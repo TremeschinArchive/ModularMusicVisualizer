@@ -1,0 +1,3 @@
+[submodule "src/pygradienter"]
+	path = src/pygradienter
+	url = https://github.com/Tremeschin/pygradienter

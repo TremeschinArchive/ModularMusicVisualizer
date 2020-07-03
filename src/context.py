@@ -35,3 +35,6 @@ class Context():
         self.batch_size = 512
         self.nbatches = None
 
+        self.width = 1280
+        self.height = 720
+

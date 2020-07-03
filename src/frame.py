@@ -57,3 +57,23 @@ class Frame():
 
     def load_from_path_wait(self, filename):
         self.utils.until_exist(filename)
+
+    # Get PIL image array from this object frame
+    def image_array(self):
+        return Image.fromarray(self.frame.astype(np.uint8))
+
+    # Save an image with specific instructions depending on it's extension type.
+    def save(self, directory):
+
+        debug_prefix = "[Frame.save]"
+
+        print(debug_prefix, "Saving to file: [%s]" % directory)
+
+        if '.jpg' in directory:
+            jpegsave = self.image_array()
+            jpegsave.save(directory, format='JPEG', subsampling=0, quality=100)
+
+        elif ".png" in directory:
+            save_image = self.image_array()
+            save_image.save(directory, format='PNG')
+            

@@ -45,7 +45,8 @@ class FFmpegWrapper():
                 '-c:v', 'libx264',
                 '-crf', '18',
                 '-pix_fmt', 'yuv420p',
-                '-r', '60'
+                '-r', '60',
+                output
         ]
 
         self.pipe_subprocess = subprocess.Popen(command, stdin=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=10**8)

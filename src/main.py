@@ -24,6 +24,7 @@ from video import FFmpegWrapper
 from utils import Miscellaneous
 from fourier import Fourier
 from context import Context
+from canvas import Canvas
 from audio import Audio
 from frame import Frame
 from PIL import Image
@@ -39,6 +40,9 @@ class MMV():
 
         print(debug_prefix, "Creating Context()")
         self.context = Context()
+
+        print(debug_prefix, "Creating Canvas()")
+        self.canvas = Canvas(self.context)
 
         print(debug_prefix, "Creating Fourier()")
         self.fourier = Fourier()
@@ -59,9 +63,17 @@ class MMV():
         print(debug_prefix, "Reading Audio")
         self.audio.read(self.context.input_file)
 
+        print(debug_prefix, "Creating MMVAnimation()")
+        self.mmvanimation = MMVAnimation(self.context)
+
         # # #
 
-        self.ffmpeg.pipe_one_time()
+        # Start the pipe one time
+        #self.ffmpeg.pipe_one_time()
+
+        self.mmvanimation.generate()
+
+        # self.canvas.canvas.save("canvas.jpg")
 
 
 
@@ -134,8 +146,8 @@ class MMV():
                 canvas[position][batch][0] = size
                 canvas[position][batch][1] = size
                 canvas[position][batch][2] = size
-            '''
-            '''
+        '''
+        '''
             chunks = np.array_split(fft, vertical_points)
 
             for index, chunk in enumerate(chunks):
@@ -147,12 +159,8 @@ class MMV():
                 canvas[index][batch][0] = size
                 canvas[index][batch][1] = size
                 canvas[index][batch][2] = size
-            '''
+        '''
 
-        print(canvas)
-        img = Image.fromarray(canvas)
-        # img = img.filter(ImageFilter.SMOOTH)
-        img.save("spec.jpg", quality=95)
 
         #print(fft)
 

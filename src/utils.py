@@ -85,3 +85,22 @@ class Utils():
     def load_yaml(self, path):
         with open(path, "r") as f:
             return yaml.load(f, Loader=yaml.FullLoader)
+
+    # Waits until file exist or controller stop var is True
+    def until_exist(self, path):
+
+        debug_prefix = "[Utils.until_exist]"
+
+        print("Waiting for file or diretory: [%s]" % path)
+
+        while True:
+            # Path exist or controller says stop: break
+            if self.controller.stop:
+                self.log(color, 4, debug_prefix, "Quitting waiting: [%s]" % path)
+                break
+            if os.path.exists(path):
+                self.log(color, 6, debug_prefix, "Waited done: [%s]" % path)
+                break
+            
+            # Wait or we'll hang this Python GIL thread
+            time.sleep(self.context.wait_time)

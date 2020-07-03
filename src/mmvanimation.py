@@ -22,8 +22,11 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from mmvparticle import MMVParticle
 
 class MMVAnimation():
-    def __init__(self):
-        self.content = {}
+    def __init__(self, context):
+        self.context = context
+        self.content = {
+            
+        }
 
     def next(self):
         for zindex in sorted(self.content.keys()):
@@ -31,4 +34,4 @@ class MMVAnimation():
                 item.next()
 
     def generate(self):
-        self.content[0] = MMVParticle()
+        self.content[0] = [MMVParticle() for _ in range(1)]
