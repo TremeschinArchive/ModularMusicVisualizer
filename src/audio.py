@@ -30,25 +30,39 @@ class Audio():
     def __init__(self, context):
         self.context = context
 
+    # Converts a file to .wav if it's not and move to the processing dir, sets the context.input_file var
     def set_audio_file(self, audio):
 
         debug_prefix = "[Audio.set_audio_file]"
 
+        # Audio isn't an .wav
         if not audio.endswith(".wav"):
             print(debug_prefix, "Audio does not end with .wav")
+
+            # Where the working .wav file will be saved
             output = self.context.processing + os.path.sep + self.context.utils.get_filename_no_extension(audio) + ".wav"
             print(debug_prefix, "Processing .wav audio file will be [%s]" % output)
+
+            # If we haven't already converted to .wav the file into the directory
             if not os.path.exists(output):
+
+                # Input original audio, output the .wav
                 print(debug_prefix, "Processing .wav audio file does not exist")
                 command = ["ffmpeg", "-i", audio, "-b:a", "300k", output]
+            
+                # Run the command
                 print(debug_prefix, "Converting to .wav with command:", command)
                 subprocess.run(command)
+
             else:
+                # File already exists
                 print(debug_prefix, "Processing .wav audio file exists")
 
+            # Set the context.input_file to the output (.wav)
             self.context.input_file = output
             print(debug_prefix, "context.input_file is now [%s]" % self.context.input_file)
 
+    # Read a .wav file from disk and gets the values on a list
     def read(self, audio):
 
         debug_prefix = "[Audio.read]"
@@ -85,6 +99,7 @@ class Audio():
         print(debug_prefix, "Len data:", len(self.data))
         print(debug_prefix, "Len data[0]:", len(self.data[0]))
         
+    # Get info from audio file - sample rate, channels, bit depth
     def get_info(self, path):
 
         info = soundfile.SoundFile(path)
