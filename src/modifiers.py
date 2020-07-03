@@ -24,6 +24,8 @@ from frame import Frame
 import os
 
 
+# # Paths
+
 class Line():
     def __init__(self, start, end, steps):
         self.start = start
@@ -34,3 +36,10 @@ class Point():
         self.x = x
         self.y = y
     
+
+# # Effects
+
+class Fade():
+    def __init__(self, start_percentage, end_percentage):
+        self.start_percentage = start_percentage
+        self.end_percentage = end_percentage
