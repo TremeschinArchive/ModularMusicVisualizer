@@ -1,7 +1,8 @@
 """
 ===============================================================================
 
-Purpose: Paths a few objects can follow
+Purpose: Modifiers (paths, effects, constants) we use under animations
+Yes dataclasses would be better but welp
 
 ===============================================================================
 
@@ -38,7 +39,7 @@ class Point():
         self.x = x
         self.y = y
 
-# LA
+# Linear Algebra / "Physics" / motion?
 
 class VelocityVector():
     def __init__(self, x, y):
