@@ -72,33 +72,35 @@ class Utils():
             os.makedirs(path, exist_ok=True)
     
     # Deletes an directory, fail safe? Quits if
-    def rmdir(self, directory):
+    def rmdir(self, path):
 
         debug_prefix = "[Utils.rmdir]"
 
-        if os.path.isdir(directory):
+        # If the asked directory is even a path
+        if os.path.isdir(path):
 
-            print(debug_prefix, "Removing dir: [%s]" % directory)
+            print(debug_prefix, "Removing dir: [%s]" % path)
 
             # Try removing with ignoring errors first..?
-            shutil.rmtree(directory, ignore_errors=True)
+            shutil.rmtree(path, ignore_errors=True)
 
             # Not deleted?
-            if os.path.isdir(directory):
+            if os.path.isdir(path):
                 print(debug_prefix, "Error removing directory with ignore_errors=True, trying again")
 
                 # Remove without ignoring errors?
-                shutil.rmtree(directory, ignore_errors=False)
+                shutil.rmtree(path, ignore_errors=False)
 
                 # Still exists? oops, better quit
-                if os.path.isdir(directory):
-                    print(debug_prefix, "COULD NOT REMOVE DIRECTORY: [%s]" % directory)
+                if os.path.isdir(path):
+                    print(debug_prefix, "COULD NOT REMOVE DIRECTORY: [%s]" % path)
                     sys.exit(-1)
 
             print(debug_prefix, "Removed successfully")
         else:
-            print(debug_prefix, "Directory exists, skipping... [%s]" % directory)
+            print(debug_prefix, "Directory exists, skipping... [%s]" % path)
 
+    # Copy every file of a directory to another
     def copy_files_recursive(self, src, dst):
         print(src, dst)
         if os.path.isdir(src) and os.path.isdir(dst) :
@@ -112,6 +114,7 @@ class Utils():
             print("src and dst must be dirs")
             sys.exit(-1)
 
+    # Get the full path of a random file from a given directory
     def random_file_from_dir(self, path):
         print("random file from path [%s]" % path)
         r = random.choice([path + os.path.sep + f for f in os.listdir(path)])
@@ -125,9 +128,11 @@ class Utils():
         else:
             return os.path.dirname(os.path.abspath(__file__))
 
+    # Get the basename of a path
     def get_basename(self, path):
         return os.path.basename(path)
 
+    # Get the filename without extension /home/linux/file.ogg -> "file"
     def get_filename_no_extension(self, path):
         (f, ext) = os.path.splitext(path)
         return f
