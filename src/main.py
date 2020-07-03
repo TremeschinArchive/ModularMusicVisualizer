@@ -20,6 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmvanimation import MMVAnimation
+from controller import Controller
 from video import FFmpegWrapper
 from utils import Miscellaneous
 from fourier import Fourier
@@ -28,10 +29,12 @@ from canvas import Canvas
 from assets import Assets
 from audio import Audio
 from frame import Frame
+from core import Core
 from PIL import Image
 import numpy as np
 import argparse
 import math
+import os
 
 
 class MMV():
@@ -42,6 +45,9 @@ class MMV():
         print(debug_prefix, "Creating Context()")
         self.context = Context()
         # self.context.reset_directories()
+
+        print(debug_prefix, "Creating Controller()")
+        self.controller = Controller(self.context)
 
         print(debug_prefix, "Creating Canvas()")
         self.canvas = Canvas(self.context)
@@ -69,19 +75,25 @@ class MMV():
         self.audio.read(self.context.input_file)
 
         print(debug_prefix, "Creating MMVAnimation()")
-        self.mmvanimation = MMVAnimation(self.context)
+        self.mmvanimation = MMVAnimation(self.context, self.canvas)
+
+        print(debug_prefix, "Creating Core()")
+        self.core = Core(
+            self.context,
+            self.controller,
+            self.canvas,
+            self.assets,
+            self.fourier,
+            self.ffmpeg,
+            self.audio,
+            self.mmvanimation
+        )
 
         # # #
 
-        # Start the pipe one time
-        #self.ffmpeg.pipe_one_time()
+        self.ffmpeg.pipe_one_time(self.context.ROOT + os.path.sep + "demorum.mkv")
+        self.core.start()   
 
-        self.assets.pygradienter("particles", 100, 100, 1)
-
-        self.mmvanimation.generate()
-
-        for _ in range(20):
-            self.mmvanimation.next()
 
         # self.canvas.canvas.save("canvas.jpg")
 
