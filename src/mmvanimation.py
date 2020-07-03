@@ -25,15 +25,21 @@ from modifiers import Line
 
 
 class MMVAnimation():
-    def __init__(self, context):
+    def __init__(self, context, canvas):
         self.context = context
+        self.canvas = canvas
+
         self.content = {}
 
     # Call every next step of the content animations
     def next(self):
         for zindex in sorted(list(self.content.keys())):
             for item in self.content[zindex]:
+                # Generate next step of animation
                 item.next()
+
+                # Blit itself on the canvas
+                item.blit(self.canvas)
 
     # Generate the objects on the animation
     # TODO: PROFILES, CURRENTLY MANUALLY SET HERE
