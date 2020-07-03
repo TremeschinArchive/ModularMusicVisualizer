@@ -21,15 +21,19 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from PIL import Image
 import subprocess
+import copy
 import time
 import sys
 
 
 class FFmpegWrapper():
     def __init__(self, context):
-        self.context = context        
+        self.context = context
+
+        # TODO: WINDWOWZ
         self.ffmpeg_binary = "ffmpeg"
 
+    # Create a FFmpeg writable pipe for generating a video
     def pipe_one_time(self, output):
 
         debug_prefix = "[FFmpegWrapper.pipe_one_time]"
@@ -46,10 +50,61 @@ class FFmpegWrapper():
                 '-c:v', 'libx264',
                 '-crf', '18',
                 '-pix_fmt', 'yuv420p',
-                '-r', self.context.fps,
+                '-r', str(self.context.fps),
                 output
         ]
 
         self.pipe_subprocess = subprocess.Popen(command, stdin=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=10**8)
 
         print(debug_prefix, "Open one time pipe")
+
+        self.stop_piping = False
+        self.lock_writing = False
+        self.images_to_pipe = []
+
+    # Write images into pipe
+    def write_to_pipe(self, image):
+        self.images_to_pipe.append(copy.deepcopy(image.image_array()))
+
+    # Thread save the images to the pipe, this way processing.py can do its job while we write the images
+    def pipe_writer_loop(self):
+
+        debug_prefix = "[FFmpegWrapper.pipe_writer_loop]"
+
+        count = 0
+
+        while not self.stop_piping:
+            if len(self.images_to_pipe) > 0:
+                self.lock_writing = True
+                image = self.images_to_pipe.pop(0)
+                image.save(self.pipe_subprocess.stdin, format="jpeg", quality=100)
+                self.lock_writing = False
+                count += 1
+                print(debug_prefix, "Write new image from buffer to pipe, count=[%s]" % count)
+            else:
+                time.sleep(0.1)
+
+    # Close stdin and stderr of pipe_subprocess and wait for it to finish properly
+    def close_pipe(self):
+
+        debug_prefix = "[FFmpegWrapper.close_pipe]"
+
+        print(debug_prefix, "Closing pipe")
+
+        while not len(self.images_to_pipe) == 0:
+            print(debug_prefix, "Waiting for image buffer list to end, len [%s]" % len(self.images_to_pipe))
+            time.sleep(0.1)
+
+        while self.lock_writing:
+            print(debug_prefix, "Lock writing is on, should only have one image?")
+            time.sleep(0.1)
+
+        self.stop_piping = True
+        self.pipe_subprocess.stdin.close()
+        self.pipe_subprocess.stderr.close()
+
+        print(debug_prefix, "Waiting process to finish")
+
+        self.pipe_subprocess.wait()
+
+        print(debug_prefix, "Closed!!")
