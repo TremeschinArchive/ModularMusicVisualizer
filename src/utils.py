@@ -163,9 +163,10 @@ class Utils():
 
     # Check if either type A = wanted[0] and B = wanted[1] or the opposite
     def is_matching_type(self, items, wanted):
-        for item in items:
-            if item in wanted:
-                wanted.remove(item)
+        print("Checking items", items, "on wanted", wanted)
+        for index, item in enumerate(items):
+            if isinstance(item, tuple(wanted)):
+                del wanted[index]
             else:
-                False
+                return False
         return True
