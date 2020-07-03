@@ -26,9 +26,12 @@ import os
 class Context():
     def __init__(self):
         self.utils = Utils()
+        self.ROOT = self.utils.ROOT
         
-        self.processing = self.utils.ROOT + os.path.sep + "processing"
-        self.data = self.utils.ROOT + os.path.sep + "data"
+        # Directories
+        self.processing = self.ROOT + os.path.sep + "processing"
+        self.data = self.ROOT + os.path.sep + "data"
+        self.assets = self.ROOT + os.path.sep + "assets"
 
         self.input_file = None
 
@@ -38,3 +41,7 @@ class Context():
         self.width = 1280
         self.height = 720
 
+    def reset_directories(self):
+        for d in [self.assets]:
+            self.utils.rmdir(d)
+            self.utils.mkdir_dne(d)

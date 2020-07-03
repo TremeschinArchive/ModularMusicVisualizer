@@ -2,6 +2,7 @@
 src/wavefun
 src/a.py
 src/processing
+src/assets
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

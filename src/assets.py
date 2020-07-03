@@ -35,16 +35,24 @@ class Assets():
         self.ROOT = self.utils.get_root()
 
     def pygradienter(self, profile, width, height, n=1):
+
+        pygradient_src_dir = self.ROOT + os.path.sep + "pygradienter" + os.path.sep + "src"  + os.path.sep
+        move_to_assets_subdir = self.context.assets + os.path.sep + profile
+
+        self.utils.mkdir_dne(move_to_assets_subdir)
+
         subprocess.call(
             [
                 "python",
-                self.ROOT + os.path.sep + "pygradienter" + os.path.sep + "src" + os.path.sep + "pygradienter.py", 
+                pygradient_src_dir + "pygradienter.py", 
                 "-p", profile,
-                "-x", width,
-                "-y", height,
-                "-n", n
+                "-x", str(width),
+                "-y", str(height),
+                "-n", str(n)
             ]
         )
 
-a = Assets(None)
-a.pygradienter("particles", 400, 400, 1)
+        self.utils.move_files_recursive(
+            pygradient_src_dir + "data" + os.path.sep + profile + os.path.sep + str(width) + "x" + str(height),
+            move_to_assets_subdir
+        )

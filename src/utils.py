@@ -21,6 +21,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
 import shutil
+import glob
 import math
 import yaml
 import time
@@ -68,6 +69,44 @@ class Utils():
                 os.makedirs(p, exist_ok=True)
         else:
             os.makedirs(path, exist_ok=True)
+    
+    # Deletes an directory, fail safe? Quits if
+    def rmdir(self, directory):
+
+        debug_prefix = "[Utils.rmdir]"
+
+        if os.path.isdir(directory):
+
+            print(debug_prefix, "Removing dir: [%s]" % directory)
+
+            # Try removing with ignoring errors first..?
+            shutil.rmtree(directory, ignore_errors=True)
+
+            # Not deleted?
+            if os.path.isdir(directory):
+                print(debug_prefix, "Error removing directory with ignore_errors=True, trying again")
+
+                # Remove without ignoring errors?
+                shutil.rmtree(directory, ignore_errors=False)
+
+                # Still exists? oops, better quit
+                if os.path.isdir(directory):
+                    print(debug_prefix, "COULD NOT REMOVE DIRECTORY: [%s]" % directory)
+                    sys.exit(-1)
+
+            print(debug_prefix, "Removed successfully")
+        else:
+            print(debug_prefix, "Directory exists, skipping... [%s]" % directory)
+
+    def move_files_recursive(self, src, dst):
+        print(src, dst)
+        if os.path.isdir(src) and os.path.isdir(dst) :
+            for path in glob.glob(src + '/*.*'):
+                print("Moving path [%s] --> [%s]" % (path, dst))
+                shutil.move(path, dst)
+        else:
+            print("src and dst must be dirs")
+            sys.exit(-1)
 
     # Get the directory this file is in if run from source or from a release
     def get_root(self):

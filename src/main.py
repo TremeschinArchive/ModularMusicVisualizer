@@ -25,6 +25,7 @@ from utils import Miscellaneous
 from fourier import Fourier
 from context import Context
 from canvas import Canvas
+from assets import Assets
 from audio import Audio
 from frame import Frame
 from PIL import Image
@@ -40,9 +41,13 @@ class MMV():
 
         print(debug_prefix, "Creating Context()")
         self.context = Context()
+        self.context.reset_directories()
 
         print(debug_prefix, "Creating Canvas()")
         self.canvas = Canvas(self.context)
+
+        print(debug_prefix, "Creating Assets()")
+        self.assets = Assets(self.context)
 
         print(debug_prefix, "Creating Fourier()")
         self.fourier = Fourier()
@@ -70,6 +75,8 @@ class MMV():
 
         # Start the pipe one time
         #self.ffmpeg.pipe_one_time()
+
+        self.assets.pygradienter("particles", 400, 400, 1)
 
         self.mmvanimation.generate()
 
