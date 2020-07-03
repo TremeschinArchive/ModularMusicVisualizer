@@ -26,6 +26,7 @@ import numpy as np
 import imageio
 import numpy
 import time
+import sys
 import os
 
 
@@ -81,4 +82,26 @@ class Frame():
         elif ".png" in directory:
             save_image = self.image_array()
             save_image.save(directory, format='PNG')
-            
+    
+    # https://stackoverflow.com/questions/52702809/copy-array-into-part-of-another-array-in-numpy
+    def copy_from(self, A, B, A_start, B_start, B_end):
+        """
+        A_start is the index with respect to A of the upper left corner of the overlap
+        B_start is the index with respect to B of the upper left corner of the overlap
+        B_end is the index of with respect to B of the lower right corner of the overlap
+        """
+
+        debug_prefix = "[Frame.copy_from]"
+
+        try:
+            A_start, B_start, B_end = map(np.asarray, [A_start, B_start, B_end])
+            shape = B_end - B_start
+            B_slices = tuple(map(slice, B_start, B_end + 1))
+            A_slices = tuple(map(slice, A_start, A_start + shape + 1))
+            B[B_slices] = A[A_slices]
+
+            print(debug_prefix, "Copied from, args = {%s, %s, %s}" % (A_start, B_start, B_end))
+
+        except ValueError as e:
+            print(debug_prefix, "Fatal error copying block: ", e)
+            sys.exit(-1)
