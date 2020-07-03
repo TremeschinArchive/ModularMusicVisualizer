@@ -19,9 +19,11 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+import subprocess
 import shutil
 import math
 import yaml
+import time
 import sys
 import os
 
@@ -91,16 +93,19 @@ class Utils():
 
         debug_prefix = "[Utils.until_exist]"
 
-        print("Waiting for file or diretory: [%s]" % path)
+        print(debug_prefix, "Waiting for file or diretory: [%s]" % path)
 
         while True:
-            # Path exist or controller says stop: break
-            if self.controller.stop:
-                self.log(color, 4, debug_prefix, "Quitting waiting: [%s]" % path)
-                break
-            if os.path.exists(path):
-                self.log(color, 6, debug_prefix, "Waited done: [%s]" % path)
-                break
-            
-            # Wait or we'll hang this Python GIL thread
-            time.sleep(self.context.wait_time)
+            time.sleep(0.1)
+        
+    # $ mv A B
+    def move(self, src, dst, shell=False):
+        command = ["mv", src, dst]
+        print(' '.join(command))
+        subprocess.run(command, stdout=subprocess.PIPE, shell=shell)
+    
+    # $ cp A B
+    def copy(self, src, dst, shell=False):
+        command = ["cp", src, dst]
+        print(' '.join(command))
+        subprocess.run(command, stdout=subprocess.PIPE, shell=shell)
