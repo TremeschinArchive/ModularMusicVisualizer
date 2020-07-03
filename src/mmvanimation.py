@@ -27,9 +27,7 @@ from modifiers import Line
 class MMVAnimation():
     def __init__(self, context):
         self.context = context
-        self.content = {
-            
-        }
+        self.content = {}
 
     def next(self):
         for zindex in sorted(list(self.content.keys())):
@@ -39,7 +37,8 @@ class MMVAnimation():
     def generate(self):
         
         temp = MMVParticle(self.context)
-        temp.path[0] = {"position": Point(0, 0), "steps": 10}
+        temp.path[0] = {"position": Line((0, 0), (10, 5)), "steps": 10}
+        # temp.path[1] = {"position": Point(20, 0), "steps": 5}
 
         print("Generating, adding mmvparticle")
         self.content[0] = [temp]

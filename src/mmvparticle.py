@@ -61,7 +61,7 @@ class MMVParticle():
 
         this_animation = self.path[self.current_animation]
         
-        if self.current_step == this_animation["steps"]:
+        if self.current_step == this_animation["steps"] + 1:
             print("Out of steps, next animation")
             self.current_animation += 1
             self.current_step = 0
@@ -75,6 +75,9 @@ class MMVParticle():
             print("Path is Point, current steps", self.current_step)
             self.x = position.x
             self.y = position.y
+
+            print("x=", self.x)
+            print("y=", self.y)
         
         # Move according to a Line
         if self.utils.is_matching_type([position], [Line]):
@@ -99,7 +102,8 @@ class MMVParticle():
                 steps
             )
 
-            # Apply
-            self.x = position.x
-            self.y = position.y
+            print("x=", self.x)
+            print("y=", self.y)
+
+        self.current_step += 1
             

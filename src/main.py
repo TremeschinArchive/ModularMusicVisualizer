@@ -80,7 +80,7 @@ class MMV():
 
         self.mmvanimation.generate()
 
-        for _ in range(10):
+        for _ in range(20):
             self.mmvanimation.next()
 
         # self.canvas.canvas.save("canvas.jpg")
