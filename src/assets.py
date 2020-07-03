@@ -48,7 +48,8 @@ class Assets():
                 "-p", profile,
                 "-x", str(width),
                 "-y", str(height),
-                "-n", str(n)
+                "-n", str(n),
+                "-q"
             ]
         )
 
