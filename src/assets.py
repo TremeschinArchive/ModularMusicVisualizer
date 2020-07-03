@@ -34,13 +34,17 @@ class Assets():
 
         self.ROOT = self.utils.get_root()
 
+    # Generate a pygradienter image of a given profile and move it to the assets folder
     def pygradienter(self, profile, width, height, n=1):
 
+        # Define where stuff is
         pygradient_src_dir = self.ROOT + os.path.sep + "pygradienter" + os.path.sep + "src"  + os.path.sep
         move_to_assets_subdir = self.context.assets + os.path.sep + profile
 
+        # Make the assets subdirectory
         self.utils.mkdir_dne(move_to_assets_subdir)
 
+        # Call pygradienter to generate the image
         subprocess.call(
             [
                 "python",
@@ -53,6 +57,7 @@ class Assets():
             ]
         )
 
+        # Copy every file from src to dst
         self.utils.copy_files_recursive(
             pygradient_src_dir + "data" + os.path.sep + profile + os.path.sep + str(width) + "x" + str(height),
             move_to_assets_subdir
