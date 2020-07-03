@@ -26,6 +26,8 @@ import os
 
 # # Paths
 
+# Basic
+
 class Line():
     def __init__(self, start, end):
         self.start = start
@@ -35,7 +37,19 @@ class Point():
     def __init__(self, x, y):
         self.x = x
         self.y = y
-    
+
+# LA
+
+class VelocityVector():
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+# # Values
+
+class Constant():
+    def __init__(self, value):
+        self.value = value
 
 # # Effects
 

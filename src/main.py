@@ -53,7 +53,7 @@ class MMV():
         self.fourier = Fourier()
 
         print(debug_prefix, "Creating FFmpegWrapper()")
-        self.ffmpeg = FFmpegWrapper()
+        self.ffmpeg = FFmpegWrapper(self.context)
 
         self.context.input_file = args["input_file"]
 

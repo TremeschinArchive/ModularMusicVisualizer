@@ -20,8 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from interpolation import Interpolation
-from modifiers import Point
-from modifiers import Line
+from modifiers import *
 from frame import Frame
 from utils import Utils
 import os
@@ -81,7 +80,7 @@ class MMVParticle():
         
         # Move according to a Line
         if self.utils.is_matching_type([position], [Line]):
-            print("Path is Line, current steps", self.current_step, "interpolating")
+            print("Path is Line, current steps", self.current_step, "- interpolating")
             
             start_coordinate = position.start
             end_coordinate = position.end

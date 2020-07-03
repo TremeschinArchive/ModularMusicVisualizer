@@ -26,7 +26,8 @@ import sys
 
 
 class FFmpegWrapper():
-    def __init__(self):
+    def __init__(self, context):
+        self.context = context        
         self.ffmpeg_binary = "ffmpeg"
 
     def pipe_one_time(self, output):
@@ -45,7 +46,7 @@ class FFmpegWrapper():
                 '-c:v', 'libx264',
                 '-crf', '18',
                 '-pix_fmt', 'yuv420p',
-                '-r', '60',
+                '-r', self.context.fps,
                 output
         ]
 
