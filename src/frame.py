@@ -33,6 +33,7 @@ class Frame():
     def __init__(self):
         self.utils = Utils()
 
+    # Create new numpy array as a "frame", attribute width, height and resolution
     def new(self, width, height):
         self.frame = np.zeros([height, width, 3], dtype=np.uint8)
         self.width = width
@@ -40,11 +41,13 @@ class Frame():
         self.resolution = (width, height)
         self.name = ''
 
-    def load_from_path(self, filename):
+    # Load image from a given path
+    def load_from_path(self, path):
 
+        # Keep trying to read it
         while True:
             try:
-                self.frame = imageio.imread(filename).astype(np.uint8)
+                self.frame = imageio.imread(path).astype(np.uint8)
                 break
             except Exception:
                 pass
@@ -53,10 +56,12 @@ class Frame():
         self.height = self.frame.shape[0]
         self.width = self.frame.shape[1]
         self.resolution = (self.width, self.height)
-        self.name = filename
+        self.name = path
 
-    def load_from_path_wait(self, filename):
-        self.utils.until_exist(filename)
+    # Wait until a file exist and then load it as a image
+    def load_from_path_wait(self, path):
+        self.utils.until_exist(path)
+        self.load_from_path(path)
 
     # Get PIL image array from this object frame
     def image_array(self):
