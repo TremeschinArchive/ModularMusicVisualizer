@@ -20,6 +20,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 class Interpolation():
+
+    # Linear, between point A and B based on a current "step" and total steps
     def linear(self, a, b, current, total):
         part = (b - a) / total
         walked = part * current
