@@ -20,6 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import subprocess
+import random
 import shutil
 import glob
 import math
@@ -98,15 +99,24 @@ class Utils():
         else:
             print(debug_prefix, "Directory exists, skipping... [%s]" % directory)
 
-    def move_files_recursive(self, src, dst):
+    def copy_files_recursive(self, src, dst):
         print(src, dst)
         if os.path.isdir(src) and os.path.isdir(dst) :
             for path in glob.glob(src + '/*.*'):
-                print("Moving path [%s] --> [%s]" % (path, dst))
-                shutil.move(path, dst)
+                if not any([f in path for f in os.listdir(dst)]):
+                    print("Moving path [%s] --> [%s]" % (path, dst))
+                    shutil.copy(path, dst)
+                else:
+                    print("File already under dst dir")
         else:
             print("src and dst must be dirs")
             sys.exit(-1)
+
+    def random_file_from_dir(self, path):
+        print("random file from path [%s]" % path)
+        r = random.choice([path + os.path.sep + f for f in os.listdir(path)])
+        print("got [%s]" % r)
+        return r
 
     # Get the directory this file is in if run from source or from a release
     def get_root(self):
@@ -136,6 +146,8 @@ class Utils():
 
         while True:
             time.sleep(0.1)
+            if os.path.exists(path):
+                break
         
     # $ mv A B
     def move(self, src, dst, shell=False):
@@ -148,3 +160,12 @@ class Utils():
         command = ["cp", src, dst]
         print(' '.join(command))
         subprocess.run(command, stdout=subprocess.PIPE, shell=shell)
+
+    # Check if either type A = wanted[0] and B = wanted[1] or the opposite
+    def is_matching_type(self, items, wanted):
+        for item in items:
+            if item in wanted:
+                wanted.remove(item)
+            else:
+                False
+        return True

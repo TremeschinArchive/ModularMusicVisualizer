@@ -52,7 +52,7 @@ class Assets():
             ]
         )
 
-        self.utils.move_files_recursive(
+        self.utils.copy_files_recursive(
             pygradient_src_dir + "data" + os.path.sep + profile + os.path.sep + str(width) + "x" + str(height),
             move_to_assets_subdir
         )

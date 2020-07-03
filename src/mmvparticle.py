@@ -20,12 +20,48 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from interpolation import Interpolation
+from modifiers import Point
+from modifiers import Line
+from frame import Frame
+from utils import Utils
+import os
+
 
 class MMVParticle():
-    def __init__(self):
+    def __init__(self, context):
+        
+        debug_prefix = "[MMVParticle.__init__]"
+        
+        self.context = context
+
         self.interpolation = Interpolation()
-        self.path = []
+        self.utils = Utils()
+
+        self.path = {}
 
         self.x = 0
         self.y = 0
-        self.size = 0
+        self.size = 1
+        self.current_animation = 0
+        self.current_step = 0
+
+        # Create Frame and load random particle
+        self.frame = Frame()
+        self.frame.load_from_path_wait(
+            self.utils.random_file_from_dir(
+                self.context.assets + os.path.sep + "particles"
+            )
+        )
+    
+    def next(self):
+        this_animation = self.path[self.current_animation]
+        
+        if self.current_step == this_animation["steps"]:
+            print("Out of steps, deleting")
+            return
+
+        position = this_animation["position"]
+
+        if self.utils.is_matching_type([position], [Point]):
+            print("Path is point, current steps", self.current_step)
+            

@@ -41,7 +41,7 @@ class MMV():
 
         print(debug_prefix, "Creating Context()")
         self.context = Context()
-        self.context.reset_directories()
+        # self.context.reset_directories()
 
         print(debug_prefix, "Creating Canvas()")
         self.canvas = Canvas(self.context)
@@ -76,9 +76,11 @@ class MMV():
         # Start the pipe one time
         #self.ffmpeg.pipe_one_time()
 
-        self.assets.pygradienter("particles", 400, 400, 1)
+        self.assets.pygradienter("particles", 100, 100, 1)
 
         self.mmvanimation.generate()
+
+        self.mmvanimation.next()
 
         # self.canvas.canvas.save("canvas.jpg")
 

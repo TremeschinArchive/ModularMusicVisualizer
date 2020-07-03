@@ -1,7 +1,7 @@
 """
 ===============================================================================
 
-Purpose: MMVAnimation object
+Purpose: Paths a few objects can follow
 
 ===============================================================================
 
@@ -19,27 +19,18 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmvparticle import MMVParticle
-from modifiers import Point
-from modifiers import Line
+from utils import Utils
+from frame import Frame
+import os
 
 
-class MMVAnimation():
-    def __init__(self, context):
-        self.context = context
-        self.content = {
-            
-        }
+class Line():
+    def __init__(self, start, end, steps):
+        self.start = start
+        self.end = end
 
-    def next(self):
-        for zindex in sorted(list(self.content.keys())):
-            for item in self.content[zindex]:
-                item.next()
-
-    def generate(self):
-        
-        temp = MMVParticle(self.context)
-        temp.path[0] = {"position": Point(0, 0), "steps": 10}
-
-        print("Generating, adding mmvparticle")
-        self.content[0] = [temp]
+class Point():
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+    
