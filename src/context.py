@@ -40,6 +40,7 @@ class Context():
 
         self.width = 1280
         self.height = 720
+        self.fps = 30
 
     def reset_directories(self):
         for d in [self.assets]:
