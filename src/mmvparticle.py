@@ -54,14 +54,52 @@ class MMVParticle():
         )
     
     def next(self):
+
+        if not self.current_animation in list(self.path.keys()):
+            print("No more animations, quitting")
+            return
+
         this_animation = self.path[self.current_animation]
         
         if self.current_step == this_animation["steps"]:
-            print("Out of steps, deleting")
+            print("Out of steps, next animation")
+            self.current_animation += 1
+            self.current_step = 0
             return
 
         position = this_animation["position"]
+        steps = this_animation["steps"]
 
+        # Move according to a Point
         if self.utils.is_matching_type([position], [Point]):
-            print("Path is point, current steps", self.current_step)
+            print("Path is Point, current steps", self.current_step)
+            self.x = position.x
+            self.y = position.y
+        
+        # Move according to a Line
+        if self.utils.is_matching_type([position], [Line]):
+            print("Path is Line, current steps", self.current_step, "interpolating")
+            
+            start_coordinate = position.start
+            end_coordinate = position.end
+            
+            # Interpolate X coordinate on line
+            self.x = self.interpolation.linear(
+                start_coordinate[0],  
+                end_coordinate[0],
+                self.current_step,
+                steps
+            )
+
+            # Interpolate Y coordinate on line
+            self.y = self.interpolation.linear(
+                start_coordinate[1],  
+                end_coordinate[1],
+                self.current_step,
+                steps
+            )
+
+            # Apply
+            self.x = position.x
+            self.y = position.y
             
