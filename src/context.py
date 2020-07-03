@@ -33,15 +33,19 @@ class Context():
         self.data = self.ROOT + os.path.sep + "data"
         self.assets = self.ROOT + os.path.sep + "assets"
 
+        # Files
         self.input_file = None
 
+        # Batchs, responsiveness
         self.batch_size = 512
         self.nbatches = None
 
+        # Video specs
         self.width = 1280
         self.height = 720
         self.fps = 30
 
+    # Delete and create (reset) the runtime directories
     def reset_directories(self):
         for d in [self.assets]:
             self.utils.rmdir(d)
