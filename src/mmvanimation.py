@@ -29,11 +29,14 @@ class MMVAnimation():
         self.context = context
         self.content = {}
 
+    # Call every next step of the content animations
     def next(self):
         for zindex in sorted(list(self.content.keys())):
             for item in self.content[zindex]:
                 item.next()
 
+    # Generate the objects on the animation
+    # TODO: PROFILES, CURRENTLY MANUALLY SET HERE
     def generate(self):
         
         temp = MMVParticle(self.context)
