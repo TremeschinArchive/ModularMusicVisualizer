@@ -75,8 +75,26 @@ class Core():
         self.canvas.reset_canvas()
 
         # Next animation
-        for _ in range(total_steps):
+        for this_step in range(120, total_steps):
             print(" > Next step")
+
+            this_time = (1/self.context.fps) * this_step
+            this_time_sample = this_time * self.audio.info["sample_rate"]
+
+            print(this_time, self.audio.info["sample_rate"], this_time_sample, this_time_sample + self.context.batch_size)
+
+            fft = self.fourier.fft(
+                self.audio.data[0][
+                    int(this_time_sample)
+                    :
+                    int(this_time_sample + self.context.batch_size)
+                ],
+                self.audio.info
+            )
+
+            print(this_time_sample, self.context.batch_size, fft)
+            exit()
+
             self.mmvanimation.next()
             self.ffmpeg.write_to_pipe(self.canvas.canvas)
             # self.canvas.reset_canvas()
