@@ -19,10 +19,31 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from functions import Functions
+
+
 class Interpolation():
 
+    def __init__(self):
+        self.functions = Functions()
+
     # Linear, between point A and B based on a current "step" and total steps
-    def linear(self, a, b, current, total):
+    def linear(self, a, b, current, total, this_coord, arg_a):
         part = (b - a) / total
         walked = part * current
         return a + walked
+
+    # "Biased" remaining linear
+    def remaining_approach(self, a, b, current, total, this_coord, arg_a):
+        ratio = arg_a
+        if current == 0:
+            return a
+        return this_coord + ( (b - this_coord) * ratio )
+
+    # Sigmoid activation between two points, smoothed out "linear" curver
+    def sigmoid(self, a, b, current, total, this_coord, arg_a):
+        smooth = arg_a
+        distance = (b - a)
+        where = self.functions.proportion(total, 1, current)
+        walk = distance*self.functions.sigmoid(where, smooth)
+        return a + walk
