@@ -70,6 +70,10 @@ class Core():
         self.mmvanimation.generate()
 
         # Next animation
-        for _ in range(20):
+        for _ in range(300):
             print(" > Next animation")
+            self.canvas.reset_canvas()
             self.mmvanimation.next()
+            self.ffmpeg.write_to_pipe(self.canvas.canvas)
+    
+        self.ffmpeg.close_pipe()

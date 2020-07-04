@@ -75,7 +75,7 @@ class MMV():
         self.audio.read(self.context.input_file)
 
         print(debug_prefix, "Creating MMVAnimation()")
-        self.mmvanimation = MMVAnimation(self.context, self.canvas)
+        self.mmvanimation = MMVAnimation(self.context, self.controller, self.canvas)
 
         print(debug_prefix, "Creating Core()")
         self.core = Core(

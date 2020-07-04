@@ -45,8 +45,8 @@ class MMVParticle():
         self.current_step = 0
 
         # Create Frame and load random particle
-        self.frame = Frame()
-        self.frame.load_from_path_wait(
+        self.image = Frame()
+        self.image.load_from_path(
             self.utils.random_file_from_dir(
                 self.context.assets + os.path.sep + "particles"
             )
@@ -77,20 +77,20 @@ class MMVParticle():
         # Move according to a Point (be stationary)
         if self.utils.is_matching_type([position], [Point]):
 
-            print("Path is Point, current steps", self.current_step)
+            # print("Path is Point, current steps", self.current_step)
 
             # Atribute (x, y) to Point's x and y
-            self.x = position.x
-            self.y = position.y
+            self.x = int(position.x)
+            self.y = int(position.y)
 
             # Debug
-            print("x=", self.x)
-            print("y=", self.y)
+            # print("x=", self.x)
+            # print("y=", self.y)
         
         # Move according to a Line (interpolate current steps)
         if self.utils.is_matching_type([position], [Line]):
 
-            print("Path is Line, current steps", self.current_step, "- interpolating")
+            # print("Path is Line, current steps", self.current_step, "- interpolating")
             
             start_coordinate = position.start
             end_coordinate = position.end
@@ -111,9 +111,32 @@ class MMVParticle():
                 steps
             )
 
-            print("x=", self.x)
-            print("y=", self.y)
+            self.x = int(self.x)
+            self.y = int(self.y)
+
+            # print("x=", self.x)
+            # print("y=", self.y)
 
         # Next step, end of loop
         self.current_step += 1
-            
+        
+    def blit(self, canvas):
+
+        img = self.image.frame
+        width, height, _ = img.shape
+
+        # print("x,", self.x)
+        # print("y,", self.y)
+        # print("width,", width)
+        # print("height,", height)
+
+        # print("width+x", self.x + width - 1)
+        # print("height+y", self.y + height - 1)
+
+        canvas.canvas.copy_from(
+            self.image.frame,
+            canvas.canvas.frame,
+            [0, 0],
+            [self.y, self.x],
+            [self.y + height - 1, self.x + width - 1]
+        )

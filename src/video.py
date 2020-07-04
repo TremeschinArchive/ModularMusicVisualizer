@@ -66,6 +66,13 @@ class FFmpegWrapper():
     def write_to_pipe(self, image):
         self.images_to_pipe.append(copy.deepcopy(image.image_array()))
 
+    # http://stackoverflow.com/a/9459208/284318
+    def pure_pil_alpha_to_color_v2(self, image, color=(0, 0, 0)):
+        image.load()
+        background = Image.new('RGB', image.size, color)
+        background.paste(image, mask=image.split()[3])
+        return background
+
     # Thread save the images to the pipe, this way processing.py can do its job while we write the images
     def pipe_writer_loop(self):
 
@@ -77,6 +84,7 @@ class FFmpegWrapper():
             if len(self.images_to_pipe) > 0:
                 self.lock_writing = True
                 image = self.images_to_pipe.pop(0)
+                image = self.pure_pil_alpha_to_color_v2(image)
                 image.save(self.pipe_subprocess.stdin, format="jpeg", quality=100)
                 self.lock_writing = False
                 count += 1

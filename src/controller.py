@@ -34,13 +34,6 @@ class Controller():
         self.threads = {}
 
     def exit(self):
-
         debug_prefix = "[Controller.exit]"
-
         print(debug_prefix, "Controller exit called")
-
-        if not self.context.resume:
-            print(debug_prefix, "Setting resume=True as we're closing")
-            self.context.resume = True
-
         self.stop = True

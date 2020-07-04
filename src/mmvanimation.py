@@ -22,11 +22,13 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from mmvparticle import MMVParticle
 from modifiers import Point
 from modifiers import Line
+import random
 
 
 class MMVAnimation():
-    def __init__(self, context, canvas):
+    def __init__(self, context, controller, canvas):
         self.context = context
+        self.controller = controller
         self.canvas = canvas
 
         self.content = {}
@@ -45,9 +47,35 @@ class MMVAnimation():
     # TODO: PROFILES, CURRENTLY MANUALLY SET HERE
     def generate(self):
         
-        temp = MMVParticle(self.context)
-        temp.path[0] = {"position": Line((0, 0), (10, 5)), "steps": 10}
-        # temp.path[1] = {"position": Point(20, 0), "steps": 5}
+        particles = []
+
+        for _ in range(100):
+            temp = MMVParticle(self.context)
+
+            x1 = random.randint(100, 1000)
+            y1 = random.randint(100, 500)
+            x2 = random.randint(100, 1000)
+            y2 = random.randint(100, 500)
+            x3 = random.randint(100, 1000)
+            y3 = random.randint(100, 500)
+
+            temp.path[0] = {
+                "position": Line(
+                    (x1, y1),
+                    (x2, y2),
+                ),
+                "steps": 100
+            }
+            temp.path[1] = {
+                "position": Line(
+                    (x2, y2),
+                    (x3, y3),
+                ),
+                "steps": 200
+            }
+
+
+            particles.append(temp)
 
         print("Generating, adding mmvparticle")
-        self.content[0] = [temp]
+        self.content[0] = particles

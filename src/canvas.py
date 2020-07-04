@@ -32,8 +32,14 @@ class Canvas():
         self.context = context
         self.utils = Utils()
 
+        self.reset_canvas()
+
+    def reset_canvas(self):
+
+        debug_prefix = "[Canvas.reset_canvas]"
+
         # Our Canvas is a black Frame class
         self.canvas = Frame()
         self.canvas.new(self.context.width, self.context.height)
-        
+
         print(debug_prefix, "Create new frame as canvas")
