@@ -20,8 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmvimage import MMVImage
-from modifiers import Point
-from modifiers import Line
+from modifiers import *
 from utils import Utils
 import random
 import math
@@ -65,26 +64,64 @@ class MMVAnimation():
             )
         )
         temp.image.resize_by_ratio( random.uniform(0.05, 0.1) )
-        x1 = random.randint(0, 1280 - 100)
-        y1 = random.randint(0, 720 - 100)
-        x2 = random.randint(0, 1280 - 100)
-        y2 = random.randint(0, 720 - 100)
-        x3 = random.randint(0, 1280 - 100)
-        y3 = random.randint(0, 720 - 100)
+        x1 = random.randint(100, 1280 - 100)
+        y1 = random.randint(100, 720 - 100)
+        x2 = x1 + random.randint(-50, 50)
+        y2 = y1 + random.randint(-50, 50)
+        x3 = x2 + random.randint(-50, 50)
+        y3 = y2 + random.randint(-50, 50)
 
+        # temp.path[0] = {
+        #     "position": Point(x1, y1),
+        #     "interpolation_x": "linear",
+        #     "interpolation_y": "linear",
+        #     "steps": 1,
+        # }
+        # temp.path[1] = {
+        #     "position": Line(
+        #         (x1, y1),
+        #         (x2, y2),
+        #     ),
+        #     "interpolation_x": "linear",
+        #     "interpolation_y": "sigmoid",
+        #     "interpolation_y_arg_a": 10,
+        #     "steps": random.randint(50, 100)
+        # }
+        # temp.path[2] = {
+        #     "position": Line(
+        #         (x2, y2),
+        #         (x3, y3),
+        #     ),
+        #     "interpolation_x": "sigmoid",
+        #     "interpolation_x_arg_a": 10,
+        #     "interpolation_y": "linear",
+        #     "steps": random.randint(150, 200)
+        # }
+
+        fast = 0.05
+
+ 
         temp.path[0] = {
             "position": Line(
                 (x1, y1),
                 (x2, y2),
             ),
-            "steps": random.randint(1, 100)
+            "interpolation_x": "remaining_approach",
+            "interpolation_x_arg_a": fast,
+            "interpolation_y": "remaining_approach",
+            "interpolation_y_arg_a": fast,
+            "steps": random.randint(50, 100)
         }
         temp.path[1] = {
             "position": Line(
                 (x2, y2),
                 (x3, y3),
             ),
-            "steps": random.randint(1, 200)
+            "interpolation_x": "remaining_approach",
+            "interpolation_x_arg_a": fast,
+            "interpolation_y": "remaining_approach",
+            "interpolation_y_arg_a": fast,
+            "steps": random.randint(150, 200)
         }
 
         self.content[1].append(temp)
@@ -93,7 +130,9 @@ class MMVAnimation():
         temp = MMVImage(self.context)
         temp.path[0] = {
             "position": Point(0, 0),
-            "steps": math.inf
+            "steps": math.inf,
+            "interpolation_x": None,
+            "interpolation_y": None,
         }
         temp.image.load_from_path(
             self.context.assets + os.path.sep + "background" + os.path.sep + "0a6d6e0bfbc4e88502e28b3d14bb81a5.png"
@@ -101,7 +140,6 @@ class MMVAnimation():
         temp.image.resize_to_resolution(self.context.width, self.context.height)
 
         self.content[0] = [temp]
-
 
     # Generate the objects on the animation
     # TODO: PROFILES, CURRENTLY MANUALLY SET HERE

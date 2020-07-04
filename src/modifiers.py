@@ -46,6 +46,11 @@ class VelocityVector():
         self.x = x
         self.y = y
 
+
+class Shake():
+    def __init__(self):
+        pass
+
 # # Values
 
 class Constant():

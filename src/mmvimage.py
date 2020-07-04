@@ -53,7 +53,7 @@ class MMVImage():
 
         # Animation has ended, this current_animation isn't present on path.keys
         if not self.current_animation in list(self.path.keys()):
-            print("No more animations, quitting")
+            # print("No more animations, quitting")
             self.is_deletable = True
             return
 
@@ -62,12 +62,23 @@ class MMVImage():
         
         # The current step is one above the steps we've been told, next animation
         if self.current_step == this_animation["steps"] + 1:
-            print("Out of steps, next animation")
+            # print("Out of steps, next animation")
             self.current_animation += 1
             self.current_step = 0
             return
 
         # Get info on the animation dic items to operate
+        interpolation_x = this_animation["interpolation_x"]
+        interpolation_y = this_animation["interpolation_y"]
+        
+        interpolation_x_arg_a = None
+        if "interpolation_x_arg_a" in this_animation:
+            interpolation_x_arg_a = this_animation["interpolation_x_arg_a"]
+        
+        interpolation_y_arg_a = None
+        if "interpolation_y_arg_a" in this_animation:
+            interpolation_y_arg_a = this_animation["interpolation_y_arg_a"]
+
         position = this_animation["position"]
         steps = this_animation["steps"]
 
@@ -91,26 +102,41 @@ class MMVImage():
             
             start_coordinate = position.start
             end_coordinate = position.end
+
+            if interpolation_x == "sigmoid":
+                interpolation_x_function = self.interpolation.sigmoid
+            if interpolation_x == "linear":
+                interpolation_x_function = self.interpolation.linear
+            if interpolation_x == "remaining_approach":
+                interpolation_x_function = self.interpolation.remaining_approach
+
+            if interpolation_y == "sigmoid":
+                interpolation_y_function = self.interpolation.sigmoid
+            if interpolation_y == "linear":
+                interpolation_y_function = self.interpolation.linear
+            if interpolation_y == "remaining_approach":
+                interpolation_y_function = self.interpolation.remaining_approach
             
             # Interpolate X coordinate on line
-            self.x = self.interpolation.linear(
+            self.x = interpolation_x_function(
                 start_coordinate[1],  
                 end_coordinate[1],
                 self.current_step,
-                steps
+                steps,
+                self.x,
+                interpolation_x_arg_a
             )
 
             # Interpolate Y coordinate on line
-            self.y = self.interpolation.linear(
+            self.y = interpolation_y_function(
                 start_coordinate[0],  
                 end_coordinate[0],
                 self.current_step,
-                steps
+                steps,
+                self.y,
+                interpolation_y_arg_a
             )
 
-            self.x = int(self.x)
-            self.y = int(self.y)
-            
             # Debug
             # print("x=", self.x)
             # print("y=", self.y)
@@ -124,12 +150,15 @@ class MMVImage():
         img = self.image
         width, height, _ = img.frame.shape
 
+        x = int(self.x)
+        y = int(self.y)
+
         if False:
             # This is the right way but it's slow TODO: R&D
             canvas.canvas.overlay_transparent(
                 self.image.frame,
-                self.x,
-                self.y
+                x,
+                y
             )
         else:
             # Fast but ugly
@@ -137,6 +166,6 @@ class MMVImage():
                 self.image.frame,
                 canvas.canvas.frame,
                 [0, 0],
-                [self.x, self.y],
-                [self.x + width - 1, self.y + height - 1]
+                [x, y],
+                [x + width - 1, y + height - 1]
             )
