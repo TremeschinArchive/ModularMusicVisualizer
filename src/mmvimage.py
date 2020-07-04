@@ -49,7 +49,7 @@ class MMVImage():
         self.image = Frame()
         
     # Next step of animation
-    def next(self):
+    def next(self, fftinfo):
 
         # Animation has ended, this current_animation isn't present on path.keys
         if not self.current_animation in list(self.path.keys()):
@@ -82,24 +82,36 @@ class MMVImage():
         position = this_animation["position"]
         steps = this_animation["steps"]
 
+        if "testlink" in this_animation:
+            a = fftinfo["average_value"]
+            if a > 1:
+                a = 1
+            if a < -0.99:
+                a = -0.99
+
+            print(self.size, 0.5+a)
+            a = self.interpolation.remaining_approach(
+                self.size,
+                0.5 + 4*a,
+                self.current_step,
+                steps,
+                self.size,
+                0.02
+            )
+            print("APP", a)
+            self.size = a
+            self.image.resize_by_ratio(a)
+
         # Move according to a Point (be stationary)
         if self.utils.is_matching_type([position], [Point]):
-
-            # print("Path is Point, current steps", self.current_step)
-
             # Atribute (x, y) to Point's x and y
             self.x = int(position.y)
             self.y = int(position.x)
 
-            # Debug
-            # print("x=", self.x)
-            # print("y=", self.y)
-        
         # Move according to a Line (interpolate current steps)
         if self.utils.is_matching_type([position], [Line]):
 
-            # print("Path is Line, current steps", self.current_step, "- interpolating")
-            
+            # Where we start and end
             start_coordinate = position.start
             end_coordinate = position.end
 
@@ -136,10 +148,6 @@ class MMVImage():
                 self.y,
                 interpolation_y_arg_a
             )
-
-            # Debug
-            # print("x=", self.x)
-            # print("y=", self.y)
 
         # Next step, end of loop
         self.current_step += 1

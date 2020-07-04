@@ -26,6 +26,7 @@ import numpy as np
 import imageio
 import numpy
 import time
+import copy
 import sys
 import os
 
@@ -58,7 +59,8 @@ class Frame():
         while True:
             try:
                 # self.frame = imageio.imread(path).astype(np.uint8)
-                self.image = Image.open(path)
+                self.original_image = Image.open(path)
+                self.image = copy.deepcopy(self.original_image)
                 self.frame = np.array(self.image)
                 break
             except Exception:
@@ -98,17 +100,19 @@ class Frame():
 
         debug_prefix = "[Frame.resize_by_ratio]"
 
-        # print(debug_prefix, ratio)
+        print(debug_prefix, ratio, self.width, self.height)
 
         new_width = int(self.width * ratio)
         new_height = int(self.height * ratio)
 
-        resized = self.image.resize((new_width, new_height), Image.ANTIALIAS)
-        self.frame = np.array(resized)
+        print(debug_prefix, new_width, new_height)
+
+        self.image = self.original_image.resize((new_height, new_width), Image.ANTIALIAS)
+        self.frame = np.array(self.image)
     
     def resize_to_resolution(self, width, height):
-        resized = self.image.resize((width, height), Image.ANTIALIAS)
-        self.frame = np.array(resized)
+        self.image = self.original_image.resize((width, height), Image.ANTIALIAS)
+        self.frame = np.array(self.image)
 
     # https://stackoverflow.com/questions/52702809/copy-array-into-part-of-another-array-in-numpy
     def copy_from(self, A, B, A_start, B_start, B_end):

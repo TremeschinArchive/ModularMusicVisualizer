@@ -76,7 +76,7 @@ class MMV():
         self.context.duration = self.audio.info["duration"]
 
         print(debug_prefix, "Creating MMVAnimation()")
-        self.mmvanimation = MMVAnimation(self.context, self.controller, self.canvas)
+        self.mmvanimation = MMVAnimation(self.context, self.controller, self.canvas, self.audio)
 
         print(debug_prefix, "Creating Core()")
         self.core = Core(

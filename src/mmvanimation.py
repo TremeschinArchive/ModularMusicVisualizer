@@ -28,10 +28,11 @@ import os
 
 
 class MMVAnimation():
-    def __init__(self, context, controller, canvas):
+    def __init__(self, context, controller, canvas, audio):
         self.context = context
         self.controller = controller
         self.canvas = canvas
+        self.audio = audio
 
         self.utils = Utils()
 
@@ -42,14 +43,27 @@ class MMVAnimation():
             self.content[n] = []
 
     # Call every next step of the content animations
-    def next(self):
+    def next(self, audio_slice, fft):
+
+        # Calculate some fft from the audio
+        biased_total_size = abs(sum(fft)) / self.context.batch_size
+        average_value = sum([abs(x)/(2**self.audio.info["bit_depth"]) for x in audio_slice]) / len(audio_slice)
+
+        fftinfo = {
+            "average_value": average_value,
+            "biased_total_size": biased_total_size,
+        }
+
+        print(">>>>", fftinfo, audio_slice)
+
         for zindex in sorted(list(self.content.keys())):
             for item in self.content[zindex]:
                 if item.is_deletable:
                     del item
                     continue
+
                 # Generate next step of animation
-                item.next()
+                item.next(fftinfo)
 
                 # Blit itself on the canvas
                 item.blit(self.canvas)
@@ -133,6 +147,7 @@ class MMVAnimation():
             "steps": math.inf,
             "interpolation_x": None,
             "interpolation_y": None,
+            "testlink": None,
         }
         temp.image.load_from_path(
             self.context.assets + os.path.sep + "background" + os.path.sep + "0a6d6e0bfbc4e88502e28b3d14bb81a5.png"
