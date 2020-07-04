@@ -44,6 +44,7 @@ class FFmpegWrapper():
                 '-nostats',
                 '-hide_banner',
                 '-y',
+                '-r', str(self.context.fps),
                 '-f', "image2pipe",
                 '-i', '-',
                 '-i', self.context.input_file,
