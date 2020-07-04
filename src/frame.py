@@ -85,6 +85,14 @@ class Frame():
             save_image = self.image_array()
             save_image.save(directory, format='PNG')
     
+    def resize_by_ratio(self, ratio):
+
+        new_width = int(self.width * ratio)
+        new_height = int(self.height * ratio)
+
+        resized = self.image.resize((new_width, new_height), Image.ANTIALIAS)
+        self.frame = np.array(resized)
+
     # https://stackoverflow.com/questions/52702809/copy-array-into-part-of-another-array-in-numpy
     def copy_from(self, A, B, A_start, B_start, B_end):
         """

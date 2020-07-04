@@ -37,6 +37,9 @@ class MMVAnimation():
     def next(self):
         for zindex in sorted(list(self.content.keys())):
             for item in self.content[zindex]:
+                if item.is_deletable:
+                    del item
+                    continue
                 # Generate next step of animation
                 item.next()
 
@@ -52,26 +55,26 @@ class MMVAnimation():
         for _ in range(100):
             temp = MMVParticle(self.context)
 
-            x1 = random.randint(100, 1000)
-            y1 = random.randint(100, 500)
-            x2 = random.randint(100, 1000)
-            y2 = random.randint(100, 500)
-            x3 = random.randint(100, 1000)
-            y3 = random.randint(100, 500)
+            x1 = random.randint(0, 1280 - 100)
+            y1 = random.randint(0, 720 - 100)
+            x2 = random.randint(0, 1280 - 100)
+            y2 = random.randint(0, 720 - 100)
+            x3 = random.randint(0, 1280 - 100)
+            y3 = random.randint(0, 720 - 100)
 
             temp.path[0] = {
                 "position": Line(
                     (x1, y1),
                     (x2, y2),
                 ),
-                "steps": 100
+                "steps": random.randint(1, 100)
             }
             temp.path[1] = {
                 "position": Line(
                     (x2, y2),
                     (x3, y3),
                 ),
-                "steps": 200
+                "steps": random.randint(1, 200)
             }
 
 

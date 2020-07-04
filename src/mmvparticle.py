@@ -40,9 +40,10 @@ class MMVParticle():
 
         self.x = 0
         self.y = 0
-        self.size = 1
+        self.size = 0.1
         self.current_animation = 0
         self.current_step = 0
+        self.is_deletable = False
 
         # Create Frame and load random particle
         self.image = Frame()
@@ -51,6 +52,8 @@ class MMVParticle():
                 self.context.assets + os.path.sep + "particles"
             )
         )
+
+        self.image.resize_by_ratio(self.size)
     
     # Next step of animation
     def next(self):
@@ -58,6 +61,7 @@ class MMVParticle():
         # Animation has ended, this current_animation isn't present on path.keys
         if not self.current_animation in list(self.path.keys()):
             print("No more animations, quitting")
+            self.is_deletable = True
             return
 
         # The animation we're currently playing
@@ -113,7 +117,8 @@ class MMVParticle():
 
             self.x = int(self.x)
             self.y = int(self.y)
-
+            
+            # Debug
             # print("x=", self.x)
             # print("y=", self.y)
 
