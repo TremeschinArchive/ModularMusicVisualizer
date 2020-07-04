@@ -38,7 +38,6 @@ class Context():
 
         # Batchs, responsiveness
         self.batch_size = 512
-        self.nbatches = None
         self.duration = None
 
         # Video specs
