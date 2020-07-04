@@ -116,9 +116,9 @@ class Utils():
 
     # Get the full path of a random file from a given directory
     def random_file_from_dir(self, path):
-        print("random file from path [%s]" % path)
+        # print("random file from path [%s]" % path)
         r = random.choice([path + os.path.sep + f for f in os.listdir(path)])
-        print("got [%s]" % r)
+        # print("got [%s]" % r)
         return r
 
     # Get the directory this file is in if run from source or from a release

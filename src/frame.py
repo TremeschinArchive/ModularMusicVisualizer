@@ -52,7 +52,7 @@ class Frame():
 
         debug_prefix = "[Frame.load_from_path]"
 
-        print(debug_prefix, path)
+        # print(debug_prefix, path)
 
         # Keep trying to read it
         while True:
@@ -98,7 +98,7 @@ class Frame():
 
         debug_prefix = "[Frame.resize_by_ratio]"
 
-        print(debug_prefix, ratio)
+        # print(debug_prefix, ratio)
 
         new_width = int(self.width * ratio)
         new_height = int(self.height * ratio)
