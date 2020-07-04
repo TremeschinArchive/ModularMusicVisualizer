@@ -19,10 +19,13 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmvparticle import MMVParticle
+from mmvimage import MMVImage
 from modifiers import Point
 from modifiers import Line
+from utils import Utils
 import random
+import math
+import os
 
 
 class MMVAnimation():
@@ -31,7 +34,13 @@ class MMVAnimation():
         self.controller = controller
         self.canvas = canvas
 
+        self.utils = Utils()
+
         self.content = {}
+
+        n_layers = 10
+        for n in range(n_layers):
+            self.content[n] = []
 
     # Call every next step of the content animations
     def next(self):
@@ -45,40 +54,58 @@ class MMVAnimation():
 
                 # Blit itself on the canvas
                 item.blit(self.canvas)
+        
+        self.add_random_particle()
+    
+    def add_random_particle(self):
+        temp = MMVImage(self.context)
+        temp.image.load_from_path(
+            self.utils.random_file_from_dir (
+                self.context.assets + os.path.sep + "particles"
+            )
+        )
+        temp.image.resize_by_ratio( random.uniform(0.05, 0.1) )
+        x1 = random.randint(0, 1280 - 100)
+        y1 = random.randint(0, 720 - 100)
+        x2 = random.randint(0, 1280 - 100)
+        y2 = random.randint(0, 720 - 100)
+        x3 = random.randint(0, 1280 - 100)
+        y3 = random.randint(0, 720 - 100)
+
+        temp.path[0] = {
+            "position": Line(
+                (x1, y1),
+                (x2, y2),
+            ),
+            "steps": random.randint(1, 100)
+        }
+        temp.path[1] = {
+            "position": Line(
+                (x2, y2),
+                (x3, y3),
+            ),
+            "steps": random.randint(1, 200)
+        }
+
+        self.content[1].append(temp)
+
+    def add_background(self):
+        temp = MMVImage(self.context)
+        temp.path[0] = {
+            "position": Point(0, 0),
+            "steps": math.inf
+        }
+        temp.image.load_from_path(
+            self.context.assets + os.path.sep + "background" + os.path.sep + "0a6d6e0bfbc4e88502e28b3d14bb81a5.png"
+        )
+        temp.image.resize_to_resolution(self.context.width, self.context.height)
+
+        self.content[0] = [temp]
+
 
     # Generate the objects on the animation
     # TODO: PROFILES, CURRENTLY MANUALLY SET HERE
     def generate(self):
+        self.add_background()
+
         
-        particles = []
-
-        for _ in range(100):
-            temp = MMVParticle(self.context)
-
-            x1 = random.randint(0, 1280 - 100)
-            y1 = random.randint(0, 720 - 100)
-            x2 = random.randint(0, 1280 - 100)
-            y2 = random.randint(0, 720 - 100)
-            x3 = random.randint(0, 1280 - 100)
-            y3 = random.randint(0, 720 - 100)
-
-            temp.path[0] = {
-                "position": Line(
-                    (x1, y1),
-                    (x2, y2),
-                ),
-                "steps": random.randint(1, 100)
-            }
-            temp.path[1] = {
-                "position": Line(
-                    (x2, y2),
-                    (x3, y3),
-                ),
-                "steps": random.randint(1, 200)
-            }
-
-
-            particles.append(temp)
-
-        print("Generating, adding mmvparticle")
-        self.content[0] = particles

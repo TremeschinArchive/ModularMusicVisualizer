@@ -39,14 +39,15 @@ class Context():
         # Batchs, responsiveness
         self.batch_size = 512
         self.nbatches = None
+        self.duration = None
 
         # Video specs
         self.width = 1280
         self.height = 720
-        self.fps = 30
+        self.fps = 60
 
     # Delete and create (reset) the runtime directories
     def reset_directories(self):
-        for d in [self.assets]:
+        for d in []:
             self.utils.rmdir(d)
             self.utils.mkdir_dne(d)

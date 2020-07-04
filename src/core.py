@@ -63,17 +63,23 @@ class Core():
 
     def testrun(self):
 
+        total_steps = int(self.context.duration * self.context.fps)
+
+        print("Total steps:", total_steps)
+
         # Generate the assets
         self.assets.pygradienter("particles", 100, 100, 1)
 
         # Generate a Animation
         self.mmvanimation.generate()
+        self.canvas.reset_canvas()
 
         # Next animation
-        for _ in range(300):
-            print(" > Next animation")
-            self.canvas.reset_canvas()
+        for _ in range(total_steps):
+            print(" > Next step")
             self.mmvanimation.next()
             self.ffmpeg.write_to_pipe(self.canvas.canvas)
-    
+            # self.canvas.reset_canvas()
+            # self.canvas.canvas.save("canvas.png")
+
         self.ffmpeg.close_pipe()

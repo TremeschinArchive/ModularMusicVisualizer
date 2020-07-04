@@ -46,7 +46,8 @@ class FFmpegWrapper():
                 '-y',
                 '-f', "image2pipe",
                 '-i', '-',
-                '-an',
+                '-i', self.context.input_file,
+                #'-an',
                 '-c:v', 'libx264',
                 '-crf', '18',
                 '-pix_fmt', 'yuv420p',
@@ -83,8 +84,8 @@ class FFmpegWrapper():
         while not self.stop_piping:
             if len(self.images_to_pipe) > 0:
                 self.lock_writing = True
-                image = self.images_to_pipe.pop(0)
-                image = self.pure_pil_alpha_to_color_v2(image)
+                image = self.images_to_pipe.pop(0).convert("RGB")
+                # image = self.pure_pil_alpha_to_color_v2(image)
                 image.save(self.pipe_subprocess.stdin, format="jpeg", quality=100)
                 self.lock_writing = False
                 count += 1

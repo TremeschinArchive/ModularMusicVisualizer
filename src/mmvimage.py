@@ -1,7 +1,7 @@
 """
 ===============================================================================
 
-Purpose: MMVParticle object
+Purpose: MMVImage object
 
 ===============================================================================
 
@@ -26,10 +26,10 @@ from utils import Utils
 import os
 
 
-class MMVParticle():
+class MMVImage():
     def __init__(self, context):
         
-        debug_prefix = "[MMVParticle.__init__]"
+        debug_prefix = "[MMVImage.__init__]"
         
         self.context = context
 
@@ -40,21 +40,14 @@ class MMVParticle():
 
         self.x = 0
         self.y = 0
-        self.size = 0.1
+        self.size = 1
         self.current_animation = 0
         self.current_step = 0
         self.is_deletable = False
 
         # Create Frame and load random particle
         self.image = Frame()
-        self.image.load_from_path(
-            self.utils.random_file_from_dir(
-                self.context.assets + os.path.sep + "particles"
-            )
-        )
-
-        self.image.resize_by_ratio(self.size)
-    
+        
     # Next step of animation
     def next(self):
 
@@ -84,8 +77,8 @@ class MMVParticle():
             # print("Path is Point, current steps", self.current_step)
 
             # Atribute (x, y) to Point's x and y
-            self.x = int(position.x)
-            self.y = int(position.y)
+            self.x = int(position.y)
+            self.y = int(position.x)
 
             # Debug
             # print("x=", self.x)
@@ -101,16 +94,16 @@ class MMVParticle():
             
             # Interpolate X coordinate on line
             self.x = self.interpolation.linear(
-                start_coordinate[0],  
-                end_coordinate[0],
+                start_coordinate[1],  
+                end_coordinate[1],
                 self.current_step,
                 steps
             )
 
             # Interpolate Y coordinate on line
             self.y = self.interpolation.linear(
-                start_coordinate[1],  
-                end_coordinate[1],
+                start_coordinate[0],  
+                end_coordinate[0],
                 self.current_step,
                 steps
             )
@@ -124,24 +117,26 @@ class MMVParticle():
 
         # Next step, end of loop
         self.current_step += 1
-        
+    
+    # Blit this item on the canvas
     def blit(self, canvas):
 
-        img = self.image.frame
-        width, height, _ = img.shape
+        img = self.image
+        width, height, _ = img.frame.shape
 
-        # print("x,", self.x)
-        # print("y,", self.y)
-        # print("width,", width)
-        # print("height,", height)
-
-        # print("width+x", self.x + width - 1)
-        # print("height+y", self.y + height - 1)
-
-        canvas.canvas.copy_from(
-            self.image.frame,
-            canvas.canvas.frame,
-            [0, 0],
-            [self.y, self.x],
-            [self.y + height - 1, self.x + width - 1]
-        )
+        if False:
+            # This is the right way but it's slow TODO: R&D
+            canvas.canvas.overlay_transparent(
+                self.image.frame,
+                self.x,
+                self.y
+            )
+        else:
+            # Fast but ugly
+            canvas.canvas.copy_from(
+                self.image.frame,
+                canvas.canvas.frame,
+                [0, 0],
+                [self.x, self.y],
+                [self.x + width - 1, self.y + height - 1]
+            )

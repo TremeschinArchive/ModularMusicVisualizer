@@ -40,6 +40,6 @@ class Canvas():
 
         # Our Canvas is a black Frame class
         self.canvas = Frame()
-        self.canvas.new(self.context.width, self.context.height)
+        self.canvas.new(self.context.width, self.context.height, transparent=True)
 
         print(debug_prefix, "Create new frame as canvas")

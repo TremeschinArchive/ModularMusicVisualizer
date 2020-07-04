@@ -35,8 +35,13 @@ class Frame():
         self.utils = Utils()
 
     # Create new numpy array as a "frame", attribute width, height and resolution
-    def new(self, width, height):
-        self.frame = np.zeros([height, width, 4], dtype=np.uint8)
+    def new(self, width, height, transparent=False):
+        if transparent:
+            channels = 4
+        else:
+            channels = 3
+            
+        self.frame = np.zeros([height, width, channels], dtype=np.uint8)
         self.width = width
         self.height = height
         self.resolution = (width, height)
@@ -44,6 +49,10 @@ class Frame():
 
     # Load image from a given path
     def load_from_path(self, path):
+
+        debug_prefix = "[Frame.load_from_path]"
+
+        print(debug_prefix, path)
 
         # Keep trying to read it
         while True:
@@ -87,10 +96,18 @@ class Frame():
     
     def resize_by_ratio(self, ratio):
 
+        debug_prefix = "[Frame.resize_by_ratio]"
+
+        print(debug_prefix, ratio)
+
         new_width = int(self.width * ratio)
         new_height = int(self.height * ratio)
 
         resized = self.image.resize((new_width, new_height), Image.ANTIALIAS)
+        self.frame = np.array(resized)
+    
+    def resize_to_resolution(self, width, height):
+        resized = self.image.resize((width, height), Image.ANTIALIAS)
         self.frame = np.array(resized)
 
     # https://stackoverflow.com/questions/52702809/copy-array-into-part-of-another-array-in-numpy
@@ -110,10 +127,33 @@ class Frame():
             shape = B_end - B_start
             B_slices = tuple(map(slice, B_start, B_end + 1))
             A_slices = tuple(map(slice, A_start, A_start + shape + 1))
-            B[B_slices] += A[A_slices]
+
+            B[B_slices] = A[A_slices]
 
             # print(debug_prefix, "Copied from, args = {%s, %s, %s}" % (A_start, B_start, B_end))
 
         except ValueError as e:
             print(debug_prefix, "Fatal error copying block: ", e)
             sys.exit(-1)
+
+    # TODO: THIS FUNCTION IS HELL SLOW
+    def overlay_transparent(self, overlay, x, y):
+
+        positioned = Frame()
+        positioned.new(self.width, self.height, transparent=True)
+
+        overlay_resolution = overlay.shape
+        overlay_width = overlay_resolution[0]
+        overlay_height = overlay_resolution[1]
+
+        positioned.copy_from(
+            overlay,
+            positioned.frame,
+            [0, 0],
+            [x, y],
+            [x + overlay_width - 1, y + overlay_height - 1]
+        )
+
+        self.image = Image.alpha_composite(self.image_array(), positioned.image_array())
+
+        self.frame = np.array(self.image)
