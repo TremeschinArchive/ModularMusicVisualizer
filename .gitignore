@@ -3,6 +3,13 @@ src/wavefun
 src/a.py
 src/processing
 src/assets
+src/trivia*
+src/rlc.ogg
+*.mp4
+*.mkv
+
+# Yeah this is my identity, you should use yours here :)
+src/assets/tremx_assets
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

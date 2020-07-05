@@ -76,7 +76,7 @@ class Core():
 
         # Next animation
         for this_step in range(0, total_steps):
-            print(" > Next step")
+            # print(" > Next step")
 
             this_time = (1/self.context.fps) * this_step
             this_time_sample = this_time * self.audio.info["sample_rate"]
@@ -92,7 +92,7 @@ class Core():
                 self.audio.info
             )
 
-            self.mmvanimation.next(audio_slice, fft)
+            self.mmvanimation.next(audio_slice, fft, this_step)
             self.ffmpeg.write_to_pipe(self.canvas.canvas)
             # self.canvas.canvas.save("data/canvas%s.png" % this_step)
             # self.canvas.reset_canvas()

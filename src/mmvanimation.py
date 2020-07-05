@@ -19,6 +19,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from interpolation import Interpolation
 from mmvimage import MMVImage
 from modifiers import *
 from utils import Utils
@@ -35,6 +36,7 @@ class MMVAnimation():
         self.audio = audio
 
         self.utils = Utils()
+        self.interpolation = Interpolation()
 
         self.content = {}
 
@@ -43,7 +45,7 @@ class MMVAnimation():
             self.content[n] = []
 
     # Call every next step of the content animations
-    def next(self, audio_slice, fft):
+    def next(self, audio_slice, fft, this_step):
 
         # Calculate some fft from the audio
         biased_total_size = abs(sum(fft)) / self.context.batch_size
@@ -68,7 +70,9 @@ class MMVAnimation():
                 # Blit itself on the canvas
                 item.blit(self.canvas)
         
-        self.add_random_particle()
+        if this_step % 5 == 0:
+            # print("Adding particle")
+            self.add_random_particle()
     
     def add_random_particle(self):
         temp = MMVImage(self.context)
@@ -79,11 +83,12 @@ class MMVAnimation():
         )
         temp.image.resize_by_ratio( random.uniform(0.05, 0.1) )
         x1 = random.randint(0, 1280)
-        y1 = random.randint(0, 720)
+        # y1 = random.randint(0, 720)
+        y1 = 720
         x2 = x1 + random.randint(-50, 50)
-        y2 = y1 + random.randint(-50, 50)
+        y2 = y1 + random.randint(-400, -300)
         x3 = x2 + random.randint(-50, 50)
-        y3 = y2 + random.randint(-50, 50)
+        y3 = y2 + random.randint(-400, -300)
 
         # temp.path[0] = {
         #     "position": Point(x1, y1),
@@ -114,7 +119,6 @@ class MMVAnimation():
 
         fast = 0.05
 
- 
         temp.path[0] = {
             "position": Line(
                 (x1, y1),
@@ -147,7 +151,15 @@ class MMVAnimation():
             "steps": math.inf,
             "interpolation_x": None,
             "interpolation_y": None,
-            "testlink": None,
+            "modules": {
+                "resize": {
+                    "keep_center": True,
+                    "interpolation": self.interpolation.remaining_approach,
+                    "activation": "1 + 3*x",
+                    "arg_a": 0.08,
+                },
+                "blur": True
+            }
         }
         temp.image.load_from_path(
             self.context.assets + os.path.sep + "background" + os.path.sep + "ten.jpg",
@@ -160,6 +172,39 @@ class MMVAnimation():
         )
 
         self.content[0] = [temp]
+
+
+        # Logo
+
+        logo_size = 200
+        temp = MMVImage(self.context)
+        temp.path[0] = {
+            "position": Point(
+                self.context.width // 2 - (logo_size/2),
+                self.context.height // 2 - (logo_size/2)
+            ),
+            "steps": math.inf,
+            "interpolation_x": None,
+            "interpolation_y": None,
+            "modules": {
+                "resize": {
+                    "keep_center": True,
+                    "interpolation": self.interpolation.remaining_approach,
+                    "activation": "1 + 5*x",
+                    "arg_a": 0.08,
+                }
+            }
+        }
+        temp.image.load_from_path(
+            self.context.assets + os.path.sep + "tremx_assets" + os.path.sep + "logo" + os.path.sep + "logo.png"
+        )
+        temp.image.resize_to_resolution(
+            logo_size,
+            logo_size,
+            override=True
+        )
+
+        self.content[2] = [temp]
 
     # Generate the objects on the animation
     # TODO: PROFILES, CURRENTLY MANUALLY SET HERE

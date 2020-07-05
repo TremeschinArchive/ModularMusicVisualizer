@@ -92,7 +92,7 @@ class MMV():
 
         # # #
 
-        self.ffmpeg.pipe_one_time(self.context.ROOT + os.path.sep + "demorun.mkv")
+        self.ffmpeg.pipe_one_time(self.context.ROOT + os.path.sep + "demorun.mp4")
         self.core.start()
 
 

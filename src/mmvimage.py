@@ -83,25 +83,35 @@ class MMVImage():
         position = this_animation["position"]
         steps = this_animation["steps"]
 
-        if "testlink" in this_animation:
-            a = fftinfo["average_value"]
-            if a > 1:
-                a = 1
-            if a < -0.9:
-                a = -0.9
+        if "modules" in this_animation:
+        
+            if "resize" in this_animation["modules"]:
+        
+                a = fftinfo["average_value"]
 
-            a = self.interpolation.remaining_approach(
-                self.size,
-                1 + 3*a,
-                self.current_step,
-                steps,
-                self.size,
-                0.2
-            )
+                if a > 1:
+                    a = 1
+                if a < -0.9:
+                    a = -0.9
 
+                a = this_animation["modules"]["resize"]["interpolation"](
+                    self.size,
+                    eval(this_animation["modules"]["resize"]["activation"].replace("x", str(a))),
+                    self.current_step,
+                    steps,
+                    self.size,
+                    this_animation["modules"]["resize"]["arg_a"]
+                )
+                self.size = a
+                self.offset = self.image.resize_by_ratio(a)
+
+                if not this_animation["modules"]["resize"]["keep_center"]:
+                    self.offset = [0, 0]
+
+            if "blur" in this_animation["modules"]:
+                self.image.gaussian_blur(10*fftinfo["average_value"])
+                
             # print("APP", a)
-            self.size = a
-            self.offset = self.image.resize_by_ratio(a)
 
         # Move according to a Point (be stationary)
         if self.utils.is_matching_type([position], [Point]):

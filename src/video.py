@@ -90,7 +90,7 @@ class FFmpegWrapper():
                 image.save(self.pipe_subprocess.stdin, format="jpeg", quality=100)
                 self.lock_writing = False
                 count += 1
-                print(debug_prefix, "Write new image from buffer to pipe, count=[%s]" % count)
+                print(debug_prefix, "Write new image from buffer to pipe, count=[%s] time=[%s sec / %s sec]" % (count, round((1/self.context.fps) * count, 2), round(self.context.duration, 2)))
             else:
                 time.sleep(0.1)
 

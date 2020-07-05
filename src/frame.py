@@ -20,6 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from PIL import ImageFilter
 from utils import Utils
 from PIL import Image
 import numpy as np
@@ -127,6 +128,11 @@ class Frame():
         else:
             self.image = self.original_image.resize((width, height), Image.ANTIALIAS)
             self.frame = np.array(self.image)
+    
+    def gaussian_blur(self, radius):
+        # print("Gaussian", radius)
+        self.image = self.image.filter(ImageFilter.GaussianBlur(radius=radius))
+        self.frame = np.array(self.image)
 
     # https://stackoverflow.com/questions/52702809/copy-array-into-part-of-another-array-in-numpy
     def copy_from(self, A, B, A_start, B_start, B_end):
