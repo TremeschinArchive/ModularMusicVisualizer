@@ -54,7 +54,7 @@ class MMVAnimation():
             "biased_total_size": biased_total_size,
         }
 
-        print(">>>>", fftinfo, audio_slice)
+        # print(">>>>", fftinfo, audio_slice)
 
         for zindex in sorted(list(self.content.keys())):
             for item in self.content[zindex]:
@@ -78,8 +78,8 @@ class MMVAnimation():
             )
         )
         temp.image.resize_by_ratio( random.uniform(0.05, 0.1) )
-        x1 = random.randint(100, 1280 - 100)
-        y1 = random.randint(100, 720 - 100)
+        x1 = random.randint(0, 1280)
+        y1 = random.randint(0, 720)
         x2 = x1 + random.randint(-50, 50)
         y2 = y1 + random.randint(-50, 50)
         x3 = x2 + random.randint(-50, 50)
@@ -150,9 +150,14 @@ class MMVAnimation():
             "testlink": None,
         }
         temp.image.load_from_path(
-            self.context.assets + os.path.sep + "background" + os.path.sep + "0a6d6e0bfbc4e88502e28b3d14bb81a5.png"
+            self.context.assets + os.path.sep + "background" + os.path.sep + "ten.jpg",
+            convert_to_png=True
         )
-        temp.image.resize_to_resolution(self.context.width, self.context.height)
+        temp.image.resize_to_resolution(
+            self.context.width,
+            self.context.height,
+            override=True
+        )
 
         self.content[0] = [temp]
 

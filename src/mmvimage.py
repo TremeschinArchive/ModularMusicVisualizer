@@ -44,6 +44,7 @@ class MMVImage():
         self.current_animation = 0
         self.current_step = 0
         self.is_deletable = False
+        self.offset = [0, 0]
 
         # Create Frame and load random particle
         self.image = Frame()
@@ -86,21 +87,21 @@ class MMVImage():
             a = fftinfo["average_value"]
             if a > 1:
                 a = 1
-            if a < -0.99:
-                a = -0.99
+            if a < -0.9:
+                a = -0.9
 
-            print(self.size, 0.5+a)
             a = self.interpolation.remaining_approach(
                 self.size,
-                0.5 + 4*a,
+                1 + 3*a,
                 self.current_step,
                 steps,
                 self.size,
-                0.02
+                0.2
             )
-            print("APP", a)
+
+            # print("APP", a)
             self.size = a
-            self.image.resize_by_ratio(a)
+            self.offset = self.image.resize_by_ratio(a)
 
         # Move according to a Point (be stationary)
         if self.utils.is_matching_type([position], [Point]):
@@ -157,9 +158,11 @@ class MMVImage():
 
         img = self.image
         width, height, _ = img.frame.shape
+        
+        # print("OFFSET:", self.offset)
 
-        x = int(self.x)
-        y = int(self.y)
+        x = int(self.x + self.offset[1])
+        y = int(self.y + self.offset[0])
 
         if False:
             # This is the right way but it's slow TODO: R&D

@@ -49,7 +49,7 @@ class Frame():
         self.name = ''
 
     # Load image from a given path
-    def load_from_path(self, path):
+    def load_from_path(self, path, convert_to_png=False):
 
         debug_prefix = "[Frame.load_from_path]"
 
@@ -60,6 +60,8 @@ class Frame():
             try:
                 # self.frame = imageio.imread(path).astype(np.uint8)
                 self.original_image = Image.open(path)
+                if convert_to_png:
+                    self.original_image = self.original_image.convert("RGBA")
                 self.image = copy.deepcopy(self.original_image)
                 self.frame = np.array(self.image)
                 break
@@ -73,9 +75,9 @@ class Frame():
         self.name = path
 
     # Wait until a file exist and then load it as a image
-    def load_from_path_wait(self, path):
+    def load_from_path_wait(self, path, convert_to_png=False):
         self.utils.until_exist(path)
-        self.load_from_path(path)
+        self.load_from_path(path, convert_to_png=convert_to_png)
 
     # Get PIL image array from this object frame
     def image_array(self):
@@ -100,19 +102,31 @@ class Frame():
 
         debug_prefix = "[Frame.resize_by_ratio]"
 
-        print(debug_prefix, ratio, self.width, self.height)
-
         new_width = int(self.width * ratio)
         new_height = int(self.height * ratio)
 
-        print(debug_prefix, new_width, new_height)
+        self.image = self.original_image.resize((new_width, new_height), Image.ANTIALIAS)
+        self.frame = np.array(self.image)
 
-        self.image = self.original_image.resize((new_height, new_width), Image.ANTIALIAS)
-        self.frame = np.array(self.image)
+        # print(debug_prefix, self.width, self.height, new_width, new_height, ratio)
+        # print(self.frame.shape)
+
+        # Return the offset to preserve the center
+        return [
+            (self.width - new_width)/2,
+            (self.height - new_height)/2
+        ]
     
-    def resize_to_resolution(self, width, height):
-        self.image = self.original_image.resize((width, height), Image.ANTIALIAS)
-        self.frame = np.array(self.image)
+    def resize_to_resolution(self, width, height, override=False):
+        if override:
+            self.original_image = self.original_image.resize((width, height), Image.ANTIALIAS)
+            self.image = self.original_image
+            self.frame = np.array(self.image)
+            self.height = self.frame.shape[0]
+            self.width = self.frame.shape[1]
+        else:
+            self.image = self.original_image.resize((width, height), Image.ANTIALIAS)
+            self.frame = np.array(self.image)
 
     # https://stackoverflow.com/questions/52702809/copy-array-into-part-of-another-array-in-numpy
     def copy_from(self, A, B, A_start, B_start, B_end):
@@ -124,11 +138,81 @@ class Frame():
 
         debug_prefix = "[Frame.copy_from]"
 
-        # print(debug_prefix, "Copying from, args = {%s, %s, %s}" % (A_start, B_start, B_end))
+        A_start, B_start, B_end = map(np.asarray, [A_start, B_start, B_end])
+        shape = B_end - B_start
+        resolution = B.shape
+
+        # print(debug_prefix, "starting from args = {%s, %s, %s, %s}" % (A_start, B_start, B_end, shape))
+        
+        # If B_start is before zero, A_start is that offset and B_start is zero
+        for i in range(2):
+            if B_start[i] < 0:
+                # print("A start changing", A_start[i], - B_start[i])
+                A_start[i] = - B_start[i]
+                # B_end[i] -= B_start[i]
+                B_start[i] = 0
+                # shape = B_end - B_start
+                # A = A[
+                #     0:shape[0],
+                #     0:shape[1]
+                # ]
+
+        # Ignore negative shapes, error (?)
+        if any([shape[i] < 0 for i in range(2)]):
+            # print(debug_prefix, "NEGATIVE SHAPE")
+            return
+
+        # [Out of Bounds] We offsetted A_start if B_start is before zero
+        # so if the size of the shape is entirely out of bounds
+        if A_start[0] >= shape[0] or A_start[1] >= shape[1]:
+            # print("RETURN A")
+            return
+
+        # [Out of Bounds] B_start is bigger than the B's resolution on that axis
+        if B_start[0] >= resolution[0] or B_start[1] >= resolution[1]:
+            # print("RETURN B")
+            return
+
+        # # Bottom and right edge out of bounds
+
+        # End is bigger than resolution
+        # for i in range(2):
+        #     if B_end[i] >= resolution[i]:
+        #         print("A", B_end[i], resolution[i])
+        #         B_end[i] = resolution[i] - 1
+        #         print("AA", B_end[i])
+                
+        # Start + shape is bigger than resolution
+        for i in range(2):
+            if B_start[i] + shape[i] >= resolution[i]:
+                # print("B", B_start[i], shape[i], resolution[i], B_end[i])
+                B_end[i] = resolution[i] - 1
+
+        # Shape is bigger than resolution, cut it
+        if any([shape[i] >= resolution[i] for i in range(2)]):
+
+            for i in range(2):
+                B_end[i] = resolution[i]
+
+            cut = [
+                min(resolution[0], B_start[0] + shape[0] + 1),
+                min(resolution[1], B_start[1] + shape[1] + 1)
+            ]
+            cut[0] += A_start[0]
+            cut[1] += A_start[1]
+
+            A = A[
+                0:cut[0],
+                0:cut[1]
+            ]
+
+            # print(">>>> CUT A", cut, A.shape)
+        
+        shape = B_end - B_start
+        
+        # print(debug_prefix, "Copying from, args = {%s, %s, %s, %s}" % (A_start, B_start, B_end, shape))
 
         try:
-            A_start, B_start, B_end = map(np.asarray, [A_start, B_start, B_end])
-            shape = B_end - B_start
             B_slices = tuple(map(slice, B_start, B_end + 1))
             A_slices = tuple(map(slice, A_start, A_start + shape + 1))
 

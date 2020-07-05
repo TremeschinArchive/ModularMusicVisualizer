@@ -34,15 +34,15 @@ class Fourier():
         debug_prefix = "[Fourier.fft]"
 
         # Normalize the data on [-1, 1] based on the bit count
-        print(debug_prefix, "Normalizing the data")
+        # print(debug_prefix, "Normalizing the data")
         normalized = [(x/2**info["bit_depth"])*2 - 1 for x in data]
 
         # Calculate the fft
-        print(debug_prefix, "Calculating FFT")
+        # print(debug_prefix, "Calculating FFT")
         transform = fft(normalized)
 
-        print(debug_prefix, "len(data) =", len(data))
-        print(debug_prefix, "len(fft) =", len(transform))
+        # print(debug_prefix, "len(data) =", len(data))
+        # print(debug_prefix, "len(fft) =", len(transform))
 
         # Only need half the list of fft
         cut = int(len(normalized)/2)

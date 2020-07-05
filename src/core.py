@@ -94,7 +94,7 @@ class Core():
 
             self.mmvanimation.next(audio_slice, fft)
             self.ffmpeg.write_to_pipe(self.canvas.canvas)
-            self.canvas.reset_canvas()
-            # self.canvas.canvas.save("canvas.png")
+            # self.canvas.canvas.save("data/canvas%s.png" % this_step)
+            # self.canvas.reset_canvas()
 
         self.ffmpeg.close_pipe()
