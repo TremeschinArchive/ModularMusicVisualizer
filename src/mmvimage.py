@@ -98,7 +98,9 @@ class MMVImage():
                     self.offset = [0, 0]
 
             if "blur" in this_animation["modules"]:
-                self.image.gaussian_blur(10*fftinfo["average_value"])
+                self.image.gaussian_blur(
+                    this_animation["modules"]["blur"]["multiplier"]*fftinfo["average_value"]
+                )
             
             if "fade" in this_animation["modules"]:
                 

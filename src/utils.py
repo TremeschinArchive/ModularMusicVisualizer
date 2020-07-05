@@ -33,7 +33,7 @@ import os
 class Miscellaneous():
 
     def __init__(self):
-        self.version = "1.0.0rc1"
+        self.version = "1.1.0rc1"
         self.greeter_message()
 
     def greeter_message(self):

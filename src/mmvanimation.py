@@ -52,13 +52,17 @@ class MMVAnimation():
                 self.context.assets + os.path.sep + "particles"
             )
         )
-        x1 = random.randint(0, 1280)
+        horizontal_randomness = 50
+        vertical_randomness_min = self.context.height//1.7
+        vertical_randomness_max = self.context.height//2.3
+
+        x1 = random.randint(0, self.context.width)
         # y1 = random.randint(0, 720)
-        y1 = 720
-        x2 = x1 + random.randint(-50, 50)
-        y2 = y1 + random.randint(-400, -300)
-        x3 = x2 + random.randint(-50, 50)
-        y3 = y2 + random.randint(-400, -300)
+        y1 = self.context.height
+        x2 = x1 + random.randint(-horizontal_randomness, horizontal_randomness)
+        y2 = y1 + random.randint(-vertical_randomness_min, -vertical_randomness_max)
+        x3 = x2 + random.randint(-horizontal_randomness, horizontal_randomness)
+        y3 = y2 + random.randint(-vertical_randomness_min, -vertical_randomness_max)
 
         # temp.path[0] = {
         #     "position": Point(x1, y1),
@@ -105,7 +109,7 @@ class MMVAnimation():
                     "arg_a": None,
                     "object": Fade(
                         start_percentage=0,
-                        end_percentage=1,
+                        end_percentage=0.6,
                         finish_steps=50,
                     )
                 }
@@ -128,7 +132,7 @@ class MMVAnimation():
                     "interpolation": self.interpolation.linear,
                     "arg_a": None,
                     "object": Fade(
-                        start_percentage=1,
+                        start_percentage=0.6,
                         end_percentage=0,
                         finish_steps=this_steps,
                     )
@@ -154,10 +158,12 @@ class MMVAnimation():
                 "resize": {
                     "keep_center": True,
                     "interpolation": self.interpolation.remaining_approach,
-                    "activation": "1 + 3*x",
+                    "activation": "1 + 2*x",
                     "arg_a": 0.08,
                 },
-                "blur": True
+                "blur": {
+                    "multiplier": 13,
+                }
             }
         }
         temp.image.load_from_path(
@@ -194,7 +200,7 @@ class MMVAnimation():
         self.content[0] = [temp]
 
     def add_logo(self):
-        logo_size = 200
+        logo_size = int((200/1280)*self.context.width)
         temp = MMVImage(self.context)
         temp.path[0] = {
             "position": Point(
