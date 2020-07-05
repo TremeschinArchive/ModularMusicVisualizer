@@ -29,6 +29,7 @@ import numpy
 import time
 import copy
 import sys
+import cv2
 import os
 
 
@@ -44,6 +45,7 @@ class Frame():
             channels = 3
             
         self.frame = np.zeros([height, width, channels], dtype=np.uint8)
+        self.original_image = Image.fromarray(self.frame)
         self.width = width
         self.height = height
         self.resolution = (width, height)
@@ -317,9 +319,33 @@ class Frame():
         image = (np.dstack((r, g, b, alpha))).astype(np.uint8)
         self.image = Image.fromarray(image)
         self.frame = image
+    
+    def vignetting(self, x, y, deviation_x, deviation_y):
+
+        red, green, blue, alpha = self.original_image.split()
+
+        img = np.array(self.original_image)
+        rows, cols = img.shape[:2]
+
+        a = cv2.getGaussianKernel(2*cols, deviation_x)[cols - x:2 * cols - x]
+        b = cv2.getGaussianKernel(2*rows, deviation_y)[rows - y:2 * rows - y]
+        c = b*a.T
+        d = c/c.max()
+
+        red = red * d
+        green = green * d
+        blue = blue * d
+
+        image = (np.dstack((red, green, blue, alpha))).astype(np.uint8)
+
+        self.image = Image.fromarray(image)
+        self.frame = image
 
 if __name__ == "__main__":
     f = Frame()
     f.load_from_path("assets/tremx_assets/background.png")
-    f.transparency(0.95)
-    f.save("w.png")
+    for _ in range(100):
+        f.vignette(f.height//2, f.width//2, 300, 300)
+        print(_)
+    # f.transparency(0.95)
+    # f.save("w.png")

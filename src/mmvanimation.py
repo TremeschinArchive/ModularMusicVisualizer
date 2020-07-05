@@ -233,6 +233,21 @@ class MMVAnimation():
     def add_visualizer(self):
         temp = MMVVisualizer(self.context)
         self.content[0].append(temp)
+    
+    def add_post_processing(self):
+        vignetting_start = 900
+        self.canvas.vignetting = vignetting_start
+        self.canvas.post_processing[0] =  {
+            "steps": math.inf,
+            "modules": {
+                "vignetting": {
+                    "interpolation": self.interpolation.remaining_approach,
+                    "activation": "%s - 8000*x" % vignetting_start,
+                    "arg_a": 0.09,
+                    "minimum": 460,
+                }
+            }
+        }
 
     # Generate the objects on the animation
     # TODO: PROFILES, CURRENTLY MANUALLY SET HERE
@@ -243,6 +258,7 @@ class MMVAnimation():
             "static_background": False,
             "logo": True,
             "visualizer": False,
+            "add_post_processing": True
         }
 
         if config["moving_background"]:
@@ -256,6 +272,9 @@ class MMVAnimation():
 
         if config["visualizer"]:
             self.add_visualizer()
+        
+        if config["add_post_processing"]:
+            self.add_post_processing()
 
     # Call every next step of the content animations
     def next(self, audio_slice, fft, this_step):
@@ -283,6 +302,10 @@ class MMVAnimation():
                 # Blit itself on the canvas
                 item.blit(self.canvas)
         
+        self.canvas.next(fftinfo)
+        
         if this_step % 6 == 0:
             # print("Adding particle")
             self.add_random_particle()
+
+        

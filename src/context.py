@@ -42,7 +42,7 @@ class Context():
 
         # Video specs
         self.width = 1280
-        self.height = 720
+        self.height = 720 
         self.fps = 60
 
     # Delete and create (reset) the runtime directories

@@ -34,6 +34,10 @@ class Canvas():
 
         self.reset_canvas()
 
+        self.post_processing = {}
+        self.vignetting = 0
+        self.current_step = 0
+
     def reset_canvas(self):
 
         debug_prefix = "[Canvas.reset_canvas]"
@@ -43,3 +47,51 @@ class Canvas():
         self.canvas.new(self.context.width, self.context.height, transparent=True)
 
         # print(debug_prefix, "Create new frame as canvas")
+
+    # Next step of animation
+    def next(self, fftinfo):
+
+        # No post processing
+        if len(list(self.post_processing.keys())) == 0:
+            return
+
+        for key in sorted(list(self.post_processing.keys())):
+            # The animation we're currently playing
+            this_post_processing = self.post_processing[key]
+            
+            if "modules" in this_post_processing:
+                if "vignetting" in this_post_processing["modules"]:
+                    
+                    a = fftinfo["average_value"]
+
+                    if a > 1:
+                        a = 1
+                    if a < -0.9:
+                        a = -0.9
+
+                    towards = eval(this_post_processing["modules"]["vignetting"]["activation"].replace("x", str(a)))
+
+                    # Minimum vignetting
+                    minimum = this_post_processing["modules"]["vignetting"]["minimum"] 
+                    if towards < minimum:
+                        towards = minimum
+
+                    new_vignetting = this_post_processing["modules"]["vignetting"]["interpolation"](
+                        self.vignetting,
+                        towards,
+                        self.current_step,
+                        this_post_processing["steps"],
+                        self.vignetting,
+                        this_post_processing["modules"]["vignetting"]["arg_a"]
+                    )
+
+                    self.canvas.vignetting(
+                        self.context.width//2,
+                        self.context.height//2,
+                        new_vignetting,
+                        new_vignetting
+                    )
+                    self.vignetting = new_vignetting
+                    # print("vignetting", new_vignetting, "to", towards)
+            
+        self.current_step += 1
