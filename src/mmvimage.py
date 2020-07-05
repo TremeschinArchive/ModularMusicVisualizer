@@ -45,6 +45,10 @@ class MMVImage():
         self.current_animation = 0
         self.current_step = 0
         self.is_deletable = False
+
+        # Base offset is the default offset when calling .next at the end
+        # Offset is the animations and motions this frame offset
+        self.base_offset = [0, 0]
         self.offset = [0, 0]
 
         # Create Frame and load random particle
@@ -68,8 +72,11 @@ class MMVImage():
             self.current_animation += 1
             self.current_step = 0
             return
+        
+        # Reset offset
+        self.offset = [0, 0]
 
-        position = this_animation["position"]
+        positions = this_animation["position"]
         steps = this_animation["steps"]
 
         if "modules" in this_animation:
@@ -92,10 +99,11 @@ class MMVImage():
                     this_animation["modules"]["resize"]["arg_a"]
                 )
                 self.size = a
-                self.offset = self.image.resize_by_ratio(a)
+                offset = self.image.resize_by_ratio(a)
 
-                if not this_animation["modules"]["resize"]["keep_center"]:
-                    self.offset = [0, 0]
+                if this_animation["modules"]["resize"]["keep_center"]:
+                    self.offset[0] += offset[0]
+                    self.offset[1] += offset[1]
 
             if "blur" in this_animation["modules"]:
                 self.image.gaussian_blur(
@@ -123,38 +131,51 @@ class MMVImage():
                     
             # print("APP", a)
 
-        # Move according to a Point (be stationary)
-        if self.utils.is_matching_type([position], [Point]):
-            # Atribute (x, y) to Point's x and y
-            self.x = int(position.y)
-            self.y = int(position.x)
+        # Iterate through every position module
+        for position in positions:
+            
+            # # Override modules
 
-        # Move according to a Line (interpolate current steps)
-        if self.utils.is_matching_type([position], [Line]):
+            # Move according to a Point (be stationary)
+            if self.utils.is_matching_type([position], [Point]):
+                # Atribute (x, y) to Point's x and y
+                self.x = int(position.y)
+                self.y = int(position.x)
 
-            # Where we start and end
-            start_coordinate = position.start
-            end_coordinate = position.end
+            # Move according to a Line (interpolate current steps)
+            if self.utils.is_matching_type([position], [Line]):
 
-            # Interpolate X coordinate on line
-            self.x = this_animation["interpolation_x"](
-                start_coordinate[1],  
-                end_coordinate[1],
-                self.current_step,
-                steps,
-                self.x,
-                this_animation["interpolation_x_arg_a"]
-            )
+                # Where we start and end
+                start_coordinate = position.start
+                end_coordinate = position.end
 
-            # Interpolate Y coordinate on line
-            self.y = this_animation["interpolation_y"](
-                start_coordinate[0],  
-                end_coordinate[0],
-                self.current_step,
-                steps,
-                self.y,
-                this_animation["interpolation_y_arg_a"]
-            )
+                # Interpolate X coordinate on line
+                self.x = this_animation["interpolation_x"](
+                    start_coordinate[1],  
+                    end_coordinate[1],
+                    self.current_step,
+                    steps,
+                    self.x,
+                    this_animation["interpolation_x_arg_a"]
+                )
+
+                # Interpolate Y coordinate on line
+                self.y = this_animation["interpolation_y"](
+                    start_coordinate[0],  
+                    end_coordinate[0],
+                    self.current_step,
+                    steps,
+                    self.y,
+                    this_animation["interpolation_y_arg_a"]
+                )
+            
+            # # Offset modules
+
+            # Get next shake offset value
+            if self.utils.is_matching_type([position], [Shake]):
+                position.next()
+                self.offset[0] += position.x
+                self.offset[1] += position.y
 
         # Next step, end of loop
         self.current_step += 1
@@ -167,8 +188,8 @@ class MMVImage():
         
         # print("OFFSET:", self.offset)
 
-        x = int(self.x + self.offset[1])
-        y = int(self.y + self.offset[0])
+        x = int(self.x + self.offset[1] + self.base_offset[1])
+        y = int(self.y + self.offset[0] + self.base_offset[0])
 
 
         if True:

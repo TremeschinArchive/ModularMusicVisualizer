@@ -91,13 +91,25 @@ class MMVAnimation():
         #     "steps": random.randint(150, 200)
         # }
 
+        particle_shake = Shake({
+            "interpolation": self.interpolation.remaining_approach,
+            "distance": 18,
+            "arg_a": 0.01,
+            "arg_b": 0.04,
+            "x_steps": "end_interpolation",
+            "y_steps": "end_interpolation",
+        })
+
         fast = 0.05
 
         temp.path[0] = {
-            "position": Line(
-                (x1, y1),
-                (x2, y2),
-            ),
+            "position": [
+                Line(
+                    (x1, y1),
+                    (x2, y2),
+                ),
+                particle_shake
+            ],
             "interpolation_x": self.interpolation.remaining_approach,
             "interpolation_x_arg_a": fast,
             "interpolation_y": self.interpolation.remaining_approach,
@@ -118,10 +130,13 @@ class MMVAnimation():
         }
         this_steps = random.randint(150, 200)
         temp.path[1] = {
-            "position": Line(
-                (x2, y2),
-                (x3, y3),
-            ),
+            "position": [
+                Line(
+                    (x2, y2),
+                    (x3, y3),
+                ),
+                particle_shake
+            ],
             "interpolation_x": self.interpolation.remaining_approach,
             "interpolation_x_arg_a": fast,
             "interpolation_y": self.interpolation.remaining_approach,
@@ -147,10 +162,21 @@ class MMVAnimation():
 
         self.content[1].append(temp)
 
-    def add_moving_background(self):
+    def add_moving_background(self, shake=0):
+
         temp = MMVImage(self.context)
         temp.path[0] = {
-            "position": Point(0, 0),
+            "position": [
+                Point(-shake, -shake),
+                Shake({
+                    "interpolation": self.interpolation.remaining_approach,
+                    "distance": shake,
+                    "arg_a": 0.01,
+                    "arg_b": 0.02,
+                    "x_steps": "end_interpolation",
+                    "y_steps": "end_interpolation",
+                })
+            ],
             "steps": math.inf,
             "interpolation_x": None, "interpolation_x_arg_a": None,
             "interpolation_y": None, "interpolation_y_arg_a": None,
@@ -162,7 +188,7 @@ class MMVAnimation():
                     "arg_a": 0.08,
                 },
                 "blur": {
-                    "multiplier": 13,
+                    "multiplier": 15,
                 }
             }
         }
@@ -171,18 +197,29 @@ class MMVAnimation():
             convert_to_png=True
         )
         temp.image.resize_to_resolution(
-            self.context.width,
-            self.context.height,
+            self.context.width + (2 * shake),
+            self.context.height + (2 * shake),
             override=True
         )
 
         self.content[0] = [temp]
     
 
-    def add_static_background(self):
+    def add_static_background(self, shake=0): 
+
         temp = MMVImage(self.context)
         temp.path[0] = {
-            "position": Point(0, 0),
+            "position": [
+                Point(-shake, -shake),
+                Shake({
+                    "interpolation": self.interpolation.remaining_approach,
+                    "distance": shake,
+                    "arg_a": 0.01,
+                    "arg_b": 0.02,
+                    "x_steps": "end_interpolation",
+                    "y_steps": "end_interpolation",
+                })
+            ],
             "steps": math.inf,
             "interpolation_x": None, "interpolation_x_arg_a": None,
             "interpolation_y": None, "interpolation_y_arg_a": None,
@@ -192,21 +229,31 @@ class MMVAnimation():
             convert_to_png=True
         )
         temp.image.resize_to_resolution(
-            self.context.width,
-            self.context.height,
+            self.context.width + (2 * shake),
+            self.context.height + (2 * shake),
             override=True
         )
 
         self.content[0] = [temp]
 
-    def add_logo(self):
+    def add_logo(self, shake=0):
         logo_size = int((200/1280)*self.context.width)
         temp = MMVImage(self.context)
         temp.path[0] = {
-            "position": Point(
-                self.context.width // 2 - (logo_size/2),
-                self.context.height // 2 - (logo_size/2)
-            ),
+            "position": [
+                Point(
+                    self.context.width // 2 - (logo_size/2),
+                    self.context.height // 2 - (logo_size/2)
+                ),
+                Shake({
+                    "interpolation": self.interpolation.remaining_approach,
+                    "distance": shake,
+                    "arg_a": 0.01,
+                    "arg_b": 0.04,
+                    "x_steps": "end_interpolation",
+                    "y_steps": "end_interpolation",
+                })
+            ],
             "steps": math.inf,
             "interpolation_x": None,
             "interpolation_y": None,
@@ -262,10 +309,14 @@ class MMVAnimation():
         }
 
         if config["moving_background"]:
-            self.add_moving_background()
+            self.add_moving_background(
+                shake = int((15/1280) * self.context.width)
+            )
         
         if config["static_background"]:
-            self.add_static_background()
+            self.add_static_background(
+                shake = int((15/1280) * self.context.width)
+            )
         
         if config["logo"]:
             self.add_logo()
@@ -304,7 +355,7 @@ class MMVAnimation():
         
         self.canvas.next(fftinfo)
         
-        if this_step % 6 == 0:
+        if this_step % 5 == 0:
             # print("Adding particle")
             self.add_random_particle()
 

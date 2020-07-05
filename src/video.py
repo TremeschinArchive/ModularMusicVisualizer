@@ -19,6 +19,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from functions import Functions
 from PIL import Image
 import subprocess
 import copy
@@ -29,6 +30,7 @@ import sys
 class FFmpegWrapper():
     def __init__(self, context):
         self.context = context
+        self.functions = Functions()
 
         # TODO: WINDWOWZ
         self.ffmpeg_binary = "ffmpeg"
@@ -81,6 +83,8 @@ class FFmpegWrapper():
         debug_prefix = "[FFmpegWrapper.pipe_writer_loop]"
 
         count = 0
+        
+        start = time.time()
 
         while not self.stop_piping:
             if len(self.images_to_pipe) > 0:
@@ -90,7 +94,14 @@ class FFmpegWrapper():
                 image.save(self.pipe_subprocess.stdin, format="jpeg", quality=100)
                 self.lock_writing = False
                 count += 1
-                print(debug_prefix, "Write new image from buffer to pipe, count=[%s] time=[%s sec / %s sec]" % (count, round((1/self.context.fps) * count, 2), round(self.context.duration, 2)))
+                current_time = round((1/self.context.fps) * count, 2)
+                duration = round(self.context.duration, 2)
+                remaining = duration - current_time
+                now = time.time()
+                took = now - start
+                eta = round(self.functions.proportion(current_time, took, remaining) / 60, 2)
+                
+                print(debug_prefix, "Write to pipe, count=[%s] time=[%s sec / %s sec] eta=[%s min]" % (count, current_time, duration, eta))
             else:
                 time.sleep(0.1)
 

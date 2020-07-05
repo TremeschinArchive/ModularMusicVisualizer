@@ -20,6 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from functions import Functions
+import random
 
 
 class Interpolation():
@@ -34,11 +35,13 @@ class Interpolation():
         return a + walked
 
     # "Biased" remaining linear
-    def remaining_approach(self, a, b, current, total, this_coord, arg_a):
+    # arg_a is how aggressive it is, 0.05 is smooth, 0.1 is medium, 1 is instant
+    # arg_b is a random decimal that adds to arg_a
+    def remaining_approach(self, a, b, current, total, this_coord, arg_a, arg_b=0):
         ratio = arg_a
         if current == 0:
             return a
-        return this_coord + ( (b - this_coord) * ratio )
+        return this_coord + ( (b - this_coord) * (ratio + random.uniform(0, arg_b)) )
 
     # Sigmoid activation between two points, smoothed out "linear" curver
     def sigmoid(self, a, b, current, total, this_coord, arg_a):

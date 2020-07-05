@@ -36,14 +36,14 @@ class Context():
         # Files
         self.input_file = None
 
-        # Batchs, responsiveness
-        self.batch_size = 512
-        self.duration = None
-
         # Video specs
-        self.width = 1280
-        self.height = 720 
+        self.width = 1920
+        self.height = 1080
         self.fps = 60
+
+        # Batchs, responsiveness
+        self.batch_size = 48000//self.fps # 512
+        self.duration = None
 
     # Delete and create (reset) the runtime directories
     def reset_directories(self):
