@@ -23,6 +23,7 @@ from interpolation import Interpolation
 from modifiers import *
 from frame import Frame
 from utils import Utils
+import copy
 import os
 
 
@@ -68,18 +69,6 @@ class MMVImage():
             self.current_step = 0
             return
 
-        # Get info on the animation dic items to operate
-        interpolation_x = this_animation["interpolation_x"]
-        interpolation_y = this_animation["interpolation_y"]
-        
-        interpolation_x_arg_a = None
-        if "interpolation_x_arg_a" in this_animation:
-            interpolation_x_arg_a = this_animation["interpolation_x_arg_a"]
-        
-        interpolation_y_arg_a = None
-        if "interpolation_y_arg_a" in this_animation:
-            interpolation_y_arg_a = this_animation["interpolation_y_arg_a"]
-
         position = this_animation["position"]
         steps = this_animation["steps"]
 
@@ -110,7 +99,26 @@ class MMVImage():
 
             if "blur" in this_animation["modules"]:
                 self.image.gaussian_blur(10*fftinfo["average_value"])
+            
+            if "fade" in this_animation["modules"]:
                 
+                fade = this_animation["modules"]["fade"]["object"]
+                
+                if fade.current_step < fade.finish_steps:
+                    t = this_animation["modules"]["fade"]["interpolation"](
+                        fade.start_percentage,  
+                        fade.end_percentage,
+                        self.current_step,
+                        fade.finish_steps,
+                        fade.current_step,
+                        this_animation["modules"]["fade"]["arg_a"]
+                    )
+                    self.image.transparency(t)
+                    fade.current_step += 1
+                else:
+                    # TODO: Failsafe really necessary?
+                    self.image.transparency(fade.end_percentage)
+                    
             # print("APP", a)
 
         # Move according to a Point (be stationary)
@@ -126,38 +134,24 @@ class MMVImage():
             start_coordinate = position.start
             end_coordinate = position.end
 
-            if interpolation_x == "sigmoid":
-                interpolation_x_function = self.interpolation.sigmoid
-            if interpolation_x == "linear":
-                interpolation_x_function = self.interpolation.linear
-            if interpolation_x == "remaining_approach":
-                interpolation_x_function = self.interpolation.remaining_approach
-
-            if interpolation_y == "sigmoid":
-                interpolation_y_function = self.interpolation.sigmoid
-            if interpolation_y == "linear":
-                interpolation_y_function = self.interpolation.linear
-            if interpolation_y == "remaining_approach":
-                interpolation_y_function = self.interpolation.remaining_approach
-            
             # Interpolate X coordinate on line
-            self.x = interpolation_x_function(
+            self.x = this_animation["interpolation_x"](
                 start_coordinate[1],  
                 end_coordinate[1],
                 self.current_step,
                 steps,
                 self.x,
-                interpolation_x_arg_a
+                this_animation["interpolation_x_arg_a"]
             )
 
             # Interpolate Y coordinate on line
-            self.y = interpolation_y_function(
+            self.y = this_animation["interpolation_y"](
                 start_coordinate[0],  
                 end_coordinate[0],
                 self.current_step,
                 steps,
                 self.y,
-                interpolation_y_arg_a
+                this_animation["interpolation_y_arg_a"]
             )
 
         # Next step, end of loop
@@ -174,6 +168,15 @@ class MMVImage():
         x = int(self.x + self.offset[1])
         y = int(self.y + self.offset[0])
 
+
+        if True:
+            # This is the right way but it's slow TODO: R&D
+            canvas.canvas.overlay_transparent(
+                self.image.frame,
+                y,
+                x
+            )
+
         if False:
             # This is the right way but it's slow TODO: R&D
             canvas.canvas.overlay_transparent(
@@ -181,7 +184,8 @@ class MMVImage():
                 x,
                 y
             )
-        else:
+
+        if False:
             # Fast but ugly
             canvas.canvas.copy_from(
                 self.image.frame,

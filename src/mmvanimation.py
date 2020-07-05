@@ -52,7 +52,6 @@ class MMVAnimation():
                 self.context.assets + os.path.sep + "particles"
             )
         )
-        temp.image.resize_by_ratio( random.uniform(0.05, 0.1) )
         x1 = random.randint(0, 1280)
         # y1 = random.randint(0, 720)
         y1 = 720
@@ -95,23 +94,52 @@ class MMVAnimation():
                 (x1, y1),
                 (x2, y2),
             ),
-            "interpolation_x": "remaining_approach",
+            "interpolation_x": self.interpolation.remaining_approach,
             "interpolation_x_arg_a": fast,
-            "interpolation_y": "remaining_approach",
+            "interpolation_y": self.interpolation.remaining_approach,
             "interpolation_y_arg_a": fast,
-            "steps": random.randint(50, 100)
+            "steps": random.randint(50, 100),
+            "modules": {
+                "fade": {
+                    "interpolation": self.interpolation.linear,
+                    "arg_a": None,
+                    "object": Fade(
+                        start_percentage=0,
+                        end_percentage=1,
+                        finish_steps=50,
+                    )
+                }
+            }
+            
         }
+        this_steps = random.randint(150, 200)
         temp.path[1] = {
             "position": Line(
                 (x2, y2),
                 (x3, y3),
             ),
-            "interpolation_x": "remaining_approach",
+            "interpolation_x": self.interpolation.remaining_approach,
             "interpolation_x_arg_a": fast,
-            "interpolation_y": "remaining_approach",
+            "interpolation_y": self.interpolation.remaining_approach,
             "interpolation_y_arg_a": fast,
-            "steps": random.randint(150, 200)
+            "steps": this_steps,
+            "modules": {
+                "fade": {
+                    "interpolation": self.interpolation.linear,
+                    "arg_a": None,
+                    "object": Fade(
+                        start_percentage=1,
+                        end_percentage=0,
+                        finish_steps=this_steps,
+                    )
+                }
+            }
         }
+
+        temp.image.resize_by_ratio(
+            random.uniform(0.1, 0.2),
+            override=True
+        )
 
         self.content[1].append(temp)
 
@@ -120,8 +148,8 @@ class MMVAnimation():
         temp.path[0] = {
             "position": Point(0, 0),
             "steps": math.inf,
-            "interpolation_x": None,
-            "interpolation_y": None,
+            "interpolation_x": None, "interpolation_x_arg_a": None,
+            "interpolation_y": None, "interpolation_y_arg_a": None,
             "modules": {
                 "resize": {
                     "keep_center": True,
@@ -131,6 +159,27 @@ class MMVAnimation():
                 },
                 "blur": True
             }
+        }
+        temp.image.load_from_path(
+            self.context.assets + os.path.sep + "tremx_assets" + os.path.sep + "background.jpg",
+            convert_to_png=True
+        )
+        temp.image.resize_to_resolution(
+            self.context.width,
+            self.context.height,
+            override=True
+        )
+
+        self.content[0] = [temp]
+    
+
+    def add_static_background(self):
+        temp = MMVImage(self.context)
+        temp.path[0] = {
+            "position": Point(0, 0),
+            "steps": math.inf,
+            "interpolation_x": None, "interpolation_x_arg_a": None,
+            "interpolation_y": None, "interpolation_y_arg_a": None,
         }
         temp.image.load_from_path(
             self.context.assets + os.path.sep + "tremx_assets" + os.path.sep + "background.jpg",
@@ -184,13 +233,17 @@ class MMVAnimation():
     def generate(self):
 
         config = {
-            "moving_background": False,
-            "logo": False,
-            "visualizer": True,
+            "moving_background": True,
+            "static_background": False,
+            "logo": True,
+            "visualizer": False,
         }
 
         if config["moving_background"]:
             self.add_moving_background()
+        
+        if config["static_background"]:
+            self.add_static_background()
         
         if config["logo"]:
             self.add_logo()
@@ -224,6 +277,6 @@ class MMVAnimation():
                 # Blit itself on the canvas
                 item.blit(self.canvas)
         
-        if this_step % 5 == 0:
+        if this_step % 6 == 0:
             # print("Adding particle")
             self.add_random_particle()

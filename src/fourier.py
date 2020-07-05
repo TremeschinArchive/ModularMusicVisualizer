@@ -24,8 +24,6 @@ from scipy.fftpack import fft
 from scipy import arange
 import numpy as np
 
-plt.ion()
-
 
 class Fourier():
     def fft(self, data, info):

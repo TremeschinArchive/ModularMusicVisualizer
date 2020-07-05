@@ -60,6 +60,8 @@ class Constant():
 # # Effects
 
 class Fade():
-    def __init__(self, start_percentage, end_percentage):
+    def __init__(self, start_percentage, end_percentage, finish_steps):
         self.start_percentage = start_percentage
         self.end_percentage = end_percentage
+        self.finish_steps = finish_steps
+        self.current_step = 0

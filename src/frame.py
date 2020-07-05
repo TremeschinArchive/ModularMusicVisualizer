@@ -99,15 +99,22 @@ class Frame():
             save_image = self.image_array()
             save_image.save(directory, format='PNG')
     
-    def resize_by_ratio(self, ratio):
+    def resize_by_ratio(self, ratio, override=False):
 
         debug_prefix = "[Frame.resize_by_ratio]"
 
         new_width = int(self.width * ratio)
         new_height = int(self.height * ratio)
 
-        self.image = self.original_image.resize((new_width, new_height), Image.ANTIALIAS)
-        self.frame = np.array(self.image)
+        if override:
+            self.original_image = self.original_image.resize((new_width, new_height), Image.ANTIALIAS)
+            self.image = self.original_image
+            self.frame = np.array(self.image)
+            self.height = self.frame.shape[0]
+            self.width = self.frame.shape[1]
+        else:
+            self.image = self.original_image.resize((new_width, new_height), Image.ANTIALIAS)
+            self.frame = np.array(self.image)
 
         # print(debug_prefix, self.width, self.height, new_width, new_height, ratio)
         # print(self.frame.shape)
@@ -190,9 +197,10 @@ class Frame():
                 
         # Start + shape is bigger than resolution
         for i in range(2):
-            if B_start[i] + shape[i] >= resolution[i]:
+            if B_start[i] + shape[i] > resolution[i]:
                 # print("B", B_start[i], shape[i], resolution[i], B_end[i])
                 B_end[i] = resolution[i] - 1
+                # print("B2", B_start[i], shape[i], resolution[i], B_end[i])
 
         # Shape is bigger than resolution, cut it
         if any([shape[i] >= resolution[i] for i in range(2)]):
@@ -230,24 +238,88 @@ class Frame():
             print(debug_prefix, "Fatal error copying block: ", e)
             sys.exit(-1)
 
-    # TODO: THIS FUNCTION IS HELL SLOW
     def overlay_transparent(self, overlay, x, y):
+        
+        # print("A")
+        # print("Overlay shape", overlay.shape)
 
-        positioned = Frame()
-        positioned.new(self.width, self.height, transparent=True)
+        # Out of bounds
+        if y >= self.frame.shape[0]:
+            return
+        if x >= self.frame.shape[1]:
+            return
 
-        overlay_resolution = overlay.shape
-        overlay_width = overlay_resolution[0]
-        overlay_height = overlay_resolution[1]
+        # Offset the cut
+        x_offset = 0
+        y_offset = 0
+        if x < 0:
+            x_offset = -x
+            x = 0
+            # print("X offset", x_offset)
+        if y < 0:
+            y_offset = -y
+            y = 0
+            # print("Y offset", y_offset)
+        
+        # Out of bounds, negative x bigger than shape
+        if x_offset >= overlay.shape[1]:
+            return
+        if y_offset >= overlay.shape[0]:
+            return
 
-        positioned.copy_from(
-            overlay,
-            positioned.frame,
+        cut_pos = [
+            y + overlay.shape[0] - y_offset - 1,
+            x + overlay.shape[1] - x_offset - 1
+        ]
+
+        # print("CUT POS", cut_pos)
+
+        cut = [
+            min(cut_pos[0], self.frame.shape[0] - 1),
+            min(cut_pos[1], self.frame.shape[1] - 1)
+        ]
+
+        crop = self.frame[
+            y:cut[0],
+            x:cut[1],
+        ]
+
+        overlay = overlay[
+            y_offset:cut[0] - y + y_offset,
+            x_offset:cut[1] - x + x_offset,
+        ]
+        
+        # print("FRAME", self.frame)
+        # print("CROP", crop)
+
+        # print("CUT", cut)
+        # print("Y, X:", y, x)
+        # print("FRAME SHAPE", self.frame.shape)
+
+        # print("Crop shape", crop.shape)
+        # print("Overlay shape", overlay.shape)
+
+        alpha_composite = Image.alpha_composite(Image.fromarray(crop), Image.fromarray(overlay))
+        # alpha_composite.save("a.png")
+        alpha_composite = np.array(alpha_composite)
+
+        self.copy_from(
+            alpha_composite,
+            self.frame,
             [0, 0],
-            [x, y],
-            [x + overlay_width - 1, y + overlay_height - 1]
+            [y, x],
+            [y + crop.shape[0] - 1, x + crop.shape[1] - 1]
         )
 
-        self.image = Image.alpha_composite(self.image_array(), positioned.image_array())
+    def transparency(self, ratio):
+        r, g, b, alpha = self.original_image.split()
+        alpha = np.array(alpha)*ratio
+        image = (np.dstack((r, g, b, alpha))).astype(np.uint8)
+        self.image = Image.fromarray(image)
+        self.frame = image
 
-        self.frame = np.array(self.image)
+if __name__ == "__main__":
+    f = Frame()
+    f.load_from_path("assets/tremx_assets/background.png")
+    f.transparency(0.95)
+    f.save("w.png")
