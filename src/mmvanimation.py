@@ -291,7 +291,7 @@ class MMVAnimation():
                     "interpolation": self.interpolation.remaining_approach,
                     "activation": "%s - 8000*x" % vignetting_start,
                     "arg_a": 0.09,
-                    "minimum": 460,
+                    "minimum": 600,
                 }
             }
         }
