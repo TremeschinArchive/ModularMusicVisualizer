@@ -45,36 +45,6 @@ class MMVAnimation():
         for n in range(n_layers):
             self.content[n] = []
 
-    # Call every next step of the content animations
-    def next(self, audio_slice, fft, this_step):
-
-        # Calculate some fft from the audio
-        biased_total_size = abs(sum(fft)) / self.context.batch_size
-        average_value = sum([abs(x)/(2**self.audio.info["bit_depth"]) for x in audio_slice]) / len(audio_slice)
-
-        fftinfo = {
-            "average_value": average_value,
-            "biased_total_size": biased_total_size,
-        }
-
-        # print(">>>>", fftinfo, audio_slice)
-
-        for zindex in sorted(list(self.content.keys())):
-            for item in self.content[zindex]:
-                if item.is_deletable:
-                    del item
-                    continue
-
-                # Generate next step of animation
-                item.next(fftinfo)
-
-                # Blit itself on the canvas
-                item.blit(self.canvas)
-        
-        if this_step % 5 == 0:
-            # print("Adding particle")
-            self.add_random_particle()
-    
     def add_random_particle(self):
         temp = MMVImage(self.context)
         temp.image.load_from_path(
@@ -227,3 +197,33 @@ class MMVAnimation():
 
         if config["visualizer"]:
             self.add_visualizer()
+
+    # Call every next step of the content animations
+    def next(self, audio_slice, fft, this_step):
+
+        # Calculate some fft from the audio
+        biased_total_size = abs(sum(fft)) / self.context.batch_size
+        average_value = sum([abs(x)/(2**self.audio.info["bit_depth"]) for x in audio_slice]) / len(audio_slice)
+
+        fftinfo = {
+            "average_value": average_value,
+            "biased_total_size": biased_total_size,
+        }
+
+        # print(">>>>", fftinfo, audio_slice)
+
+        for zindex in sorted(list(self.content.keys())):
+            for item in self.content[zindex]:
+                if item.is_deletable:
+                    del item
+                    continue
+
+                # Generate next step of animation
+                item.next(fftinfo)
+
+                # Blit itself on the canvas
+                item.blit(self.canvas)
+        
+        if this_step % 5 == 0:
+            # print("Adding particle")
+            self.add_random_particle()
