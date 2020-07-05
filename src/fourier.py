@@ -20,7 +20,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-import matplotlib.pyplot as plt
 from scipy.fftpack import fft
 from scipy import arange
 import numpy as np

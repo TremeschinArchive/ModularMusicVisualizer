@@ -20,6 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from interpolation import Interpolation
+from mmvvisualizer import MMVVisualizer
 from mmvimage import MMVImage
 from modifiers import *
 from utils import Utils
@@ -144,7 +145,7 @@ class MMVAnimation():
 
         self.content[1].append(temp)
 
-    def add_background(self):
+    def add_moving_background(self):
         temp = MMVImage(self.context)
         temp.path[0] = {
             "position": Point(0, 0),
@@ -162,7 +163,7 @@ class MMVAnimation():
             }
         }
         temp.image.load_from_path(
-            self.context.assets + os.path.sep + "background" + os.path.sep + "ten.jpg",
+            self.context.assets + os.path.sep + "tremx_assets" + os.path.sep + "background.jpg",
             convert_to_png=True
         )
         temp.image.resize_to_resolution(
@@ -173,9 +174,7 @@ class MMVAnimation():
 
         self.content[0] = [temp]
 
-
-        # Logo
-
+    def add_logo(self):
         logo_size = 200
         temp = MMVImage(self.context)
         temp.path[0] = {
@@ -190,7 +189,7 @@ class MMVAnimation():
                 "resize": {
                     "keep_center": True,
                     "interpolation": self.interpolation.remaining_approach,
-                    "activation": "1 + 5*x",
+                    "activation": "1 + 8*x",
                     "arg_a": 0.08,
                 }
             }
@@ -206,9 +205,25 @@ class MMVAnimation():
 
         self.content[2] = [temp]
 
+    def add_visualizer(self):
+        temp = MMVVisualizer(self.context)
+        self.content[0].append(temp)
+
     # Generate the objects on the animation
     # TODO: PROFILES, CURRENTLY MANUALLY SET HERE
     def generate(self):
-        self.add_background()
 
+        config = {
+            "moving_background": False,
+            "logo": False,
+            "visualizer": True,
+        }
+
+        if config["moving_background"]:
+            self.add_moving_background()
         
+        if config["logo"]:
+            self.add_logo()
+
+        if config["visualizer"]:
+            self.add_visualizer()

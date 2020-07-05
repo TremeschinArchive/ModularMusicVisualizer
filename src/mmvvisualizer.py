@@ -1,7 +1,7 @@
 """
 ===============================================================================
 
-Purpose: Canvas to draw on
+Purpose: MMVVisualizer object
 
 ===============================================================================
 
@@ -19,27 +19,32 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from utils import Utils
+from interpolation import Interpolation
+from modifiers import *
 from frame import Frame
+from utils import Utils
 import os
 
 
-class Canvas():
+class MMVVisualizer():
     def __init__(self, context):
-
-        debug_prefix = "[Canvas.__init__]"
-
+        
+        debug_prefix = "[MMVVisualizer.__init__]"
+        
         self.context = context
+
+        self.interpolation = Interpolation()
         self.utils = Utils()
 
-        self.reset_canvas()
+        self.path = {}
 
-    def reset_canvas(self):
+        self.x = 0
+        self.y = 0
+        self.size = 1
+        self.current_animation = 0
+        self.current_step = 0
+        self.is_deletable = False
+        self.offset = [0, 0]
 
-        debug_prefix = "[Canvas.reset_canvas]"
-
-        # Our Canvas is a black Frame class
-        self.canvas = Frame()
-        self.canvas.new(self.context.width, self.context.height, transparent=True)
-
-        # print(debug_prefix, "Create new frame as canvas")
+        # Create Frame and load random particle
+        self.image = Frame()
