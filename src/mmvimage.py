@@ -45,6 +45,7 @@ class MMVImage():
         self.current_animation = 0
         self.current_step = 0
         self.is_deletable = False
+        self.type = "mmvimage"
 
         # Base offset is the default offset when calling .next at the end
         # Offset is the animations and motions this frame offset
@@ -55,7 +56,7 @@ class MMVImage():
         self.image = Frame()
         
     # Next step of animation
-    def next(self, fftinfo):
+    def next(self, fftinfo, this_step):
 
         # Animation has ended, this current_animation isn't present on path.keys
         if not self.current_animation in list(self.path.keys()):
@@ -197,34 +198,20 @@ class MMVImage():
         img = self.image
         width, height, _ = img.frame.shape
         
-        # print("OFFSET:", self.offset)
-
         x = int(self.x + self.offset[1] + self.base_offset[1])
         y = int(self.y + self.offset[0] + self.base_offset[0])
 
+        canvas.canvas.overlay_transparent(
+            self.image.frame,
+            y,
+            x
+        )
 
-        if True:
-            # This is the right way but it's slow TODO: R&D
-            canvas.canvas.overlay_transparent(
-                self.image.frame,
-                y,
-                x
-            )
-
-        if False:
-            # This is the right way but it's slow TODO: R&D
-            canvas.canvas.overlay_transparent(
-                self.image.frame,
-                x,
-                y
-            )
-
-        if False:
-            # Fast but ugly
-            canvas.canvas.copy_from(
-                self.image.frame,
-                canvas.canvas.frame,
-                [0, 0],
-                [x, y],
-                [x + width - 1, y + height - 1]
-            )
+        # This is for trivia / future, how it used to work until overlay_transparent wasn't slow anymore
+        # canvas.canvas.copy_from(
+        #     self.image.frame,
+        #     canvas.canvas.frame,
+        #     [0, 0],
+        #     [x, y],
+        #     [x + width - 1, y + height - 1]
+        # )

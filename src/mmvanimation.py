@@ -22,6 +22,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from interpolation import Interpolation
 from mmvvisualizer import MMVVisualizer
 from mmvimage import MMVImage
+from mmvgenerator import *
 from modifiers import *
 from utils import Utils
 import random
@@ -44,97 +45,6 @@ class MMVAnimation():
         n_layers = 10
         for n in range(n_layers):
             self.content[n] = []
-
-    def add_random_particle(self):
-        temp = MMVImage(self.context)
-        temp.image.load_from_path(
-            self.utils.random_file_from_dir (
-                self.context.assets + os.path.sep + "particles"
-            )
-        )
-        horizontal_randomness = 50
-        vertical_randomness_min = self.context.height//1.7
-        vertical_randomness_max = self.context.height//2.3
-
-        x1 = random.randint(0, self.context.width)
-        # y1 = random.randint(0, 720)
-        y1 = self.context.height
-        x2 = x1 + random.randint(-horizontal_randomness, horizontal_randomness)
-        y2 = y1 + random.randint(-vertical_randomness_min, -vertical_randomness_max)
-        x3 = x2 + random.randint(-horizontal_randomness, horizontal_randomness)
-        y3 = y2 + random.randint(-vertical_randomness_min, -vertical_randomness_max)
-
-        particle_shake = Shake({
-            "interpolation": self.interpolation.remaining_approach,
-            "distance": 18,
-            "arg_a": 0.01,
-            "arg_b": 0.04,
-            "x_steps": "end_interpolation",
-            "y_steps": "end_interpolation",
-        })
-
-        fast = 0.05
-        fade_intensity = random.uniform(0.1, 0.7)
-
-        temp.path[0] = {
-            "position": [
-                Line(
-                    (x1, y1),
-                    (x2, y2),
-                ),
-                particle_shake
-            ],
-            "interpolation_x": self.interpolation.remaining_approach,
-            "interpolation_x_arg_a": fast,
-            "interpolation_y": self.interpolation.remaining_approach,
-            "interpolation_y_arg_a": fast,
-            "steps": random.randint(50, 100),
-            "modules": {
-                "fade": {
-                    "interpolation": self.interpolation.linear,
-                    "arg_a": None,
-                    "object": Fade(
-                        start_percentage=0,
-                        end_percentage=fade_intensity,
-                        finish_steps=50,
-                    )
-                }
-            }
-            
-        }
-        this_steps = random.randint(150, 200)
-        temp.path[1] = {
-            "position": [
-                Line(
-                    (x2, y2),
-                    (x3, y3),
-                ),
-                particle_shake
-            ],
-            "interpolation_x": self.interpolation.remaining_approach,
-            "interpolation_x_arg_a": fast,
-            "interpolation_y": self.interpolation.remaining_approach,
-            "interpolation_y_arg_a": fast,
-            "steps": this_steps,
-            "modules": {
-                "fade": {
-                    "interpolation": self.interpolation.linear,
-                    "arg_a": None,
-                    "object": Fade(
-                        start_percentage=fade_intensity,
-                        end_percentage=0,
-                        finish_steps=this_steps,
-                    )
-                }
-            }
-        }
-
-        temp.image.resize_by_ratio(
-            random.uniform(0.1, 0.3),
-            override=True
-        )
-
-        self.content[2].append(temp)
 
     def add_moving_background(self, shake=0):
 
@@ -162,7 +72,7 @@ class MMVAnimation():
                     "arg_a": 0.08,
                 },
                 "blur": {
-                    "activation": 15,
+                    "activation": "15*X",
                 }
             }
         }
@@ -176,7 +86,7 @@ class MMVAnimation():
             override=True
         )
 
-        self.content[0] = [temp]
+        self.content[0].append(temp)
     
 
     def add_static_background(self, shake=0): 
@@ -208,8 +118,7 @@ class MMVAnimation():
             override=True
         )
 
-        self.content[0] = [temp]
-
+        self.content[0].append(temp)
 
     def add_layers_background(self, shake1=0, shake2=0):
 
@@ -289,9 +198,8 @@ class MMVAnimation():
             override=True
         )
 
-        self.content[0] = [temp]
-        self.content[1] = [temp2]
-
+        self.content[0].append(temp)
+        self.content[1].append(temp2)
 
     def add_logo(self, shake=0):
         logo_size = int((200/1280)*self.context.width)
@@ -335,7 +243,7 @@ class MMVAnimation():
             override=True
         )
 
-        self.content[3] = [temp]
+        self.content[4] = [temp]
 
     def add_visualizer(self):
         temp = MMVVisualizer(self.context)
@@ -356,17 +264,22 @@ class MMVAnimation():
             }
         }
 
+    def add_particles_generator(self):
+        generator = MMVParticleGenerator(self.context)
+        self.content[0].append(generator)
+
     # Generate the objects on the animation
     # TODO: PROFILES, CURRENTLY MANUALLY SET HERE
     def generate(self):
 
         config = {
-            "moving_background": False,
+            "moving_background": True,
             "static_background": False,
-            "layers_background": True,
+            "layers_background": False,
             "logo": True,
             "visualizer": False,
-            "add_post_processing": True
+            "add_post_processing": True,
+            "particles": True
         }
 
         if config["moving_background"]:
@@ -391,6 +304,9 @@ class MMVAnimation():
         
         if config["add_post_processing"]:
             self.add_post_processing()
+        
+        if config["particles"]:
+            self.add_particles_generator()
 
     # Call every next step of the content animations
     def next(self, audio_slice, fft, this_step):
@@ -406,22 +322,28 @@ class MMVAnimation():
 
         # print(">>>>", fftinfo, audio_slice)
 
-        for zindex in sorted(list(self.content.keys())):
-            for item in self.content[zindex]:
+        for index in sorted(list(self.content.keys())):
+            for item in self.content[index]:
+
+                # We can delete the item as it has decided life wasn't worth anymore
                 if item.is_deletable:
                     del item
                     continue
 
                 # Generate next step of animation
-                item.next(fftinfo)
+                new = item.next(fftinfo, this_step)
 
                 # Blit itself on the canvas
                 item.blit(self.canvas)
-        
-        self.canvas.next(fftinfo)
-        
-        if this_step % 5 == 0:
-            # print("Adding particle")
-            self.add_random_particle()
 
-        
+                # Item is an MMVGenerator so we'll see what it has to offer
+                if item.type == "mmvgenerator":
+                    # The response object (if any [None]) and layer to instert on this self.content
+                    new_object = new["object"]
+
+                    # Object is not null, add it to the said layer
+                    if not new_object == None:
+                        self.content[new["layer"]].append(new_object)
+    
+        # Post process this final frame as we added all the items
+        self.canvas.next(fftinfo)
