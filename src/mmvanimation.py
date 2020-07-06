@@ -53,12 +53,13 @@ class MMVAnimation():
             "position": [
                 Point(-shake, -shake),
                 Shake({
-                    "interpolation": self.interpolation.remaining_approach,
+                    "interpolation_x": self.interpolation.remaining_approach,
+                    "interpolation_y": self.interpolation.remaining_approach,
+                    "x_steps": "end_interpolation",
+                    "y_steps": "end_interpolation",
                     "distance": shake,
                     "arg_a": 0.01,
                     "arg_b": 0.02,
-                    "x_steps": "end_interpolation",
-                    "y_steps": "end_interpolation",
                 })
             ],
             "steps": math.inf,
@@ -96,12 +97,13 @@ class MMVAnimation():
             "position": [
                 Point(-shake, -shake),
                 Shake({
-                    "interpolation": self.interpolation.remaining_approach,
+                    "interpolation_x": self.interpolation.remaining_approach,
+                    "interpolation_y": self.interpolation.remaining_approach,
+                    "x_steps": "end_interpolation",
+                    "y_steps": "end_interpolation",
                     "distance": shake,
                     "arg_a": 0.01,
                     "arg_b": 0.02,
-                    "x_steps": "end_interpolation",
-                    "y_steps": "end_interpolation",
                 })
             ],
             "steps": math.inf,
@@ -127,12 +129,13 @@ class MMVAnimation():
             "position": [
                 Point(-shake1, -shake1),
                 Shake({
-                    "interpolation": self.interpolation.remaining_approach,
+                    "interpolation_x": self.interpolation.remaining_approach,
+                    "interpolation_y": self.interpolation.remaining_approach,
+                    "x_steps": "end_interpolation",
+                    "y_steps": "end_interpolation",
                     "distance": shake1,
                     "arg_a": 0.01,
                     "arg_b": 0.02,
-                    "x_steps": "end_interpolation",
-                    "y_steps": "end_interpolation",
                 })
             ],
             "steps": math.inf,
@@ -165,12 +168,13 @@ class MMVAnimation():
             "position": [
                 Point(-shake2, -shake2),
                 Shake({
-                    "interpolation": self.interpolation.remaining_approach,
+                    "interpolation_x": self.interpolation.remaining_approach,
+                    "interpolation_y": self.interpolation.remaining_approach,
+                    "x_steps": "end_interpolation",
+                    "y_steps": "end_interpolation",
                     "distance": shake2,
                     "arg_a": 0.01,
                     "arg_b": 0.02,
-                    "x_steps": "end_interpolation",
-                    "y_steps": "end_interpolation",
                 })
             ],
             "steps": math.inf,
@@ -211,12 +215,13 @@ class MMVAnimation():
                     self.context.height // 2 - (logo_size/2)
                 ),
                 Shake({
-                    "interpolation": self.interpolation.remaining_approach,
+                    "interpolation_x": self.interpolation.remaining_approach,
+                    "interpolation_y": self.interpolation.remaining_approach,
+                    "x_steps": "end_interpolation",
+                    "y_steps": "end_interpolation",
                     "distance": shake,
                     "arg_a": 0.01,
                     "arg_b": 0.04,
-                    "x_steps": "end_interpolation",
-                    "y_steps": "end_interpolation",
                 })
             ],
             "steps": math.inf,

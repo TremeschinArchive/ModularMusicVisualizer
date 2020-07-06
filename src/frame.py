@@ -243,9 +243,7 @@ class Frame():
             # End is bigger than resolution TODO: does this matter?
             # for i in range(2):
             #     if B_end[i] >= resolution[i]:
-            #         print("A", B_end[i], resolution[i])
             #         B_end[i] = resolution[i] - 1
-            #         print("AA", B_end[i])
                     
             # [ Potential error ] Start + shape is bigger than resolution
             for i in range(2):

@@ -58,6 +58,7 @@ class MMVParticleGenerator():
                 self.context.assets + os.path.sep + "particles"
             )
         )
+        
         horizontal_randomness = 50
         vertical_randomness_min = self.context.height//1.7
         vertical_randomness_max = self.context.height//2.3

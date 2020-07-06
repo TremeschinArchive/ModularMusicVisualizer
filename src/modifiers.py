@@ -32,6 +32,7 @@ import os
 # Basic
 
 class Line():
+    # @start, end: 2d coordinate list [0, 2]
     def __init__(self, start, end):
         self.start = start
         self.end = end
@@ -49,7 +50,22 @@ class VelocityVector():
         self.y = y
 
 class Shake():
+    # @config: dict
+    #    @"interpolation_$": Interpolation function on that $ axis
+    #    @"arg_$": Interpolation argument letter $, see Interpolation class
+    #    @"$_steps": How much steps to end interpolation
+    #    @"distance": Max shake distance in any square direction
+    #    
     def __init__(self, config):
+
+        # Get config
+        self.interpolation_x = config["interpolation_x"]
+        self.interpolation_y = config["interpolation_y"]
+        self.distance = config["distance"]
+        self.x_steps = config["x_steps"]
+        self.y_steps = config["y_steps"]
+        self.arg_a = config["arg_a"]
+        self.arg_b = config["arg_b"]
 
         # Start at the center point
         self.x = 0
@@ -59,19 +75,15 @@ class Shake():
         self.towards_x = 0
         self.towards_y = 0
 
+        # Count of steps on each axis
         self.current_x_step = 0
         self.current_y_step = 0
 
-        # Get config
-        self.interpolation = config["interpolation"]
-        self.distance = config["distance"]
-        self.x_steps = config["x_steps"]
-        self.y_steps = config["y_steps"]
-        self.arg_a = config["arg_a"]
-        self.arg_b = config["arg_b"]
-
+        # Get a next random point as we're starting on (0, 0)
         self.next_random_point("both")
     
+    # Generate a next random coordinate to shake to according to the max distance
+    # @who: "x", "y" or "both"
     def next_random_point(self, who):
         if who == "x":
             self.towards_x = random.randint(-self.distance, self.distance)
@@ -81,21 +93,24 @@ class Shake():
             self.next_random_point("x")
             self.next_random_point("y")
     
+    # Next step of this X and Y towards the current random point
+    # @who: "x", "y" or "both"
     def next(self, who="both"):
         
         if who == "both":
             self.next("x")
             self.next("y")
 
-        # X 
+        # X axis
         if who == "x":
 
             if isinstance(self.current_x_step, int):
                 self.current_x_step += 1
 
             if self.x_steps == "end_interpolation":
-                # If both X and Y are within two pixels of the target 
+                # If X is within two pixels of the target, end interpolation
                 if abs(self.x - self.towards_x) < 2:
+                    self.x = self.towards_x
                     self.next_random_point("x")
                     self.current_x_step = 0
                     return
@@ -105,8 +120,9 @@ class Shake():
                     self.current_x_step = 0
                     return
 
+            # Calculate next interpolation
             self.x = round(
-                self.interpolation(
+                self.interpolation_x(
                     self.x,
                     self.towards_x,
                     self.current_x_step,
@@ -118,14 +134,16 @@ class Shake():
                 2
             )
 
-        # Y
+        # Y axis
         if who == "y":
             
             if isinstance(self.current_y_step, int):
                 self.current_y_step += 1
 
             if self.y_steps == "end_interpolation":
+                # If Y is within two pixels of the target, end interpolation
                 if abs(self.y - self.towards_y) < 2:
+                    self.y = self.towards_y
                     self.next_random_point("y")
                     self.current_y_step = 0
                     return
@@ -135,8 +153,9 @@ class Shake():
                     self.current_y_step = 0
                     return
 
+            # Calculate next interpolation
             self.y = round(
-                self.interpolation(
+                self.interpolation_y(
                     self.y,
                     self.towards_y,
                     self.current_y_step,
@@ -148,12 +167,16 @@ class Shake():
                 2
             )
 
+# Swing back and forth in the lines of a sine wave
 class SineSwing():
+    # @max_value: Maximum amplitute of the sine wave
+    # @smooth: Add this part of 1 (1/smooth) on each next step to current X
     def __init__(self, max_value, smooth):
         self.smooth = smooth
         self.max_value = max_value
         self.x = 0
     
+    # Return next value of the iteration
     def next(self):
         self.x += 1 / self.smooth
         return self.max_value * math.sin(self.x)
@@ -167,6 +190,8 @@ class Constant():
 # # Effects
 
 class Fade():
+    # @start_percentage, end_percentage: Ranges from 0 to 1, 0 being transparent and 1 opaque
+    # @finish_steps: In how many steps to finish the fade
     def __init__(self, start_percentage, end_percentage, finish_steps):
         self.start_percentage = start_percentage
         self.end_percentage = end_percentage
