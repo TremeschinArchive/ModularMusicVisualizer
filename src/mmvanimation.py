@@ -379,7 +379,7 @@ class MMVAnimation():
         
         if config["layers_background"]:
             self.add_layers_background(
-                shake1 = int((15/1280) * self.context.width),
+                shake1 = int((20/1280) * self.context.width),
                 shake2 = int((10/1280) * self.context.width)
             )
         
