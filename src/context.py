@@ -54,7 +54,10 @@ class Context():
         self.process_args()
     
     def process_args(self):
+        
         preset = self.args["preset"]
+
+        # User chose a preset
         if not preset == None:
             if preset == "l":
                 self.width = 854

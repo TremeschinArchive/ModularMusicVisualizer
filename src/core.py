@@ -27,6 +27,7 @@ import os
 
 class Core():
     def __init__(self, context, controller, canvas, assets, fourier, ffmpeg, audio, mmvanimation):
+        # Get every class
         self.context = context
         self.controller = controller
         self.canvas = canvas
@@ -35,7 +36,6 @@ class Core():
         self.ffmpeg = ffmpeg
         self.audio = audio
         self.mmvanimation = mmvanimation
-        
         self.utils = Utils()
 
         self.ROOT = self.context.ROOT
@@ -59,13 +59,16 @@ class Core():
         
         print(debug_prefix, "Started!!")
 
-        self.testrun()
+        self.run()
 
-    def testrun(self):
+    def run(self):
 
+        debug_prefix = "[Core.run]"
+
+        # How many steps is the audio duration times the frames per second
         total_steps = int(self.context.duration * self.context.fps)
 
-        print("Total steps:", total_steps)
+        print(debug_prefix, "Total steps:", total_steps)
 
         # Generate the assets
         self.assets.pygradienter("particles", 100, 100, 1)
@@ -76,32 +79,44 @@ class Core():
 
         # Next animation
         for this_step in range(0, total_steps):
-            # print(" > Next step")
 
+            # Add the offset audio step (because interpolation isn't instant for smoothness)
             this_step += self.context.offset_audio_before_in_many_steps
 
+            # If this step is out of bounds because the offset, set it to its max value
             if this_step >= total_steps - 1:
                 this_step = total_steps - 1
 
-            this_time = max(
-                (1/self.context.fps) * this_step,
-                0
-            )
+            # The current time in seconds we're going to slice the audio based on its samplerate
+            # If we offset to the opposite way, the starting point can be negative hence the max function.
+            this_time = max( (1/self.context.fps) * this_step, 0 )
 
+            # The current time in sample count to slice the audio
             this_time_sample = int(this_time * self.audio.info["sample_rate"])
 
+            # The slice starts at the this_time_sample and end the cut here
             until = int(this_time_sample + self.context.batch_size)
 
+            # Get the audio slice
             audio_slice = self.audio.data[0][this_time_sample:until]
 
+            # Calculate the fft on the frequencies
             fft = self.fourier.fft(
                 audio_slice,
                 self.audio.info
             )
 
+            # Process next animation with audio info and the step count to process on
             self.mmvanimation.next(audio_slice, fft, this_step)
+
+            # Save current canvas's Frame to the final video
             self.ffmpeg.write_to_pipe(self.canvas.canvas)
+            
+            # Hard debug, save the canvas into a folder
             # self.canvas.canvas.save("data/canvas%s.png" % this_step)
+
+            # [ FAILSAFE ] Reset the canvas (not needed if full background is present (recommended))
             self.canvas.reset_canvas()
 
+        # We're out of animation steps, close the pipe to finish the video
         self.ffmpeg.close_pipe()
