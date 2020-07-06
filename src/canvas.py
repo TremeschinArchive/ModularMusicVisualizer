@@ -32,8 +32,10 @@ class Canvas():
         self.context = context
         self.utils = Utils()
 
+        # Create new canvas
         self.reset_canvas()
 
+        # Processing variables
         self.post_processing = {}
         self.vignetting = 0
         self.current_step = 0
@@ -42,56 +44,77 @@ class Canvas():
 
         debug_prefix = "[Canvas.reset_canvas]"
 
-        # Our Canvas is a black Frame class
+        # Our Canvas is a blank Frame class
         self.canvas = Frame()
         self.canvas.new(self.context.width, self.context.height, transparent=True)
 
-        # print(debug_prefix, "Create new frame as canvas")
-
     # Next step of animation
     def next(self, fftinfo):
+
+        debug_prefix = "[Canvas.next]"
 
         # No post processing
         if len(list(self.post_processing.keys())) == 0:
             return
 
+        # There is some post processing
         for key in sorted(list(self.post_processing.keys())):
-            # The animation we're currently playing
+
+            # The animation we're currently processing
             this_post_processing = self.post_processing[key]
             
+            # Is there any modules in this animation?
             if "modules" in this_post_processing:
-                if "vignetting" in this_post_processing["modules"]:
+
+                module = this_post_processing["modules"]
+
+                # Apply vignetting
+                if "vignetting" in module:
                     
-                    a = fftinfo["average_value"]
+                    # The module we're working with
+                    this_module = module["vignetting"]
 
-                    if a > 1:
-                        a = 1
-                    if a < -0.9:
-                        a = -0.9
+                    # TODO: needed?
+                    # Limit the average
+                    average = fftinfo["average_value"]
 
-                    towards = eval(this_post_processing["modules"]["vignetting"]["activation"].replace("X", str(a)))
+                    if average > 1:
+                        average = 1
+                    if average < -0.9:
+                        average = -0.9
+
+                    # Where the vignetting intensity is pointing to according to our 
+                    towards = eval(
+                        this_module["activation"].replace("X", str(average))
+                    )
 
                     # Minimum vignetting
-                    minimum = this_post_processing["modules"]["vignetting"]["minimum"] 
+                    minimum = this_module["minimum"] 
                     if towards < minimum:
                         towards = minimum
 
-                    new_vignetting = this_post_processing["modules"]["vignetting"]["interpolation"](
+                    # Interpolate to a new vignetting value
+                    new_vignetting = this_module["interpolation"](
                         self.vignetting,
                         towards,
                         self.current_step,
                         this_post_processing["steps"],
                         self.vignetting,
-                        this_post_processing["modules"]["vignetting"]["arg_a"]
+                        this_module["arg_a"]
                     )
 
+                    # Apply the new vignetting effect on the center of the screen
                     self.canvas.vignetting(
                         self.context.width//2,
                         self.context.height//2,
                         new_vignetting,
                         new_vignetting
                     )
+
+                    # Update vignetting value
                     self.vignetting = new_vignetting
-                    # print("vignetting", new_vignetting, "to", towards)
-            
+
+                    # print(debug_prefix, "vignetting", new_vignetting, "to", towards)
+        
+        # Next step of animation
         self.current_step += 1
