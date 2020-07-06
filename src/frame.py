@@ -250,9 +250,7 @@ class Frame():
             # [ Potential error ] Start + shape is bigger than resolution
             for i in range(2):
                 if B_start[i] + shape[i] > resolution[i]:
-                    # print("B", B_start[i], shape[i], resolution[i], B_end[i])
                     B_end[i] = resolution[i] - 1
-                    # print("B2", B_start[i], shape[i], resolution[i], B_end[i])
 
             # [ FIX ] Shape is bigger than resolution, cut it
             if any([shape[i] >= resolution[i] for i in range(2)]):
