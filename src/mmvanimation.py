@@ -64,33 +64,6 @@ class MMVAnimation():
         x3 = x2 + random.randint(-horizontal_randomness, horizontal_randomness)
         y3 = y2 + random.randint(-vertical_randomness_min, -vertical_randomness_max)
 
-        # temp.path[0] = {
-        #     "position": Point(x1, y1),
-        #     "interpolation_x": "linear",
-        #     "interpolation_y": "linear",
-        #     "steps": 1,
-        # }
-        # temp.path[1] = {
-        #     "position": Line(
-        #         (x1, y1),
-        #         (x2, y2),
-        #     ),
-        #     "interpolation_x": "linear",
-        #     "interpolation_y": "sigmoid",
-        #     "interpolation_y_arg_a": 10,
-        #     "steps": random.randint(50, 100)
-        # }
-        # temp.path[2] = {
-        #     "position": Line(
-        #         (x2, y2),
-        #         (x3, y3),
-        #     ),
-        #     "interpolation_x": "sigmoid",
-        #     "interpolation_x_arg_a": 10,
-        #     "interpolation_y": "linear",
-        #     "steps": random.randint(150, 200)
-        # }
-
         particle_shake = Shake({
             "interpolation": self.interpolation.remaining_approach,
             "distance": 18,
@@ -101,6 +74,7 @@ class MMVAnimation():
         })
 
         fast = 0.05
+        fade_intensity = random.uniform(0.1, 0.7)
 
         temp.path[0] = {
             "position": [
@@ -121,7 +95,7 @@ class MMVAnimation():
                     "arg_a": None,
                     "object": Fade(
                         start_percentage=0,
-                        end_percentage=0.6,
+                        end_percentage=fade_intensity,
                         finish_steps=50,
                     )
                 }
@@ -147,7 +121,7 @@ class MMVAnimation():
                     "interpolation": self.interpolation.linear,
                     "arg_a": None,
                     "object": Fade(
-                        start_percentage=0.6,
+                        start_percentage=fade_intensity,
                         end_percentage=0,
                         finish_steps=this_steps,
                     )
@@ -156,11 +130,11 @@ class MMVAnimation():
         }
 
         temp.image.resize_by_ratio(
-            random.uniform(0.1, 0.2),
+            random.uniform(0.1, 0.3),
             override=True
         )
 
-        self.content[1].append(temp)
+        self.content[2].append(temp)
 
     def add_moving_background(self, shake=0):
 
@@ -184,11 +158,11 @@ class MMVAnimation():
                 "resize": {
                     "keep_center": True,
                     "interpolation": self.interpolation.remaining_approach,
-                    "activation": "1 + 2*x",
+                    "activation": "1 + 2*X",
                     "arg_a": 0.08,
                 },
                 "blur": {
-                    "multiplier": 15,
+                    "activation": 15,
                 }
             }
         }
@@ -236,6 +210,89 @@ class MMVAnimation():
 
         self.content[0] = [temp]
 
+
+    def add_layers_background(self, shake1=0, shake2=0):
+
+        temp = MMVImage(self.context)
+        temp.path[0] = {
+            "position": [
+                Point(-shake1, -shake1),
+                Shake({
+                    "interpolation": self.interpolation.remaining_approach,
+                    "distance": shake1,
+                    "arg_a": 0.01,
+                    "arg_b": 0.02,
+                    "x_steps": "end_interpolation",
+                    "y_steps": "end_interpolation",
+                })
+            ],
+            "steps": math.inf,
+            "interpolation_x": None, "interpolation_x_arg_a": None,
+            "interpolation_y": None, "interpolation_y_arg_a": None,
+            "modules": {
+                "resize": {
+                    "keep_center": True,
+                    "interpolation": self.interpolation.remaining_approach,
+                    "activation": "1 + 4*X",
+                    "arg_a": 0.04,
+                },
+                "blur": {
+                    "activation": "max(5 - 15*X, 0)",
+                }
+            }
+        }
+        temp.image.load_from_path(
+            self.context.assets + os.path.sep + "tremx_assets" + os.path.sep + "layers" + os.path.sep + "space.jpg",
+            convert_to_png=True
+        )
+        temp.image.resize_to_resolution(
+            self.context.width + (2 * shake1),
+            self.context.height + (2 * shake1),
+            override=True
+        )
+
+        temp2 = MMVImage(self.context)
+        temp2.path[0] = {
+            "position": [
+                Point(-shake2, -shake2),
+                Shake({
+                    "interpolation": self.interpolation.remaining_approach,
+                    "distance": shake2,
+                    "arg_a": 0.01,
+                    "arg_b": 0.02,
+                    "x_steps": "end_interpolation",
+                    "y_steps": "end_interpolation",
+                })
+            ],
+            "steps": math.inf,
+            "interpolation_x": None, "interpolation_x_arg_a": None,
+            "interpolation_y": None, "interpolation_y_arg_a": None,
+            "modules": {
+                "resize": {
+                    "keep_center": True,
+                    "interpolation": self.interpolation.remaining_approach,
+                    "activation": "1 + 2*X",
+                    "arg_a": 0.08,
+                },
+                "blur": {
+                    "activation": "15*X",
+                }
+            }
+        }
+        temp2.image.load_from_path(
+            self.context.assets + os.path.sep + "tremx_assets" + os.path.sep + "layers" + os.path.sep + "curtains.png",
+            # convert_to_png=True
+        )
+        temp2.image.resize_to_resolution(
+            self.context.width + (2 * shake2),
+            self.context.height + (2 * shake2),
+            override=True
+        )
+
+        self.content[0] = [temp]
+        self.content[1] = [temp2]
+
+
     def add_logo(self, shake=0):
         logo_size = int((200/1280)*self.context.width)
         temp = MMVImage(self.context)
@@ -261,7 +318,7 @@ class MMVAnimation():
                 "resize": {
                     "keep_center": True,
                     "interpolation": self.interpolation.remaining_approach,
-                    "activation": "1 + 8*x",
+                    "activation": "1 + 8*X",
                     "arg_a": 0.08,
                 }
             }
@@ -275,7 +332,7 @@ class MMVAnimation():
             override=True
         )
 
-        self.content[2] = [temp]
+        self.content[3] = [temp]
 
     def add_visualizer(self):
         temp = MMVVisualizer(self.context)
@@ -289,7 +346,7 @@ class MMVAnimation():
             "modules": {
                 "vignetting": {
                     "interpolation": self.interpolation.remaining_approach,
-                    "activation": "%s - 8000*x" % vignetting_start,
+                    "activation": "%s - 8000*X" % vignetting_start,
                     "arg_a": 0.09,
                     "minimum": 600,
                 }
@@ -301,11 +358,12 @@ class MMVAnimation():
     def generate(self):
 
         config = {
-            "moving_background": True,
-            "static_background": False,
+            "moving_background": False,
+            "static_background": True,
+            "layers_background": False,
             "logo": True,
             "visualizer": False,
-            "add_post_processing": True
+            "add_post_processing": False
         }
 
         if config["moving_background"]:
@@ -316,6 +374,12 @@ class MMVAnimation():
         if config["static_background"]:
             self.add_static_background(
                 shake = int((15/1280) * self.context.width)
+            )
+        
+        if config["layers_background"]:
+            self.add_layers_background(
+                shake1 = int((15/1280) * self.context.width),
+                shake2 = int((10/1280) * self.context.width)
             )
         
         if config["logo"]:

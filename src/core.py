@@ -78,14 +78,21 @@ class Core():
         for this_step in range(0, total_steps):
             # print(" > Next step")
 
-            this_time = (1/self.context.fps) * this_step
-            this_time_sample = this_time * self.audio.info["sample_rate"]
+            this_step += self.context.offset_audio_before_in_many_steps
 
-            audio_slice = self.audio.data[0][
-                int(this_time_sample)
-                :
-                int(this_time_sample + self.context.batch_size)
-            ]
+            if this_step >= total_steps - 1:
+                this_step = total_steps - 1
+
+            this_time = max(
+                (1/self.context.fps) * this_step,
+                0
+            )
+
+            this_time_sample = int(this_time * self.audio.info["sample_rate"])
+
+            until = int(this_time_sample + self.context.batch_size)
+
+            audio_slice = self.audio.data[0][this_time_sample:until]
 
             fft = self.fourier.fft(
                 audio_slice,

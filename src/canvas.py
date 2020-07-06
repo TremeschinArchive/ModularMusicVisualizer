@@ -69,7 +69,7 @@ class Canvas():
                     if a < -0.9:
                         a = -0.9
 
-                    towards = eval(this_post_processing["modules"]["vignetting"]["activation"].replace("x", str(a)))
+                    towards = eval(this_post_processing["modules"]["vignetting"]["activation"].replace("X", str(a)))
 
                     # Minimum vignetting
                     minimum = this_post_processing["modules"]["vignetting"]["minimum"] 

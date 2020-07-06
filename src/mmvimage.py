@@ -92,7 +92,7 @@ class MMVImage():
 
                 a = this_animation["modules"]["resize"]["interpolation"](
                     self.size,
-                    eval(this_animation["modules"]["resize"]["activation"].replace("x", str(a))),
+                    eval(this_animation["modules"]["resize"]["activation"].replace("X", str(a))),
                     self.current_step,
                     steps,
                     self.size,
@@ -107,7 +107,7 @@ class MMVImage():
 
             if "blur" in this_animation["modules"]:
                 self.image.gaussian_blur(
-                    this_animation["modules"]["blur"]["multiplier"]*fftinfo["average_value"]
+                    eval(this_animation["modules"]["blur"]["activation"].replace("X", str(fftinfo["average_value"])))
                 )
             
             if "fade" in this_animation["modules"]:

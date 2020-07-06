@@ -33,17 +33,20 @@ class Context():
         self.data = self.ROOT + os.path.sep + "data"
         self.assets = self.ROOT + os.path.sep + "assets"
 
-        # Files
+        # Files, info
         self.input_file = None
+        self.duration = None
 
         # Video specs
-        self.width = 1920
-        self.height = 1080
+        self.width = 1280
+        self.height = 720
         self.fps = 60
 
-        # Batchs, responsiveness
-        self.batch_size = 48000//self.fps # 512
-        self.duration = None
+        # # Batchs, responsiveness
+        self.batch_size = 48000 // self.fps # 512
+
+        # Offset the audio slice by this much of steps
+        self.offset_audio_before_in_many_steps = self.fps // 8
 
     # Delete and create (reset) the runtime directories
     def reset_directories(self):
