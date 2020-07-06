@@ -23,11 +23,16 @@ import math
 
 
 class Functions():
+
+    # Sigmoid function, put that last part in a graphic visualization software to understand
+    # @smooth: how much steps are needed for X to get from -4 to 4 on the function (as they are some nice angle spots on the graph)
+    # @x: the "biased" "this_position" step
     def sigmoid(self, x, smooth):
         # Fit x from -4 to 4, 0 to 1
         fit = smooth*x - (smooth/2)
         return 1 / (1 + math.exp(-fit))
 
+    # Calculate a linear proportion
     def proportion(self, a, b, c):
         # a - b
         # c - x
