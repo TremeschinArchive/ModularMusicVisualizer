@@ -189,7 +189,7 @@ class Frame():
     #
     # https://stackoverflow.com/questions/52702809/copy-array-into-part-of-another-array-in-numpy
     #
-    # Heavily modified, implemented out of bounds safetry (a huge headache and pain that took 5+ hours)
+    # Heavily modified, implemented out of bounds safety (a huge headache and pain that took 5+ hours)
     # Remember, numpy's images arrays and coordinates are the following:
     #   - Center point (0, 0) at the top left corner
     #     - X increases to the right
