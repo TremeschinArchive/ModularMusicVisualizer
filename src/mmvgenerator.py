@@ -71,12 +71,13 @@ class MMVParticleGenerator():
         y3 = y2 + random.randint(-vertical_randomness_min, -vertical_randomness_max)
 
         particle_shake = Shake({
-            "interpolation": self.interpolation.remaining_approach,
+            "interpolation_x": self.interpolation.remaining_approach,
+            "interpolation_y": self.interpolation.remaining_approach,
+            "x_steps": "end_interpolation",
+            "y_steps": "end_interpolation",
             "distance": 18,
             "arg_a": 0.01,
             "arg_b": 0.04,
-            "x_steps": "end_interpolation",
-            "y_steps": "end_interpolation",
         })
 
         fast = 0.05
