@@ -7,6 +7,8 @@ src/trivia*
 src/rlc.ogg
 *.mp4
 *.mkv
+modular-music-visualizer-venv
+.vscode
 
 # Yeah this is my identity, you should use yours here :)
 src/assets/tremx_assets
