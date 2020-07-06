@@ -80,8 +80,14 @@ class MMVImage():
         steps = this_animation["steps"]
 
         if "modules" in this_animation:
-        
-            if "resize" in this_animation["modules"]:
+            
+            modules = this_animation["modules"]
+
+            if "rotate" in modules:
+                rotate = modules["rotate"]["object"]
+                self.image.rotate(rotate.next())
+
+            if "resize" in modules:
         
                 a = fftinfo["average_value"]
 
@@ -90,45 +96,50 @@ class MMVImage():
                 if a < -0.9:
                     a = -0.9
 
-                a = this_animation["modules"]["resize"]["interpolation"](
+                a = modules["resize"]["interpolation"](
                     self.size,
-                    eval(this_animation["modules"]["resize"]["activation"].replace("X", str(a))),
+                    eval(modules["resize"]["activation"].replace("X", str(a))),
                     self.current_step,
                     steps,
                     self.size,
-                    this_animation["modules"]["resize"]["arg_a"]
+                    modules["resize"]["arg_a"]
                 )
                 self.size = a
-                offset = self.image.resize_by_ratio(a)
 
-                if this_animation["modules"]["resize"]["keep_center"]:
+                offset = self.image.resize_by_ratio(
+                    a,
+                    # If we're going to rotate, resize the rotated frame which is not the original image
+                    from_current_frame="rotate" in modules
+                )
+
+                if modules["resize"]["keep_center"]:
                     self.offset[0] += offset[0]
                     self.offset[1] += offset[1]
 
-            if "blur" in this_animation["modules"]:
+            if "blur" in modules:
                 self.image.gaussian_blur(
-                    eval(this_animation["modules"]["blur"]["activation"].replace("X", str(fftinfo["average_value"])))
+                    eval(modules["blur"]["activation"].replace("X", str(fftinfo["average_value"])))
                 )
             
-            if "fade" in this_animation["modules"]:
+            if "fade" in modules:
                 
-                fade = this_animation["modules"]["fade"]["object"]
+                fade = modules["fade"]["object"]
                 
                 if fade.current_step < fade.finish_steps:
-                    t = this_animation["modules"]["fade"]["interpolation"](
+                    t = modules["fade"]["interpolation"](
                         fade.start_percentage,  
                         fade.end_percentage,
                         self.current_step,
                         fade.finish_steps,
                         fade.current_step,
-                        this_animation["modules"]["fade"]["arg_a"]
+                        modules["fade"]["arg_a"]
                     )
                     self.image.transparency(t)
                     fade.current_step += 1
                 else:
                     # TODO: Failsafe really necessary?
                     self.image.transparency(fade.end_percentage)
-                    
+            
             # print("APP", a)
 
         # Iterate through every position module

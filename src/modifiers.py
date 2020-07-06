@@ -48,7 +48,6 @@ class VelocityVector():
         self.x = x
         self.y = y
 
-
 class Shake():
     def __init__(self, config):
 
@@ -149,6 +148,15 @@ class Shake():
                 2
             )
 
+class SineSwing():
+    def __init__(self, max_value, smooth):
+        self.smooth = smooth
+        self.max_value = max_value
+        self.x = 0
+    
+    def next(self):
+        self.x += 1 / self.smooth
+        return self.max_value * math.sin(self.x)
 
 # # Values
 

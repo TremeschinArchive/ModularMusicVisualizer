@@ -101,7 +101,7 @@ class Frame():
             save_image = self.image_array()
             save_image.save(directory, format='PNG')
     
-    def resize_by_ratio(self, ratio, override=False):
+    def resize_by_ratio(self, ratio, override=False, from_current_frame=False):
 
         debug_prefix = "[Frame.resize_by_ratio]"
 
@@ -115,7 +115,11 @@ class Frame():
             self.height = self.frame.shape[0]
             self.width = self.frame.shape[1]
         else:
-            self.image = self.original_image.resize((new_width, new_height), Image.ANTIALIAS)
+            if from_current_frame:
+                toresize = self.image
+            else:
+                toresize = self.original_image
+            self.image = toresize.resize((new_width, new_height), Image.ANTIALIAS)
             self.frame = np.array(self.image)
 
         # print(debug_prefix, self.width, self.height, new_width, new_height, ratio)
@@ -138,11 +142,20 @@ class Frame():
             self.image = self.original_image.resize((width, height), Image.ANTIALIAS)
             self.frame = np.array(self.image)
     
+    def rotate(self, angle, override=False):
+        if override:
+            self.original_image = self.original_image.rotate(angle, resample=Image.BICUBIC)
+            self.image = self.original_image
+            self.frame = np.array(self.image)
+        else:
+            self.image = self.original_image.rotate(angle, resample=Image.BICUBIC)
+            self.frame = np.array(self.image)
+    
     def gaussian_blur(self, radius):
         # print("Gaussian", radius)
         self.image = self.image.filter(ImageFilter.GaussianBlur(radius=radius))
         self.frame = np.array(self.image)
-
+    
     # https://stackoverflow.com/questions/52702809/copy-array-into-part-of-another-array-in-numpy
     def copy_from(self, A, B, A_start, B_start, B_end):
         """

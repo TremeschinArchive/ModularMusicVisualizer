@@ -320,6 +320,9 @@ class MMVAnimation():
                     "interpolation": self.interpolation.remaining_approach,
                     "activation": "1 + 8*X",
                     "arg_a": 0.08,
+                },
+                "rotate": {
+                    "object": SineSwing(10, 100)
                 }
             }
         }
