@@ -44,7 +44,7 @@ class MMV():
         debug_prefix = "[MMV.__init__]"
 
         print(debug_prefix, "Creating Context()")
-        self.context = Context()
+        self.context = Context(args)
         # self.context.reset_directories()
 
         print(debug_prefix, "Creating Controller()")
@@ -107,13 +107,13 @@ if __name__ == "__main__":
 
     # Add arguments
     args.add_argument('-i', '--input_file', required=True, help="(string) Input audio to generate final video, if not .wav uses ffmpeg to convert")
-    args.add_argument("-p", "--profile", required=False, help="(string) Generate the video with that profile script under profiles dir")
+    args.add_argument("-p", "--preset", required=False, help="(string) Resolution and FPS presets [l, m, h, u, M] (low, medium, high, ultra, max respectively)")
 
     # Parse and organize the arguments
     args = args.parse_args()
     args = {
         "input_file": args.input_file,
-        "profile": args.profile,
+        "preset": args.preset,
     }
 
     MMV(args)

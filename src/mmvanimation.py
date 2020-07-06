@@ -322,7 +322,7 @@ class MMVAnimation():
                     "arg_a": 0.08,
                 },
                 "rotate": {
-                    "object": SineSwing(10, 100)
+                    "object": SineSwing(6, 100)
                 }
             }
         }
@@ -362,11 +362,11 @@ class MMVAnimation():
 
         config = {
             "moving_background": False,
-            "static_background": True,
-            "layers_background": False,
+            "static_background": False,
+            "layers_background": True,
             "logo": True,
             "visualizer": False,
-            "add_post_processing": False
+            "add_post_processing": True
         }
 
         if config["moving_background"]:
