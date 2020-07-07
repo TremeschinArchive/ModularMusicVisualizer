@@ -55,6 +55,23 @@ class Frame():
         self.width = width
         self.height = height
 
+    # Load this image by array
+    def load_from_array(self, array, convert_to_png=False):
+        # Load the array as image and set it as the frame
+        self.original_image = Image.fromarray(array)
+
+        # Alpha composite only works on RGBA if we're going to do it
+        if convert_to_png:
+            self.original_image = self.original_image.convert("RGBA")
+
+        # Set the image
+        self.image = self.original_image
+        self.frame = array
+
+        # Update width, height info
+        self.height = array.shape[0]
+        self.width = array.shape[1]
+
     # Load image from a given path
     def load_from_path(self, path, convert_to_png=False):
 

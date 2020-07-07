@@ -24,6 +24,7 @@ from modifiers import *
 from frame import Frame
 from utils import Utils
 import copy
+import cv2
 import os
 
 
@@ -46,6 +47,9 @@ class MMVImage():
         self.current_step = 0
         self.is_deletable = False
         self.type = "mmvimage"
+
+        # If we want to get the images from a video, be sure to match the fps!!
+        self.video = None
 
         # Base offset is the default offset when calling .next at the end
         # Offset is the animations and motions this frame offset
@@ -84,11 +88,36 @@ class MMVImage():
             
             modules = this_animation["modules"]
 
+            # The video module must be before everything as it gets the new frame                
+            if "video" in modules:
+
+                this_module = modules["video"]
+
+                # We haven't set a video capture or it has ended
+                if self.video == None:
+                    self.video = cv2.VideoCapture(this_module["path"])
+
+                # Can we read next frame? if not, go back to frame 0 for a loop
+                ok, frame = self.video.read()
+                if not ok:  # cry
+                    self.video.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, 0)
+                    ok, frame = self.video.read()
+                
+                # CV2 utilizes BGR matrix, but we need RGB
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                
+                self.image.load_from_array(frame, convert_to_png=True)
+
             if "rotate" in modules:
-                rotate = modules["rotate"]["object"]
+
+                this_module = modules["rotate"]
+
+                rotate = this_module["object"]
                 self.image.rotate(rotate.next())
 
             if "resize" in modules:
+
+                this_module = modules["resize"]
         
                 a = fftinfo["average_value"]
 
@@ -97,13 +126,13 @@ class MMVImage():
                 if a < -0.9:
                     a = -0.9
 
-                a = modules["resize"]["interpolation"](
+                a = this_module["interpolation"](
                     self.size,
-                    eval(modules["resize"]["activation"].replace("X", str(a))),
+                    eval(this_module["activation"].replace("X", str(a))),
                     self.current_step,
                     steps,
                     self.size,
-                    modules["resize"]["arg_a"]
+                    this_module["arg_a"]
                 )
                 self.size = a
 
@@ -113,34 +142,40 @@ class MMVImage():
                     from_current_frame="rotate" in modules
                 )
 
-                if modules["resize"]["keep_center"]:
+                if this_module["keep_center"]:
                     self.offset[0] += offset[0]
                     self.offset[1] += offset[1]
 
             if "blur" in modules:
+
+                this_module = modules["blur"]
+
                 self.image.gaussian_blur(
-                    eval(modules["blur"]["activation"].replace("X", str(fftinfo["average_value"])))
+                    eval(this_module["activation"].replace("X", str(fftinfo["average_value"])))
                 )
             
             if "fade" in modules:
+
+                this_module = modules["fade"]
                 
-                fade = modules["fade"]["object"]
+                fade = this_module["object"]
                 
                 if fade.current_step < fade.finish_steps:
-                    t = modules["fade"]["interpolation"](
+                    t = this_module["interpolation"](
                         fade.start_percentage,  
                         fade.end_percentage,
                         self.current_step,
                         fade.finish_steps,
                         fade.current_step,
-                        modules["fade"]["arg_a"]
+                        this_module["arg_a"]
                     )
                     self.image.transparency(t)
                     fade.current_step += 1
                 else:
                     # TODO: Failsafe really necessary?
                     self.image.transparency(fade.end_percentage)
-            
+
+
             # print("APP", a)
 
         # Iterate through every position module

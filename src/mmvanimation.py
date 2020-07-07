@@ -78,7 +78,7 @@ class MMVAnimation():
             }
         }
         temp.image.load_from_path(
-            self.context.assets + os.path.sep + "tremx_assets" + os.path.sep + "background.jpg",
+            self.context.assets + os.path.sep + "tremx_assets" + os.path.sep + "background2.jpg",
             convert_to_png=True
         )
         temp.image.resize_to_resolution(
@@ -89,6 +89,42 @@ class MMVAnimation():
 
         self.content[0].append(temp)
     
+    def add_moving_video_background(self, shake=0):
+
+        temp = MMVImage(self.context)
+        temp.path[0] = {
+            "position": [
+                Point(-shake, -shake),
+                Shake({
+                    "interpolation_x": self.interpolation.remaining_approach,
+                    "interpolation_y": self.interpolation.remaining_approach,
+                    "x_steps": "end_interpolation",
+                    "y_steps": "end_interpolation",
+                    "distance": shake,
+                    "arg_a": 0.01,
+                    "arg_b": 0.02,
+                })
+            ],
+            "steps": math.inf,
+            "interpolation_x": None, "interpolation_x_arg_a": None,
+            "interpolation_y": None, "interpolation_y_arg_a": None,
+            "modules": {
+                "resize": {
+                    "keep_center": True,
+                    "interpolation": self.interpolation.remaining_approach,
+                    "activation": "1 + 2*X",
+                    "arg_a": 0.08,
+                },
+                "blur": {
+                    "activation": "15*X",
+                },
+                "video": {
+                    "path": self.context.ROOT + os.path.sep + "vid.mp4"
+                }
+            }
+        }
+        
+        self.content[0].append(temp)
 
     def add_static_background(self, shake=0): 
 
@@ -154,7 +190,7 @@ class MMVAnimation():
             }
         }
         temp.image.load_from_path(
-            self.context.assets + os.path.sep + "tremx_assets" + os.path.sep + "layers" + os.path.sep + "space.jpg",
+            self.context.assets + os.path.sep + "tremx_assets" + os.path.sep + "layers" + os.path.sep + "nature.jpg",
             convert_to_png=True
         )
         temp.image.resize_to_resolution(
@@ -278,9 +314,10 @@ class MMVAnimation():
     def generate(self):
 
         config = {
-            "moving_background": True,
+            "moving_background": False,
             "static_background": False,
             "layers_background": False,
+            "moving_video_background": True,
             "logo": True,
             "visualizer": False,
             "add_post_processing": True,
@@ -299,6 +336,11 @@ class MMVAnimation():
             self.add_layers_background(
                 shake1 = int((20/1280) * self.context.width),
                 shake2 = int((10/1280) * self.context.width)
+            )
+        
+        if config["moving_video_background"]:
+            self.add_moving_video_background(
+                shake = int((15/1280) * self.context.width)
             )
         
         if config["logo"]:
