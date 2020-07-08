@@ -33,7 +33,7 @@ import os
 class Miscellaneous():
 
     def __init__(self):
-        self.version = "1.1.0rc1"
+        self.version = "1.2.1dev"
         self.greeter_message()
 
     def greeter_message(self):
@@ -109,7 +109,8 @@ class Utils():
                     print("Moving path [%s] --> [%s]" % (path, dst))
                     shutil.copy(path, dst)
                 else:
-                    print("File already under dst dir")
+                    pass
+                    # print("File already under dst dir")
         else:
             print("src and dst must be dirs")
             sys.exit(-1)
