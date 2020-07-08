@@ -88,6 +88,17 @@ class MMVImage():
             
             modules = this_animation["modules"]
 
+            if "visualizer" in modules:
+
+                this_module = modules["visualizer"]
+
+                visualizer = this_module["object"]
+
+                self.image.load_from_array(
+                    visualizer.next(fftinfo, this_step),
+                    convert_to_png=True
+                )
+
             # The video module must be before everything as it gets the new frame                
             if "video" in modules:
 

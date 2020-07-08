@@ -42,12 +42,14 @@ class Fourier():
         # print(debug_prefix, "len(fft) =", len(transform))
 
         # Only need half the list of fft
-        cut = int(len(normalized)/2)
+        cut = [
+            2,
+            int(len(normalized)/2) - 200
+        ]
 
-        # plt.xscale("log")
-        # plt.plot(abs(transform[:cut]), 'r') 
-        # plt.draw()
-        # plt.pause(0.00001)
-        # plt.clf()
+        return transform[cut[0]:cut[1]]
 
-        return transform[:cut]
+
+class FitFourier():
+    def polynomial(self, fft, exponent):
+        pass

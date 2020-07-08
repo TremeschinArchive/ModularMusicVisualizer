@@ -21,6 +21,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from interpolation import Interpolation
 from mmvvisualizer import MMVVisualizer
+from functions import Functions
 from mmvimage import MMVImage
 from mmvgenerator import *
 from modifiers import *
@@ -37,8 +38,9 @@ class MMVAnimation():
         self.canvas = canvas
         self.audio = audio
 
-        self.utils = Utils()
         self.interpolation = Interpolation()
+        self.functions = Functions()
+        self.utils = Utils()
 
         self.content = {}
 
@@ -276,7 +278,8 @@ class MMVAnimation():
             }
         }
         temp.image.load_from_path(
-            self.context.assets + os.path.sep + "tremx_assets" + os.path.sep + "logo" + os.path.sep + "logo.png"
+            self.context.assets + os.path.sep + "tremx_assets" + os.path.sep + "logo" + os.path.sep + "logo.png",
+            convert_to_png=True
         )
         temp.image.resize_to_resolution(
             logo_size,
@@ -286,9 +289,64 @@ class MMVAnimation():
 
         self.content[4] = [temp]
 
-    def add_visualizer(self):
-        temp = MMVVisualizer(self.context)
-        self.content[0].append(temp)
+    def add_visualizer(self, shake=0):
+
+        visualizer_size = int((400/1280)*self.context.width)
+        
+        temp = MMVImage(self.context)
+        temp.path[0] = {
+            "position": [
+                Point(
+                    self.context.width // 2 - (visualizer_size/2),
+                    self.context.height // 2 - (visualizer_size/2)
+                ),
+                Shake({
+                    "interpolation_x": self.interpolation.remaining_approach,
+                    "interpolation_y": self.interpolation.remaining_approach,
+                    "x_steps": "end_interpolation",
+                    "y_steps": "end_interpolation",
+                    "distance": shake,
+                    "arg_a": 0.01,
+                    "arg_b": 0.04,
+                })
+            ],
+            "steps": math.inf,
+            "interpolation_x": None,
+            "interpolation_y": None,
+            "modules": {
+                "resize": {
+                    "keep_center": True,
+                    "interpolation": self.interpolation.remaining_approach,
+                    "activation": "1 + 8*X",
+                    "arg_a": 0.08,
+                },
+                "visualizer": {
+                    "object": MMVVisualizer(
+                        self.context,
+                        {
+                            "type": "circle",
+                            "width": visualizer_size,
+                            "height": visualizer_size,
+                            "minimum_bar_distance": 100,
+                            "maximum_bar_distance": 200,
+                            "activation": {
+                                "function": self.functions.sigmoid,
+                                "arg_a": 10,
+                            },
+                            "fourier": {
+                                "interpolation": {
+                                    "function": self.interpolation.remaining_approach,
+                                    "activation": "X",
+                                    "arg_a": 0.34,
+                                    "steps": math.inf
+                                }
+                            }
+                        }
+                    )
+                }
+            }
+        }
+        self.content[3].append(temp)
     
     def add_post_processing(self):
         vignetting_start = 900
@@ -305,7 +363,7 @@ class MMVAnimation():
             }
         }
 
-    def add_particles_generator(self):
+    def add_particles_generator(self):        
         generator = MMVParticleGenerator(self.context)
         self.content[0].append(generator)
 
@@ -314,12 +372,12 @@ class MMVAnimation():
     def generate(self):
 
         config = {
-            "moving_background": False,
+            "moving_background": True,
             "static_background": False,
             "layers_background": False,
-            "moving_video_background": True,
+            "moving_video_background": False,
             "logo": True,
-            "visualizer": False,
+            "visualizer": True,
             "add_post_processing": True,
             "particles": True
         }
@@ -365,6 +423,7 @@ class MMVAnimation():
         fftinfo = {
             "average_value": average_value,
             "biased_total_size": biased_total_size,
+            "fft": fft
         }
 
         # print(">>>>", fftinfo, audio_slice)

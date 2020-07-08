@@ -71,7 +71,7 @@ class Core():
         print(debug_prefix, "Total steps:", total_steps)
 
         # Generate the assets
-        self.assets.pygradienter("particles", 100, 100, 1)
+        # self.assets.pygradienter("particles", 150, 150, 20)
 
         # Generate a Animation
         self.mmvanimation.generate()
