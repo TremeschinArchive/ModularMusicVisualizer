@@ -118,6 +118,11 @@ class MMVImage():
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 
                 self.image.load_from_array(frame, convert_to_png=True)
+                self.image.resize_to_resolution(
+                    self.context.width + (2*this_module["shake"]),
+                    self.context.height + (2*this_module["shake"]),
+                    override=True
+                )
 
             if "rotate" in modules:
 

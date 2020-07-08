@@ -114,14 +114,15 @@ class MMVAnimation():
                 "resize": {
                     "keep_center": True,
                     "interpolation": self.interpolation.remaining_approach,
-                    "activation": "1 + 2*X",
+                    "activation": "1 + 0.3*X",
                     "arg_a": 0.08,
                 },
                 "blur": {
                     "activation": "15*X",
                 },
                 "video": {
-                    "path": self.context.ROOT + os.path.sep + "vid.mp4"
+                    "path": self.context.ROOT + os.path.sep + "vid.mp4",
+                    "shake": shake
                 }
             }
         }
@@ -291,7 +292,7 @@ class MMVAnimation():
 
     def add_visualizer(self, shake=0):
 
-        visualizer_size = int((400/1280)*self.context.width)
+        visualizer_size = int((720/1280)*self.context.width)
         
         temp = MMVImage(self.context)
         temp.path[0] = {
@@ -320,6 +321,12 @@ class MMVAnimation():
                     "activation": "1 + 8*X",
                     "arg_a": 0.08,
                 },
+                "rotate": {
+                    "object": LinearSwing(10)
+                },
+                "blur": {
+                    "activation": "20*X",
+                },
                 "visualizer": {
                     "object": MMVVisualizer(
                         self.context,
@@ -339,6 +346,10 @@ class MMVAnimation():
                                     "activation": "X",
                                     "arg_a": 0.34,
                                     "steps": math.inf
+                                },
+                                "fitfourier": {
+                                    "fft_smoothing": 3,
+                                    "tesselation": 2,
                                 }
                             }
                         }
@@ -372,14 +383,14 @@ class MMVAnimation():
     def generate(self):
 
         config = {
-            "moving_background": True,
-            "static_background": False,
+            "moving_background": False,
+            "static_background": True,
             "layers_background": False,
             "moving_video_background": False,
             "logo": True,
             "visualizer": True,
-            "add_post_processing": True,
-            "particles": True
+            "add_post_processing": False,
+            "particles": False
         }
 
         if config["moving_background"]:
