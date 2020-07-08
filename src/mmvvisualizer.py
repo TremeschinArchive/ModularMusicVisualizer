@@ -21,12 +21,14 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from coordinates import PolarCoordinates
 from interpolation import Interpolation
+from functions import Functions
 from modifiers import *
 from frame import Frame
 from utils import Utils
 from svg import SVG
 import svgwrite
 import random
+import resampy
 import math
 import os
 
@@ -41,6 +43,7 @@ class MMVVisualizer():
         self.config = config
 
         self.interpolation = Interpolation()
+        self.functions = Functions()
         self.utils = Utils()
         self.svg = SVG(
             self.config["width"],
@@ -73,15 +76,20 @@ class MMVVisualizer():
 
         self.svg.new_drawing()
 
+        fitfourier = self.config["fourier"]["fitfourier"]
+
         fft = fftinfo["fft"]
         fft = [abs(x) for x in fft]
-        fft = self.smooth(fft, 3)
+        fft = self.smooth(fft, fitfourier["fft_smoothing"])
+
+        # fft = resampy.resample(fft, len(fft), len(fft)*fitfourier["tesselation"])
 
         if self.current_fft == None:
             self.current_fft = [0 for _ in range(len(fft))]
 
         interpolation = self.config["fourier"]["interpolation"]
 
+        # Interpolate the next fft with the current one
         for index in range(len(self.current_fft)):
             self.current_fft[index] = interpolation["function"](
                 self.current_fft[index],  
@@ -92,21 +100,34 @@ class MMVVisualizer():
                 interpolation["arg_a"]
             )
 
+        
+        fitted_fft = [0 for _ in range(len(fft))]
+
+        for i in range(len(fft) - 1):
+            
+            # i = (parts - 1) * (self.functions.proportion(parts - 1, 1, i) ** 0.7)
+            transformed_index = int((len(fft) - 1) * (math.log(1 +self.functions.proportion(len(fft) - 1, 9, i), 10)))
+            fitted_fft[i] = self.current_fft[transformed_index]
+
+        fitted_fft = self.smooth(fitted_fft, fitfourier["fft_smoothing"])
+        fitted_fft = resampy.resample(fitted_fft, len(fitted_fft), len(fitted_fft)*fitfourier["tesselation"])
+
+
         if self.config["type"] == "circle":
 
             points = []
-            parts = len(fft)
             
             # avg_fft = sum(fft)/len(fft)
-
             # fft = [max(x - avg_fft, 0) for x in fft]
 
-            for i in range(parts - 1):
-                size = self.current_fft[i]*(1.2 + i/10)
+            for i in range(len(fitted_fft) - 1):
+
+                size = fitted_fft[i]*(1.1 + i/20)
+
                 # print(size)
                 self.polar.from_r_theta(
                     self.config["minimum_bar_distance"] + size,
-                    ((math.pi*2)/parts)*i
+                    ((math.pi*2)/len(fitted_fft))*i # fitted_fft -> fft nice effect
                 )
                 coord = self.polar.get_rectangular_coordinates()
                 points.append(coord)
@@ -116,7 +137,7 @@ class MMVVisualizer():
             self.svg.dwg.add(
                 self.svg.dwg.polyline(
                     points,
-                    stroke=svgwrite.rgb(10, 10, 16, '%'),
+                    stroke=svgwrite.rgb(60, 60, 60, '%'),
                     fill='white',
                 )
             )
