@@ -47,7 +47,9 @@ class MMVVisualizer():
         self.utils = Utils()
         self.svg = SVG(
             self.config["width"],
-            self.config["height"]
+            self.config["height"],
+            self.context.svg_rasterizer,
+            "png"
         )
 
         self.path = {}
@@ -105,13 +107,21 @@ class MMVVisualizer():
 
         for i in range(len(fft) - 1):
             
-            # i = (parts - 1) * (self.functions.proportion(parts - 1, 1, i) ** 0.7)
-            transformed_index = int((len(fft) - 1) * (math.log(1 +self.functions.proportion(len(fft) - 1, 9, i), 10)))
+            transformed_index = int((len(fft) - 1) * (self.functions.proportion(len(fft) - 1, 1, i) ** 1.5))
+            # transformed_index = int((len(fft) - 1) * (math.log(1 +self.functions.proportion(len(fft) - 1, 9, i), 10)))
             fitted_fft[i] = self.current_fft[transformed_index]
 
         fitted_fft = self.smooth(fitted_fft, fitfourier["fft_smoothing"])
         fitted_fft = resampy.resample(fitted_fft, len(fitted_fft), len(fitted_fft)*fitfourier["tesselation"])
 
+        cut = [0, 0.8]
+        fitted_fft = fitted_fft[
+            int(len(fitted_fft)*cut[0])
+            :
+            int(len(fitted_fft)*cut[1])
+        ]
+
+        mode = self.config["mode"]
 
         if self.config["type"] == "circle":
 
@@ -122,15 +132,30 @@ class MMVVisualizer():
 
             for i in range(len(fitted_fft) - 1):
 
-                size = fitted_fft[i]*(1.1 + i/20)
+                size = fitted_fft[i]*(0.3 + i/20)
 
-                # print(size)
-                self.polar.from_r_theta(
-                    self.config["minimum_bar_distance"] + size,
-                    ((math.pi*2)/len(fitted_fft))*i # fitted_fft -> fft nice effect
-                )
+                # Simple
+                if mode == "linear":
+                    self.polar.from_r_theta(
+                        self.config["minimum_bar_distance"] + size,
+                        ((math.pi*2)/len(fitted_fft))*i # fitted_fft -> fft nice effect
+                    )
+
+                # Symetric
+                if mode == "symetric":
+                    self.polar.from_r_theta(
+                        self.config["minimum_bar_distance"] + size,
+                        (math.pi/2) - (((math.pi)/len(fitted_fft))*i) # fitted_fft -> fft nice effect
+                    )
+                
                 coord = self.polar.get_rectangular_coordinates()
                 points.append(coord)
+
+            # print(points)
+
+            if mode == "symetric":
+                for point in reversed(points):
+                    points.append([ - point[0], point[1]])
             
             points.append(points[0])
             

@@ -51,6 +51,9 @@ class Context():
         # Offset the audio slice by this much of steps
         self.offset_audio_before_in_many_steps = self.fps // 8
 
+        # Performance
+        self.svg_rasterizer = "wand"
+
         self.process_args()
     
     def process_args(self):

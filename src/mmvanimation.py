@@ -270,7 +270,7 @@ class MMVAnimation():
                 "resize": {
                     "keep_center": True,
                     "interpolation": self.interpolation.remaining_approach,
-                    "activation": "1 + 8*X",
+                    "activation": "1 + 5*X",
                     "arg_a": 0.08,
                 },
                 "rotate": {
@@ -318,7 +318,7 @@ class MMVAnimation():
                 "resize": {
                     "keep_center": True,
                     "interpolation": self.interpolation.remaining_approach,
-                    "activation": "1 + 8*X",
+                    "activation": "1 + 5*X",
                     "arg_a": 0.08,
                 },
                 "rotate": {
@@ -332,6 +332,7 @@ class MMVAnimation():
                         self.context,
                         {
                             "type": "circle",
+                            "mode": "symetric",
                             "width": visualizer_size,
                             "height": visualizer_size,
                             "minimum_bar_distance": 100,
