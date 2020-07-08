@@ -181,6 +181,19 @@ class SineSwing():
         self.x += 1 / self.smooth
         return self.max_value * math.sin(self.x)
 
+
+# Swing to one direction
+class LinearSwing():
+    # @smooth: Add this part of 1 (1/smooth) on each next step to current X
+    def __init__(self, smooth):
+        self.smooth = smooth
+        self.x = 0
+    
+    # Return next value of the iteration
+    def next(self):
+        self.x += 1 / self.smooth
+        return self.x
+
 # # Values
 
 class Constant():
