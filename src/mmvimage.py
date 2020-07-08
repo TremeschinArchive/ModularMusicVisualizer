@@ -111,7 +111,7 @@ class MMVImage():
                 # Can we read next frame? if not, go back to frame 0 for a loop
                 ok, frame = self.video.read()
                 if not ok:  # cry
-                    self.video.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, 0)
+                    self.video.set(cv2.CAP_PROP_POS_FRAMES, 0)
                     ok, frame = self.video.read()
                 
                 # CV2 utilizes BGR matrix, but we need RGB
