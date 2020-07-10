@@ -36,6 +36,10 @@ class Frame():
     def __init__(self):
         self.utils = Utils()
 
+        # Multiprocessing pending things to do, ordered
+        self.pending = {}
+        self.size = 1
+
     # Create new numpy array as a "frame", attribute width, height and resolution
     def new(self, width, height, transparent=False):
 
@@ -137,7 +141,7 @@ class Frame():
     # @ratio: scalar to multiply
     # @override: set the original image to the new resized one
     # @from_current_frame: resize not the original image but the current self.frame, overrided by override
-    def resize_by_ratio(self, ratio, override=False, from_current_frame=False):
+    def resize_by_ratio(self, ratio, override=False, from_current_frame=False, get_only_offset=False):
 
         debug_prefix = "[Frame.resize_by_ratio]"
 
@@ -145,26 +149,27 @@ class Frame():
         new_width = int(self.width * ratio)
         new_height = int(self.height * ratio)
 
-        if override:
-            # Resize the original image itself and set it as the resized as well as the image var
-            self.original_image = self.original_image.resize((new_width, new_height), Image.ANTIALIAS)
-            self.image = self.original_image
+        if not get_only_offset:
+            if override:
+                # Resize the original image itself and set it as the resized as well as the image var
+                self.original_image = self.original_image.resize((new_width, new_height), Image.ANTIALIAS)
+                self.image = self.original_image
 
-            # Standart procedure on updating this class info
-            self.frame = np.array(self.image)
-            self.height = self.frame.shape[0]
-            self.width = self.frame.shape[1]
+                # Standart procedure on updating this class info
+                self.frame = np.array(self.image)
+                self.height = self.frame.shape[0]
+                self.width = self.frame.shape[1]
 
-        else:
-            # Do we want self.image to be the self.image itself resized or the
-            if from_current_frame:
-                toresize = self.image
             else:
-                toresize = self.original_image
+                # Do we want self.image to be the self.image itself resized or the
+                if from_current_frame:
+                    toresize = self.image
+                else:
+                    toresize = self.original_image
 
-            # Resize and update the frame info
-            self.image = toresize.resize((new_width, new_height), Image.ANTIALIAS)
-            self.frame = np.array(self.image)
+                # Resize and update the frame info
+                self.image = toresize.resize((new_width, new_height), Image.ANTIALIAS)
+                self.frame = np.array(self.image)
 
         # Return the offset to preserve the center
         return [
@@ -433,3 +438,73 @@ class Frame():
         # Attribute this object frame and image
         self.image = Image.fromarray(image)
         self.frame = image
+
+    def resolve_pending(self):
+
+        keys = self.pending.keys()
+
+        if "visualizer" in keys:
+
+            module = self.pending["visualizer"]
+
+            visualizer = module[0]
+            fftinfo = module[1]
+
+            self.load_from_array(
+                visualizer.next(fftinfo),
+                convert_to_png=True
+            )
+
+        if "video" in keys:
+
+            module = self.pending["video"]
+
+            frame = module[0]
+            width = module[1]
+            height = module[2]
+
+            self.load_from_array(frame, convert_to_png=True)
+            self.resize_to_resolution(
+                width, height,
+                override=True
+            )
+        
+        if "rotate" in keys:
+            module = self.pending["rotate"]
+            angle = module[0]
+            self.rotate(angle)
+        
+        if "resize" in keys:
+            module = self.pending["resize"]
+            ratio = module[0]
+            if not self.size == ratio:
+                self.resize_by_ratio(
+                    ratio, from_current_frame="rotate" in keys
+                )
+                self.size = ratio
+            
+        if "blur" in keys:
+            module = self.pending["blur"]
+            ammount = module[0]
+            self.gaussian_blur(ammount)
+        
+        if "fade" in keys:
+            module = self.pending["fade"]
+            ammount = module[0]
+            self.transparency(ammount)
+        
+        # ~ 0.23 seconds on 720p image
+        if "vignetting" in keys:
+
+            module = self.pending["vignetting"]
+
+            x = module[0]
+            y = module[1]
+            value_x = module[2]
+            value_y = module[3]
+
+            self.vignetting(
+                x, y,
+                value_x,
+                value_y
+            )

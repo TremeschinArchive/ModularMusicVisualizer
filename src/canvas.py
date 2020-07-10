@@ -33,6 +33,7 @@ class Canvas():
         self.utils = Utils()
 
         # Create new canvas
+        self.canvas = Frame()
         self.reset_canvas()
 
         # Processing variables
@@ -45,7 +46,7 @@ class Canvas():
         debug_prefix = "[Canvas.reset_canvas]"
 
         # Our Canvas is a blank Frame class
-        self.canvas = Frame()
+        # self.canvas = Frame()
         self.canvas.new(self.context.width, self.context.height, transparent=True)
 
     # Next step of animation
@@ -56,6 +57,8 @@ class Canvas():
         # No post processing
         if len(list(self.post_processing.keys())) == 0:
             return
+        
+        self.canvas.pending = {}
 
         # There is some post processing
         for key in sorted(list(self.post_processing.keys())):
@@ -104,12 +107,21 @@ class Canvas():
                     )
 
                     # Apply the new vignetting effect on the center of the screen
-                    self.canvas.vignetting(
-                        self.context.width//2,
-                        self.context.height//2,
-                        new_vignetting,
-                        new_vignetting
-                    )
+
+                    if self.context.multiprocessed:
+                        self.canvas.pending["vignetting"] = [
+                            self.context.width//2,
+                            self.context.height//2,
+                            new_vignetting,
+                            new_vignetting,
+                        ]
+                    else:
+                        self.canvas.vignetting(
+                            self.context.width//2,
+                            self.context.height//2,
+                            new_vignetting,
+                            new_vignetting
+                        )
 
                     # Update vignetting value
                     self.vignetting = new_vignetting
@@ -118,3 +130,6 @@ class Canvas():
         
         # Next step of animation
         self.current_step += 1
+    
+    def resolve_pending(self):
+        self.canvas.resolve_pending()

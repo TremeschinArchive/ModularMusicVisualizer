@@ -78,8 +78,9 @@ class MMVImage():
             self.current_step = 0
             return
         
-        # Reset offset
+        # Reset offset, pending
         self.offset = [0, 0]
+        self.image.pending = {}
 
         positions = this_animation["position"]
         steps = this_animation["steps"]
@@ -94,10 +95,19 @@ class MMVImage():
 
                 visualizer = this_module["object"]
 
-                self.image.load_from_array(
-                    visualizer.next(fftinfo, this_step),
-                    convert_to_png=True
-                )
+                if self.context.multiprocessed:
+                    visualizer.next(fftinfo, is_multiprocessing=True)
+                    self.image.pending["visualizer"] = [
+                        copy.deepcopy(visualizer), fftinfo
+                    ]
+                    self.image.width = visualizer.config["width"]
+                    self.image.height = visualizer.config["height"]
+
+                else:
+                    self.image.load_from_array(
+                        visualizer.next(fftinfo),
+                        convert_to_png=True
+                    )
 
             # The video module must be before everything as it gets the new frame                
             if "video" in modules:
@@ -117,19 +127,31 @@ class MMVImage():
                 # CV2 utilizes BGR matrix, but we need RGB
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 
-                self.image.load_from_array(frame, convert_to_png=True)
-                self.image.resize_to_resolution(
-                    self.context.width + (2*this_module["shake"]),
-                    self.context.height + (2*this_module["shake"]),
-                    override=True
-                )
+                if self.context.multiprocessed:
+                    self.image.pending["video"] = [
+                        copy.deepcopy(frame),
+                        self.context.width + (2*this_module["shake"]),
+                        self.context.height + (2*this_module["shake"])
+                    ]
+                else:
+                    self.image.load_from_array(frame, convert_to_png=True)
+                    self.image.resize_to_resolution(
+                        self.context.width + (2*this_module["shake"]),
+                        self.context.height + (2*this_module["shake"]),
+                        override=True
+                    )
 
             if "rotate" in modules:
 
                 this_module = modules["rotate"]
-
                 rotate = this_module["object"]
-                self.image.rotate(rotate.next())
+                
+                if self.context.multiprocessed:
+                    self.image.pending["rotate"] = [
+                        rotate.next()
+                    ]
+                else:
+                    self.image.rotate(rotate.next())
 
             if "resize" in modules:
 
@@ -152,11 +174,16 @@ class MMVImage():
                 )
                 self.size = a
 
-                offset = self.image.resize_by_ratio(
-                    a,
-                    # If we're going to rotate, resize the rotated frame which is not the original image
-                    from_current_frame="rotate" in modules
-                )
+                if self.context.multiprocessed:
+                    self.image.pending["resize"] = [a]
+                    offset = self.image.resize_by_ratio(
+                        a, get_only_offset=True
+                    )
+                else:
+                    offset = self.image.resize_by_ratio(
+                        # If we're going to rotate, resize the rotated frame which is not the original image
+                        a, from_current_frame="rotate" in modules
+                    )
 
                 if this_module["keep_center"]:
                     self.offset[0] += offset[0]
@@ -166,9 +193,12 @@ class MMVImage():
 
                 this_module = modules["blur"]
 
-                self.image.gaussian_blur(
-                    eval(this_module["activation"].replace("X", str(fftinfo["average_value"])))
-                )
+                ammount = eval(this_module["activation"].replace("X", str(fftinfo["average_value"])))
+
+                if self.context.multiprocessed:
+                    self.image.pending["blur"] = [ammount]
+                else:
+                    self.image.gaussian_blur(ammount)
             
             if "fade" in modules:
 
@@ -185,14 +215,17 @@ class MMVImage():
                         fade.current_step,
                         this_module["arg_a"]
                     )
-                    self.image.transparency(t)
+                    if self.context.multiprocessed:
+                        self.image.pending["fade"] = [t]
+                    else:
+                        self.image.transparency(t)
                     fade.current_step += 1
                 else:
                     # TODO: Failsafe really necessary?
-                    self.image.transparency(fade.end_percentage)
-
-
-            # print("APP", a)
+                    if self.context.multiprocessed:
+                        self.image.pending["fade"] = [fade.end_percentage]
+                    else:
+                        self.image.transparency(fade.end_percentage)
 
         # Iterate through every position module
         for position in positions:
@@ -246,19 +279,17 @@ class MMVImage():
     # Blit this item on the canvas
     def blit(self, canvas):
 
-        img = self.image
-        width, height, _ = img.frame.shape
-        
         x = int(self.x + self.offset[1] + self.base_offset[1])
         y = int(self.y + self.offset[0] + self.base_offset[0])
 
         canvas.canvas.overlay_transparent(
             self.image.frame,
-            y,
-            x
+            y, x
         )
 
         # This is for trivia / future, how it used to work until overlay_transparent wasn't slow anymore
+        # img = self.image
+        # width, height, _ = img.frame.shape
         # canvas.canvas.copy_from(
         #     self.image.frame,
         #     canvas.canvas.frame,
@@ -266,3 +297,6 @@ class MMVImage():
         #     [x, y],
         #     [x + width - 1, y + height - 1]
         # )
+
+    def resolve_pending(self):
+        self.image.resolve_pending()

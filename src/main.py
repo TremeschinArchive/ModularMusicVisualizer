@@ -77,7 +77,10 @@ class MMV():
         self.context.duration = self.audio.info["duration"]
 
         print(debug_prefix, "Creating MMVAnimation()")
-        self.mmvanimation = MMVAnimation(self.context, self.controller, self.canvas, self.audio)
+        self.mmvanimation = MMVAnimation(self.context, self.controller, self.audio)
+
+        print(debug_prefix, "Creating Frame()")
+        self.frame = Frame()
 
         print(debug_prefix, "Creating Core()")
         self.core = Core(
@@ -88,12 +91,12 @@ class MMV():
             self.fourier,
             self.ffmpeg,
             self.audio,
-            self.mmvanimation
+            self.mmvanimation,
         )
 
         # # #
 
-        self.ffmpeg.pipe_one_time(self.context.ROOT + os.path.sep + "demorun.mp4")
+        self.ffmpeg.pipe_one_time(self.context.ROOT + os.path.sep + "demorun.mkv")
         self.core.start()
 
 
@@ -108,12 +111,16 @@ if __name__ == "__main__":
     # Add arguments
     args.add_argument('-i', '--input_file', required=True, help="(string) Input audio to generate final video, if not .wav uses ffmpeg to convert")
     args.add_argument("-p", "--preset", required=False, help="(string) Resolution and FPS presets [l, m, h, u, M] (low, medium, high, ultra, max respectively)")
+    args.add_argument("-m", "--multiprocessed", required=False, action="store_true", help="(solo) Use multiprocessing with svg rasterizer")
+    args.add_argument("-w", "--workers", required=False, help="(int) Multiprocessing Process count, defaults to system number of threads")
 
     # Parse and organize the arguments
     args = args.parse_args()
     args = {
         "input_file": args.input_file,
         "preset": args.preset,
+        "multiprocessed": args.multiprocessed,
+        "workers": args.workers,
     }
 
     MMV(args)

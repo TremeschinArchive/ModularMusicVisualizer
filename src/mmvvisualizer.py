@@ -22,13 +22,13 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from coordinates import PolarCoordinates
 from interpolation import Interpolation
 from functions import Functions
+from resampy import resample
 from modifiers import *
 from frame import Frame
 from utils import Utils
 from svg import SVG
 import svgwrite
 import random
-import resampy
 import math
 import os
 
@@ -48,7 +48,7 @@ class MMVVisualizer():
         self.svg = SVG(
             self.config["width"],
             self.config["height"],
-            self.context.svg_rasterizer,
+            "cairo", #self.context.svg_rasterizer, # cairo is just faster here
             "png"
         )
 
@@ -74,9 +74,10 @@ class MMVVisualizer():
         return array_smooth
 
     # Next step of animation
-    def next(self, fftinfo, this_step):
+    def next(self, fftinfo, is_multiprocessing=False):
 
-        self.svg.new_drawing()
+        if not is_multiprocessing:
+            self.svg.new_drawing()
 
         fitfourier = self.config["fourier"]["fitfourier"]
 
@@ -102,78 +103,75 @@ class MMVVisualizer():
                 interpolation["arg_a"]
             )
 
-        
-        fitted_fft = [0 for _ in range(len(fft))]
+        if not is_multiprocessing:
 
-        for i in range(len(fft) - 1):
-            
-            transformed_index = int((len(fft) - 1) * (self.functions.proportion(len(fft) - 1, 1, i) ** 1.5))
-            # transformed_index = int((len(fft) - 1) * (math.log(1 +self.functions.proportion(len(fft) - 1, 9, i), 10)))
-            fitted_fft[i] = self.current_fft[transformed_index]
+            fitted_fft = [0 for _ in range(len(fft))]
 
-        fitted_fft = self.smooth(fitted_fft, fitfourier["fft_smoothing"])
-        fitted_fft = resampy.resample(fitted_fft, len(fitted_fft), len(fitted_fft)*fitfourier["tesselation"])
-
-        cut = [0, 0.8]
-        fitted_fft = fitted_fft[
-            int(len(fitted_fft)*cut[0])
-            :
-            int(len(fitted_fft)*cut[1])
-        ]
-
-        mode = self.config["mode"]
-
-        if self.config["type"] == "circle":
-
-            points = []
-            
-            # avg_fft = sum(fft)/len(fft)
-            # fft = [max(x - avg_fft, 0) for x in fft]
-
-            for i in range(len(fitted_fft) - 1):
-
-                size = fitted_fft[i]*(0.3 + i/20)
-
-                # Simple
-                if mode == "linear":
-                    self.polar.from_r_theta(
-                        self.config["minimum_bar_distance"] + size,
-                        ((math.pi*2)/len(fitted_fft))*i # fitted_fft -> fft nice effect
-                    )
-
-                # Symetric
-                if mode == "symetric":
-                    self.polar.from_r_theta(
-                        self.config["minimum_bar_distance"] + size,
-                        (math.pi/2) - (((math.pi)/len(fitted_fft))*i) # fitted_fft -> fft nice effect
-                    )
+            for i in range(len(fft) - 1):
                 
-                coord = self.polar.get_rectangular_coordinates()
-                points.append(coord)
+                transformed_index = int((len(fft) - 1) * (self.functions.proportion(len(fft) - 1, 1, i) ** 1.5))
+                # transformed_index = int((len(fft) - 1) * (math.log(1 +self.functions.proportion(len(fft) - 1, 9, i), 10)))
+                fitted_fft[i] = self.current_fft[transformed_index]
 
-            # print(points)
+            fitted_fft = self.smooth(fitted_fft, fitfourier["fft_smoothing"])
+            fitted_fft = resample(fitted_fft, len(fitted_fft), len(fitted_fft)*fitfourier["tesselation"])
 
-            if mode == "symetric":
-                for point in reversed(points):
-                    points.append([ - point[0], point[1]])
-            
-            points.append(points[0])
-            
-            self.svg.dwg.add(
-                self.svg.dwg.polyline(
-                    points,
-                    stroke=svgwrite.rgb(60, 60, 60, '%'),
-                    fill='white',
+            cut = [0, 0.8]
+            fitted_fft = fitted_fft[
+                int(len(fitted_fft)*cut[0])
+                :
+                int(len(fitted_fft)*cut[1])
+            ]
+
+            mode = self.config["mode"]
+
+            if self.config["type"] == "circle":
+
+                points = []
+                
+                # avg_fft = sum(fft)/len(fft)
+                # fft = [max(x - avg_fft, 0) for x in fft]
+
+                for i in range(len(fitted_fft) - 1):
+
+                    size = fitted_fft[i]*(0.3 + i/20)
+
+                    # Simple
+                    if mode == "linear":
+                        self.polar.from_r_theta(
+                            self.config["minimum_bar_distance"] + size,
+                            ((math.pi*2)/len(fitted_fft))*i # fitted_fft -> fft nice effect
+                        )
+
+                    # Symetric
+                    if mode == "symetric":
+                        self.polar.from_r_theta(
+                            self.config["minimum_bar_distance"] + size,
+                            (math.pi/2) - (((math.pi)/len(fitted_fft))*i) # fitted_fft -> fft nice effect
+                        )
+                    
+                    coord = self.polar.get_rectangular_coordinates()
+                    points.append(coord)
+
+                if mode == "symetric":
+                    for point in reversed(points):
+                        points.append([ - point[0], point[1]])
+                
+                points.append(points[0])
+                
+                self.svg.dwg.add(
+                    self.svg.dwg.polyline(
+                        points,
+                        stroke=svgwrite.rgb(60, 60, 60, '%'),
+                        fill='white',
+                    )
                 )
-            )
 
-            # print(self.svg.dwg)
+                array = self.svg.get_array()
+            self.current_step += 1
 
-            array = self.svg.get_array()
-            # print(array)
-
+            return array
         self.current_step += 1
-        return array
 
     # Blit this item on the canvas
     def blit(self, canvas):

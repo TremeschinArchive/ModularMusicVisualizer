@@ -42,6 +42,8 @@ class MMVParticleGenerator():
     # Duck typing, this doesn't do anything
     def blit(self, _):
         pass
+    def resolve_pending(self):
+        pass
 
     def next(self, fftinfo, this_step):
         if this_step % 5 == 0:

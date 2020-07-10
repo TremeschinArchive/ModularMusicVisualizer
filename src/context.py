@@ -20,6 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from utils import Utils
+import multiprocessing
 import os
 
 
@@ -52,7 +53,9 @@ class Context():
         self.offset_audio_before_in_many_steps = self.fps // 8
 
         # Performance
-        self.svg_rasterizer = "wand"
+        self.svg_rasterizer = "cairo"
+        self.multiprocessed = False
+        self.multiprocessing_workers = multiprocessing.cpu_count()
 
         self.process_args()
     
@@ -83,7 +86,15 @@ class Context():
                 self.height = 1440
                 self.fps = 60
             print("PRESET: [%s], WIDTHxHEIGHT: [%sx%s] FPS: [%s]" % (preset, self.width, self.height, self.fps))
-
+        
+        if not self.args["multiprocessed"] == None:
+            self.multiprocessed = self.args["multiprocessed"]
+        
+        if not self.args["workers"] == None:
+            self.multiprocessing_workers = int(self.args["workers"])
+        
+        print(self.multiprocessing_workers)
+        
     # Delete and create (reset) the runtime directories
     def reset_directories(self):
         for d in []:

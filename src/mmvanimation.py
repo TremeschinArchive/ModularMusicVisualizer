@@ -32,10 +32,9 @@ import os
 
 
 class MMVAnimation():
-    def __init__(self, context, controller, canvas, audio):
+    def __init__(self, context, controller, audio):
         self.context = context
         self.controller = controller
-        self.canvas = canvas
         self.audio = audio
 
         self.interpolation = Interpolation()
@@ -193,7 +192,7 @@ class MMVAnimation():
             }
         }
         temp.image.load_from_path(
-            self.context.assets + os.path.sep + "tremx_assets" + os.path.sep + "layers" + os.path.sep + "nature.jpg",
+            self.context.assets + os.path.sep + "tremx_assets" + os.path.sep + "layers" + os.path.sep + "space.jpg",
             convert_to_png=True
         )
         temp.image.resize_to_resolution(
@@ -292,7 +291,7 @@ class MMVAnimation():
 
     def add_visualizer(self, shake=0):
 
-        visualizer_size = int((720/1280)*self.context.width)
+        visualizer_size = int((400/1280)*self.context.width)
         
         temp = MMVImage(self.context)
         temp.path[0] = {
@@ -350,7 +349,7 @@ class MMVAnimation():
                                 },
                                 "fitfourier": {
                                     "fft_smoothing": 3,
-                                    "tesselation": 2,
+                                    "tesselation": 1,
                                 }
                             }
                         }
@@ -381,17 +380,19 @@ class MMVAnimation():
 
     # Generate the objects on the animation
     # TODO: PROFILES, CURRENTLY MANUALLY SET HERE
-    def generate(self):
+    def generate(self, canvas):
+
+        self.canvas = canvas
 
         config = {
+            "static_background": False,
             "moving_background": False,
-            "static_background": True,
-            "layers_background": False,
+            "layers_background": True,
             "moving_video_background": False,
             "logo": True,
             "visualizer": True,
-            "add_post_processing": False,
-            "particles": False
+            "add_post_processing": True,
+            "particles": True
         }
 
         if config["moving_background"]:
@@ -452,7 +453,8 @@ class MMVAnimation():
                 new = item.next(fftinfo, this_step)
 
                 # Blit itself on the canvas
-                item.blit(self.canvas)
+                if not self.context.multiprocessed:
+                    item.blit(self.canvas)
 
                 # Item is an MMVGenerator so we'll see what it has to offer
                 if item.type == "mmvgenerator":
@@ -465,3 +467,9 @@ class MMVAnimation():
     
         # Post process this final frame as we added all the items
         self.canvas.next(fftinfo)
+
+        if self.context.multiprocessed:
+            return {
+                "content": self.content,
+                "fftinfo": fftinfo
+            }

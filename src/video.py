@@ -67,8 +67,11 @@ class FFmpegWrapper():
         self.images_to_pipe = []
 
     # Write images into pipe
-    def write_to_pipe(self, image):
-        self.images_to_pipe.append(copy.deepcopy(image.image_array()))
+    def write_to_pipe(self, image, already_PIL_Image=False):
+        if already_PIL_Image:
+            self.images_to_pipe.append(copy.deepcopy(image))
+        else:
+            self.images_to_pipe.append(copy.deepcopy(image.image_array()))
 
     # http://stackoverflow.com/a/9459208/284318
     def pure_pil_alpha_to_color_v2(self, image, color=(0, 0, 0)):
@@ -126,6 +129,6 @@ class FFmpegWrapper():
 
         print(debug_prefix, "Waiting process to finish")
 
-        self.pipe_subprocess.wait()
+        # self.pipe_subprocess.wait()
 
         print(debug_prefix, "Closed!!")
