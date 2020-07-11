@@ -444,11 +444,11 @@ class MMVAnimation():
                 self.content[new["layer"]].append(new_object)
 
         for index in sorted(list(self.content.keys())):
-            for item in self.content[index]:
+            for position, item in enumerate(self.content[index]):
 
                 # We can delete the item as it has decided life wasn't worth anymore
                 if item.is_deletable:
-                    del item
+                    del self.content[index][position]
                     continue
 
                 # Generate next step of animation
