@@ -43,6 +43,7 @@ class MMVAnimation():
         self.utils = Utils()
 
         self.content = {}
+        self.generators = []
 
         n_layers = 10
         for n in range(n_layers):
@@ -377,7 +378,7 @@ class MMVAnimation():
 
     def add_particles_generator(self):        
         generator = MMVParticleGenerator(self.context)
-        self.content[0].append(generator)
+        self.generators.append(generator)
 
     # Generate the objects on the animation
     # TODO: PROFILES, CURRENTLY MANUALLY SET HERE
@@ -388,8 +389,8 @@ class MMVAnimation():
         config = {
             "static_background": False,
             "moving_background": False,
-            "layers_background": True,
-            "moving_video_background": False,
+            "layers_background": False,
+            "moving_video_background": True,
             "logo": True,
             "visualizer": True,
             "add_post_processing": True,
@@ -430,6 +431,18 @@ class MMVAnimation():
     # Call every next step of the content animations
     def next(self, audio_slice, fftinfo, this_step):
 
+        for item in self.generators:
+
+            # Get what the generator has to offer
+            new = item.next(fftinfo, this_step)
+
+            # The response object (if any [None]) and layer to instert on this self.content
+            new_object = new["object"]
+
+            # Object is not null, add it to the said layer
+            if not new_object == None:
+                self.content[new["layer"]].append(new_object)
+
         for index in sorted(list(self.content.keys())):
             for item in self.content[index]:
 
@@ -439,22 +452,11 @@ class MMVAnimation():
                     continue
 
                 # Generate next step of animation
-                new = item.next(fftinfo, this_step)
+                item.next(fftinfo, this_step)
 
                 # Blit itself on the canvas
                 if not self.context.multiprocessed:
                     item.blit(self.canvas)
 
-                # Item is an MMVGenerator so we'll see what it has to offer
-                if item.type == "mmvgenerator":
-
-                    # The response object (if any [None]) and layer to instert on this self.content
-                    new_object = new["object"]
-
-                    # Object is not null, add it to the said layer
-                    if not new_object == None:
-                        self.content[new["layer"]].append(new_object)
-    
         # Post process this final frame as we added all the items
         self.canvas.next(fftinfo)
-
