@@ -96,7 +96,7 @@ class FFmpegWrapper():
                 took = now - start
                 eta = round(self.functions.proportion(current_time, took, remaining) / 60, 2)
                 
-                print("Write to pipe, count=[%s] proc=[%.2f sec / %.2f sec] total=[%.2f min] eta=[%.2f min]" % (count, current_time, duration, round(took/60, 2), eta))
+                print("Frame count=[%s] proc=[%.2f sec / %.2f sec] took=[%.2f min] eta=[%.2f min] sum=[%.2f min]" % (count, current_time, duration, round(took/60, 2), eta, round((took/60 + eta), 2)))
             else:
                 time.sleep(0.1)
 
