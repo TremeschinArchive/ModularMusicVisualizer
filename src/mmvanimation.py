@@ -119,7 +119,7 @@ class MMVAnimation():
                     "arg_a": 0.08,
                 },
                 "blur": {
-                    "activation": "15*X",
+                    "activation": "13*X",
                 },
                 "video": {
                     "path": self.context.ROOT + os.path.sep + "vid.mkv",
@@ -271,8 +271,8 @@ class MMVAnimation():
                 "resize": {
                     "keep_center": True,
                     "interpolation": copy.deepcopy(self.interpolation.remaining_approach),
-                    "activation": "1 + 5*X",
-                    "arg_a": 0.08,
+                    "activation": "1 + 6*X",
+                    "arg_a": 0.07,
                 },
                 "rotate": {
                     "object": SineSwing(6, 100)
@@ -293,7 +293,7 @@ class MMVAnimation():
 
     def add_visualizer(self, shake=0):
 
-        visualizer_size = int((400/1280)*self.context.width)
+        visualizer_size = self.context.height #int((600/1280)*self.context.width)
         
         temp = MMVImage(self.context)
         temp.path[0] = {
@@ -319,15 +319,15 @@ class MMVAnimation():
                 "resize": {
                     "keep_center": True,
                     "interpolation": copy.deepcopy(self.interpolation.remaining_approach),
-                    "activation": "1 + 5*X",
-                    "arg_a": 0.08,
+                    "activation": "1 + 6*X",
+                    "arg_a": 0.14,
                 },
-                "rotate": {
-                    "object": LinearSwing(10)
-                },
-                "blur": {
-                    "activation": "20*X",
-                },
+                # "rotate": {
+                #     "object": LinearSwing(10)
+                # },
+                # "blur": {
+                #     "activation": "20*X",
+                # },
                 "visualizer": {
                     "object": MMVVisualizer(
                         self.context,
@@ -337,7 +337,6 @@ class MMVAnimation():
                             "width": visualizer_size,
                             "height": visualizer_size,
                             "minimum_bar_distance": 100,
-                            "maximum_bar_distance": 200,
                             "activation": {
                                 "function": copy.deepcopy(self.functions.sigmoid),
                                 "arg_a": 10,
@@ -346,12 +345,12 @@ class MMVAnimation():
                                 "interpolation": {
                                     "function": copy.deepcopy(self.interpolation.remaining_approach),
                                     "activation": "X",
-                                    "arg_a": 0.34,
+                                    "arg_a": 0.25,
                                     "steps": math.inf
                                 },
                                 "fitfourier": {
-                                    "fft_smoothing": 4,
-                                    "tesselation": 2,
+                                    "fft_smoothing": 2,
+                                    "tesselation": 4,
                                 }
                             }
                         }
@@ -389,8 +388,8 @@ class MMVAnimation():
         config = {
             "static_background": False,
             "moving_background": False,
-            "layers_background": False,
-            "moving_video_background": True,
+            "layers_background": True,
+            "moving_video_background": False,
             "logo": True,
             "visualizer": True,
             "add_post_processing": True,

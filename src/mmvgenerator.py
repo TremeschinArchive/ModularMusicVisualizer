@@ -47,7 +47,7 @@ class MMVParticleGenerator():
         pass
 
     def next(self, fftinfo, this_step):
-        if this_step % 5 == 0:
+        if this_step % 10 == 0:
             return {
                 "object": self.add_random_particle(),
                 "layer": 3

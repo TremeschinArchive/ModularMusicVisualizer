@@ -108,14 +108,14 @@ class MMVVisualizer():
 
             for i in range(len(fft) - 1):
                 
-                transformed_index = int((len(fft) - 1) * (self.functions.proportion(len(fft) - 1, 1, i) ** 1.5))
+                transformed_index = int((len(fft) - 1) * (self.functions.proportion(len(fft) - 1, 1, i) ** 2))
                 # transformed_index = int((len(fft) - 1) * (math.log(1 +self.functions.proportion(len(fft) - 1, 9, i), 10)))
                 fitted_fft[i] = self.current_fft[transformed_index]
 
             fitted_fft = self.smooth(fitted_fft, fitfourier["fft_smoothing"])
             fitted_fft = resample(fitted_fft, len(fitted_fft), len(fitted_fft)*fitfourier["tesselation"])
 
-            cut = [0, 0.8]
+            cut = [0.05, 0.95]
             fitted_fft = fitted_fft[
                 int(len(fitted_fft)*cut[0])
                 :
@@ -133,7 +133,7 @@ class MMVVisualizer():
 
                 for i in range(len(fitted_fft) - 1):
 
-                    size = fitted_fft[i]*(0.3 + i/20)
+                    size = fitted_fft[i]*(0.1 + i/80)
 
                     # Simple
                     if mode == "linear":
