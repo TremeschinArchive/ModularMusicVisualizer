@@ -20,66 +20,45 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from utils import Utils
-import multiprocessing
 import threading
 import pickle
 import time
 import copy
+import ray
+import sys
 import os
 
-with open("./communicate.txt", "w") as f:
-    f.write("")
 
+@ray.remote
+class Worker():
 
-def get_canvas_multiprocess_return(queue, worker_id, return_dict):
+    def get_canvas_multiprocess_return(self, instructions, worker_id):
 
-    while True:
-        
-        instructions = queue.get()
+        instructions = pickle.loads(instructions)
 
-        start = time.time()
-
-        if instructions == "stop":
-            break
-    
         canvas = instructions["canvas"]
         instructions_content = instructions["content"]
-        canvas = instructions["canvas"]
         fftinfo = instructions["fftinfo"]
         instructions_index = instructions["index"]
 
         del instructions
 
-        with open("./communicate.txt", "a") as f:
-            f.write(str(worker_id) + " " + str(instructions_index) + " " + str(time.time() - start) + " start\n")
-
         canvas.reset_canvas()
-
-        with open("./communicate.txt", "a") as f:
-            f.write(str(worker_id) + " " + str(instructions_index) + " " + str(time.time() - start) + " reset canvas\n")
 
         for index in sorted(list(instructions_content.keys())):
             for item in instructions_content[index]:
                 item.resolve_pending()
         
-        with open("./communicate.txt", "a") as f:
-            f.write(str(worker_id) + " " + str(instructions_index) + " " + str(time.time() - start) + " item resolve pending\n")
-  
         for index in sorted(list(instructions_content.keys())):
-            for item in instructions_content[index]:     
+            for item in instructions_content[index]:
                 item.blit(canvas)
-
-        with open("./communicate.txt", "a") as f:
-            f.write(str(worker_id) + " " + str(instructions_index) + " " + str(time.time() - start) + " blit\n")
+                del item
 
         # canvas.canvas.save("data/d%s.png" % instructions_index)
         canvas.resolve_pending()
 
-        with open("./communicate.txt", "a") as f:
-            f.write(str(worker_id) + " " + str(instructions_index) + " " + str(time.time() - start) + " resolve pending canvas\n")
         # canvas.canvas.save("data/da%s.png" % index)
-        # print(index, "returning")
-        return_dict[instructions_index] = copy.deepcopy(canvas.canvas.image_array())
+        return canvas.canvas
 
 
 class Core():
@@ -97,6 +76,8 @@ class Core():
 
         self.ROOT = self.context.ROOT
         self.count = 0
+
+        self.multiprocessed = self.context.multiprocessed
 
     # Calls and starts threads 
     def start(self):
@@ -118,66 +99,31 @@ class Core():
         print(debug_prefix, "Started!!")
 
         self.run()
-    
-    def setup_multiprocessing(self):
-        debug_prefix = "[Core.setup_multiprocessing]"
 
-        for worker_id in range(self.context.multiprocessing_workers):
-            print("applying async", worker_id)
-            multiprocessing.Process(
-            # self.pool.apply_async(
-                target=get_canvas_multiprocess_return,
-                # get_canvas_multiprocess_return,
-                args=(
-                    self.queue,
-                    worker_id,
-                    self.mp_return_dict
-                )
-            # )
-            ).start()
-            print("Applied async")
-    
     def write_to_pipe_from_multiprocessing(self):
         while True:
             if self.total_steps - 1 == self.count:
                 self.ffmpeg.close_pipe()
-                for _ in range(self.context.multiprocessing_workers):
-                    self.queue.put("stop")
+                ray.shutdown()
                 break
-            
-            for key in self.mp_return_dict.keys():
-                if key < self.count:
-                    del self.mp_return_dict[key]
             
             if self.count in list(self.returned_images.keys()):
                 image = self.returned_images[self.count]
-                self.ffmpeg.write_to_pipe(image, already_PIL_Image=True)
+                self.ffmpeg.write_to_pipe(self.count, image)
                 del self.returned_images[self.count]
                 self.count += 1
             else:
                 time.sleep(0.1)
                 # print("waiting for", self.count, self.mp_return_dict.keys())
 
-    def get_mp_return_dict_to_returned_images(self, index):
-        self.returned_images[index] = self.mp_return_dict[index]
-        del self.mp_return_dict[index]
-
-    def get_images_from_shared_dict(self):
-        while not self.ffmpeg.stop_piping:
-            for index in list(self.mp_return_dict.keys()):
-                if not index in self.already_returned_image_indexes:
-                    self.already_returned_image_indexes.append(index)
-                    threading.Thread(
-                        target=self.get_mp_return_dict_to_returned_images,
-                        args=(index,)
-                    ).start()
-
-
-    def put_on_queue(self, update_dict):
-        start = time.time()
-        self.queue.put(update_dict)
-        with open("./communicate.txt", "a") as f:
-            f.write("run" + " " + "0" + " " + str(time.time() - start) + " put on queue\n")
+    def new_ray_process(self, global_frame_index, worker_id, update_dict):
+        self.returned_images[
+            global_frame_index
+        ] = ray.get(
+            self.ray_processes[worker_id]
+            .get_canvas_multiprocess_return
+            .remote(update_dict, worker_id)
+        )
 
     def run(self):
 
@@ -195,27 +141,22 @@ class Core():
         self.mmvanimation.generate(self.canvas)
 
         if self.context.multiprocessed:
-            # ctx = multiprocessing.get_context("spawn")
-            # self.pool = ctx.Pool(processes=self.context.multiprocessing_workers)
-            # self.manager = ctx.Manager()
-            self.pool = multiprocessing.Pool(processes=self.context.multiprocessing_workers)
-            self.manager = multiprocessing.Manager()
-            self.mp_return_dict = self.manager.dict()
-            self.already_returned_image_indexes = []
+            ray.init(
+                num_cpus=self.context.multiprocessing_workers,
+            )
+            self.ray_processes = {}
             self.returned_images = {}
-            self.queue = multiprocessing.Queue()
+            for index in range(self.context.multiprocessing_workers):
+                self.ray_processes[index] = Worker.remote()
             self.write_thread = threading.Thread(target=self.write_to_pipe_from_multiprocessing).start()
-            self.get_images_from_shared_dict = threading.Thread(target=self.get_images_from_shared_dict).start()
-            self.setup_multiprocessing()
         else:
             self.canvas.reset_canvas()
 
         # Next animation
         for this_step in range(0, self.total_steps):
+
             global_frame_index = this_step
             
-            start = time.time()
-
             # Add the offset audio step (because interpolation isn't instant for smoothness)
             this_step += self.context.offset_audio_before_in_many_steps
 
@@ -234,57 +175,53 @@ class Core():
             until = int(this_time_sample + self.context.batch_size)
 
             # Get the audio slice
-            audio_slice = self.audio.data[0][this_time_sample:until]
+            audio_slice = self.audio.data[this_time_sample:until]
 
-            # Calculate the fft on the frequencies
+            # Calculate the FFT on the frequencies
             fft = self.fourier.fft(
                 audio_slice,
                 self.audio.info
             )
 
-            with open("./communicate.txt", "a") as f:
-                f.write("run" + " " + str(global_frame_index) + " " + str(time.time() - start) + " ffts\n")
+            # Adapt the FFT
+            biased_total_size = abs(sum(fft)) / self.context.batch_size
+            average_value = sum([abs(x)/(2**self.audio.info["bit_depth"]) for x in audio_slice]) / len(audio_slice)
+
+            fftinfo = {
+                "average_value": average_value,
+                "biased_total_size": biased_total_size,
+                "fft": fft
+            }
 
             # Process next animation with audio info and the step count to process on
-            start = time.time()
-            content = self.mmvanimation.next(audio_slice, fft, this_step)
-            with open("./communicate.txt", "a") as f:
-                f.write("run" + " " + str(global_frame_index) + " " + str(time.time() - start) + " next\n")
-
-            if self.context.multiprocessed:
+            self.mmvanimation.next(audio_slice, fftinfo, this_step)
+            
+            if self.multiprocessed:
 
                 while global_frame_index - self.count >= self.context.multiprocessing_workers*2:
-                    # print("waiting")
                     time.sleep(0.05)
 
-                # print("new item", global_frame_index)
-
-                start = time.time()
-
-                update_dict = { 
-                    "content": content["content"],
+                # print("new item", global_frame_index, "asking worker", global_frame_index % self.context.multiprocessing_workers)
+                
+                update_dict = {
+                    "content": self.mmvanimation.content,
                     "canvas": self.canvas,
                     "context": self.context,
-                    "fftinfo": content["fftinfo"],
+                    "fftinfo": fftinfo,
                     "index": global_frame_index
                 }
 
-                with open("./communicate.txt", "a") as f:
-                    f.write("run" + " " + str(global_frame_index) + " " + str(time.time() - start) + " make update dict\n")
-
-                start = time.time()
-
                 threading.Thread(
-                    target=self.put_on_queue,
-                    args=(copy.deepcopy(update_dict),)
+                    target=self.new_ray_process,
+                    args=(
+                        global_frame_index,
+                        global_frame_index % self.context.multiprocessing_workers,
+                        pickle.dumps(update_dict, protocol=pickle.HIGHEST_PROTOCOL)
+                    )
                 ).start()
-                
-                with open("./communicate.txt", "a") as f:
-                    f.write("run" + " " + str(global_frame_index) + " " + str(time.time() - start) + " deepcopy instructions\n")
-
             else:
                 # Save current canvas's Frame to the final video
-                self.ffmpeg.write_to_pipe(self.canvas.canvas)
+                self.ffmpeg.write_to_pipe(global_frame_index, self.canvas.canvas)
 
                 # Hard debug, save the canvas into a folder
                 # self.canvas.canvas.save("data/canvas%s.png" % this_step)

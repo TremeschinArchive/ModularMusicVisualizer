@@ -35,6 +35,7 @@ import numpy as np
 import argparse
 import math
 import time
+import sys
 import os
 
 
@@ -97,8 +98,14 @@ class MMV():
         # # #
 
         self.ffmpeg.pipe_one_time(self.context.ROOT + os.path.sep + "demorun.mkv")
-        self.core.start()
 
+        try:
+            self.core.start()
+        except KeyboardInterrupt:
+            if self.context.multiprocessed:
+                import ray
+                ray.shutdown()
+            sys.exit(-1)
 
 if __name__ == "__main__":
 

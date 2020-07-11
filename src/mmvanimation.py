@@ -27,6 +27,7 @@ from mmvgenerator import *
 from modifiers import *
 from utils import Utils
 import random
+import copy
 import math
 import os
 
@@ -54,8 +55,8 @@ class MMVAnimation():
             "position": [
                 Point(-shake, -shake),
                 Shake({
-                    "interpolation_x": self.interpolation.remaining_approach,
-                    "interpolation_y": self.interpolation.remaining_approach,
+                    "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
+                    "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",
                     "y_steps": "end_interpolation",
                     "distance": shake,
@@ -69,7 +70,7 @@ class MMVAnimation():
             "modules": {
                 "resize": {
                     "keep_center": True,
-                    "interpolation": self.interpolation.remaining_approach,
+                    "interpolation": copy.deepcopy(self.interpolation.remaining_approach),
                     "activation": "1 + 2*X",
                     "arg_a": 0.08,
                 },
@@ -97,8 +98,8 @@ class MMVAnimation():
             "position": [
                 Point(-shake, -shake),
                 Shake({
-                    "interpolation_x": self.interpolation.remaining_approach,
-                    "interpolation_y": self.interpolation.remaining_approach,
+                    "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
+                    "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",
                     "y_steps": "end_interpolation",
                     "distance": shake,
@@ -112,7 +113,7 @@ class MMVAnimation():
             "modules": {
                 "resize": {
                     "keep_center": True,
-                    "interpolation": self.interpolation.remaining_approach,
+                    "interpolation": copy.deepcopy(self.interpolation.remaining_approach),
                     "activation": "1 + 0.3*X",
                     "arg_a": 0.08,
                 },
@@ -120,7 +121,7 @@ class MMVAnimation():
                     "activation": "15*X",
                 },
                 "video": {
-                    "path": self.context.ROOT + os.path.sep + "vid.mp4",
+                    "path": self.context.ROOT + os.path.sep + "vid.mkv",
                     "shake": shake
                 }
             }
@@ -135,8 +136,8 @@ class MMVAnimation():
             "position": [
                 Point(-shake, -shake),
                 Shake({
-                    "interpolation_x": self.interpolation.remaining_approach,
-                    "interpolation_y": self.interpolation.remaining_approach,
+                    "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
+                    "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",
                     "y_steps": "end_interpolation",
                     "distance": shake,
@@ -167,8 +168,8 @@ class MMVAnimation():
             "position": [
                 Point(-shake1, -shake1),
                 Shake({
-                    "interpolation_x": self.interpolation.remaining_approach,
-                    "interpolation_y": self.interpolation.remaining_approach,
+                    "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
+                    "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",
                     "y_steps": "end_interpolation",
                     "distance": shake1,
@@ -182,7 +183,7 @@ class MMVAnimation():
             "modules": {
                 "resize": {
                     "keep_center": True,
-                    "interpolation": self.interpolation.remaining_approach,
+                    "interpolation": copy.deepcopy(self.interpolation.remaining_approach),
                     "activation": "1 + 4*X",
                     "arg_a": 0.04,
                 },
@@ -206,8 +207,8 @@ class MMVAnimation():
             "position": [
                 Point(-shake2, -shake2),
                 Shake({
-                    "interpolation_x": self.interpolation.remaining_approach,
-                    "interpolation_y": self.interpolation.remaining_approach,
+                    "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
+                    "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",
                     "y_steps": "end_interpolation",
                     "distance": shake2,
@@ -221,7 +222,7 @@ class MMVAnimation():
             "modules": {
                 "resize": {
                     "keep_center": True,
-                    "interpolation": self.interpolation.remaining_approach,
+                    "interpolation": copy.deepcopy(self.interpolation.remaining_approach),
                     "activation": "1 + 2*X",
                     "arg_a": 0.08,
                 },
@@ -253,8 +254,8 @@ class MMVAnimation():
                     self.context.height // 2 - (logo_size/2)
                 ),
                 Shake({
-                    "interpolation_x": self.interpolation.remaining_approach,
-                    "interpolation_y": self.interpolation.remaining_approach,
+                    "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
+                    "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",
                     "y_steps": "end_interpolation",
                     "distance": shake,
@@ -268,7 +269,7 @@ class MMVAnimation():
             "modules": {
                 "resize": {
                     "keep_center": True,
-                    "interpolation": self.interpolation.remaining_approach,
+                    "interpolation": copy.deepcopy(self.interpolation.remaining_approach),
                     "activation": "1 + 5*X",
                     "arg_a": 0.08,
                 },
@@ -301,8 +302,8 @@ class MMVAnimation():
                     self.context.height // 2 - (visualizer_size/2)
                 ),
                 Shake({
-                    "interpolation_x": self.interpolation.remaining_approach,
-                    "interpolation_y": self.interpolation.remaining_approach,
+                    "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
+                    "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",
                     "y_steps": "end_interpolation",
                     "distance": shake,
@@ -316,7 +317,7 @@ class MMVAnimation():
             "modules": {
                 "resize": {
                     "keep_center": True,
-                    "interpolation": self.interpolation.remaining_approach,
+                    "interpolation": copy.deepcopy(self.interpolation.remaining_approach),
                     "activation": "1 + 5*X",
                     "arg_a": 0.08,
                 },
@@ -337,19 +338,19 @@ class MMVAnimation():
                             "minimum_bar_distance": 100,
                             "maximum_bar_distance": 200,
                             "activation": {
-                                "function": self.functions.sigmoid,
+                                "function": copy.deepcopy(self.functions.sigmoid),
                                 "arg_a": 10,
                             },
                             "fourier": {
                                 "interpolation": {
-                                    "function": self.interpolation.remaining_approach,
+                                    "function": copy.deepcopy(self.interpolation.remaining_approach),
                                     "activation": "X",
                                     "arg_a": 0.34,
                                     "steps": math.inf
                                 },
                                 "fitfourier": {
-                                    "fft_smoothing": 3,
-                                    "tesselation": 1,
+                                    "fft_smoothing": 4,
+                                    "tesselation": 2,
                                 }
                             }
                         }
@@ -366,7 +367,7 @@ class MMVAnimation():
             "steps": math.inf,
             "modules": {
                 "vignetting": {
-                    "interpolation": self.interpolation.remaining_approach,
+                    "interpolation": copy.deepcopy(self.interpolation.remaining_approach),
                     "activation": "%s - 8000*X" % vignetting_start,
                     "arg_a": 0.09,
                     "minimum": 450,
@@ -427,19 +428,7 @@ class MMVAnimation():
             self.add_particles_generator()
 
     # Call every next step of the content animations
-    def next(self, audio_slice, fft, this_step):
-
-        # Calculate some fft from the audio
-        biased_total_size = abs(sum(fft)) / self.context.batch_size
-        average_value = sum([abs(x)/(2**self.audio.info["bit_depth"]) for x in audio_slice]) / len(audio_slice)
-
-        fftinfo = {
-            "average_value": average_value,
-            "biased_total_size": biased_total_size,
-            "fft": fft
-        }
-
-        # print(">>>>", fftinfo, audio_slice)
+    def next(self, audio_slice, fftinfo, this_step):
 
         for index in sorted(list(self.content.keys())):
             for item in self.content[index]:
@@ -458,6 +447,7 @@ class MMVAnimation():
 
                 # Item is an MMVGenerator so we'll see what it has to offer
                 if item.type == "mmvgenerator":
+
                     # The response object (if any [None]) and layer to instert on this self.content
                     new_object = new["object"]
 
@@ -468,8 +458,3 @@ class MMVAnimation():
         # Post process this final frame as we added all the items
         self.canvas.next(fftinfo)
 
-        if self.context.multiprocessed:
-            return {
-                "content": self.content,
-                "fftinfo": fftinfo
-            }

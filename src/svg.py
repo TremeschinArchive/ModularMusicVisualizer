@@ -29,6 +29,7 @@ import cairosvg
 import svgwrite
 import base64
 import sys
+import os
 
 
 class SVG():
@@ -70,17 +71,19 @@ class SVG():
                 return Image.open(BytesIO(image.make_blob(self.mode)))
 
         elif self.rasterizer == "cairo":
-                
+
             # Save the file to this temporary buffer
-            buffer = BytesIO()
+            r, w = os.pipe()
 
             # Save the svg to the temporary buffer
-            cairosvg.svg2png(bytestring=svg_string, write_to=buffer)
+            cairosvg.svg2png(bytestring=svg_string, write_to=open(w, "wb"))
             # cairosvg.surface.PNGSurface.convert(svg_string, write_to=buffer)
 
             # Open the image from the buffer, convert to png
-            image = Image.open(buffer)
-            
+            image = Image.open(open(r, "rb"))
+
+            del r, w
+
             if convert_to_png:
                 image = image.convert("RGBA")
             else:

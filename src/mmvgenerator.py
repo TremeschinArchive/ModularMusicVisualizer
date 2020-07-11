@@ -26,6 +26,7 @@ from mmvimage import MMVImage
 from modifiers import *
 from utils import Utils
 import random
+import copy
 import math
 import os
 
@@ -73,8 +74,8 @@ class MMVParticleGenerator():
         y3 = y2 + random.randint(-vertical_randomness_min, -vertical_randomness_max)
 
         particle_shake = Shake({
-            "interpolation_x": self.interpolation.remaining_approach,
-            "interpolation_y": self.interpolation.remaining_approach,
+            "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
+            "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
             "x_steps": "end_interpolation",
             "y_steps": "end_interpolation",
             "distance": 18,
@@ -85,6 +86,7 @@ class MMVParticleGenerator():
         fast = 0.05
         fade_intensity = random.uniform(0.1, 0.7)
 
+        this_steps = random.randint(50, 100)
         particle.path[0] = {
             "position": [
                 Line(
@@ -93,14 +95,14 @@ class MMVParticleGenerator():
                 ),
                 particle_shake
             ],
-            "interpolation_x": self.interpolation.remaining_approach,
+            "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
             "interpolation_x_arg_a": fast,
-            "interpolation_y": self.interpolation.remaining_approach,
+            "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
             "interpolation_y_arg_a": fast,
-            "steps": random.randint(50, 100),
+            "steps": this_steps,
             "modules": {
                 "fade": {
-                    "interpolation": self.interpolation.linear,
+                    "interpolation": copy.deepcopy(self.interpolation.linear),
                     "arg_a": None,
                     "object": Fade(
                         start_percentage=0,
@@ -120,14 +122,14 @@ class MMVParticleGenerator():
                 ),
                 particle_shake
             ],
-            "interpolation_x": self.interpolation.remaining_approach,
+            "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
             "interpolation_x_arg_a": fast,
-            "interpolation_y": self.interpolation.remaining_approach,
+            "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
             "interpolation_y_arg_a": fast,
             "steps": this_steps,
             "modules": {
                 "fade": {
-                    "interpolation": self.interpolation.linear,
+                    "interpolation": copy.deepcopy(self.interpolation.linear),
                     "arg_a": None,
                     "object": Fade(
                         start_percentage=fade_intensity,

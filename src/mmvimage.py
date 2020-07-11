@@ -37,6 +37,7 @@ class MMVImage():
 
         self.interpolation = Interpolation()
         self.utils = Utils()
+        self.image = Frame()
 
         self.path = {}
 
@@ -44,7 +45,7 @@ class MMVImage():
         self.y = 0
         self.size = 1
         self.current_animation = 0
-        self.current_step = 0
+        self.current_step = -1
         self.is_deletable = False
         self.type = "mmvimage"
 
@@ -56,24 +57,29 @@ class MMVImage():
         self.base_offset = [0, 0]
         self.offset = [0, 0]
 
-        # Create Frame and load random particle
-        self.image = Frame()
+        self.ROUND = 3
+    
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        # Don't pickle video
+        del state["video"]
+        return state
         
     # Next step of animation
     def next(self, fftinfo, this_step):
 
+        self.current_step += 1
+
         # Animation has ended, this current_animation isn't present on path.keys
         if not self.current_animation in list(self.path.keys()):
-            # print("No more animations, quitting")
             self.is_deletable = True
             return
 
         # The animation we're currently playing
         this_animation = self.path[self.current_animation]
-        
+
         # The current step is one above the steps we've been told, next animation
         if self.current_step == this_animation["steps"] + 1:
-            # print("Out of steps, next animation")
             self.current_animation += 1
             self.current_step = 0
             return
@@ -126,18 +132,21 @@ class MMVImage():
                 
                 # CV2 utilizes BGR matrix, but we need RGB
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+                width = self.context.width + (2*this_module["shake"])
+                height = self.context.height + (2*this_module["shake"])
                 
                 if self.context.multiprocessed:
                     self.image.pending["video"] = [
                         copy.deepcopy(frame),
-                        self.context.width + (2*this_module["shake"]),
-                        self.context.height + (2*this_module["shake"])
+                        width, height
                     ]
+                    self.image.width = width
+                    self.image.height = height
                 else:
                     self.image.load_from_array(frame, convert_to_png=True)
                     self.image.resize_to_resolution(
-                        self.context.width + (2*this_module["shake"]),
-                        self.context.height + (2*this_module["shake"]),
+                        width, height,
                         override=True
                     )
 
@@ -145,44 +154,47 @@ class MMVImage():
 
                 this_module = modules["rotate"]
                 rotate = this_module["object"]
+
+                ammount = rotate.next()
+                ammount = round(ammount, self.ROUND)
                 
                 if self.context.multiprocessed:
-                    self.image.pending["rotate"] = [
-                        rotate.next()
-                    ]
+                    self.image.pending["rotate"] = [ammount]
                 else:
-                    self.image.rotate(rotate.next())
+                    self.image.rotate(ammount)
 
             if "resize" in modules:
 
                 this_module = modules["resize"]
         
-                a = fftinfo["average_value"]
+                ammount = fftinfo["average_value"]
 
-                if a > 1:
-                    a = 1
-                if a < -0.9:
-                    a = -0.9
+                if ammount > 1:
+                    ammount = 1
+                if ammount < -0.9:
+                    ammount = -0.9
 
-                a = this_module["interpolation"](
+                ammount = this_module["interpolation"](
                     self.size,
-                    eval(this_module["activation"].replace("X", str(a))),
+                    eval(this_module["activation"].replace("X", str(ammount))),
                     self.current_step,
                     steps,
                     self.size,
                     this_module["arg_a"]
                 )
-                self.size = a
+
+                ammount = round(ammount, self.ROUND)
+                self.size = ammount
 
                 if self.context.multiprocessed:
-                    self.image.pending["resize"] = [a]
+                    self.image.pending["resize"] = [ammount]
                     offset = self.image.resize_by_ratio(
-                        a, get_only_offset=True
+                        ammount, get_only_offset=True
                     )
                 else:
                     offset = self.image.resize_by_ratio(
                         # If we're going to rotate, resize the rotated frame which is not the original image
-                        a, from_current_frame="rotate" in modules
+                        ammount, from_current_frame="rotate" in modules
                     )
 
                 if this_module["keep_center"]:
@@ -194,6 +206,7 @@ class MMVImage():
                 this_module = modules["blur"]
 
                 ammount = eval(this_module["activation"].replace("X", str(fftinfo["average_value"])))
+                ammount = round(ammount, self.ROUND)
 
                 if self.context.multiprocessed:
                     self.image.pending["blur"] = [ammount]
@@ -207,7 +220,7 @@ class MMVImage():
                 fade = this_module["object"]
                 
                 if fade.current_step < fade.finish_steps:
-                    t = this_module["interpolation"](
+                    ammount = this_module["interpolation"](
                         fade.start_percentage,  
                         fade.end_percentage,
                         self.current_step,
@@ -215,10 +228,14 @@ class MMVImage():
                         fade.current_step,
                         this_module["arg_a"]
                     )
+
+                    ammount = round(ammount, self.ROUND)
+
                     if self.context.multiprocessed:
-                        self.image.pending["fade"] = [t]
+                        self.image.pending["fade"] = [ammount]
                     else:
-                        self.image.transparency(t)
+                        self.image.transparency(ammount)
+                        
                     fade.current_step += 1
                 else:
                     # TODO: Failsafe really necessary?
@@ -273,9 +290,6 @@ class MMVImage():
                 self.offset[0] += position.x
                 self.offset[1] += position.y
 
-        # Next step, end of loop
-        self.current_step += 1
-    
     # Blit this item on the canvas
     def blit(self, canvas):
 

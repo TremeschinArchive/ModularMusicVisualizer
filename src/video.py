@@ -21,11 +21,12 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from functions import Functions
 from PIL import Image
+import numpy as np
 import subprocess
+import ffmpeg
 import copy
 import time
 import sys
-
 
 class FFmpegWrapper():
     def __init__(self, context):
@@ -40,38 +41,28 @@ class FFmpegWrapper():
 
         debug_prefix = "[FFmpegWrapper.pipe_one_time]"
 
-        command = [
-                self.ffmpeg_binary,
-                '-loglevel', 'panic',
-                '-nostats',
-                '-hide_banner',
-                '-y',
-                '-r', str(self.context.fps),
-                '-f', "image2pipe",
-                '-i', '-',
-                '-i', self.context.input_file,
-                #'-an',
-                '-c:v', 'libx264',
-                '-crf', '18',
-                '-pix_fmt', 'yuv420p',
-                '-r', str(self.context.fps),
-                output
-        ]
-
-        self.pipe_subprocess = subprocess.Popen(command, stdin=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=10**8)
+        self.pipe_subprocess = (
+            ffmpeg
+            .input('pipe:', format='rawvideo', pix_fmt='rgb24', r=self.context.fps, s='{}x{}'.format(self.context.width, self.context.height))
+            .output(output, pix_fmt='yuv420p', vcodec='libx264', r=self.context.fps, crf=18, loglevel="quiet")
+            .global_args('-i', self.context.input_file)
+            .overwrite_output()
+            .run_async(pipe_stdin=True)
+        )
 
         print(debug_prefix, "Open one time pipe")
 
         self.stop_piping = False
         self.lock_writing = False
-        self.images_to_pipe = []
+        self.images_to_pipe = {}
 
     # Write images into pipe
-    def write_to_pipe(self, image, already_PIL_Image=False):
-        if already_PIL_Image:
-            self.images_to_pipe.append(copy.deepcopy(image))
-        else:
-            self.images_to_pipe.append(copy.deepcopy(image.image_array()))
+    def write_to_pipe(self, index, image):
+        while len(list(self.images_to_pipe.keys())) >= 20:
+            print("Too many images on pipe buffer")
+            time.sleep(0.1)
+        self.images_to_pipe[index] = image
+        del image
 
     # http://stackoverflow.com/a/9459208/284318
     def pure_pil_alpha_to_color_v2(self, image, color=(0, 0, 0)):
@@ -86,15 +77,16 @@ class FFmpegWrapper():
         debug_prefix = "[FFmpegWrapper.pipe_writer_loop]"
 
         count = 0
-        
-        start = time.time()
 
         while not self.stop_piping:
-            if len(self.images_to_pipe) > 0:
+            if count in list(self.images_to_pipe.keys()):
+                if count == 0:
+                    start = time.time()
                 self.lock_writing = True
-                image = self.images_to_pipe.pop(0).convert("RGB")
-                # image = self.pure_pil_alpha_to_color_v2(image)
-                image.save(self.pipe_subprocess.stdin, format="jpeg", quality=100)
+                image = self.images_to_pipe[count]
+                self.pipe_subprocess.stdin.write(image.get_rgb_frame_array())
+                del image
+                del self.images_to_pipe[count]
                 self.lock_writing = False
                 count += 1
                 current_time = round((1/self.context.fps) * count, 2)
@@ -124,8 +116,6 @@ class FFmpegWrapper():
             time.sleep(0.1)
 
         self.stop_piping = True
-        self.pipe_subprocess.stdin.close()
-        self.pipe_subprocess.stderr.close()
 
         print(debug_prefix, "Waiting process to finish")
 

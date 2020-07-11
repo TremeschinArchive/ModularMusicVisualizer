@@ -42,7 +42,6 @@ class MMVVisualizer():
         self.context = context
         self.config = config
 
-        self.interpolation = Interpolation()
         self.functions = Functions()
         self.utils = Utils()
         self.svg = SVG(
