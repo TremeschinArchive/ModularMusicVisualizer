@@ -33,7 +33,7 @@ import os
 @ray.remote
 class Worker():
 
-    def get_canvas_multiprocess_return(self, instructions, worker_id):
+    def get_canvas_multiprocess_return(self, instructions):
 
         instructions = pickle.loads(instructions)
 
@@ -124,7 +124,7 @@ class Core():
         ] = ray.get(
             self.ray_processes[worker_id]
             .get_canvas_multiprocess_return
-            .remote(update_dict, worker_id)
+            .remote(update_dict)
         )
 
     def run(self):
@@ -258,7 +258,7 @@ class Core():
                 self.ffmpeg.write_to_pipe(global_frame_index, self.canvas.canvas)
 
                 # Hard debug, save the canvas into a folder
-                self.canvas.canvas.save("data/canvas%s.png" % this_step)
+                # self.canvas.canvas.save("data/canvas%s.png" % this_step)
             
             # [ FAILSAFE ] Reset the canvas (not needed if full background is present (recommended))
             if not self.context.multiprocessed:

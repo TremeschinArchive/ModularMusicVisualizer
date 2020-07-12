@@ -34,9 +34,6 @@ class FFmpegWrapper():
         self.controller = controller
         self.functions = Functions()
 
-        # TODO: WINDWOWZ
-        self.ffmpeg_binary = "ffmpeg"
-
     # Create a FFmpeg writable pipe for generating a video
     def pipe_one_time(self, output):
 
@@ -62,7 +59,7 @@ class FFmpegWrapper():
         while len(list(self.images_to_pipe.keys())) >= 20:
             print("Too many images on pipe buffer")
             time.sleep(0.1)
-        self.images_to_pipe[index] = image
+        self.images_to_pipe[index] = copy.deepcopy(image)
         del image
 
     # http://stackoverflow.com/a/9459208/284318

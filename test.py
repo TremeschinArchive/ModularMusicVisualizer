@@ -15,9 +15,9 @@ image.configure.simple_add_path_modifier_shake(20)
 
 image.configure.simple_add_linear_blur(intensity="medium")
 image.configure.simple_add_linear_resize(intensity="medium")
-image.configure.simple_add_swing_rotation()
+# image.configure.simple_add_swing_rotation()
 
-visualizer.add(image)
+visualizer.add(image, layer=0)
 
 visualizer.performance(
     multiprocessed=False,

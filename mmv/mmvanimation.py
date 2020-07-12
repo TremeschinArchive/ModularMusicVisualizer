@@ -432,8 +432,6 @@ class MMVAnimation():
     # Call every next step of the content animations
     def next(self, audio_slice, fftinfo, this_step):
 
-        print(self.content)
-
         for item in self.generators:
 
             # Get what the generator has to offer

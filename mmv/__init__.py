@@ -10,8 +10,8 @@ class mmv:
     def __init__(self):
         Miscellaneous()
         self.main = MMVMain()
-        self.main.setup()
         self.utils = Utils()
+        self.main.setup(cli=False)
 
     def performance(self, multiprocessed=False, workers=4):
         self.main.context.multiprocessed = multiprocessed
@@ -43,8 +43,4 @@ class mmv:
     
     def add(self, item, layer=0):
         if self.utils.is_matching_type([item], [MMVImage]):
-            self.main.mmvanimation.content[layer].append(item)
-
-    
-
-        
+            self.main.core.mmvanimation.content[layer].append(item)

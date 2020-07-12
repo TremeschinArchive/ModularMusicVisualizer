@@ -47,7 +47,7 @@ class MMVMain():
         self.audio.read(self.context.input_file)
         self.context.duration = self.audio.info["duration"]
 
-    def setup(self, args={}, cli=False, module=False):
+    def setup(self, args={}, cli=False):
 
         debug_prefix = "[MMVMain.__init__]"
 

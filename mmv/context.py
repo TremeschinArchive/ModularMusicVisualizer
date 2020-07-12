@@ -50,7 +50,7 @@ class Context():
         self.batch_size = 48000 // self.fps # 512
 
         # Offset the audio slice by this much of steps
-        self.offset_audio_before_in_many_steps = self.fps // 8
+        self.offset_audio_before_in_many_steps = (60/self.fps) // 8
 
         # Performance
         self.svg_rasterizer = "cairo"
@@ -100,7 +100,7 @@ class Context():
         
         if not (input_file := self.args["input_file"] if "input_file" in keys else None) == None:
             self.input_file = input_file
-            
+
     # Delete and create (reset) the runtime directories
     def reset_directories(self):
         for d in []:

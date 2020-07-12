@@ -134,8 +134,8 @@ class Configure():
     def simple_add_linear_resize(self, intensity="medium", smooth=0.08):
         intensities = {
             "low": "1 + 0.3*X",
-            "medium": "1.5*X",
-            "high": "3*X",
+            "medium": "1 + 1.5*X",
+            "high": "1 + 3*X",
         }
         if not intensity in list(intensities.keys()):
             print("Unhandled resize intensity [%s]" % intensity)
