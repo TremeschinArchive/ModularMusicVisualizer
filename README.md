@@ -4,7 +4,7 @@ An attempt to make a music visualization software
 
 ![Demo image of MMV](repo/demo.jpg)
 
-[Link to unlisted video of the full music in the image above](ttps://youtu.be/BhpLwaR1Oj8)
+[Link to unlisted video of the full music in the image above](https://youtu.be/BhpLwaR1Oj8)
 
 # Running
 
