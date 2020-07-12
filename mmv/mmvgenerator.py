@@ -20,11 +20,11 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-from interpolation import Interpolation
-from mmvvisualizer import MMVVisualizer
-from mmvimage import MMVImage
-from modifiers import *
-from utils import Utils
+from mmv.interpolation import Interpolation
+from mmv.mmvvisualizer import MMVVisualizer
+from mmv.mmvimage import MMVImage
+from mmv.modifiers import *
+from mmv.utils import Utils
 import random
 import copy
 import math

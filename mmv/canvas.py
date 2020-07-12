@@ -19,8 +19,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from utils import Utils
-from frame import Frame
+from mmv.utils import Utils
+from mmv.frame import Frame
 import os
 
 

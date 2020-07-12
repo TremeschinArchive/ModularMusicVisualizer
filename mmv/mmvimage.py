@@ -19,13 +19,140 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from interpolation import Interpolation
-from modifiers import *
-from frame import Frame
-from utils import Utils
+from mmv.interpolation import Interpolation
+from mmv.modifiers import *
+from mmv.frame import Frame
+from mmv.utils import Utils
 import copy
 import cv2
 import os
+
+
+class Configure():
+    def __init__(self, mmvimage_object):
+        self.object = mmvimage_object
+        self.animation_index = 0
+    
+    def init_animation_layer(self):
+        self.set_animation_empty_dictionary()
+        self.set_this_animation_steps()
+        self.set_animation_position_interpolation(axis="both")
+
+    # # # [ Set Methods ] # # #
+
+    def set_animation_empty_dictionary(self):
+        self.object.path[self.animation_index] = {}
+        self.object.path[self.animation_index]["position"] = []
+        self.object.path[self.animation_index]["modules"] = {}
+    
+    def set_animation_position_interpolation(self, axis="both", method=None):
+        if axis == "both":
+            for ax in ["x", "y"]:
+                self.set_animation_position_interpolation(ax)
+        self.object.path[self.animation_index]["interpolation_%s" % axis] = None
+        self.object.path[self.animation_index]["interpolation_%s_arg_a" % axis] = None
+
+    def set_animation_index(self, n):
+        self.animation_index = n
+
+    def set_this_animation_steps(self, steps=math.inf):
+        self.object.path[self.animation_index]["steps"] = steps
+
+    # # # [ Next Methods ] # # #
+
+    def next_animation_index(self):
+        self.animation_index += 1
+    
+    # # # [ Add Methods ] # # #
+
+    def add_path_point(self, x, y):
+        self.object.path[self.animation_index]["position"].append(Point(x, y))
+
+    def load_image(self, path):
+        self.object.image.load_from_path(path, convert_to_png=True)
+    
+    def resize_to_resolution(self, width, height, override=False):
+        self.object.image.resize_to_resolution(width, height, override=override)
+    
+    def resize_to_video_resolution(self):
+        self.resize_to_resolution(self.object.context.width, self.object.context.height, override=True)
+
+    # # Generic add module
+
+    def add_module(self, module):
+        module_name = list(module.keys())[0]
+        self.object.path[self.animation_index]["modules"][module_name] = module[module_name]
+
+    def add_module_blur(self, activation):
+        self.add_module({
+            "blur": { "activation": activation }
+        })
+    
+    def add_module_rotate(self, modifier):
+        self.add_module({
+            "rotate": {
+                "object": modifier
+            }
+        })
+    
+    def add_resize_module(self, keep_center, interpolation, activation, smooth):
+        self.add_module({
+            "resize": {
+                "keep_center": True,
+                "interpolation": interpolation,
+                "activation": activation,
+                "arg_a": smooth,
+            }
+        })
+
+    # Pre defined simple modules
+
+    def simple_add_path_modifier_shake(self, shake_max_distance, x_smoothness=0.01, y_smoothness=0.02):
+        self.object.path[self.animation_index]["position"].append(
+            Shake({
+                "interpolation_x": copy.deepcopy(self.object.interpolation.remaining_approach),
+                "interpolation_y": copy.deepcopy(self.object.interpolation.remaining_approach),
+                "x_steps": "end_interpolation", "y_steps": "end_interpolation",
+                "distance": shake_max_distance,
+                "arg_a": x_smoothness,
+                "arg_b": y_smoothness,
+            })
+        )
+    
+    def simple_add_linear_blur(self, intensity="medium"):
+        intensities = {
+            "low": "10*X",
+            "medium": "15*X",
+            "high": "20*X",
+        }
+        if not intensity in list(intensities.keys()):
+            print("Unhandled blur intensity [%s]" % intensity)
+            sys.exit(-1)
+            
+        self.add_module_blur(intensities[intensity])
+    
+    def simple_add_linear_resize(self, intensity="medium", smooth=0.08):
+        intensities = {
+            "low": "1 + 0.3*X",
+            "medium": "1.5*X",
+            "high": "3*X",
+        }
+        if not intensity in list(intensities.keys()):
+            print("Unhandled resize intensity [%s]" % intensity)
+            sys.exit(-1)
+
+        self.add_resize_module(
+            keep_center=True,
+            interpolation=copy.deepcopy(self.object.interpolation.remaining_approach),
+            activation=intensities[intensity],
+            smooth=smooth
+        )
+    
+    def simple_add_swing_rotation(self, max_angle=6, smooth=100):
+        self.add_module_rotate( SineSwing(max_angle, smooth) )
+    
+    def simple_add_linear_rotation(self, smooth=10):
+        self.add_module_rotate( LinearSwing(smooth) )
 
 
 class MMVImage():
@@ -35,11 +162,12 @@ class MMVImage():
         
         self.context = context
 
+        self.path = {}
+
         self.interpolation = Interpolation()
         self.utils = Utils()
         self.image = Frame()
-
-        self.path = {}
+        self.configure = Configure(self)
 
         self.x = 0
         self.y = 0
@@ -64,7 +192,7 @@ class MMVImage():
         # Don't pickle video
         del state["video"]
         return state
-        
+    
     # Next step of animation
     def next(self, fftinfo, this_step):
 

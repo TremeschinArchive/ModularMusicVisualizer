@@ -19,13 +19,13 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from interpolation import Interpolation
-from mmvvisualizer import MMVVisualizer
-from functions import Functions
-from mmvimage import MMVImage
-from mmvgenerator import *
-from modifiers import *
-from utils import Utils
+from mmv.interpolation import Interpolation
+from mmv.mmvvisualizer import MMVVisualizer
+from mmv.functions import Functions
+from mmv.mmvimage import MMVImage
+from mmv.mmvgenerator import *
+from mmv.modifiers import *
+from mmv.utils import Utils
 import random
 import copy
 import math
@@ -48,7 +48,7 @@ class MMVAnimation():
         n_layers = 10
         for n in range(n_layers):
             self.content[n] = []
-
+    
     def add_moving_background(self, shake=0):
 
         temp = MMVImage(self.context)
@@ -81,7 +81,7 @@ class MMVAnimation():
             }
         }
         temp.image.load_from_path(
-            self.context.assets + os.path.sep + "tremx_assets" + os.path.sep + "background3.jpg",
+            self.context.assets + os.path.sep + "tremx_assets" + os.path.sep + "background2.jpg",
             convert_to_png=True
         )
         temp.image.resize_to_resolution(
@@ -318,7 +318,7 @@ class MMVAnimation():
                 "resize": {
                     "keep_center": True,
                     "interpolation": copy.deepcopy(self.interpolation.remaining_approach),
-                    "activation": "1 + 6*X",
+                    "activation": "1 + 8*X",
                     "arg_a": 0.14,
                 },
                 # "rotate": {
@@ -388,16 +388,17 @@ class MMVAnimation():
 
         config = {
             "static_background": False,
-            "moving_background": True,
+            "moving_background": False,
             "layers_background": False,
             "moving_video_background": False,
-            "logo": True,
-            "visualizer": True,
-            "add_post_processing": True,
-            "particles": True
+            "logo": False,
+            "visualizer": False,
+            "add_post_processing": False,
+            "particles": False
         }
 
         if config["moving_background"]:
+            print("Adding moving background")
             self.add_moving_background(
                 shake = int((15/1280) * self.context.width)
             )
@@ -430,6 +431,8 @@ class MMVAnimation():
 
     # Call every next step of the content animations
     def next(self, audio_slice, fftinfo, this_step):
+
+        print(self.content)
 
         for item in self.generators:
 

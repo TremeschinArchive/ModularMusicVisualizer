@@ -1,6 +1,6 @@
 # Modular Music Visualizer
 
-An attempt to make a music visualization software
+An attempt to make a free (as in freedom) and open source music visualization software
 
 ![Demo image of MMV](repo/demo.jpg)
 

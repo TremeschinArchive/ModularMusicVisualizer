@@ -33,7 +33,7 @@ import os
 class Miscellaneous():
 
     def __init__(self):
-        self.version = "1.4.0dev"
+        self.version = "1.4.1dev-not-working"
         self.greeter_message()
 
     def greeter_message(self):
@@ -135,8 +135,7 @@ class Utils():
 
     # Get the filename without extension /home/linux/file.ogg -> "file"
     def get_filename_no_extension(self, path):
-        (f, ext) = os.path.splitext(path)
-        return f
+        return os.path.splitext(os.path.basename(path))[0]
     
     # Load a yaml and return its content
     def load_yaml(self, path):

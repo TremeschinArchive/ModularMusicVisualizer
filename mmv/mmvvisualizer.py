@@ -19,15 +19,15 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from coordinates import PolarCoordinates
-from interpolation import Interpolation
-from functions import FitTransformIndex
-from functions import Functions
+from mmv.coordinates import PolarCoordinates
+from mmv.interpolation import Interpolation
+from mmv.functions import FitTransformIndex
+from mmv.functions import Functions
 from resampy import resample
-from modifiers import *
-from frame import Frame
-from utils import Utils
-from svg import SVG
+from mmv.modifiers import *
+from mmv.frame import Frame
+from mmv.utils import Utils
+from mmv.svg import SVG
 import svgwrite
 import random
 import math
@@ -188,7 +188,7 @@ class MMVVisualizer():
                     for i in range(len(fitted_fft) - 1):
 
                         # Calculate our size of the bar
-                        size = fitted_fft[i]*(0.8 + i/80)
+                        size = fitted_fft[i]*(0.8 - i/len(fitted_fft))#+ i/80)
 
                         # Simple, linear
                         if mode == "linear":

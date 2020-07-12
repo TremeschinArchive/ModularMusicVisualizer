@@ -19,7 +19,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from utils import Utils
+from mmv.utils import Utils
 import numpy as np
 import threading
 import pickle
@@ -103,7 +103,8 @@ class Core():
 
     def write_to_pipe_from_multiprocessing(self):
         while True:
-            if self.total_steps - 1 == self.count:
+            if self.count == self.total_steps - 1:
+                print("Closing..")
                 self.ffmpeg.close_pipe()
                 ray.shutdown()
                 break
@@ -186,7 +187,7 @@ class Core():
             # Normalize the audio slice to 1
             for i, array in enumerate(audio_slice):
                 normalize = np.linalg.norm(array)
-                if not normalize == 0:
+                if False:# not normalize == 0:
                     fft_audio_slice.append((array / normalize)*(2**(self.audio.info["bit_depth"] + 1)))
                 else:
                     fft_audio_slice.append(array)
@@ -238,20 +239,26 @@ class Core():
                     "index": global_frame_index
                 }
 
-                threading.Thread(
-                    target=self.new_ray_process,
-                    args=(
-                        global_frame_index,
-                        global_frame_index % self.context.multiprocessing_workers,
-                        pickle.dumps(update_dict, protocol=pickle.HIGHEST_PROTOCOL)
-                    )
-                ).start()
+                self.new_ray_process(
+                    global_frame_index,
+                    global_frame_index % self.context.multiprocessing_workers,
+                    pickle.dumps(update_dict, protocol=pickle.HIGHEST_PROTOCOL)
+                )
+
+                # threading.Thread(
+                #     target=self.new_ray_process,
+                #     args=(
+                #         global_frame_index,
+                #         global_frame_index % self.context.multiprocessing_workers,
+                #         pickle.dumps(update_dict, protocol=pickle.HIGHEST_PROTOCOL)
+                #     )
+                # ).start()
             else:
                 # Save current canvas's Frame to the final video
                 self.ffmpeg.write_to_pipe(global_frame_index, self.canvas.canvas)
 
                 # Hard debug, save the canvas into a folder
-                # self.canvas.canvas.save("data/canvas%s.png" % this_step)
+                self.canvas.canvas.save("data/canvas%s.png" % this_step)
             
             # [ FAILSAFE ] Reset the canvas (not needed if full background is present (recommended))
             if not self.context.multiprocessed:

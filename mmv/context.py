@@ -19,7 +19,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from utils import Utils
+from mmv.utils import Utils
 import multiprocessing
 import os
 
@@ -57,42 +57,50 @@ class Context():
         self.multiprocessed = False
         self.multiprocessing_workers = multiprocessing.cpu_count()
 
+        self.presets = ["low", "medium", "high", "ultra", "max"]
+
         self.process_args()
     
+    def preset(self, preset):
+        if preset == "low":
+            self.width = 854
+            self.height = 480
+            self.fps = 24
+        elif preset == "medium":
+            self.width = 1280
+            self.height = 720
+            self.fps = 30
+        elif preset == "high":
+            self.width = 1280
+            self.height = 720
+            self.fps = 60
+        elif preset == "ultra":
+            self.width = 1920
+            self.height = 1080
+            self.fps = 60
+        elif preset == "max":
+            self.width = 2560
+            self.height = 1440
+            self.fps = 60
+        print("PRESET: [%s], WIDTHxHEIGHT: [%sx%s] FPS: [%s]" % (preset, self.width, self.height, self.fps))
+
     def process_args(self):
         
-        preset = self.args["preset"]
-
+        keys = list(self.args.keys())
+        
         # User chose a preset
-        if not preset == None:
-            if preset == "l":
-                self.width = 854
-                self.height = 480
-                self.fps = 24
-            elif preset == "m":
-                self.width = 1280
-                self.height = 720
-                self.fps = 30
-            elif preset == "h":
-                self.width = 1280
-                self.height = 720
-                self.fps = 60
-            elif preset == "u":
-                self.width = 1920
-                self.height = 720
-                self.fps = 60
-            elif preset == "M":
-                self.width = 2560
-                self.height = 1440
-                self.fps = 60
-            print("PRESET: [%s], WIDTHxHEIGHT: [%sx%s] FPS: [%s]" % (preset, self.width, self.height, self.fps))
+        if not (preset := self.args["preset"] if "preset" in keys else None) == None:
+            self.preset(preset)
+
+        if not (multiprocessed := self.args["multiprocessed"] if "multiprocessed" in keys else None) == None:
+            self.multiprocessed = multiprocessed
         
-        if not self.args["multiprocessed"] == None:
-            self.multiprocessed = self.args["multiprocessed"]
+        if not (workers := int(self.args["workers"]) if "workers" in keys else None) == None:
+            self.multiprocessing_workers = workers
         
-        if not self.args["workers"] == None:
-            self.multiprocessing_workers = int(self.args["workers"])
-        
+        if not (input_file := self.args["input_file"] if "input_file" in keys else None) == None:
+            self.input_file = input_file
+            
     # Delete and create (reset) the runtime directories
     def reset_directories(self):
         for d in []:

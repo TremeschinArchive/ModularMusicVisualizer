@@ -1,17 +1,24 @@
 # Tremx
-src/wavefun
-src/a.py
-src/processing
-src/assets
-src/trivia*
-src/rlc.ogg
-*.mp4
+mmv/wavefun
+mmv/a.py
+mmv/processing
+mmv/assets
+mmv/trivia*
+*.ogg
+*.mp3
+*.opus
+*.flac
 *.mkv
+*.mp4
+*.png
+*.jpg
+!repo
+!mmv/banjo.ogg
 modular-music-visualizer-venv
 .vscode
 
 # Yeah this is my identity, you should use yours here :)
-src/assets/tremx_assets
+mmv/assets/tremx_assets
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
