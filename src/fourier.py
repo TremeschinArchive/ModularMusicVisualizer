@@ -43,8 +43,7 @@ class Fourier():
 
         # Only need half the list of fft
         cut = [
-            2,
-            int(len(normalized)/2) - 200
+            2, int(len(normalized)/2) - 200
         ]
 
         return transform[cut[0]:cut[1]]

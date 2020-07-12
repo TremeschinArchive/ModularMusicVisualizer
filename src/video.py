@@ -29,8 +29,9 @@ import time
 import sys
 
 class FFmpegWrapper():
-    def __init__(self, context):
+    def __init__(self, context, controller):
         self.context = context
+        self.controller = controller
         self.functions = Functions()
 
         # TODO: WINDWOWZ
@@ -96,7 +97,7 @@ class FFmpegWrapper():
                 took = now - start
                 eta = round(self.functions.proportion(current_time, took, remaining) / 60, 2)
                 
-                print("Frame count=[%s] proc=[%.2f sec / %.2f sec] took=[%.2f min] eta=[%.2f min] sum=[%.2f min]" % (count, current_time, duration, round(took/60, 2), eta, round((took/60 + eta), 2)))
+                print("Frame count=[%s] proc=[%.2f sec / %.2f sec] took=[%.2f min] eta=[%.2f min] sum=[%.2f min] fullpower=[%s]" % (count, current_time, duration, round(took/60, 2), eta, round((took/60 + eta), 2), not self.controller.core_waiting))
             else:
                 time.sleep(0.1)
 

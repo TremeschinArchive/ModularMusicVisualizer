@@ -21,6 +21,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from coordinates import PolarCoordinates
 from interpolation import Interpolation
+from functions import FitTransformIndex
 from functions import Functions
 from resampy import resample
 from modifiers import *
@@ -43,6 +44,7 @@ class MMVVisualizer():
         self.config = config
 
         self.functions = Functions()
+        self.fit_transform_index = FitTransformIndex()
         self.utils = Utils()
         self.svg = SVG(
             self.config["width"],
@@ -62,7 +64,7 @@ class MMVVisualizer():
         self.offset = [0, 0]
         self.polar = PolarCoordinates()
 
-        self.current_fft = None
+        self.current_fft = {}
 
         # Create Frame and load random particle
         self.image = Frame()
@@ -80,109 +82,181 @@ class MMVVisualizer():
 
         fitfourier = self.config["fourier"]["fitfourier"]
 
-        fft = fftinfo["fft"]
-        fft = [abs(x) for x in fft]
-        fft = self.smooth(fft, fitfourier["fft_smoothing"])
+        ffts = fftinfo["fft"]
 
-        # fft = resampy.resample(fft, len(fft), len(fft)*fitfourier["tesselation"])
+        # Abs of left and right channel
+        ffts = [
+            np.abs(ffts[0]),
+            np.abs(ffts[1])
+        ]
 
-        if self.current_fft == None:
-            self.current_fft = [0 for _ in range(len(fft))]
+        # Add mean FFT, the "mid/mean" (m) channel
+        ffts.append( (ffts[0] + ffts[1]) / 2 )
 
-        interpolation = self.config["fourier"]["interpolation"]
+        # Smooth the ffts
+        ffts = [
+            self.smooth(fft, fitfourier["fft_smoothing"])
+            for fft in ffts
+        ]
 
-        # Interpolate the next fft with the current one
-        for index in range(len(self.current_fft)):
-            self.current_fft[index] = interpolation["function"](
-                self.current_fft[index],  
-                fft[index],
-                self.current_step,
-                interpolation["steps"],
-                self.current_fft[index],
-                interpolation["arg_a"]
-            )
+        # The order of channels on the ffts list
+        channels = ["l", "r", "m"]
+
+        # The points to draw the visualization
+        points = {}
+
+        # Start each channel point's empty
+        for channel in channels:
+            points[channel] = []
+
+        # Loop on each channel
+        for channel_index, channel in enumerate(channels):
+
+            # Get this channel raw fft and its size
+            fft = ffts[channel_index]
+            fft_size = fft.shape[0]
+            
+            # Create a empty zeros array as a starting point for the interpolation
+            if not channel in list(self.current_fft.keys()):
+                self.current_fft[channel] = np.zeros(fft_size)
+
+            # The interpolation dictionary
+            interpolation = self.config["fourier"]["interpolation"]
+
+            # Interpolate the next fft with the current one
+            for index in range(len(self.current_fft[channel])):
+                self.current_fft[channel][index] = interpolation["function"](
+                    self.current_fft[channel][index],  
+                    fft[index],
+                    self.current_step,
+                    interpolation["steps"],
+                    self.current_fft[channel][index],
+                    interpolation["arg_a"]
+                )
+
+            # We calculate the points on a Worker process, main core loop stops at the ffts interpolation
+            if not is_multiprocessing:
+                
+                # Start a zero fitted fft list
+                fitted_fft = np.zeros(fft_size)
+
+                # For each index starting from zero up until the FFT size
+                for index in range(fft_size):
+                    
+                    # Fit the transformed index
+                    exponent = 2.2
+                    transformed_index_this = self.fit_transform_index.polynomial(index, fft_size, exponent)
+                    transformed_index_next = self.fit_transform_index.polynomial(index + fft_size//100, fft_size, exponent)
+
+                    this_index_fft_value = 0
+
+                    if transformed_index_this == transformed_index_next:
+                        this_index_fft_value = self.current_fft[channel][transformed_index_this]
+                    else:
+                        this_index_fft_value = np.mean(
+                            self.current_fft[channel][
+                                transformed_index_this:transformed_index_next
+                            ]
+                        )
+
+                    # Get the transformed_index from the interpolated fft into the fitted fft linear indexing
+                    fitted_fft[index] = this_index_fft_value
+
+                # Smooth the peaks
+                fitted_fft = self.smooth(fitted_fft, fitfourier["fft_smoothing"])
+
+                # Apply "subdivision", break jagged edges into more smooth parts
+                fitted_fft = resample(fitted_fft, fitted_fft.shape[0], fitted_fft.shape[0] * fitfourier["subdivide"])
+
+                # Ignore the really low end of the FFT as well as the high end frequency spectrum
+                cut = [0.05, 0.95]
+
+                # Cut the fitted fft
+                fitted_fft = fitted_fft[
+                    int(fitted_fft.shape[0]*cut[0])
+                    :
+                    int(fitted_fft.shape[0]*cut[1])
+                ]
+
+                # The mode (linear, symetric)
+                mode = self.config["mode"]
+
+                # If we'll be making a circle 
+                if self.config["type"] == "circle":
+
+                    # For each item on the fitted FFT
+                    for i in range(len(fitted_fft) - 1):
+
+                        # Calculate our size of the bar
+                        size = fitted_fft[i]*(0.8 + i/80)
+
+                        # Simple, linear
+                        if mode == "linear":
+                            # We only use the mid channel
+                            if channel == "m":
+                                self.polar.from_r_theta(
+                                    (self.config["minimum_bar_distance"] + size)*self.size,
+                                    ((math.pi*2)/len(fitted_fft))*i # fitted_fft -> fft nice effect
+                                )
+                                coord = self.polar.get_rectangular_coordinates()
+                                points[channel].append(coord)
+
+                        # Symetric
+                        if mode == "symetric":
+                            # The left channel starts at the top and goes clockwise
+                            if channel == "l":
+                                self.polar.from_r_theta(
+                                    (self.config["minimum_bar_distance"] + size)*self.size,
+                                    (math.pi/2) - (((math.pi)/len(fitted_fft))*i) # fitted_fft -> fft nice effect
+                                )
+                                coord = self.polar.get_rectangular_coordinates()
+                                points[channel].append(coord)
+
+                            elif channel == "r":
+                                self.polar.from_r_theta(
+                                    (self.config["minimum_bar_distance"] + size)*self.size,
+                                    (math.pi/2) + (((math.pi)/len(fitted_fft))*i) # fitted_fft -> fft nice effect
+                                )
+                                coord = self.polar.get_rectangular_coordinates()
+                                points[channel].append(coord)
+
+        self.current_step += 1
 
         if not is_multiprocessing:
 
-            fitted_fft = [0 for _ in range(len(fft))]
+            drawpoints = []
 
-            for i in range(len(fft) - 1):
-                
-                transformed_index = int((len(fft) - 1) * (self.functions.proportion(len(fft) - 1, 1, i) ** 2))
-                # transformed_index = int((len(fft) - 1) * (math.log(1 +self.functions.proportion(len(fft) - 1, 9, i), 10)))
-                fitted_fft[i] = self.current_fft[transformed_index]
+            if mode == "symetric":
+                for point in points["l"]:
+                    drawpoints.append(point)
+                for point in reversed(points["r"]):
+                    drawpoints.append(point)
+            
+            if mode == "linear":
+                for point in points["m"]:
+                    drawpoints.append(point)
 
-            fitted_fft = self.smooth(fitted_fft, fitfourier["fft_smoothing"])
-            fitted_fft = resample(fitted_fft, len(fitted_fft), len(fitted_fft)*fitfourier["tesselation"])
-
-            cut = [0.05, 0.95]
-            fitted_fft = fitted_fft[
-                int(len(fitted_fft)*cut[0])
-                :
-                int(len(fitted_fft)*cut[1])
-            ]
-
-            mode = self.config["mode"]
-
-            if self.config["type"] == "circle":
-
-                points = []
-                
-                # avg_fft = sum(fft)/len(fft)
-                # fft = [max(x - avg_fft, 0) for x in fft]
-
-                for i in range(len(fitted_fft) - 1):
-
-                    size = fitted_fft[i]*(0.1 + i/80)
-
-                    # Simple
-                    if mode == "linear":
-                        self.polar.from_r_theta(
-                            self.config["minimum_bar_distance"] + size,
-                            ((math.pi*2)/len(fitted_fft))*i # fitted_fft -> fft nice effect
-                        )
-
-                    # Symetric
-                    if mode == "symetric":
-                        self.polar.from_r_theta(
-                            self.config["minimum_bar_distance"] + size,
-                            (math.pi/2) - (((math.pi)/len(fitted_fft))*i) # fitted_fft -> fft nice effect
-                        )
-                    
-                    coord = self.polar.get_rectangular_coordinates()
-                    points.append(coord)
-
-                if mode == "symetric":
-                    for point in reversed(points):
-                        points.append([ - point[0], point[1]])
-                
-                points.append(points[0])
-                
-                self.svg.dwg.add(
-                    self.svg.dwg.polyline(
-                        points,
-                        stroke=svgwrite.rgb(60, 60, 60, '%'),
-                        fill='white',
-                    )
+            drawpoints.append(drawpoints[0])
+            
+            self.svg.dwg.add(
+                self.svg.dwg.polyline(
+                    drawpoints,
+                    stroke=svgwrite.rgb(60, 60, 60, '%'),
+                    fill='white',
                 )
+            )
 
-                array = self.svg.get_array()
-            self.current_step += 1
+            array = self.svg.get_array()
 
             return array
-        self.current_step += 1
 
     # Blit this item on the canvas
     def blit(self, canvas):
 
-        img = self.image
-        width, height, _ = img.frame.shape
-        
         x = int(self.x + self.offset[1] + self.base_offset[1])
         y = int(self.y + self.offset[0] + self.base_offset[0])
 
         canvas.canvas.overlay_transparent(
-            self.image.frame,
-            y,
-            x
+            self.image.frame, y, x
         )
+

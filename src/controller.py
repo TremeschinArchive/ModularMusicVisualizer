@@ -31,6 +31,7 @@ class Controller():
         self.utils = Utils()
 
         self.stop = False
+        self.core_waiting = False
         self.threads = {}
 
     def exit(self):

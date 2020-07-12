@@ -20,6 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from utils import Utils
+import numpy as np
 import threading
 import pickle
 import time
@@ -174,18 +175,41 @@ class Core():
             # The slice starts at the this_time_sample and end the cut here
             until = int(this_time_sample + self.context.batch_size)
 
-            # Get the audio slice
-            audio_slice = self.audio.data[this_time_sample:until]
+            # Get the audio slices of the left and right channel
+            audio_slice = [
+                self.audio.data[0][this_time_sample:until],
+                self.audio.data[1][this_time_sample:until],
+            ]
 
-            # Calculate the FFT on the frequencies
-            fft = self.fourier.fft(
-                audio_slice,
-                self.audio.info
-            )
+            fft_audio_slice = []
+
+            # Normalize the audio slice to 1
+            for i, array in enumerate(audio_slice):
+                normalize = np.linalg.norm(array)
+                if not normalize == 0:
+                    fft_audio_slice.append((array / normalize)*(2**(self.audio.info["bit_depth"] + 1)))
+                else:
+                    fft_audio_slice.append(array)
+
+            # Calculate the FFT on the left and right channel
+            fft = [
+                self.fourier.fft(
+                    fft_audio_slice[0],
+                    self.audio.info
+                ),
+                self.fourier.fft(
+                    fft_audio_slice[1],
+                    self.audio.info
+                )
+            ]
 
             # Adapt the FFT
-            biased_total_size = abs(sum(fft)) / self.context.batch_size
-            average_value = sum([abs(x)/(2**self.audio.info["bit_depth"]) for x in audio_slice]) / len(audio_slice)
+            mean_fft = (fft[0] + fft[1])/2
+            mean_audio_slice = (audio_slice[0] + audio_slice[1]) / 2
+
+            # Adapt the FFT
+            biased_total_size = abs(sum(mean_fft)) / self.context.batch_size
+            average_value = sum([abs(x)/(2**self.audio.info["bit_depth"]) for x in mean_audio_slice]) / len(mean_audio_slice)
 
             fftinfo = {
                 "average_value": average_value,
@@ -199,7 +223,10 @@ class Core():
             if self.multiprocessed:
 
                 while global_frame_index - self.count >= self.context.multiprocessing_workers*2:
+                    self.controller.core_waiting = True
                     time.sleep(0.05)
+                
+                self.controller.core_waiting = False
 
                 # print("new item", global_frame_index, "asking worker", global_frame_index % self.context.multiprocessing_workers)
                 

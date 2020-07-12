@@ -33,7 +33,7 @@ import os
 class Miscellaneous():
 
     def __init__(self):
-        self.version = "1.3.2dev-debug"
+        self.version = "1.4.0dev"
         self.greeter_message()
 
     def greeter_message(self):

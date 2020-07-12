@@ -82,17 +82,16 @@ class Audio():
         print(debug_prefix, "Len data:", len(data))
         print(debug_prefix, "Len data[0]:", len(data[0]))
 
-        self.data = np.zeros([self.info["channels"], len(data)])
+        self.data = data.T
 
-        print(debug_prefix, "Parsing data")
-
-        self.data = data.T[0]
-
-        print(debug_prefix, "Parsed data")
+        print(debug_prefix, "Transposed data")
         print(debug_prefix, "Data is", self.data)
+        print(debug_prefix, "Shape data", self.data.shape)
         print(debug_prefix, "Len data:", self.data.shape[0])
 
-        self.info["duration"] = self.data.shape[0] / self.info["sample_rate"]
+        self.info["duration"] = self.data.shape[1] / self.info["sample_rate"]
+
+        print("Duration", self.info["duration"])
 
     # Get info from audio file - sample rate, channels, bit depth
     def get_info(self, path):

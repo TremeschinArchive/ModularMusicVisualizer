@@ -81,7 +81,7 @@ class MMVAnimation():
             }
         }
         temp.image.load_from_path(
-            self.context.assets + os.path.sep + "tremx_assets" + os.path.sep + "background2.jpg",
+            self.context.assets + os.path.sep + "tremx_assets" + os.path.sep + "background3.jpg",
             convert_to_png=True
         )
         temp.image.resize_to_resolution(
@@ -246,13 +246,12 @@ class MMVAnimation():
         self.content[1].append(temp2)
 
     def add_logo(self, shake=0):
-        logo_size = int((200/1280)*self.context.width)
         temp = MMVImage(self.context)
         temp.path[0] = {
             "position": [
                 Point(
-                    self.context.width // 2 - (logo_size/2),
-                    self.context.height // 2 - (logo_size/2)
+                    self.context.width // 2 - (self.logo_size/2),
+                    self.context.height // 2 - (self.logo_size/2)
                 ),
                 Shake({
                     "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
@@ -284,8 +283,8 @@ class MMVAnimation():
             convert_to_png=True
         )
         temp.image.resize_to_resolution(
-            logo_size,
-            logo_size,
+            self.logo_size,
+            self.logo_size,
             override=True
         )
 
@@ -336,7 +335,7 @@ class MMVAnimation():
                             "mode": "symetric",
                             "width": visualizer_size,
                             "height": visualizer_size,
-                            "minimum_bar_distance": 100,
+                            "minimum_bar_distance": self.logo_size//2,
                             "activation": {
                                 "function": copy.deepcopy(self.functions.sigmoid),
                                 "arg_a": 10,
@@ -350,7 +349,7 @@ class MMVAnimation():
                                 },
                                 "fitfourier": {
                                     "fft_smoothing": 2,
-                                    "tesselation": 4,
+                                    "subdivide": 4,
                                 }
                             }
                         }
@@ -385,10 +384,12 @@ class MMVAnimation():
 
         self.canvas = canvas
 
+        self.logo_size = int((200/1280)*self.context.width)
+
         config = {
             "static_background": False,
-            "moving_background": False,
-            "layers_background": True,
+            "moving_background": True,
+            "layers_background": False,
             "moving_video_background": False,
             "logo": True,
             "visualizer": True,

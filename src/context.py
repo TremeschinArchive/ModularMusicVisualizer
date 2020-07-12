@@ -93,8 +93,6 @@ class Context():
         if not self.args["workers"] == None:
             self.multiprocessing_workers = int(self.args["workers"])
         
-        print(self.multiprocessing_workers)
-        
     # Delete and create (reset) the runtime directories
     def reset_directories(self):
         for d in []:
