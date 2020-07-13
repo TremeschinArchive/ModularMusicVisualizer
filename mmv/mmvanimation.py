@@ -33,10 +33,11 @@ import os
 
 
 class MMVAnimation():
-    def __init__(self, context, controller, audio):
+    def __init__(self, context, controller, audio, canvas):
         self.context = context
         self.controller = controller
         self.audio = audio
+        self.canvas = canvas
 
         self.interpolation = Interpolation()
         self.functions = Functions()
@@ -380,9 +381,7 @@ class MMVAnimation():
 
     # Generate the objects on the animation
     # TODO: PROFILES, CURRENTLY MANUALLY SET HERE
-    def generate(self, canvas):
-
-        self.canvas = canvas
+    def generate(self):
 
         self.logo_size = int((200/1280)*self.context.width)
 
@@ -444,12 +443,12 @@ class MMVAnimation():
             if not new_object == None:
                 self.content[new["layer"]].append(new_object)
 
-        for index in sorted(list(self.content.keys())):
-            for position, item in enumerate(self.content[index]):
+        for layer in sorted(list(self.content.keys())):
+            for position, item in enumerate(self.content[layer]):
 
                 # We can delete the item as it has decided life wasn't worth anymore
                 if item.is_deletable:
-                    del self.content[index][position]
+                    del self.content[layer][position]
                     continue
 
                 # Generate next step of animation

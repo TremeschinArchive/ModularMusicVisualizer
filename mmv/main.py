@@ -79,7 +79,7 @@ class MMVMain():
         self.audio = Audio(self.context)
 
         print(debug_prefix, "Creating MMVAnimation()")
-        self.mmvanimation = MMVAnimation(self.context, self.controller, self.audio)
+        self.mmvanimation = MMVAnimation(self.context, self.controller, self.audio, self.canvas)
     
         if cli:
             self.setup_input_audio_file()

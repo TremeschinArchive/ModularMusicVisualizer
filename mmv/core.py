@@ -180,9 +180,6 @@ class Core():
         # Generate the assets
         # self.assets.pygradienter("particles", 150, 150, 20)
 
-        # Generate a Animation
-        self.mmvanimation.generate(self.canvas)
-
         if self.context.multiprocessed:
             # ctx = multiprocessing.get_context("spawn")
             # self.pool = ctx.Pool(processes=self.context.multiprocessing_workers)
@@ -282,7 +279,7 @@ class Core():
                     "fftinfo": fftinfo,
                     "index": global_frame_index
                 }
-
+                
                 threading.Thread(
                     target=self.put_on_core_queue,
                     args=(pickle.dumps(update_dict, protocol=pickle.HIGHEST_PROTOCOL),)
@@ -292,7 +289,7 @@ class Core():
                 
             else:
                 # Save current canvas's Frame to the final video
-                self.ffmpeg.write_to_pipe(self.canvas.canvas)
+                self.ffmpeg.write_to_pipe(self.canvas.canvas.get_rgb_frame_array())
 
                 # Hard debug, save the canvas into a folder
                 # self.canvas.canvas.save("data/canvas%s.png" % this_step)
