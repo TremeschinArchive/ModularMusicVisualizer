@@ -98,7 +98,7 @@ class MMVMain():
 
     def run(self):
 
-        self.ffmpeg.pipe_one_time(self.context.ROOT + os.path.sep + "demorun.mkv")
+        self.ffmpeg.pipe_one_time(self.context.output_video)
 
         try:
             self.core.start()

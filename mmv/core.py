@@ -51,9 +51,9 @@ class Worker():
                 item.resolve_pending()
         
         for index in sorted(list(instructions_content.keys())):
-            for item in instructions_content[index]:
+            for position, item in enumerate(instructions_content[index]):
                 item.blit(canvas)
-                del item
+                del instructions_content[index][position]
 
         # canvas.canvas.save("data/d%s.png" % instructions_index)
         canvas.resolve_pending()
@@ -77,8 +77,6 @@ class Core():
 
         self.ROOT = self.context.ROOT
         self.count = 0
-
-        self.multiprocessed = self.context.multiprocessed
 
     # Calls and starts threads 
     def start(self):
@@ -127,6 +125,7 @@ class Core():
             .remote(update_dict)
         )
 
+        
     def run(self):
 
         debug_prefix = "[Core.run]"
@@ -221,7 +220,7 @@ class Core():
             # Process next animation with audio info and the step count to process on
             self.mmvanimation.next(audio_slice, fftinfo, this_step)
             
-            if self.multiprocessed:
+            if self.context.multiprocessed:
 
                 while global_frame_index - self.count >= self.context.multiprocessing_workers*2:
                     self.controller.core_waiting = True
@@ -239,20 +238,14 @@ class Core():
                     "index": global_frame_index
                 }
 
-                self.new_ray_process(
-                    global_frame_index,
-                    global_frame_index % self.context.multiprocessing_workers,
-                    pickle.dumps(update_dict, protocol=pickle.HIGHEST_PROTOCOL)
-                )
-
-                # threading.Thread(
-                #     target=self.new_ray_process,
-                #     args=(
-                #         global_frame_index,
-                #         global_frame_index % self.context.multiprocessing_workers,
-                #         pickle.dumps(update_dict, protocol=pickle.HIGHEST_PROTOCOL)
-                #     )
-                # ).start()
+                threading.Thread(
+                    target=self.new_ray_process,
+                    args=(
+                        global_frame_index,
+                        global_frame_index % self.context.multiprocessing_workers,
+                        pickle.dumps(update_dict, protocol=pickle.HIGHEST_PROTOCOL)
+                    )
+                ).start()
             else:
                 # Save current canvas's Frame to the final video
                 self.ffmpeg.write_to_pipe(global_frame_index, self.canvas.canvas)

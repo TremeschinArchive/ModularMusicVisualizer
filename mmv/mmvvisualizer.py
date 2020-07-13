@@ -42,16 +42,16 @@ class MMVVisualizer():
         
         self.context = context
         self.config = config
-
-        self.functions = Functions()
-        self.fit_transform_index = FitTransformIndex()
-        self.utils = Utils()
         self.svg = SVG(
             self.config["width"],
             self.config["height"],
             "cairo", #self.context.svg_rasterizer, # cairo is just faster here
             "png"
         )
+
+        self.fit_transform_index = FitTransformIndex()
+        self.functions = Functions()
+        self.utils = Utils()
 
         self.path = {}
 
@@ -188,14 +188,14 @@ class MMVVisualizer():
                     for i in range(len(fitted_fft) - 1):
 
                         # Calculate our size of the bar
-                        size = fitted_fft[i]*(0.8 - i/len(fitted_fft))#+ i/80)
+                        size = fitted_fft[i]*(0.8 + i/80) #- i/len(fitted_fft))
 
                         # Simple, linear
                         if mode == "linear":
                             # We only use the mid channel
                             if channel == "m":
                                 self.polar.from_r_theta(
-                                    (self.config["minimum_bar_distance"] + size)*self.size,
+                                    (self.config["minimum_bar_size"] + size)*self.size,
                                     ((math.pi*2)/len(fitted_fft))*i # fitted_fft -> fft nice effect
                                 )
                                 coord = self.polar.get_rectangular_coordinates()
@@ -206,7 +206,7 @@ class MMVVisualizer():
                             # The left channel starts at the top and goes clockwise
                             if channel == "l":
                                 self.polar.from_r_theta(
-                                    (self.config["minimum_bar_distance"] + size)*self.size,
+                                    (self.config["minimum_bar_size"] + size)*self.size,
                                     (math.pi/2) - (((math.pi)/len(fitted_fft))*i) # fitted_fft -> fft nice effect
                                 )
                                 coord = self.polar.get_rectangular_coordinates()
@@ -214,7 +214,7 @@ class MMVVisualizer():
 
                             elif channel == "r":
                                 self.polar.from_r_theta(
-                                    (self.config["minimum_bar_distance"] + size)*self.size,
+                                    (self.config["minimum_bar_size"] + size)*self.size,
                                     (math.pi/2) + (((math.pi)/len(fitted_fft))*i) # fitted_fft -> fft nice effect
                                 )
                                 coord = self.polar.get_rectangular_coordinates()

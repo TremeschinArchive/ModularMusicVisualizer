@@ -19,7 +19,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.mmvvisualizer import MMVVisualizer
 from mmv.interpolation import Interpolation
+from mmv.functions import Functions
 from mmv.modifiers import *
 from mmv.frame import Frame
 from mmv.utils import Utils
@@ -45,12 +47,16 @@ class Configure():
         self.object.path[self.animation_index]["position"] = []
         self.object.path[self.animation_index]["modules"] = {}
     
-    def set_animation_position_interpolation(self, axis="both", method=None):
+    def set_animation_position_interpolation(self, axis="both", method=None, arg_a=None):
         if axis == "both":
             for ax in ["x", "y"]:
-                self.set_animation_position_interpolation(ax)
-        self.object.path[self.animation_index]["interpolation_%s" % axis] = None
-        self.object.path[self.animation_index]["interpolation_%s_arg_a" % axis] = None
+                self.set_animation_position_interpolation(axis=ax)
+        if not method in [None]:
+            print("Unhandled interpolation method [%s]" % method)
+            sys.exit(-1)
+        
+        self.object.path[self.animation_index]["interpolation_%s" % axis] = method
+        self.object.path[self.animation_index]["interpolation_%s_arg_a" % axis] = arg_a
 
     def set_animation_index(self, n):
         self.animation_index = n
@@ -95,6 +101,51 @@ class Configure():
             }
         })
     
+    # Is this even python?
+    def add_module_visualizer(self, 
+                              vis_type,
+                              vis_mode,
+                              width, height,
+                              minimum_bar_size,
+                              activation_function,
+                              activation_function_arg_a,
+                              fourier_interpolation_function,
+                              fourier_interpolation_activation,
+                              fourier_interpolation_arg_a,
+                              fourier_interpolation_steps,
+                              fft_smoothing,
+                              subdivide ):
+        self.add_module({
+            "visualizer": {
+                "object": MMVVisualizer(
+                    self.object.context,
+                    {
+                        "type": vis_type,
+                        "mode": vis_mode,
+                        "width": width,
+                        "height": height,
+                        "minimum_bar_size": minimum_bar_size,
+                        "activation": {
+                            "function": activation_function,
+                            "arg_a": activation_function_arg_a,
+                        },
+                        "fourier": {
+                            "interpolation": {
+                                "function": fourier_interpolation_function,
+                                "activation": fourier_interpolation_activation,
+                                "arg_a": fourier_interpolation_arg_a,
+                                "steps": fourier_interpolation_steps
+                            },
+                            "fitfourier": {
+                                "fft_smoothing": fft_smoothing,
+                                "subdivide": subdivide,
+                            }
+                        }
+                    }
+                )
+            }
+        })
+    
     def add_resize_module(self, keep_center, interpolation, activation, smooth):
         self.add_module({
             "resize": {
@@ -106,6 +157,21 @@ class Configure():
         })
 
     # Pre defined simple modules
+
+    def simple_add_visualizer_circle(self, minimum_bar_size, width, height, mode="symetric", fft_smoothing=2, subdivide=4):
+        self.add_module_visualizer(
+            vis_type="circle", vis_mode=mode,
+            width=width, height=height,
+            minimum_bar_size=minimum_bar_size,
+            activation_function=copy.deepcopy(self.object.functions.sigmoid),
+            activation_function_arg_a=10,
+            fourier_interpolation_function=copy.deepcopy(self.object.interpolation.remaining_approach),
+            fourier_interpolation_activation="X",
+            fourier_interpolation_arg_a=0.25,
+            fourier_interpolation_steps=math.inf,
+            fft_smoothing=fft_smoothing,
+            subdivide=subdivide
+        )
 
     def simple_add_path_modifier_shake(self, shake_max_distance, x_smoothness=0.01, y_smoothness=0.02):
         self.object.path[self.animation_index]["position"].append(
@@ -165,6 +231,7 @@ class MMVImage():
         self.path = {}
 
         self.interpolation = Interpolation()
+        self.functions = Functions()
         self.utils = Utils()
         self.image = Frame()
         self.configure = Configure(self)

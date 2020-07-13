@@ -1,4 +1,5 @@
 from mmv.utils import Miscellaneous
+from mmv.mmvvisualizer import MMVVisualizer
 from mmv.mmvimage import MMVImage
 from mmv.main import MMVMain
 from mmv.utils import Utils
@@ -12,6 +13,8 @@ class mmv:
         self.main = MMVMain()
         self.utils = Utils()
         self.main.setup(cli=False)
+        self.performance()
+        self.quality()
 
     def performance(self, multiprocessed=False, workers=4):
         self.main.context.multiprocessed = multiprocessed
@@ -21,6 +24,9 @@ class mmv:
         self.main.context.width = width
         self.main.context.height = height
         self.main.context.fps = fps
+        self.width = width
+        self.height = height
+        self.resolution = [width, height]
     
     def preset(self, preset):
         if not preset in self.main.context.presets:
@@ -28,12 +34,15 @@ class mmv:
             sys.exit(-1)
         self.main.context.preset(preset)
     
-    def add_input_audio(self, path):
+    def input_audio(self, path):
         if not os.path.exists(path):
             print("Input audio path does not exist [%s]" % path)
             sys.exit(-1)
         self.main.context.input_file = path
         self.main.setup_input_audio_file()
+    
+    def output_video(self, path):
+        self.main.context.output_video = path
     
     def run(self):
         self.main.run()
@@ -44,3 +53,4 @@ class mmv:
     def add(self, item, layer=0):
         if self.utils.is_matching_type([item], [MMVImage]):
             self.main.core.mmvanimation.content[layer].append(item)
+

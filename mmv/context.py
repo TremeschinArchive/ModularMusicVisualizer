@@ -38,6 +38,7 @@ class Context():
         self.assets = self.ROOT + os.path.sep + "assets"
 
         # Files, info
+        self.output_video = None
         self.input_file = None
         self.duration = None
 
