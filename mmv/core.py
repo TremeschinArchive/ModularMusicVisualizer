@@ -41,31 +41,31 @@ def get_canvas_multiprocess_return(get_queue, put_queue, worker_id):
         instructions = pickle.loads(instructions)
     
         canvas = instructions["canvas"]
-        instructions_content = instructions["content"]
+        content = instructions["content"]
         fftinfo = instructions["fftinfo"]
-        instructions_index = instructions["index"]
+        this_frame_index = instructions["index"]
 
         del instructions
 
         canvas.reset_canvas()
 
-        for index in sorted(list(instructions_content.keys())):
-            for item in instructions_content[index]:
+        for index in sorted(list(content.keys())):
+            for item in content[index]:
                 item.resolve_pending()
 
-        for index in sorted(list(instructions_content.keys())):
-            for position, item in enumerate(instructions_content[index]):
+        for index in sorted(list(content.keys())):
+            for position, item in enumerate(content[index]):
                 item.blit(canvas)
-                del instructions_content[index][position]
+                del content[index][position]
 
         canvas.resolve_pending()
 
-        put_queue.put( [instructions_index, canvas.canvas.get_rgb_frame_array()] )
+        put_queue.put( [this_frame_index, canvas.canvas.get_rgb_frame_array()] )
 
         del canvas
-        del instructions_content
+        del content
         del fftinfo
-        del instructions_index
+        del this_frame_index
 
 
 class Core():
@@ -110,14 +110,13 @@ class Core():
 
         for worker_id in range(self.context.multiprocessing_workers):
             print("Create worker with id [%s]" % worker_id)
-            self.get_queues[worker_id] = multiprocessing.Queue()
             multiprocessing.Process(
             # self.pool.apply_async(
                 target=get_canvas_multiprocess_return,
                 # get_canvas_multiprocess_return,
                 args=(
                     self.core_put_queue,
-                    self.get_queues[worker_id],
+                    self.core_get_queue,
                     worker_id
                 ),
                 daemon=True
@@ -126,43 +125,35 @@ class Core():
             print("Created new worker")
     
     def write_to_pipe_from_multiprocessing(self):
+        
         empty = [None, None]
+
         while True:
             if self.total_steps - 1 == self.count:
                 self.ffmpeg.close_pipe()
                 for _ in range(self.context.multiprocessing_workers):
-                    self.queue.put("stop")
+                    self.core_put_queue.put("stop")
                 break
             
             image = self.returned_images.pop(self.count, empty)
 
             if not image == empty:
-                self.ffmpeg.write_to_pipe(
-                    self.count,
-                    image
-                )
+                self.ffmpeg.write_to_pipe(self.count, image)
                 del image
                 self.count += 1
             else:
                 time.sleep(0.1)
                 print("waiting for", self.count)
 
-    def get_queue_to_return_images(self, queue_index):
+    def core_get_queue_loop(self):
         while not self.ffmpeg.stop_piping:
-            get = self.get_queues[queue_index].get()
+            get = self.core_get_queue.get()
             index = get[0]
             image = get[1]
             self.returned_images[index] = image
             del get
             del image
             del index
-
-    def get_queues_loop(self):
-        for queue_index in range(self.context.multiprocessing_workers):
-            threading.Thread(
-                target=self.get_queue_to_return_images,
-                args=(queue_index,)
-            ).start()
 
     def put_on_core_queue(self, update_dict):
         self.core_put_queue.put(update_dict)
@@ -190,10 +181,10 @@ class Core():
             self.already_returned_image_indexes = []
             self.returned_images = {}
             self.core_put_queue = multiprocessing.Queue()
-            self.get_queues = {}
+            self.core_get_queue = multiprocessing.Queue()
             self.write_thread = threading.Thread(target=self.write_to_pipe_from_multiprocessing).start()
             self.setup_multiprocessing()
-            self.get_queues_loop = self.get_queues_loop()
+            threading.Thread(target=self.core_get_queue_loop).start()
         else:
             self.canvas.reset_canvas()
 
