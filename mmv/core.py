@@ -21,15 +21,19 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from mmv.utils import Utils
 import multiprocessing
+import setproctitle
 import numpy as np
 import threading
 import pickle
 import time
 import copy
 import os
+import gc
 
 
 def get_canvas_multiprocess_return(get_queue, put_queue, worker_id):
+    
+    setproctitle.setproctitle(f"MMV Worker {worker_id+1}")
 
     while True:
         
@@ -37,7 +41,7 @@ def get_canvas_multiprocess_return(get_queue, put_queue, worker_id):
 
         if instructions == "stop":
             break
-
+        
         instructions = pickle.loads(instructions)
     
         canvas = instructions["canvas"]
@@ -67,6 +71,8 @@ def get_canvas_multiprocess_return(get_queue, put_queue, worker_id):
         del fftinfo
         del this_frame_index
 
+        gc.collect()
+
 
 class Core():
     def __init__(self, context, controller, canvas, assets, fourier, ffmpeg, audio, mmvanimation):
@@ -82,12 +88,51 @@ class Core():
         self.utils = Utils()
 
         self.ROOT = self.context.ROOT
-        self.count = 0
+        self.ffmpeg.count = 0
 
-    # Calls and starts threads 
-    def start(self):
+    def setup_multiprocessing(self):
+        debug_prefix = "[Core.setup_multiprocessing]"
 
-        debug_prefix = "[Core.start]"
+        self.workers = []
+
+        for worker_id in range(self.context.multiprocessing_workers):
+            print("Create worker with id [%s]" % worker_id)
+            worker = multiprocessing.Process(
+                target=get_canvas_multiprocess_return,
+                args=(
+                    self.core_put_queue,
+                    self.core_get_queue,
+                    worker_id
+                ),
+                daemon=True
+            )
+            worker.name = f"MMV Worker {worker_id+1}"
+            self.workers.append(worker)
+            print("Created new worker")
+
+        for worker in self.workers:
+            worker.start()
+
+    def core_get_queue_loop(self):
+        while True:
+            # Get queue returns [index, image]
+            get = self.core_get_queue.get()
+            index = get[0]
+            image = get[1]
+            
+            if index == self.total_steps - 1:
+                print("Closing..")
+                self.ffmpeg.close_pipe()
+                break
+
+            self.ffmpeg.write_to_pipe(index, image)
+
+    def put_on_core_queue(self, update_dict):
+        self.core_put_queue.put(update_dict)
+        
+    def run(self):
+        
+        debug_prefix = "[Core.run]"
 
         # Create the pipe write thread
         self.controller.threads["pipe_writer_loop"] = threading.Thread(target=self.ffmpeg.pipe_writer_loop)
@@ -103,66 +148,6 @@ class Core():
         
         print(debug_prefix, "Started!!")
 
-        self.run()
-    
-    def setup_multiprocessing(self):
-        debug_prefix = "[Core.setup_multiprocessing]"
-
-        for worker_id in range(self.context.multiprocessing_workers):
-            print("Create worker with id [%s]" % worker_id)
-            multiprocessing.Process(
-            # self.pool.apply_async(
-                target=get_canvas_multiprocess_return,
-                # get_canvas_multiprocess_return,
-                args=(
-                    self.core_put_queue,
-                    self.core_get_queue,
-                    worker_id
-                ),
-                daemon=True
-            # )
-            ).start()
-            print("Created new worker")
-    
-    def write_to_pipe_from_multiprocessing(self):
-        
-        empty = [None, None]
-
-        while True:
-            if self.total_steps - 1 == self.count:
-                self.ffmpeg.close_pipe()
-                for _ in range(self.context.multiprocessing_workers):
-                    self.core_put_queue.put("stop")
-                break
-            
-            image = self.returned_images.pop(self.count, empty)
-
-            if not image == empty:
-                self.ffmpeg.write_to_pipe(self.count, image)
-                del image
-                self.count += 1
-            else:
-                time.sleep(0.1)
-                print("waiting for", self.count)
-
-    def core_get_queue_loop(self):
-        while not self.ffmpeg.stop_piping:
-            get = self.core_get_queue.get()
-            index = get[0]
-            image = get[1]
-            self.returned_images[index] = image
-            del get
-            del image
-            del index
-
-    def put_on_core_queue(self, update_dict):
-        self.core_put_queue.put(update_dict)
-        del update_dict
-        
-    def run(self):
-
-        debug_prefix = "[Core.run]"
-
         # How many steps is the audio duration times the frames per second
         self.total_steps = int(self.context.duration * self.context.fps)
 
@@ -177,14 +162,13 @@ class Core():
             # self.manager = ctx.Manager()
             # self.pool = multiprocessing.Pool(processes=self.context.multiprocessing_workers)
             # self.mp_return_dict = self.manager.dict()
-            self.manager = multiprocessing.Manager()
-            self.already_returned_image_indexes = []
+            # self.manager = multiprocessing.Manager()
             self.returned_images = {}
-            self.core_put_queue = multiprocessing.Queue()
-            self.core_get_queue = multiprocessing.Queue()
-            self.write_thread = threading.Thread(target=self.write_to_pipe_from_multiprocessing).start()
+            queuesize = self.context.multiprocessing_workers*2
+            self.core_put_queue = multiprocessing.Queue(maxsize=queuesize)
+            self.core_get_queue = multiprocessing.Queue(maxsize=queuesize)
             self.setup_multiprocessing()
-            threading.Thread(target=self.core_get_queue_loop).start()
+            self.controller.threads["core_get_queue_loop"] = threading.Thread(target=self.core_get_queue_loop, daemon=True).start()
         else:
             self.canvas.reset_canvas()
 
@@ -257,7 +241,7 @@ class Core():
          
             if self.context.multiprocessed:
 
-                while global_frame_index - self.count >= self.context.multiprocessing_workers*2:
+                while global_frame_index - self.ffmpeg.count >= self.context.multiprocessing_workers*2:
                     self.controller.core_waiting = True
                     time.sleep(0.05)
                 
@@ -270,17 +254,17 @@ class Core():
                     "fftinfo": fftinfo,
                     "index": global_frame_index
                 }
-                
+
                 threading.Thread(
                     target=self.put_on_core_queue,
-                    args=(pickle.dumps(update_dict, protocol=pickle.HIGHEST_PROTOCOL),)
+                    args=( pickle.dumps(update_dict, protocol=pickle.HIGHEST_PROTOCOL), )
                 ).start()
 
                 del update_dict
                 
             else:
                 # Save current canvas's Frame to the final video
-                self.ffmpeg.write_to_pipe(self.canvas.canvas.get_rgb_frame_array())
+                self.ffmpeg.write_to_pipe(global_frame_index, self.canvas.canvas.get_rgb_frame_array())
 
                 # Hard debug, save the canvas into a folder
                 # self.canvas.canvas.save("data/canvas%s.png" % this_step)

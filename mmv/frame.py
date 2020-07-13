@@ -122,9 +122,7 @@ class Frame():
         return Image.fromarray(self.frame.astype(np.uint8))
     
     def get_rgb_frame_array(self):
-        return np.array(
-            self.image_array().convert("RGB")
-        )
+        return np.array( self.image_array().convert("RGB") )
 
     # Save an image with specific instructions depending on it's extension type.
     def save(self, directory):

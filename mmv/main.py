@@ -101,7 +101,7 @@ class MMVMain():
         self.ffmpeg.pipe_one_time(self.context.output_video)
 
         try:
-            self.core.start()
+            self.core.run()
         except KeyboardInterrupt:
             sys.exit(-1)
 

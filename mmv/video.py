@@ -67,25 +67,26 @@ class FFmpegWrapper():
 
         debug_prefix = "[FFmpegWrapper.pipe_writer_loop]"
 
-        count = 0
+        self.count = 0
 
         while not self.stop_piping:
-            if count in list(self.images_to_pipe.keys()):
-                if count == 0:
+            if self.count in list(self.images_to_pipe.keys()):
+                if self.count == 0:
                     start = time.time()
                 self.lock_writing = True
-                self.pipe_subprocess.stdin.write(self.images_to_pipe[count])
-                del self.images_to_pipe[count]
+                self.pipe_subprocess.stdin.write( self.images_to_pipe.pop(self.count) )
                 self.lock_writing = False
-                count += 1
-                current_time = round((1/self.context.fps) * count, 2)
+                self.count += 1
+
+                # Stats
+                current_time = round((1/self.context.fps) * self.count, 2)
                 duration = round(self.context.duration, 2)
                 remaining = duration - current_time
                 now = time.time()
                 took = now - start
                 eta = round(self.functions.proportion(current_time, took, remaining) / 60, 2)
                 
-                print("Frame count=[%s] proc=[%.2f sec / %.2f sec] took=[%.2f min] eta=[%.2f min] sum=[%.2f min] fullpower=[%s]" % (count, current_time, duration, round(took/60, 2), eta, round((took/60 + eta), 2), not self.controller.core_waiting))
+                print("Frame count=[%s] proc=[%.2f sec / %.2f sec] took=[%.2f min] eta=[%.2f min] sum=[%.2f min] fullpower=[%s]" % (self.count, current_time, duration, round(took/60, 2), eta, round((took/60 + eta), 2), not self.controller.core_waiting))
             else:
                 time.sleep(0.1)
 
