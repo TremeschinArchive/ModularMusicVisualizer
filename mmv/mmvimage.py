@@ -197,11 +197,12 @@ class Configure():
             
         self.add_module_blur(intensities[intensity])
     
-    def simple_add_linear_resize(self, intensity="medium", smooth=0.08):
+    def simple_add_linear_resize(self, intensity="medium", smooth=0.08, activation=None):
         intensities = {
             "low": "1 + 0.3*X",
             "medium": "1 + 1.5*X",
             "high": "1 + 3*X",
+            "custom": activation
         }
         if not intensity in list(intensities.keys()):
             print("Unhandled resize intensity [%s]" % intensity)
@@ -254,11 +255,11 @@ class MMVImage():
 
         self.ROUND = 3
     
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        # Don't pickle video
-        del state["video"]
-        return state
+    # def __getstate__(self):
+    #     state = self.__dict__.copy()
+    #     # Don't pickle video
+    #     del state["video"]
+    #     return state
     
     # Next step of animation
     def next(self, fftinfo, this_step):

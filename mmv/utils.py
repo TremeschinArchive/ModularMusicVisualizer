@@ -33,7 +33,7 @@ import os
 class Miscellaneous():
 
     def __init__(self):
-        self.version = "1.4.1dev-not-working"
+        self.version = "1.4.2dev-leaking-ram"
         self.greeter_message()
 
     def greeter_message(self):

@@ -4,7 +4,7 @@ processing = mmv.mmv()
 
 processing.performance(
     multiprocessed=True,
-    workers=2
+    workers=12
 )
 
 processing.quality(
@@ -50,7 +50,7 @@ visualizer.configure.add_path_point(
 )
 
 # visualizer.configure.simple_add_linear_blur(intensity="high")
-visualizer.configure.simple_add_linear_resize(intensity="high")
+visualizer.configure.simple_add_linear_resize(intensity="custom", activation="1+8*X")
 
 visualizer.configure.simple_add_path_modifier_shake(
     shake_max_distance=5,

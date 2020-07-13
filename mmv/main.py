@@ -103,9 +103,6 @@ class MMVMain():
         try:
             self.core.start()
         except KeyboardInterrupt:
-            if self.context.multiprocessed:
-                import ray
-                ray.shutdown()
             sys.exit(-1)
 
 if __name__ == "__main__":

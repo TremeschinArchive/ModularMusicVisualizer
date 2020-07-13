@@ -20,23 +20,26 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmv.utils import Utils
+import multiprocessing
 import numpy as np
 import threading
 import pickle
 import time
 import copy
-import ray
-import sys
 import os
 
 
-@ray.remote
-class Worker():
+def get_canvas_multiprocess_return(get_queue, put_queue, worker_id):
 
-    def get_canvas_multiprocess_return(self, instructions):
+    while True:
+        
+        instructions = get_queue.get()
+
+        if instructions == "stop":
+            break
 
         instructions = pickle.loads(instructions)
-
+    
         canvas = instructions["canvas"]
         instructions_content = instructions["content"]
         fftinfo = instructions["fftinfo"]
@@ -49,17 +52,20 @@ class Worker():
         for index in sorted(list(instructions_content.keys())):
             for item in instructions_content[index]:
                 item.resolve_pending()
-        
+
         for index in sorted(list(instructions_content.keys())):
             for position, item in enumerate(instructions_content[index]):
                 item.blit(canvas)
                 del instructions_content[index][position]
 
-        # canvas.canvas.save("data/d%s.png" % instructions_index)
         canvas.resolve_pending()
 
-        # canvas.canvas.save("data/da%s.png" % index)
-        return canvas.canvas
+        put_queue.put( [instructions_index, canvas.canvas.get_rgb_frame_array()] )
+
+        del canvas
+        del instructions_content
+        del fftinfo
+        del instructions_index
 
 
 class Core():
@@ -98,33 +104,69 @@ class Core():
         print(debug_prefix, "Started!!")
 
         self.run()
+    
+    def setup_multiprocessing(self):
+        debug_prefix = "[Core.setup_multiprocessing]"
 
+        for worker_id in range(self.context.multiprocessing_workers):
+            print("Create worker with id [%s]" % worker_id)
+            self.get_queues[worker_id] = multiprocessing.Queue()
+            multiprocessing.Process(
+            # self.pool.apply_async(
+                target=get_canvas_multiprocess_return,
+                # get_canvas_multiprocess_return,
+                args=(
+                    self.core_put_queue,
+                    self.get_queues[worker_id],
+                    worker_id
+                ),
+                daemon=True
+            # )
+            ).start()
+            print("Created new worker")
+    
     def write_to_pipe_from_multiprocessing(self):
+        empty = [None, None]
         while True:
-            if self.count == self.total_steps - 1:
-                print("Closing..")
+            if self.total_steps - 1 == self.count:
                 self.ffmpeg.close_pipe()
-                ray.shutdown()
+                for _ in range(self.context.multiprocessing_workers):
+                    self.queue.put("stop")
                 break
             
-            if self.count in list(self.returned_images.keys()):
-                image = self.returned_images[self.count]
-                self.ffmpeg.write_to_pipe(self.count, image)
-                del self.returned_images[self.count]
+            image = self.returned_images.pop(self.count, empty)
+
+            if not image == empty:
+                self.ffmpeg.write_to_pipe(
+                    self.count,
+                    image
+                )
+                del image
                 self.count += 1
             else:
                 time.sleep(0.1)
-                # print("waiting for", self.count, self.mp_return_dict.keys())
+                print("waiting for", self.count)
 
-    def new_ray_process(self, global_frame_index, worker_id, update_dict):
-        self.returned_images[
-            global_frame_index
-        ] = ray.get(
-            self.ray_processes[worker_id]
-            .get_canvas_multiprocess_return
-            .remote(update_dict)
-        )
+    def get_queue_to_return_images(self, queue_index):
+        while not self.ffmpeg.stop_piping:
+            get = self.get_queues[queue_index].get()
+            index = get[0]
+            image = get[1]
+            self.returned_images[index] = image
+            del get
+            del image
+            del index
 
+    def get_queues_loop(self):
+        for queue_index in range(self.context.multiprocessing_workers):
+            threading.Thread(
+                target=self.get_queue_to_return_images,
+                args=(queue_index,)
+            ).start()
+
+    def put_on_core_queue(self, update_dict):
+        self.core_put_queue.put(update_dict)
+        del update_dict
         
     def run(self):
 
@@ -142,14 +184,19 @@ class Core():
         self.mmvanimation.generate(self.canvas)
 
         if self.context.multiprocessed:
-            ray.init(
-                num_cpus=self.context.multiprocessing_workers,
-            )
-            self.ray_processes = {}
+            # ctx = multiprocessing.get_context("spawn")
+            # self.pool = ctx.Pool(processes=self.context.multiprocessing_workers)
+            # self.manager = ctx.Manager()
+            # self.pool = multiprocessing.Pool(processes=self.context.multiprocessing_workers)
+            # self.mp_return_dict = self.manager.dict()
+            self.manager = multiprocessing.Manager()
+            self.already_returned_image_indexes = []
             self.returned_images = {}
-            for index in range(self.context.multiprocessing_workers):
-                self.ray_processes[index] = Worker.remote()
+            self.core_put_queue = multiprocessing.Queue()
+            self.get_queues = {}
             self.write_thread = threading.Thread(target=self.write_to_pipe_from_multiprocessing).start()
+            self.setup_multiprocessing()
+            self.get_queues_loop = self.get_queues_loop()
         else:
             self.canvas.reset_canvas()
 
@@ -186,7 +233,7 @@ class Core():
             # Normalize the audio slice to 1
             for i, array in enumerate(audio_slice):
                 normalize = np.linalg.norm(array)
-                if False:# not normalize == 0:
+                if not normalize == 0:
                     fft_audio_slice.append((array / normalize)*(2**(self.audio.info["bit_depth"] + 1)))
                 else:
                     fft_audio_slice.append(array)
@@ -219,7 +266,7 @@ class Core():
 
             # Process next animation with audio info and the step count to process on
             self.mmvanimation.next(audio_slice, fftinfo, this_step)
-            
+         
             if self.context.multiprocessed:
 
                 while global_frame_index - self.count >= self.context.multiprocessing_workers*2:
@@ -228,8 +275,6 @@ class Core():
                 
                 self.controller.core_waiting = False
 
-                # print("new item", global_frame_index, "asking worker", global_frame_index % self.context.multiprocessing_workers)
-                
                 update_dict = {
                     "content": self.mmvanimation.content,
                     "canvas": self.canvas,
@@ -239,16 +284,15 @@ class Core():
                 }
 
                 threading.Thread(
-                    target=self.new_ray_process,
-                    args=(
-                        global_frame_index,
-                        global_frame_index % self.context.multiprocessing_workers,
-                        pickle.dumps(update_dict, protocol=pickle.HIGHEST_PROTOCOL)
-                    )
+                    target=self.put_on_core_queue,
+                    args=(pickle.dumps(update_dict, protocol=pickle.HIGHEST_PROTOCOL),)
                 ).start()
+
+                del update_dict
+                
             else:
                 # Save current canvas's Frame to the final video
-                self.ffmpeg.write_to_pipe(global_frame_index, self.canvas.canvas)
+                self.ffmpeg.write_to_pipe(self.canvas.canvas)
 
                 # Hard debug, save the canvas into a folder
                 # self.canvas.canvas.save("data/canvas%s.png" % this_step)

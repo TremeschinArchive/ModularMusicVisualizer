@@ -2,7 +2,6 @@
 mmv/wavefun
 mmv/a.py
 mmv/processing
-mmv/assets
 mmv/trivia*
 *.ogg
 *.mp3
@@ -18,7 +17,8 @@ modular-music-visualizer-venv
 .vscode
 
 # Yeah this is my identity, you should use yours here :)
-mmv/assets/tremx_assets
+assets/tremx_assets
+assets
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
