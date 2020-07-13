@@ -33,45 +33,44 @@ import gc
 
 def get_canvas_multiprocess_return(get_queue, put_queue, worker_id):
     
+    # Set process name so we know who's what on a task manager
     setproctitle.setproctitle(f"MMV Worker {worker_id+1}")
 
     while True:
-        
-        instructions = get_queue.get()
 
-        if instructions == "stop":
-            break
-        
-        instructions = pickle.loads(instructions)
-    
+        # Unpickle our instructions        
+        instructions = pickle.loads(get_queue.get())
+
+        # Get instructions intuitive variable name
         canvas = instructions["canvas"]
         content = instructions["content"]
         fftinfo = instructions["fftinfo"]
         this_frame_index = instructions["index"]
 
-        del instructions
-
+        # Empty the canvas
         canvas.reset_canvas()
 
-        for index in sorted(list(content.keys())):
-            for item in content[index]:
-                item.resolve_pending()
-
+        # Resole pending operations and blit item on canvas
         for index in sorted(list(content.keys())):
             for position, item in enumerate(content[index]):
+                item.resolve_pending()
                 item.blit(canvas)
                 del content[index][position]
 
+        # Resolve pending operations (post process mostly)
         canvas.resolve_pending()
 
+        # Send the numpy array in RGB format back to the Core class for sending to FFmpeg
         put_queue.put( [this_frame_index, canvas.canvas.get_rgb_frame_array()] )
 
+        # Memory management
+        del instructions
         del canvas
         del content
         del fftinfo
         del this_frame_index
 
-        gc.collect()
+        gc.collect() # <-- This took 3 hours of headache with memory leaks
 
 
 class Core():
@@ -95,8 +94,13 @@ class Core():
 
         self.workers = []
 
+        # Create many workers
         for worker_id in range(self.context.multiprocessing_workers):
+            
             print("Create worker with id [%s]" % worker_id)
+            
+            # Create Process with inverted queues as there we..
+            # "put what we get here and get what we put after"
             worker = multiprocessing.Process(
                 target=get_canvas_multiprocess_return,
                 args=(
@@ -104,27 +108,26 @@ class Core():
                     self.core_get_queue,
                     worker_id
                 ),
+                # When main Python process finishes, terminate all workers
                 daemon=True
             )
             worker.name = f"MMV Worker {worker_id+1}"
+
+            # Add the worker to the list
             self.workers.append(worker)
             print("Created new worker")
 
+        # Wake up every worker
         for worker in self.workers:
             worker.start()
 
+    # Keep getting items from the queue
     def core_get_queue_loop(self):
         while True:
             # Get queue returns [index, image]
             get = self.core_get_queue.get()
             index = get[0]
             image = get[1]
-            
-            if index == self.total_steps - 1:
-                print("Closing..")
-                self.ffmpeg.close_pipe()
-                break
-
             self.ffmpeg.write_to_pipe(index, image)
 
     def put_on_core_queue(self, update_dict):
@@ -150,6 +153,7 @@ class Core():
 
         # How many steps is the audio duration times the frames per second
         self.total_steps = int(self.context.duration * self.context.fps)
+        self.controller.total_steps = self.total_steps
 
         print(debug_prefix, "Total steps:", self.total_steps)
 

@@ -232,7 +232,7 @@ class MMVImage():
         self.path = {}
 
         self.interpolation = Interpolation()
-        self.configure = Configure(self)1
+        self.configure = Configure(self)
         self.functions = Functions()
         self.utils = Utils()
         self.image = Frame()

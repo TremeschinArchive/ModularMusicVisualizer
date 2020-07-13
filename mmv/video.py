@@ -59,6 +59,7 @@ class FFmpegWrapper():
         while len(list(self.images_to_pipe.keys())) >= 20:
             print("Too many images on pipe buffer")
             time.sleep(0.1)
+
         self.images_to_pipe[index] = image
         del image
 
@@ -76,6 +77,8 @@ class FFmpegWrapper():
                 self.lock_writing = True
                 self.pipe_subprocess.stdin.write( self.images_to_pipe.pop(self.count) )
                 self.lock_writing = False
+                if self.count == self.controller.total_steps - 1:
+                    self.close_pipe()
                 self.count += 1
 
                 # Stats
