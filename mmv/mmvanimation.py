@@ -392,8 +392,8 @@ class MMVAnimation():
             "moving_video_background": False,
             "logo": False,
             "visualizer": False,
-            "add_post_processing": False,
-            "particles": False
+            "add_post_processing": True,
+            "particles": True
         }
 
         if config["moving_background"]:

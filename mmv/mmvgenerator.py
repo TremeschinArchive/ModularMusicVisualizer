@@ -31,6 +31,18 @@ import math
 import os
 
 
+class MMVGenerator():
+    def __init__(self, context):
+        self.context = context
+        self.generator = None
+
+    def next(self, fftinfo, this_step):
+        return self.generator.next(fftinfo, this_step)
+
+    def set_particle_generator(self):
+        self.generator = MMVParticleGenerator(self.context)
+        
+
 class MMVParticleGenerator():
     def __init__(self, context):
         self.context = context

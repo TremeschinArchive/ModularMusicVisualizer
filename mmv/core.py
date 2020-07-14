@@ -160,6 +160,8 @@ class Core():
         # Generate the assets
         # self.assets.pygradienter("particles", 150, 150, 20)
 
+        self.mmvanimation.generate()
+
         if self.context.multiprocessed:
             # ctx = multiprocessing.get_context("spawn")
             # self.pool = ctx.Pool(processes=self.context.multiprocessing_workers)
@@ -198,11 +200,15 @@ class Core():
             # The slice starts at the this_time_sample and end the cut here
             until = int(this_time_sample + self.context.batch_size)
 
+            left_slice = self.audio.data[0][this_time_sample:until]
+            right_slice = self.audio.data[1][this_time_sample:until]
+
+            # Empty audio slice array if we're at the end of the audio
+            audio_slice = np.zeros([2, self.context.batch_size])
+
             # Get the audio slices of the left and right channel
-            audio_slice = [
-                self.audio.data[0][this_time_sample:until],
-                self.audio.data[1][this_time_sample:until],
-            ]
+            audio_slice[0][ 0:left_slice.shape[0] ] = left_slice
+            audio_slice[1][ 0:right_slice.shape[0] ] = right_slice
 
             fft_audio_slice = []
 

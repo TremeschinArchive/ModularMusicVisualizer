@@ -50,6 +50,9 @@ class mmv:
     def image_object(self):
         return MMVImage(self.main.context)
     
+    def generator_object(self):
+        return MMVGenerator(self.main.context)
+    
     def add(self, item, layer=0):
         if self.utils.is_matching_type([item], [MMVImage]):
             self.main.core.mmvanimation.content[layer].append(item)

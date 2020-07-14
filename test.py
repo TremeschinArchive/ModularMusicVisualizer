@@ -4,7 +4,7 @@ processing = mmv.mmv()
 
 processing.performance(
     multiprocessed=True,
-    workers=12
+    workers=6
 )
 
 processing.quality(
@@ -19,7 +19,7 @@ processing.output_video("demorun.mkv")
 image = processing.image_object()
 
 image.configure.init_animation_layer()
-image.configure.load_image("background.jpg")
+image.configure.load_image("assets/background.jpg")
 image.configure.resize_to_video_resolution()
 
 image.configure.add_path_point(0, 0)
@@ -32,15 +32,36 @@ image.configure.simple_add_linear_resize(intensity="high")
 processing.add(image, layer=0)
 
 
+logo_size = 200
+
+logo = processing.image_object()
+
+logo.configure.init_animation_layer()
+logo.configure.load_image("assets/tremx_assets/logo/logo.png")
+logo.configure.resize_to_resolution(logo_size, logo_size, override=True)
+
+logo.configure.add_path_point(
+    processing.width // 2 - (logo_size/2),
+    processing.height // 2 - (logo_size/2)
+)
+
+logo.configure.simple_add_linear_resize(intensity="custom", activation="1+7*X")
+logo.configure.simple_add_swing_rotation()
+
+processing.add(logo, layer=4)
+
+
 visualizer = processing.image_object()
 visualizer.configure.init_animation_layer()
 visualizer_size = min(processing.resolution)
 visualizer.configure.simple_add_visualizer_circle(
     width=visualizer_size, height=visualizer_size,
-    minimum_bar_size=100,
+    minimum_bar_size=logo_size//2,
     mode="symetric",
-    fft_smoothing=2,
-    subdivide=4
+    responsiveness=0.25,
+    pre_fft_smoothing=2,
+    pos_fft_smoothing=0,
+    subdivide=0
 )
 
 # Center the visualizer

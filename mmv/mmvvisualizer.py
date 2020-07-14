@@ -94,10 +94,8 @@ class MMVVisualizer():
         ffts.append( (ffts[0] + ffts[1]) / 2 )
 
         # Smooth the ffts
-        ffts = [
-            self.smooth(fft, fitfourier["fft_smoothing"])
-            for fft in ffts
-        ]
+        if fitfourier["pre_fft_smoothing"] > 0:
+            ffts = [ self.smooth(fft, fitfourier["pre_fft_smoothing"]) for fft in ffts ]
 
         # The order of channels on the ffts list
         channels = ["l", "r", "m"]
@@ -139,7 +137,9 @@ class MMVVisualizer():
                 
                 # Start a zero fitted fft list
                 fitted_fft = np.zeros(fft_size)
+                fitted_fft = self.current_fft[channel]
 
+                """
                 # For each index starting from zero up until the FFT size
                 for index in range(fft_size):
                     
@@ -161,15 +161,18 @@ class MMVVisualizer():
 
                     # Get the transformed_index from the interpolated fft into the fitted fft linear indexing
                     fitted_fft[index] = this_index_fft_value
+                """
 
                 # Smooth the peaks
-                fitted_fft = self.smooth(fitted_fft, fitfourier["fft_smoothing"])
+                if fitfourier["pos_fft_smoothing"] > 0:
+                    fitted_fft = self.smooth(fitted_fft, fitfourier["pos_fft_smoothing"])
 
                 # Apply "subdivision", break jagged edges into more smooth parts
-                fitted_fft = resample(fitted_fft, fitted_fft.shape[0], fitted_fft.shape[0] * fitfourier["subdivide"])
+                if fitfourier["subdivide"] > 0:
+                    fitted_fft = resample(fitted_fft, fitted_fft.shape[0], fitted_fft.shape[0] * fitfourier["subdivide"])
 
                 # Ignore the really low end of the FFT as well as the high end frequency spectrum
-                cut = [0.05, 0.95]
+                cut = [0, 0.95]
 
                 # Cut the fitted fft
                 fitted_fft = fitted_fft[
@@ -188,7 +191,7 @@ class MMVVisualizer():
                     for i in range(len(fitted_fft) - 1):
 
                         # Calculate our size of the bar
-                        size = fitted_fft[i]*(0.8 + i/80) #- i/len(fitted_fft))
+                        size = fitted_fft[i]*(4 + i/80) #- i/len(fitted_fft))
 
                         # Simple, linear
                         if mode == "linear":
@@ -203,19 +206,25 @@ class MMVVisualizer():
 
                         # Symetric
                         if mode == "symetric":
+
+                            angle = ( i/len(fitted_fft) ) * (math.pi)
+                            angle = self.fit_transform_index.polynomial(angle, math.pi, 0.4)
+
+                            bar_size = (self.config["minimum_bar_size"] + size)*self.size
+
                             # The left channel starts at the top and goes clockwise
                             if channel == "l":
                                 self.polar.from_r_theta(
-                                    (self.config["minimum_bar_size"] + size)*self.size,
-                                    (math.pi/2) - (((math.pi)/len(fitted_fft))*i) # fitted_fft -> fft nice effect
+                                    bar_size,
+                                    (math.pi/2) - angle, # fitted_fft -> fft nice effect
                                 )
                                 coord = self.polar.get_rectangular_coordinates()
                                 points[channel].append(coord)
 
                             elif channel == "r":
                                 self.polar.from_r_theta(
-                                    (self.config["minimum_bar_size"] + size)*self.size,
-                                    (math.pi/2) + (((math.pi)/len(fitted_fft))*i) # fitted_fft -> fft nice effect
+                                    bar_size,
+                                    (math.pi/2) + angle # fitted_fft -> fft nice effect
                                 )
                                 coord = self.polar.get_rectangular_coordinates()
                                 points[channel].append(coord)

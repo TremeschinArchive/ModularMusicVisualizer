@@ -113,7 +113,7 @@ class Configure():
                               fourier_interpolation_activation,
                               fourier_interpolation_arg_a,
                               fourier_interpolation_steps,
-                              fft_smoothing,
+                              pre_fft_smoothing, pos_fft_smoothing,
                               subdivide ):
         self.add_module({
             "visualizer": {
@@ -137,7 +137,8 @@ class Configure():
                                 "steps": fourier_interpolation_steps
                             },
                             "fitfourier": {
-                                "fft_smoothing": fft_smoothing,
+                                "pre_fft_smoothing": pre_fft_smoothing,
+                                "pos_fft_smoothing": pos_fft_smoothing,
                                 "subdivide": subdivide,
                             }
                         }
@@ -158,7 +159,7 @@ class Configure():
 
     # Pre defined simple modules
 
-    def simple_add_visualizer_circle(self, minimum_bar_size, width, height, mode="symetric", fft_smoothing=2, subdivide=4):
+    def simple_add_visualizer_circle(self, minimum_bar_size, width, height, mode="symetric", responsiveness=0.25, pre_fft_smoothing=2, pos_fft_smoothing=0, subdivide=2):
         self.add_module_visualizer(
             vis_type="circle", vis_mode=mode,
             width=width, height=height,
@@ -167,9 +168,10 @@ class Configure():
             activation_function_arg_a=10,
             fourier_interpolation_function=copy.deepcopy(self.object.interpolation.remaining_approach),
             fourier_interpolation_activation="X",
-            fourier_interpolation_arg_a=0.25,
+            fourier_interpolation_arg_a=responsiveness,
             fourier_interpolation_steps=math.inf,
-            fft_smoothing=fft_smoothing,
+            pre_fft_smoothing=pre_fft_smoothing,
+            pos_fft_smoothing=pos_fft_smoothing,
             subdivide=subdivide
         )
 

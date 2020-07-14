@@ -91,9 +91,7 @@ class FitTransformIndex():
     def polynomial(self, index, total, exponent):
         if not self.out_of_bounds(index, total, 0):
             return index 
-        index = int(
-            (total) * (self.functions.proportion(total, 1, index) ** exponent)
-        )
+        index = (total) * (self.functions.proportion(total, 1, index) ** exponent)
         if not self.out_of_bounds(index, total, 0):
             return index 
         return index
@@ -101,11 +99,7 @@ class FitTransformIndex():
     def log10(self, index, total):
         if not self.out_of_bounds(index, total, 0):
             return index 
-        index = int(
-            (total) * (
-                math.log(1 + self.functions.proportion(total - 1, 9, index), 10)
-            )
-        )
+        index = (total) * ( math.log(1 + self.functions.proportion(total - 1, 9, index), 10) )
         if not self.out_of_bounds(index, total, 0):
             return index 
         return index
