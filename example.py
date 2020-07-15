@@ -58,7 +58,7 @@ background.configure.init_animation_layer()
 
 # We can load an random image from the dir :)
 background.configure.load_image(
-    processing.random_file_from_dir("assets/free_assets/background")
+    processing.random_file_from_dir("assets/free_assets/background/simple-smooth")
 )
 
 # As the background fills the video, we resize it to the video resolution

@@ -64,7 +64,7 @@ class mmv:
         return MMVGenerator(self.main.context)
 
     def random_file_from_dir(self, path):
-        self.main.utils.random_file_from_dir(path)
+        return self.utils.random_file_from_dir(path)
     
     def add(self, item, layer=0):
         if self.utils.is_matching_type([item], [MMVImage]):
