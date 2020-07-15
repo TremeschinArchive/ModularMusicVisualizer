@@ -97,7 +97,7 @@ logo_size = (200/720)*processing.height
 
 logo = processing.image_object()
 logo.configure.init_animation_layer()
-logo.configure.load_image("assets/tremx_assets/logo/logo.png")
+logo.configure.load_image("assets/free_assets/mmv-logo.png")
 logo.configure.resize_to_resolution(logo_size, logo_size, override=True)
 
 # The starting point is a bit hard to understand, we want to center it but have to
