@@ -56,7 +56,7 @@ class Assets():
                 "-x", str(width),
                 "-y", str(height),
                 "-n", str(n),
-                "-q"
+                "-d", "-q"
             ]
         )
 

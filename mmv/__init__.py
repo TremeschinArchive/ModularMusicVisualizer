@@ -45,7 +45,11 @@ class mmv:
         self.main.context.assets = path
     
     def create_pygradienter_asset(self, profile, width, height, n=1, delete_existing_files=False):
-        self.main.assets.pygradienter(profile, width, height, n=1, delete_existing_files=delete_existing_files)
+        if self.main.context.os == "windows":
+            print("PyGradienter only works under Linux for now :(")
+            input("Press enter to continue")
+        else:
+            self.main.assets.pygradienter(profile, width, height, n, delete_existing_files=delete_existing_files)
     
     def output_video(self, path):
         self.main.context.output_video = path
@@ -58,6 +62,9 @@ class mmv:
     
     def generator_object(self):
         return MMVGenerator(self.main.context)
+
+    def random_file_from_dir(self, path):
+        self.main.utils.random_file_from_dir(path)
     
     def add(self, item, layer=0):
         if self.utils.is_matching_type([item], [MMVImage]):

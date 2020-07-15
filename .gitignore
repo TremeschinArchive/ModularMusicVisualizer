@@ -3,14 +3,11 @@ mmv/wavefun
 mmv/a.py
 mmv/processing
 mmv/trivia*
-*.ogg
 *.mp3
-*.opus
 *.flac
 *.mkv
 *.mp4
 !repo
-!mmv/banjo.ogg
 modular-music-visualizer-venv
 .vscode
 

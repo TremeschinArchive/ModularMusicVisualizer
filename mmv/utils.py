@@ -137,6 +137,19 @@ class Utils():
     def get_filename_no_extension(self, path):
         return os.path.splitext(os.path.basename(path))[0]
     
+    # Get operating system
+    def get_os(self):
+
+        name = os.name
+
+        # Not really specific but should work?
+        if name == "posix":
+            os_name = "linux"
+        if name == "nt":
+            os_name = "windows"
+
+        return os_name
+    
     # Load a yaml and return its content
     def load_yaml(self, path):
         with open(path, "r") as f:

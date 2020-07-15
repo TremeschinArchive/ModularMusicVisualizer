@@ -1,36 +1,52 @@
+# Import MMV module
 import mmv
 
+# Create the wrapper class
 processing = mmv.mmv()
 
+# Single thread render the video or multiprocessed with N workers?
+# Not setting the workers, defaults to CPU thread count
 processing.performance(
     multiprocessed=True,
     workers=6
 )
 
+# Set the video quality
 processing.quality(
     width=1280,
     height=720,
     fps=60
 )
 
-# #
+# # #
+ 
+# If you want to create some assets, set the assets dir first !!
 processing.assets_dir("assets/free_assets")
+
+# Pygradienter assets only works on Linux at the moment :(
 processing.create_pygradienter_asset(
-    "particles",
-    150, 150,
-    True
+    profile="particles",
+    width=150, height=150,
+    n=20, delete_existing_files=True
 )
-# #
 
-exit()
+# # #
 
-processing.input_audio("mmv/banjo.ogg")
-processing.output_video("demorun.mkv")
+# I/O options, input a audio, output a video
+processing.input_audio("assets/free_assets/sound/banjo.ogg")
+processing.output_video("mmv-output.mkv")
+
+# # #
 
 image = processing.image_object()
 
 image.configure.init_animation_layer()
-image.configure.load_image("assets/background.jpg")
+
+# We can load an random image from the dir :)
+image.configure.load_image(
+    processing.random_file_from_dir("assets/free_assets/background")
+)
+
 image.configure.resize_to_video_resolution()
 
 image.configure.add_path_point(0, 0)
