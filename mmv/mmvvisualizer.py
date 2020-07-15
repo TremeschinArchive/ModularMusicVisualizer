@@ -191,7 +191,7 @@ class MMVVisualizer():
                     for i in range(len(fitted_fft) - 1):
 
                         # Calculate our size of the bar
-                        size = fitted_fft[i]*(2 + i/80) #- i/len(fitted_fft))
+                        size = fitted_fft[i]*(0.7 + i/80) #- i/len(fitted_fft))
 
                         # Simple, linear
                         if mode == "linear":
