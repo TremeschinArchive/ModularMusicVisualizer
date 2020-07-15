@@ -17,7 +17,7 @@ import mmv
 processing = mmv.mmv()
 
 # Single thread render the video or multiprocessed with N workers?
-# Not setting the workers, defaults to CPU thread count
+# Not setting the workers --> defaults to CPU thread count
 processing.performance(
     multiprocessed=True,
     workers=6
@@ -84,6 +84,8 @@ background.configure.simple_add_linear_blur(intensity="medium")
 background.configure.simple_add_linear_resize(intensity="high")
 
 # Add the backround object to be generated
+# The layers are a ascending order of blitted items, 0 is first, 1 is after zero
+# So our background is before everything, layer 0
 processing.add(background, layer=0)
 
 # # # Logo
