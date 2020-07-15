@@ -20,7 +20,7 @@ processing = mmv.mmv()
 # Not setting the workers --> defaults to CPU thread count
 processing.performance(
     multiprocessed=True,
-    workers=6
+    workers=4
 )
 
 # Set the video quality
@@ -36,11 +36,11 @@ processing.quality(
 processing.assets_dir("assets/free_assets")
 
 # Pygradienter assets only works on Linux at the moment :(
-processing.create_pygradienter_asset(
-    profile="particles",
-    width=150, height=150,
-    n=20, delete_existing_files=True
-)
+# processing.create_pygradienter_asset(
+#     profile="particles",
+#     width=150, height=150,
+#     n=20, delete_existing_files=True
+# )
 
 # # #
 

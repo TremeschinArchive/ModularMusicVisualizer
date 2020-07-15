@@ -393,7 +393,7 @@ class MMVAnimation():
             "logo": False,
             "visualizer": False,
             "add_post_processing": True,
-            "particles": True
+            "particles": False
         }
 
         if config["moving_background"]:

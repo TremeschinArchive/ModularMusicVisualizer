@@ -78,12 +78,12 @@ class Configure():
         self.object.image.load_from_path(path, convert_to_png=True)
     
     def resize_to_resolution(self, width, height, override=False):
-        self.object.image.resize_to_resolution(width, height, override=override)
+        self.object.image.resize_to_resolution(int(width), int(height), override=override)
     
     def resize_to_video_resolution(self, over_resize_x=0, over_resize_y=0):
         self.resize_to_resolution(
-            self.object.context.width + over_resize_x,
-            self.object.context.height + over_resize_y,
+            width=self.object.context.width + over_resize_x,
+            height=self.object.context.height + over_resize_y,
             override=True
         )
 
