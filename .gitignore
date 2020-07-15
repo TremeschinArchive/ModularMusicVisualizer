@@ -9,8 +9,6 @@ mmv/trivia*
 *.flac
 *.mkv
 *.mp4
-*.png
-*.jpg
 !repo
 !mmv/banjo.ogg
 modular-music-visualizer-venv
@@ -18,7 +16,7 @@ modular-music-visualizer-venv
 
 # Yeah this is my identity, you should use yours here :)
 assets/tremx_assets
-assets
+!assets/free_assets/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -13,6 +13,17 @@ processing.quality(
     fps=60
 )
 
+# #
+processing.assets_dir("assets/free_assets")
+processing.create_pygradienter_asset(
+    "particles",
+    150, 150,
+    True
+)
+# #
+
+exit()
+
 processing.input_audio("mmv/banjo.ogg")
 processing.output_video("demorun.mkv")
 

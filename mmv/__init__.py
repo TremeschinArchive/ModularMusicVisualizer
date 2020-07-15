@@ -41,6 +41,12 @@ class mmv:
         self.main.context.input_file = path
         self.main.setup_input_audio_file()
     
+    def assets_dir(self, path):
+        self.main.context.assets = path
+    
+    def create_pygradienter_asset(self, profile, width, height, n=1, delete_existing_files=False):
+        self.main.assets.pygradienter(profile, width, height, n=1, delete_existing_files=delete_existing_files)
+    
     def output_video(self, path):
         self.main.context.output_video = path
     
