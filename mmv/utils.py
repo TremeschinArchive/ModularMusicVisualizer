@@ -53,7 +53,7 @@ class Miscellaneous():
 {bias}  Modular Music Visualizer                        
 {bias}{(21-len("Version")-len(self.version))*" "}Version {self.version}
 {"-"*terminal_width}
-        """
+"""
 
         print(message)
 
