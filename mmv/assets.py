@@ -39,7 +39,7 @@ class Assets():
 
         # Define where stuff is
         pygradient_src_dir = self.ROOT + os.path.sep + "pygradienter" + os.path.sep + "src"  + os.path.sep
-        move_to_assets_subdir = self.context.assets + os.path.sep + profile
+        move_to_assets_subdir = self.context.assets + os.path.sep + "pygradienter" + os.path.sep + profile
 
         if delete_existing_files:
             self.utils.rmdir(move_to_assets_subdir)
