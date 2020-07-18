@@ -76,6 +76,9 @@ class Configure():
 
     def load_image(self, path):
         self.object.image.load_from_path(path, convert_to_png=True)
+
+    def load_video(self, path):
+        self.add_module_video(path)
     
     def resize_to_resolution(self, width, height, override=False):
         self.object.image.resize_to_resolution(int(width), int(height), override=override)
@@ -96,6 +99,13 @@ class Configure():
     def add_module_blur(self, activation):
         self.add_module({
             "blur": { "activation": activation }
+        })
+    
+    def add_module_video(self, path):
+        self.add_module({
+            "video": {
+                "path": path
+            }
         })
     
     def add_module_rotate(self, modifier):
@@ -178,7 +188,7 @@ class Configure():
             pos_fft_smoothing=pos_fft_smoothing,
             subdivide=subdivide
         )
-
+    
     def simple_add_path_modifier_shake(self, shake_max_distance, x_smoothness=0.01, y_smoothness=0.02):
         self.object.path[self.animation_index]["position"].append(
             Shake({
@@ -260,12 +270,12 @@ class MMVImage():
         self.offset = [0, 0]
 
         self.ROUND = 3
-    
-    # def __getstate__(self):
-    #     state = self.__dict__.copy()
-    #     # Don't pickle video
-    #     del state["video"]
-    #     return state
+
+    # Don't pickle cv2 video  
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        del state["video"]
+        return state
     
     # Next step of animation
     def next(self, fftinfo, this_step):
@@ -335,8 +345,14 @@ class MMVImage():
                 # CV2 utilizes BGR matrix, but we need RGB
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-                width = self.context.width + (2*this_module["shake"])
-                height = self.context.height + (2*this_module["shake"])
+                shake = 0
+
+                for position in positions:
+                    if self.utils.is_matching_type([position], [Shake]):
+                        shake = position.distance
+
+                width = self.context.width + (2*shake)
+                height = self.context.height + (2*shake)
                 
                 if self.context.multiprocessed:
                     self.image.pending["video"] = [
