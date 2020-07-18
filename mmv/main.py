@@ -101,7 +101,12 @@ class MMVMain():
         self.ffmpeg.pipe_one_time(self.context.output_video)
 
         try:
+            import cProfile
+            p = cProfile.Profile()
+            p.enable()
             self.core.run()
+            p.disable()
+            p.dump_stats("res.prof")
         except KeyboardInterrupt:
             sys.exit(-1)
 

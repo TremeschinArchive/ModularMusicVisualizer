@@ -274,7 +274,8 @@ class MMVImage():
     # Don't pickle cv2 video  
     def __getstate__(self):
         state = self.__dict__.copy()
-        del state["video"]
+        if "video" in state:
+            del state["video"]
         return state
     
     # Next step of animation
