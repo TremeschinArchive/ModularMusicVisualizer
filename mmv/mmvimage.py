@@ -264,9 +264,7 @@ class MMVImage():
         # If we want to get the images from a video, be sure to match the fps!!
         self.video = None
 
-        # Base offset is the default offset when calling .next at the end
         # Offset is the animations and motions this frame offset
-        self.base_offset = [0, 0]
         self.offset = [0, 0]
 
         self.ROUND = 3
@@ -437,31 +435,25 @@ class MMVImage():
                 this_module = modules["fade"]
                 
                 fade = this_module["object"]
-                
-                if fade.current_step < fade.finish_steps:
-                    ammount = this_module["interpolation"](
-                        fade.start_percentage,  
-                        fade.end_percentage,
-                        self.current_step,
-                        fade.finish_steps,
-                        fade.current_step,
-                        this_module["arg_a"]
-                    )
+            
+                ammount = this_module["interpolation"](
+                    fade.start_percentage,  
+                    fade.end_percentage,
+                    fade.current_step,
+                    fade.finish_steps,
+                    fade.current_step,
+                    this_module["arg_a"]
+                )
 
-                    ammount = round(ammount, self.ROUND)
+                ammount = round(ammount, self.ROUND)
 
-                    if self.context.multiprocessed:
-                        self.image.pending["fade"] = [ammount]
-                    else:
-                        self.image.transparency(ammount)
-                        
-                    fade.current_step += 1
+                if self.context.multiprocessed:
+                    self.image.pending["transparency"] = [ammount]
+                    self.image.transparency_value = ammount
                 else:
-                    # TODO: Failsafe really necessary?
-                    if self.context.multiprocessed:
-                        self.image.pending["fade"] = [fade.end_percentage]
-                    else:
-                        self.image.transparency(fade.end_percentage)
+                    self.image.transparency(ammount)
+                    
+                fade.current_step += 1
 
         # Iterate through every position module
         for position in positions:
@@ -512,8 +504,8 @@ class MMVImage():
     # Blit this item on the canvas
     def blit(self, canvas):
 
-        x = int(self.x + self.offset[1] + self.base_offset[1])
-        y = int(self.y + self.offset[0] + self.base_offset[0])
+        x = int(self.x + self.offset[1])
+        y = int(self.y + self.offset[0])
 
         canvas.canvas.overlay_transparent(
             self.image.frame,

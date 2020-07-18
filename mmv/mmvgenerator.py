@@ -67,7 +67,9 @@ class MMVParticleGenerator():
         return {"object": None}
 
     def add_random_particle(self):
+
         particle = MMVImage(self.context)
+
         particle.image.load_from_path(
             self.utils.random_file_from_dir (
                 self.context.assets + os.path.sep + "particles"
@@ -96,7 +98,7 @@ class MMVParticleGenerator():
         })
 
         fast = 0.05
-        fade_intensity = random.uniform(0.1, 0.7)
+        fade_intensity = round(random.uniform(0.1, 0.7), 3)
 
         this_steps = random.randint(50, 100)
         particle.path[0] = {

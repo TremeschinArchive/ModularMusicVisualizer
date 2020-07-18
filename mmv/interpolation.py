@@ -30,6 +30,8 @@ class Interpolation():
 
     # Linear, between point A and B based on a current "step" and total steps
     def linear(self, a, b, current, total, this_coord, arg_a):
+        if current > total:
+            return b
         part = (b - a) / total
         walked = part * current
         return a + walked

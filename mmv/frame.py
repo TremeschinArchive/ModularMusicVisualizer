@@ -38,6 +38,7 @@ class Frame():
 
         # Multiprocessing pending things to do, ordered
         self.pending = {}
+        self.transparency_value = 1
         self.size = 1
 
     # Create new numpy array as a "frame", attribute width, height and resolution
@@ -152,7 +153,7 @@ class Frame():
         new_width = int(self.width * ratio)
         new_height = int(self.height * ratio)
 
-        if not get_only_offset:
+        if (not get_only_offset) and (not ((new_width == self.width) and (new_height == self.height))):
             if override:
                 # Resize the original image itself and set it as the resized as well as the image var
                 self.original_image = self.original_image.resize((new_width, new_height), Image.ANTIALIAS)
@@ -398,11 +399,13 @@ class Frame():
     # @ratio: 0 - 1 values
     def transparency(self, ratio):
 
+        self.transparency_value = ratio
+
         # Split the original image's channels
         r, g, b, alpha = self.original_image.split()
 
         # Multiply the alpha by that ratio
-        alpha = np.array(alpha)*ratio
+        alpha = np.array(alpha) * ratio
 
         # Stack the arrays into a new numpy array "as image"
         image = (np.dstack((r, g, b, alpha))).astype(np.uint8)
@@ -491,10 +494,11 @@ class Frame():
             ammount = module[0]
             self.gaussian_blur(ammount)
         
-        if "fade" in keys:
-            module = self.pending["fade"]
+        if "transparency" in keys:
+            module = self.pending["transparency"]
             ammount = module[0]
-            self.transparency(ammount)
+            if not self.transparency_value == ammount:
+                self.transparency(ammount)
         
         # ~ 0.23 seconds on 720p image
         if "vignetting" in keys:

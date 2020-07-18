@@ -19,8 +19,8 @@ processing = mmv.mmv()
 # Single thread render the video or multiprocessed with N workers?
 # Not setting the workers --> defaults to CPU thread count
 processing.performance(
-    multiprocessed=False,
-    workers=4
+    multiprocessed=True,
+    workers=6
 )
 
 # Set the video quality
@@ -123,10 +123,10 @@ visualizer.configure.simple_add_visualizer_circle(
     width=visualizer_size, height=visualizer_size,
     minimum_bar_size=logo_size//2,
     mode="symetric",
-    responsiveness=0.25,
+    responsiveness=0.6,
     pre_fft_smoothing=2,
     pos_fft_smoothing=0,
-    subdivide=0
+    subdivide=4
 )
 
 # Center the visualizer

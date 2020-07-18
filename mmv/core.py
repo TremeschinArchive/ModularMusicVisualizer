@@ -51,11 +51,13 @@ def get_canvas_multiprocess_return(get_queue, put_queue, worker_id):
         canvas.reset_canvas()
 
         # Resole pending operations and blit item on canvas
-        for index in sorted(list(content.keys())):
-            for position, item in enumerate(content[index]):
+        for layer in sorted(content):
+            for item in content[layer]:
                 item.resolve_pending()
+        
+        for layer in sorted(content):
+            for position, item in enumerate(content[layer]):
                 item.blit(canvas)
-                del content[index][position]
 
         # Resolve pending operations (post process mostly)
         canvas.resolve_pending()

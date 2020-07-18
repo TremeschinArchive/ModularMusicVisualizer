@@ -70,9 +70,10 @@ class MMVVisualizer():
         self.image = Frame()
 
     def smooth(self, array, smooth):
-        box = np.ones(smooth)/smooth
-        array_smooth = np.convolve(array, box, mode='same')
-        return array_smooth
+        if smooth > 0:
+            box = np.ones(smooth)/smooth
+            array_smooth = np.convolve(array, box, mode='same')
+            return array_smooth
 
     # Next step of animation
     def next(self, fftinfo, is_multiprocessing=False):
@@ -94,8 +95,7 @@ class MMVVisualizer():
         ffts.append( (ffts[0] + ffts[1]) / 2 )
 
         # Smooth the ffts
-        if fitfourier["pre_fft_smoothing"] > 0:
-            ffts = [ self.smooth(fft, fitfourier["pre_fft_smoothing"]) for fft in ffts ]
+        ffts = [ self.smooth(fft, fitfourier["pre_fft_smoothing"]) for fft in ffts ]
 
         # The order of channels on the ffts list
         channels = ["l", "r", "m"]
@@ -136,32 +136,7 @@ class MMVVisualizer():
             if not is_multiprocessing:
                 
                 # Start a zero fitted fft list
-                fitted_fft = np.zeros(fft_size)
-                fitted_fft = self.current_fft[channel]
-
-                """
-                # For each index starting from zero up until the FFT size
-                for index in range(fft_size):
-                    
-                    # Fit the transformed index
-                    exponent = 2.2
-                    transformed_index_this = self.fit_transform_index.polynomial(index, fft_size, exponent)
-                    transformed_index_next = self.fit_transform_index.polynomial(index + fft_size//100, fft_size, exponent)
-
-                    this_index_fft_value = 0
-
-                    if transformed_index_this == transformed_index_next:
-                        this_index_fft_value = self.current_fft[channel][transformed_index_this]
-                    else:
-                        this_index_fft_value = np.mean(
-                            self.current_fft[channel][
-                                transformed_index_this:transformed_index_next
-                            ]
-                        )
-
-                    # Get the transformed_index from the interpolated fft into the fitted fft linear indexing
-                    fitted_fft[index] = this_index_fft_value
-                """
+                fitted_fft = np.copy( self.current_fft[channel] )
 
                 # Smooth the peaks
                 if fitfourier["pos_fft_smoothing"] > 0:

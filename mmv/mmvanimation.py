@@ -443,12 +443,14 @@ class MMVAnimation():
             if not new_object == None:
                 self.content[new["layer"]].append(new_object)
 
+        items_to_delete = []
+
         for layer in sorted(list(self.content.keys())):
             for position, item in enumerate(self.content[layer]):
 
                 # We can delete the item as it has decided life wasn't worth anymore
                 if item.is_deletable:
-                    del self.content[layer][position]
+                    items_to_delete.append([layer, position])
                     continue
 
                 # Generate next step of animation
@@ -457,6 +459,9 @@ class MMVAnimation():
                 # Blit itself on the canvas
                 if not self.context.multiprocessed:
                     item.blit(self.canvas)
+
+        for items in sorted(items_to_delete, reverse=True):
+            del self.content[ items[0] ][ items[1] ]
 
         # Post process this final frame as we added all the items
         self.canvas.next(fftinfo)
