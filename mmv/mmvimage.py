@@ -439,7 +439,7 @@ class MMVImage():
                 ammount = this_module["interpolation"](
                     fade.start_percentage,  
                     fade.end_percentage,
-                    fade.current_step,
+                    self.current_step,
                     fade.finish_steps,
                     fade.current_step,
                     this_module["arg_a"]
