@@ -23,7 +23,6 @@ from mmv.utils import Utils
 import multiprocessing
 import setproctitle
 import numpy as np
-import samplerate
 import threading
 import pickle
 import time
@@ -77,7 +76,7 @@ def get_canvas_multiprocess_return(get_queue, put_queue, worker_id):
 
 
 class Core():
-    def __init__(self, context, controller, canvas, assets, fourier, ffmpeg, audio, mmvanimation):
+    def __init__(self, context, controller, canvas, assets, fourier, ffmpeg, audio, mmvanimation, audio_processing):
         # Get every class
         self.context = context
         self.controller = controller
@@ -87,6 +86,7 @@ class Core():
         self.ffmpeg = ffmpeg
         self.audio = audio
         self.mmvanimation = mmvanimation
+        self.audio_processing = audio_processing
         self.utils = Utils()
 
         self.ROOT = self.context.ROOT
@@ -160,18 +160,9 @@ class Core():
 
         print(debug_prefix, "Total steps:", self.total_steps)
 
-        # Generate the assets
-        # self.assets.pygradienter("particles", 150, 150, 20)
-
         self.mmvanimation.generate()
 
         if self.context.multiprocessed:
-            # ctx = multiprocessing.get_context("spawn")
-            # self.pool = ctx.Pool(processes=self.context.multiprocessing_workers)
-            # self.manager = ctx.Manager()
-            # self.pool = multiprocessing.Pool(processes=self.context.multiprocessing_workers)
-            # self.mp_return_dict = self.manager.dict()
-            # self.manager = multiprocessing.Manager()
             self.returned_images = {}
             queuesize = self.context.multiprocessing_workers*2
             self.core_put_queue = multiprocessing.Queue(maxsize=queuesize)
@@ -193,29 +184,11 @@ class Core():
             if this_step >= self.total_steps - 1:
                 this_step = self.total_steps - 1
 
-            # The current time in seconds we're going to slice the audio based on its samplerate
-            # If we offset to the opposite way, the starting point can be negative hence the max function.
-            this_time = max( (1/self.context.fps) * this_step, 0 )
-
-            # The current time in sample count to slice the audio
-            this_time_sample = int(this_time * self.audio.info["sample_rate"])
-
-            # The slice starts at the this_time_sample and end the cut here
-            until = int(this_time_sample + self.context.batch_size)
-
-            left_slice = self.audio.data[0][this_time_sample:until]
-            right_slice = self.audio.data[1][this_time_sample:until]
-            mono_slice = self.audio.mono[this_time_sample:until]
-
-            left_slice = samplerate.resample(left_slice, 1/10, 'sinc_best')
-            right_slice = samplerate.resample(right_slice, 1/10, 'sinc_best')
-
-            # Empty audio slice array if we're at the end of the audio
-            audio_slice = np.zeros([2, self.context.batch_size])
-
-            # Get the audio slices of the left and right channel
-            audio_slice[0][ 0:left_slice.shape[0] ] = left_slice
-            audio_slice[1][ 0:right_slice.shape[0] ] = right_slice
+            audio_slice = self.audio_processing.slice_audio(
+                stereo_data = self.audio.stereo_data,
+                mono_data = self.audio.mono_data,
+                step = this_step
+            )
 
             fft_audio_slice = []
 

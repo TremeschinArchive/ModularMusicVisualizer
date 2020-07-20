@@ -21,6 +21,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from mmv.mmvanimation import MMVAnimation
 from mmv.controller import Controller
+from mmv.audio import AudioProcessing
 from mmv.video import FFmpegWrapper
 from mmv.utils import Miscellaneous
 from mmv.audio import AudioFile
@@ -78,6 +79,9 @@ class MMVMain():
         print(debug_prefix, "Creating AudioFile()")
         self.audio = AudioFile(self.context)
 
+        print(debug_prefix, "Creating AudioProcessing()")
+        self.audio_processing = AudioProcessing(self.context)
+
         print(debug_prefix, "Creating MMVAnimation()")
         self.mmvanimation = MMVAnimation(self.context, self.controller, self.audio, self.canvas)
     
@@ -94,6 +98,7 @@ class MMVMain():
             self.ffmpeg,
             self.audio,
             self.mmvanimation,
+            self.audio_processing,
         )
 
     def run(self):

@@ -21,7 +21,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from scipy.fftpack import fft
-from scipy import arange
 import numpy as np
 
 
@@ -48,7 +47,13 @@ class Fourier():
 
         return transform[cut[0]:cut[1]]
 
+    # For more information, https://stackoverflow.com/questions/4364823
+    def binned_fft(self, data, sample_rate):
+        # The FFT length
+        N = data.shape[0]
 
-class FitFourier():
-    def polynomial(self, fft, exponent):
-        pass
+        # Get the nth frequency of the fft
+        get_bin = lambda n : n * (sample_rate/N)
+
+        fft = self.fft(data)
+
