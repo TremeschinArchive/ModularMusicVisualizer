@@ -116,18 +116,6 @@ class AudioProcessing():
         self.context = context
         self.fourier = Fourier()
 
-        self.config = {
-            "0": {
-                "sample_rate": 1600,
-                "start_freq": 20
-                "end_freq": 800,
-                "nbins": "original",
-            },
-            "1": {
-
-            }
-        }
-    
     # Slice a mono and stereo audio data
     def slice_audio(self, stereo_data, mono_data, step)
 
@@ -159,8 +147,50 @@ class AudioProcessing():
 
     def resample(self, data, original_sample_rate, new_sample_rate):
         ratio = new_sample_rate / original_sample_rate
-        return samplerate.resample(data, ratio, 'sinc_best')
+        if ratio == 1:
+            return data
+        else:
+            return samplerate.resample(data, ratio, 'sinc_best')
 
-    def next(self, data):
-        left_slice = samplerate.resample(left_slice, 1/10, 'sinc_best')
-        right_slice = samplerate.resample(right_slice, 1/10, 'sinc_best')
+    def frequencies_in_between(self, data, start, end):
+        return {k: v for k, v in d.iteritems() if k > start and k < end}
+    
+    def equal_slices(self, array, n):
+        size = len(array)
+        return [ array[i: min(i+l, size) ] for i in range(0, size, k) ]
+
+    def process(self, data, original_sample_rate):
+        self.config = {
+            "0": {
+                "sample_rate": 1600,
+                "start_freq": 20
+                "end_freq": 800,
+                "nbins": "original",
+            },
+            "1": {
+                "sample_rate": 40000,
+                "start_freq": 800
+                "end_freq": 20000,
+                "nbins": "original",
+            }
+        }
+
+        # The returned dictionary
+        processed = {}
+
+        # Iterate on config
+        for key, value in self.config.items():
+
+            # Get info on config
+            sample_rate = value["sample_rate"]
+            start_freq = value["start_freq"]
+            end_freq = value["end_freq"]
+            nbins = value["nbins"]
+
+            # Resample audio to target sample rate
+            resampled = self.resample(data, original_sample_rate, sample_rate)
+
+            # Get freqs vs fft value dictionary
+            binned_fft = self.fourier.binned_fft(resampled, sample_rate)
+
+            

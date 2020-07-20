@@ -25,35 +25,48 @@ import numpy as np
 
 
 class Fourier():
-    def fft(self, data, info):
+
+    # Calculate an Fast Fourier Transform, doesn't return DC bias (first bin)
+    # and cuts up to the middle where the useful info ends
+    def fft(self, data):
 
         debug_prefix = "[Fourier.fft]"
 
-        # Normalize the data on [-1, 1] based on the bit count
-        # print(debug_prefix, "Normalizing the data")
-        normalized = [(x/2**info["bit_depth"])*2 - 1 for x in data]
+        # Normalize the data on [-1, 1]
+        normalize_scalar = np.linalg.norm(data)
+
+        # If the array is only zeros then normalize_scalar is zero
+        # We can't divide by zero so..
+        if normalize_scalar > 0:
+            normalized = normalized / normalize_scalar
+        else:
+            normalized = data
 
         # Calculate the fft
         # print(debug_prefix, "Calculating FFT")
         transform = fft(normalized)
 
-        # print(debug_prefix, "len(data) =", len(data))
-        # print(debug_prefix, "len(fft) =", len(transform))
-
-        # Only need half the list of fft
-        cut = [
-            2, int(len(normalized)/2)
-        ]
+        # Only need half the list of fft and don't need the DC bias (first item)
+        cut = [1, len(normalized) // 2]
 
         return transform[cut[0]:cut[1]]
 
     # For more information, https://stackoverflow.com/questions/4364823
     def binned_fft(self, data, sample_rate):
+        
         # The FFT length
         N = data.shape[0]
 
         # Get the nth frequency of the fft
         get_bin = lambda n : n * (sample_rate/N)
 
+        # Get the fft
         fft = self.fft(data)
 
+        bined_fft = {}
+
+        # Assign freq vs fft on a dictionary
+        for index in range(1, N):
+            binned_fft[get_bin(index)] = fft[index]   
+
+        return binned_ffet
