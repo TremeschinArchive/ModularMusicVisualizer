@@ -74,6 +74,7 @@ class MMVVisualizer():
             box = np.ones(smooth)/smooth
             array_smooth = np.convolve(array, box, mode='same')
             return array_smooth
+        return array
 
     # Next step of animation
     def next(self, fftinfo, is_multiprocessing=False):
