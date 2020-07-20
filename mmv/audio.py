@@ -26,18 +26,18 @@ import soundfile
 import os
 
 
-class Audio():
+class AudioFile():
     def __init__(self, context):
         self.context = context
 
     # Converts a file to .wav if it's not and move to the processing dir, sets the context.input_file var
     def set_audio_file(self, audio):
 
-        debug_prefix = "[Audio.set_audio_file]"
+        debug_prefix = "[AudioFile.set_audio_file]"
 
-        # Audio isn't an .wav
+        # AudioFile isn't an .wav
         if not audio.endswith(".wav"):
-            print(debug_prefix, "Audio does not end with .wav")
+            print(debug_prefix, "AudioFile does not end with .wav")
 
             # Where the working .wav file will be saved
             output = self.context.processing + os.path.sep + self.context.utils.get_filename_no_extension(audio) + ".wav"
@@ -65,7 +65,7 @@ class Audio():
     # Read a .wav file from disk and gets the values on a list
     def read(self, audio):
 
-        debug_prefix = "[Audio.read]"
+        debug_prefix = "[AudioFile.read]"
 
         print(debug_prefix, "Setting audio file")
         self.set_audio_file(audio)

@@ -23,11 +23,11 @@ from mmv.mmvanimation import MMVAnimation
 from mmv.controller import Controller
 from mmv.video import FFmpegWrapper
 from mmv.utils import Miscellaneous
+from mmv.audio import AudioFile
 from mmv.fourier import Fourier
 from mmv.context import Context
 from mmv.canvas import Canvas
 from mmv.assets import Assets
-from mmv.audio import Audio
 from mmv.core import Core
 from PIL import Image
 import numpy as np
@@ -43,7 +43,7 @@ class MMVMain():
         
         debug_prefix = "[MMVMain.setup_input_audio_file]"
 
-        print(debug_prefix, "Reading Audio")
+        print(debug_prefix, "Reading AudioFile")
         self.audio.read(self.context.input_file)
         self.context.duration = self.audio.info["duration"]
 
@@ -75,8 +75,8 @@ class MMVMain():
             self.context.processing
         )
 
-        print(debug_prefix, "Creating Audio()")
-        self.audio = Audio(self.context)
+        print(debug_prefix, "Creating AudioFile()")
+        self.audio = AudioFile(self.context)
 
         print(debug_prefix, "Creating MMVAnimation()")
         self.mmvanimation = MMVAnimation(self.context, self.controller, self.audio, self.canvas)
