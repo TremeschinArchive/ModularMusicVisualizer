@@ -17,7 +17,7 @@ import mmv
 processing = mmv.mmv()
 
 # Single thread render the video or multiprocessed with N workers?
-# Not setting the workers --> defaults to CPU thread count
+# Not setting the workers --> defaults to 4
 processing.performance(
     multiprocessed=True,
     workers=6

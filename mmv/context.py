@@ -20,7 +20,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmv.utils import Utils
-import multiprocessing
 import os
 
 
@@ -58,7 +57,7 @@ class Context():
         # Performance
         self.svg_rasterizer = "cairo"
         self.multiprocessed = False
-        self.multiprocessing_workers = multiprocessing.cpu_count()
+        self.multiprocessing_workers = 4
 
         self.presets = ["low", "medium", "high", "ultra", "max"]
 
