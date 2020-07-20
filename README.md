@@ -30,6 +30,12 @@ Please, if you are running this project from source, after installing the Python
 
 As you can see [here](https://python-pillow.org/pillow-perf/), `pillow-simd` is faster by a lot on imaging processing, it cut down render times with MMV from `2:34 minutes --> 1:89 minutes` and that was with `multiprocessed=False`, resize times went down from 34 seconds to only 13 not to mention faster GaussianBlurs.
 
+#### IMPORTANT!!
+
+If you're going to venture out on creating your own MMV scripts, I higly recommend reading the basics of Python [here](https://learnxinyminutes.com/docs/python/), it doesn't take much to read and will avoid some beginner pitfals.
+
+Though you probably should be fine by just creating a copy of the example scripting I provide on the repo and reading through my comments and seeing the Python code working, it's pretty straightforward as I tried to simplify the syntax and naming functions with a more _"concrete"_ meaning. 
+
 ## Linux
 
 Install Python and git on your distribution
