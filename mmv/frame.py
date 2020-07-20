@@ -497,8 +497,7 @@ class Frame():
         if "transparency" in keys:
             module = self.pending["transparency"]
             ammount = module[0]
-            if not self.transparency_value == ammount:
-                self.transparency(ammount)
+            self.transparency(ammount)
         
         # ~ 0.23 seconds on 720p image
         if "vignetting" in keys:

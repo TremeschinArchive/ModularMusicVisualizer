@@ -98,7 +98,7 @@ class MMVParticleGenerator():
         })
 
         fast = 0.05
-        fade_intensity = round(random.uniform(0.1, 0.7), 3)
+        fade_intensity = random.uniform(0.1, 0.7)
 
         this_steps = random.randint(50, 100)
         particle.path[0] = {

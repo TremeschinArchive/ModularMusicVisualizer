@@ -449,7 +449,6 @@ class MMVImage():
 
                 if self.context.multiprocessed:
                     self.image.pending["transparency"] = [ammount]
-                    self.image.transparency_value = ammount
                 else:
                     self.image.transparency(ammount)
                     
