@@ -49,7 +49,7 @@ class Context():
         self.fps = 60
 
         # # Batchs, responsiveness
-        self.batch_size = (48000 // self.fps) # 512
+        self.batch_size = 2048 #(48000 // self.fps) # 512
 
         # Offset the audio slice by this much of steps
         self.offset_audio_before_in_many_steps = (60/self.fps) // 8

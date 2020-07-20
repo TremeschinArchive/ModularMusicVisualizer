@@ -23,6 +23,7 @@ from mmv.utils import Utils
 import multiprocessing
 import setproctitle
 import numpy as np
+import samplerate
 import threading
 import pickle
 import time
@@ -204,6 +205,10 @@ class Core():
 
             left_slice = self.audio.data[0][this_time_sample:until]
             right_slice = self.audio.data[1][this_time_sample:until]
+            mono_slice = self.audio.mono[this_time_sample:until]
+
+            left_slice = samplerate.resample(left_slice, 1/10, 'sinc_best')
+            right_slice = samplerate.resample(right_slice, 1/10, 'sinc_best')
 
             # Empty audio slice array if we're at the end of the audio
             audio_slice = np.zeros([2, self.context.batch_size])
@@ -236,7 +241,7 @@ class Core():
 
             # Adapt the FFT
             mean_fft = (fft[0] + fft[1])/2
-            mean_audio_slice = (audio_slice[0] + audio_slice[1]) / 2
+            mean_audio_slice = mono_slice
 
             # Adapt the FFT
             biased_total_size = abs(sum(mean_fft)) / self.context.batch_size

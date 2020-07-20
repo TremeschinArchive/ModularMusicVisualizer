@@ -91,6 +91,8 @@ class Audio():
 
         self.info["duration"] = self.data.shape[1] / self.info["sample_rate"]
 
+        self.mono = (self.data[0] + self.data[1]) / 2
+
         print("Duration", self.info["duration"])
 
     # Get info from audio file - sample rate, channels, bit depth
