@@ -102,4 +102,4 @@ I include a few free assets under the `assets/free_assets` folder, you can use t
 
 # Contributing
 
-Please read [CONTRIBUTING.md](docs/CONTRIBUTING.MD) file :)
+Please read [CONTRIBUTING.md](docs/CONTRIBUTING.md) file :)
