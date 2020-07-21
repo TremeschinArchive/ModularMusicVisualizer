@@ -11,7 +11,7 @@ import os
 description = "A mushy colorful but a bit dark texturewith some reflections"
 
 
-class PyGradienterProfile():
+class PyGradienterProfileMushyColorful():
     def __init__(self, config):
         self.config = config
 
@@ -29,7 +29,7 @@ class PyGradienterProfile():
         self.point_d = Point([self.width + away, self.height + away]) # bottom right
 
         self.name = os.path.basename(__file__).replace(".py", "")
-        print("Starting PyGradienterProfile with name [%s]" % self.name)
+        print("Starting PyGradienterProfileMushyColorful with name [%s]" % self.name)
 
     def generate_nodes(self):
 

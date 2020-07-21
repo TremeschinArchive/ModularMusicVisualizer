@@ -11,7 +11,7 @@ import os
 description = "This is a template file, copy and rename to make your own!!"
 
 # This is a class with pre-defined function names that will be called to generate a image
-class PyGradienterProfile():
+class PyGradienterProfileTemplate():
     def __init__(self, config):
         self.config = config
 

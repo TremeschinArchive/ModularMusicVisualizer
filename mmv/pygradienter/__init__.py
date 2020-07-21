@@ -20,6 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pygradienter.processing import PyGradienterProcessing
+from pygradienter.main import PyGradienterMain
 from pygradienter.utils import Miscellaneous
 from pygradienter.utils import Utils
 from multiprocessing import Pool
@@ -58,6 +59,7 @@ class pygradienter():
         # Create Utils and get this file location
         self.utils = Utils()
         self.config = Config(self)
+        self.main = PyGradienterMain()
 
         # Default values
         self.n_images = 1
@@ -66,30 +68,5 @@ class pygradienter():
         self.show_welcome_message = True
         self.quiet = False
 
-    def get_result(self):
-            
-        # Create pool
-        pool = Pool()
-
-        # Start up the profile
-        profile = self.profile.PyGradienterProfile(self.config)
-        profile.id = 0
-
-        # List for mapping multiprocess
-        data_inputs = []
-
-        # Create the lists on how many images we'll create
-        for _ in range(self.config["generate_n_images"]):
-
-            # Add one ID for generating different random seeds
-            profile.id += 1
-
-            # Add a copy of the object as a argument            
-            data_inputs.append(
-                copy.deepcopy(profile)
-            )
-
-        # Main routine on making the images, multiprocessing these
-        pool.map(PyGradienterProcessing, data_inputs)
-
-        pool.close()
+    def generate(self):
+        return self.main.generate()

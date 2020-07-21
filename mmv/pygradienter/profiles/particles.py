@@ -11,7 +11,7 @@ import os
 description = "White star-like particles"
 
 
-class PyGradienterProfile():
+class PyGradienterProfileParticles():
     def __init__(self, config):
         self.config = config
 
@@ -22,7 +22,7 @@ class PyGradienterProfile():
         self.id = 0
 
         self.name = os.path.basename(__file__).replace(".py", "")
-        print("Starting PyGradienterProfile with name [%s]" % self.name)
+        print("Starting PyGradienterProfileParticles with name [%s]" % self.name)
 
     def generate_nodes(self):
 

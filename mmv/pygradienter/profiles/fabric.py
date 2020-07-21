@@ -12,7 +12,7 @@ import os
 description = "A somewhat fabric looking like texture"
 
 
-class PyGradienterProfile():
+class PyGradienterProfileFabric():
     def __init__(self, config):
         self.config = config
 
@@ -23,7 +23,7 @@ class PyGradienterProfile():
         self.id = 0
 
         self.name = os.path.basename(__file__).replace(".py", "")
-        print("Starting PyGradienterProfile with name [%s]" % self.name)
+        print("Starting PyGradienterProfileFabric with name [%s]" % self.name)
 
     def generate_nodes(self):
 

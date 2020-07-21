@@ -10,7 +10,7 @@ import os
 description = "Simple and clean gradients"
 
 
-class PyGradienterProfile():
+class PyGradienterProfileSimple():
     def __init__(self, config):
         self.config = config
 
