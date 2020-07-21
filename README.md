@@ -18,6 +18,15 @@ So I searched up for a free (as in freedom and price) tool that does exactly tha
 
 Then I just got into this opportunity on making a suckless (as in quality not minimalism I see you lol) music visualization tool with the programming languages and tools I love and care.
 
+# Table of contents
+
+   * [Running](#running)
+      * [Linux](#linux)
+      * [Windows](#windows)
+   * [Goals, what is being developed](#goals-what-is-being-developed)
+   * [Contributing](#contributing)
+
+
 # Wiki is TODO
 
 Lot's of stuff are moving on the code and being rewritten, when things are more stable I'll write a proper guide.
