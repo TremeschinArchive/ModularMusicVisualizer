@@ -25,6 +25,7 @@ import numpy as np
 import subprocess
 import samplerate
 import soundfile
+import librosa
 import os
 
 
@@ -32,89 +33,28 @@ class AudioFile():
     def __init__(self, context):
         self.context = context
 
-    # Converts a file to .wav if it's not and move to the processing dir, sets the context.input_file var
-    def set_audio_file(self, audio):
-
-        debug_prefix = "[AudioFile.set_audio_file]"
-
-        # AudioFile isn't an .wav
-        if not audio.endswith(".wav"):
-            print(debug_prefix, "AudioFile does not end with .wav")
-
-            # Where the working .wav file will be saved
-            output = self.context.processing + os.path.sep + self.context.utils.get_filename_no_extension(audio) + ".wav"
-            print(debug_prefix, "Processing .wav audio file will be [%s]" % output)
-
-            # If we haven't already converted to .wav the file into the directory
-            if not os.path.exists(output):
-
-                # Input original audio, output the .wav
-                print(debug_prefix, "Processing .wav audio file does not exist")
-                command = ["ffmpeg", "-i", audio, "-b:a", "300k", output]
-            
-                # Run the command
-                print(debug_prefix, "Converting to .wav with command:", command)
-                subprocess.run(command)
-
-            else:
-                # File already exists
-                print(debug_prefix, "Processing .wav audio file exists")
-
-            # Set the context.input_file to the output (.wav)
-            self.context.input_file = output
-            print(debug_prefix, "context.input_file is now [%s]" % self.context.input_file)
-
     # Read a .wav file from disk and gets the values on a list
-    def read(self, audio):
+    def read(self, path):
 
-        debug_prefix = "[AudioFile.read]"
+        debug_prefix = "[Audio.read]"
 
-        print(debug_prefix, "Setting audio file")
-        self.set_audio_file(audio)
-
-        print(debug_prefix, "Getting audio file info")
-        self.get_info(self.context.input_file)
-
-        print(debug_prefix, "Reading audio file data")
-        self.fs, data = wavfile.read(self.context.input_file)
-
-        print(debug_prefix, "Unparsed data info:")
-
-        print(debug_prefix, "Data is:", data)
-        print(debug_prefix, "Len data:", len(data))
-        print(debug_prefix, "Len data[0]:", len(data[0]))
-
-        self.stereo_data = data.T
-
-        print(debug_prefix, "Transposed data")
-        print(debug_prefix, "Data is", self.stereo_data)
-        print(debug_prefix, "Shape data", self.stereo_data.shape)
-        print(debug_prefix, "Len data:", self.stereo_data.shape[0])
-
-        self.info["duration"] = self.stereo_data.shape[1] / self.info["sample_rate"]
-
+        print(debug_prefix, "Reading stereo audio")
+        self.stereo_data, self.sample_rate = librosa.load(path, mono=False, sr=None)
+        
+        print(debug_prefix, "Calculating mono audio")
         self.mono_data = (self.stereo_data[0] + self.stereo_data[1]) / 2
 
-        print("Duration", self.info["duration"])
-
-    # Get info from audio file - sample rate, channels, bit depth
-    def get_info(self, path):
-
-        info = soundfile.SoundFile(path)
-
-        self.info = {
-            "sample_rate": info.samplerate,
-            "channels": info.channels,
-            "subtype": info.subtype,
-        }
-
-        self.info["bit_depth"] = int(self.info["subtype"].split("_")[1])
-
+        self.duration = self.stereo_data.shape[1] / self.sample_rate
+        self.context.duration = self.duration
+        self.channels = self.stereo_data.shape[1]
+        
+        print(debug_prefix, "Duration = %ss" % self.duration)
 
 class AudioProcessing():
     def __init__(self, context):
         self.context = context
         self.fourier = Fourier()
+        self.config = None
 
     # Slice a mono and stereo audio data
     def slice_audio(self, stereo_data, mono_data, sample_rate, step):
@@ -143,17 +83,8 @@ class AudioProcessing():
         self.audio_slice[0][ 0:left_slice.shape[0] ] = left_slice
         self.audio_slice[1][ 0:right_slice.shape[0] ] = right_slice
 
-        # # Calculate average amplitude
-        
-        # Normalize the mono data
-        normalize_scalar = np.linalg.norm(mono_slice)
-        if normalize_scalar > 0:
-            normalized_mono_slice = mono_slice / normalize_scalar
-        else:
-            normalized_mono_slice = mono_slice
-            
-        self.average_value = np.mean(abs(normalized_mono_slice))
-
+        # Calculate average amplitude
+        self.average_value = np.mean(np.abs(mono_slice))
 
     def resample(self, data, original_sample_rate, new_sample_rate):
         ratio = new_sample_rate / original_sample_rate
@@ -163,7 +94,7 @@ class AudioProcessing():
             return samplerate.resample(data, ratio, 'sinc_best')
 
     def frequencies_in_between(self, data, start, end):
-        return {k: v for k, v in d.iteritems() if k > start and k < end}
+        return {k: v for k, v in data.items() if k > start and k < end}
     
     def equal_slices(self, array, n):
         size = len(array)
@@ -173,7 +104,7 @@ class AudioProcessing():
         sorted_data = sorted(list(data.keys()))
         slices_index = self.equal_slices(sorted_data, nbars)
 
-        return_values = [0 for _ in range(nbars)]
+        return_values = {}
         
         if mode == "average":
             for bar_index, list_indexes in enumerate(slices_index):
@@ -193,22 +124,6 @@ class AudioProcessing():
         return return_values
 
     def process(self, data, original_sample_rate):
-        self.config = {
-            "0": {
-                "sample_rate": 1600,
-                "get_frequencies": "range",
-                "start_freq": 20,
-                "end_freq": 800,
-                "nbars": "original",
-            },
-            "1": {
-                "sample_rate": 40000,
-                "get_frequencies": "range",
-                "start_freq": 800,
-                "end_freq": 20000,
-                "nbars": "300,average",
-            },
-        }
 
         # The returned dictionary
         processed = {}
@@ -237,10 +152,19 @@ class AudioProcessing():
             
             # Send the raw frequency vs fft dict 
             if nbars == "original":
-                return wanted_binned_fft
+                processed[key] = wanted_binned_fft
+                continue
 
             # Split "300,average" --> 300, "average" --> nbars and mode
             nbars, mode = nbars.split(",")
 
             # Split into average bars
-            return self.equal_bars_average(wanted_binned_fft, int(nbars), mode)
+            processed[key] = self.equal_bars_average(wanted_binned_fft, int(nbars), mode)
+
+        linear_processed = []
+
+        for key, item in processed.items():
+            for frequency in item:
+                linear_processed.append(item[frequency])
+
+        return linear_processed

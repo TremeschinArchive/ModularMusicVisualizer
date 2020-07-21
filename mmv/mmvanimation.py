@@ -429,7 +429,7 @@ class MMVAnimation():
             self.add_particles_generator()
 
     # Call every next step of the content animations
-    def next(self, audio_slice, fftinfo, this_step):
+    def next(self, fftinfo, this_step):
 
         for item in self.generators:
 

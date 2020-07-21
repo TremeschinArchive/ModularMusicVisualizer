@@ -59,32 +59,7 @@ class Context():
         self.multiprocessed = False
         self.multiprocessing_workers = 4
 
-        self.presets = ["low", "medium", "high", "ultra", "max"]
-
         self.process_args()
-    
-    def preset(self, preset):
-        if preset == "low":
-            self.width = 854
-            self.height = 480
-            self.fps = 24
-        elif preset == "medium":
-            self.width = 1280
-            self.height = 720
-            self.fps = 30
-        elif preset == "high":
-            self.width = 1280
-            self.height = 720
-            self.fps = 60
-        elif preset == "ultra":
-            self.width = 1920
-            self.height = 1080
-            self.fps = 60
-        elif preset == "max":
-            self.width = 2560
-            self.height = 1440
-            self.fps = 60
-        print("PRESET: [%s], WIDTHxHEIGHT: [%sx%s] FPS: [%s]" % (preset, self.width, self.height, self.fps))
 
     def process_args(self):
         

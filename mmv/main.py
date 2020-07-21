@@ -40,14 +40,6 @@ import os
 
 
 class MMVMain():
-    def setup_input_audio_file(self):
-        
-        debug_prefix = "[MMVMain.setup_input_audio_file]"
-
-        print(debug_prefix, "Reading AudioFile")
-        self.audio.read(self.context.input_file)
-        self.context.duration = self.audio.info["duration"]
-
     def setup(self, args={}, cli=False):
 
         debug_prefix = "[MMVMain.__init__]"
@@ -85,9 +77,6 @@ class MMVMain():
         print(debug_prefix, "Creating MMVAnimation()")
         self.mmvanimation = MMVAnimation(self.context, self.controller, self.audio, self.canvas)
     
-        if cli:
-            self.setup_input_audio_file()
-
         print(debug_prefix, "Creating Core()")
         self.core = Core(
             self.context,
@@ -102,7 +91,8 @@ class MMVMain():
         )
 
     def run(self):
-
+        
+        self.audio.read(self.context.input_file)
         self.ffmpeg.pipe_one_time(self.context.output_video)
 
         try:

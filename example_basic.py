@@ -30,6 +30,13 @@ processing.quality(
     fps=60
 )
 
+# We can also set by a preset like so
+# processing.quality_preset.fullhd60()
+
+# The way we process and get the frequencies from the audio, highly
+# influences the frequencies bars on the visualizer itself
+processing.audio_processing.preset_balanced()
+
 # # #
  
 # If you want to create some assets, set the assets dir first !!
@@ -108,7 +115,7 @@ logo.configure.add_path_point(
     (processing.height // 2) - (logo_size/2),
 )
 
-logo.configure.simple_add_linear_resize(intensity="custom", activation="1+7*X")
+logo.configure.simple_add_linear_resize(intensity="medium")
 
 # We can add rotation to the object
 logo.configure.simple_add_swing_rotation()
@@ -124,9 +131,9 @@ visualizer.configure.simple_add_visualizer_circle(
     minimum_bar_size=logo_size//2,
     mode="symetric",
     responsiveness=0.6,
-    pre_fft_smoothing=2,
+    pre_fft_smoothing=0,
     pos_fft_smoothing=0,
-    subdivide=4
+    subdivide=2
 )
 
 # Center the visualizer
@@ -136,7 +143,7 @@ visualizer.configure.add_path_point(
 )
 
 # visualizer.configure.simple_add_linear_blur(intensity="high")
-visualizer.configure.simple_add_linear_resize(intensity="custom", activation="1+8*X")
+visualizer.configure.simple_add_linear_resize(intensity="medium")
 
 # # We can define how much shake we want
 # visualizer.configure.simple_add_path_modifier_shake(

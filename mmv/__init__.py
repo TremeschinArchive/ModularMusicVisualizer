@@ -15,6 +15,8 @@ class mmv:
         self.main.setup(cli=False)
         self.performance()
         self.quality()
+        self.quality_preset = QualityPreset(self)
+        self.audio_processing = AudioProcessing(self)
 
     def performance(self, multiprocessed=False, workers=4):
         self.main.context.multiprocessed = multiprocessed
@@ -28,18 +30,11 @@ class mmv:
         self.height = height
         self.resolution = [width, height]
     
-    def preset(self, preset):
-        if not preset in self.main.context.presets:
-            print("Preset unmatched [%s] --> " % (preset, self.main.context.presets))
-            sys.exit(-1)
-        self.main.context.preset(preset)
-    
     def input_audio(self, path):
         if not os.path.exists(path):
             print("Input audio path does not exist [%s]" % path)
             sys.exit(-1)
         self.main.context.input_file = path
-        self.main.setup_input_audio_file()
     
     def assets_dir(self, path):
         self.main.context.assets = path
@@ -70,3 +65,63 @@ class mmv:
         if self.utils.is_matching_type([item], [MMVImage]):
             self.main.core.mmvanimation.content[layer].append(item)
 
+
+class QualityPreset:
+    def __init__(self, mmv):
+        self.mmv = mmv
+    
+    def sd24(self):
+        self.mmv.main.context.width = 854 
+        self.mmv.main.context.height = 480
+        self.mmv.main.context.fps = 24
+    
+    def hd30(self):
+        self.mmv.main.context.width = 1280 
+        self.mmv.main.context.height = 720
+        self.mmv.main.context.fps = 30
+    
+    def fullhd60(self):
+        self.mmv.main.context.width = 1920 
+        self.mmv.main.context.height = 1080
+        self.mmv.main.context.fps = 60
+
+    def quadhd60(self):
+        self.mmv.main.context.width = 2560
+        self.mmv.main.context.height = 1440
+        self.mmv.main.context.fps = 60
+
+
+class AudioProcessing:
+    def __init__(self, mmv):
+        self.mmv = mmv
+    
+    def preset_custom(self, config):
+        self.mmv.main.audio_processing.config = config
+
+    def preset_balanced(self):
+        self.mmv.main.audio_processing.config = {
+            0: {
+                "sample_rate": 440,
+                "get_frequencies": "range",
+                "start_freq": 40,
+                "end_freq": 220,
+                "nbars": "original",
+            },
+
+            1: {
+                "sample_rate": 4000,
+                "get_frequencies": "range",
+                "start_freq": 220,
+                "end_freq": 2000,
+                "nbars": "original", #"300,max",
+            },
+
+            2: {
+                "sample_rate": 32000,
+                "get_frequencies": "range",
+                "start_freq": 2000,
+                "end_freq": 16000,
+                "nbars": "200,max",
+            },
+        }
+    

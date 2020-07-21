@@ -32,28 +32,17 @@ class Fourier():
 
         debug_prefix = "[Fourier.fft]"
 
-        # Normalize the data on [-1, 1]
-        normalize_scalar = np.linalg.norm(data)
-
-        # If the array is only zeros then normalize_scalar is zero
-        # We can't divide by zero so..
-        if normalize_scalar > 0:
-            normalized = normalized / normalize_scalar
-        else:
-            normalized = data
-
         # Calculate the fft
-        # print(debug_prefix, "Calculating FFT")
-        transform = fft(normalized)
+        transform = fft(data)
 
         # Only need half the list of fft and don't need the DC bias (first item)
-        cut = [1, len(normalized) // 2]
+        cut = [1, len(data) // 2]
 
         return transform[cut[0]:cut[1]]
 
     # For more information, https://stackoverflow.com/questions/4364823
     def binned_fft(self, data, sample_rate):
-        
+
         # The FFT length
         N = data.shape[0]
 
@@ -63,10 +52,11 @@ class Fourier():
         # Get the fft
         fft = self.fft(data)
 
-        bined_fft = {}
+        binned_fft_dict = {}
 
         # Assign freq vs fft on a dictionary
-        for index in range(1, N):
-            binned_fft[get_bin(index)] = fft[index]   
+        for index in range(1, len(fft)):
+            frequency = round(get_bin(index), 2)
+            binned_fft_dict[frequency] = fft[index]
 
-        return binned_ffet
+        return binned_fft_dict

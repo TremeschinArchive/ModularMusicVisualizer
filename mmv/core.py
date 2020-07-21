@@ -184,52 +184,20 @@ class Core():
             if this_step >= self.total_steps - 1:
                 this_step = self.total_steps - 1
 
-            audio_slice = self.audio_processing.slice_audio(
+            self.audio_processing.slice_audio(
                 stereo_data = self.audio.stereo_data,
                 mono_data = self.audio.mono_data,
-                sample_rate = self.audio.info["sample_rate"],
+                sample_rate = self.audio.sample_rate,
                 step = this_step
             )
 
-            print(audio_slice)
-
-            # fft_audio_slice = []
-
-            # # Normalize the audio slice to 1
-            # for i, array in enumerate(audio_slice):
-            #     normalize = np.linalg.norm(array)
-            #     if not normalize == 0:
-            #         fft_audio_slice.append((array / normalize)*(2**(self.audio.info["bit_depth"] + 1)))
-            #     else:
-            #         fft_audio_slice.append(array)
-
-            # # Calculate the FFT on the left and right channel
-            # fft = [
-            #     self.fourier.fft(
-            #         fft_audio_slice[0],
-            #         self.audio.info
-            #     ),
-            #     self.fourier.fft(
-            #         fft_audio_slice[1],
-            #         self.audio.info
-            #     )
-            # ]
-
-            # # Adapt the FFT
-            # mean_fft = (fft[0] + fft[1])/2
-            # mean_audio_slice = mono_slice
-
-            # # Adapt the FFT
-            # biased_total_size = abs(sum(mean_fft)) / self.context.batch_size
             # average_value = sum([abs(x)/(2**self.audio.info["bit_depth"]) for x in mean_audio_slice]) / len(mean_audio_slice)
-
-            self.audio_processing.average_value
 
             ffts = []
 
-            for channel in audio_slice:
+            for channel in self.audio_processing.audio_slice:
                 ffts.append(
-                    self.audio_processing.process(channel, self.audio.info["sample_rate"])
+                    self.audio_processing.process(channel, self.audio.sample_rate)
                 )
 
             fftinfo = {
@@ -238,7 +206,7 @@ class Core():
             }
 
             # Process next animation with audio info and the step count to process on
-            self.mmvanimation.next(audio_slice, fftinfo, this_step)
+            self.mmvanimation.next(fftinfo, this_step)
          
             if self.context.multiprocessed:
 

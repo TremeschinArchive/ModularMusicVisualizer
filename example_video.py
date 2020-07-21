@@ -30,6 +30,13 @@ processing.quality(
     fps=60
 )
 
+# We can also set by a preset like so
+# processing.quality_preset.fullhd60()
+
+# The way we process and get the frequencies from the audio, highly
+# influences the frequencies bars on the visualizer itself
+processing.audio_processing.preset_balanced()
+
 # # #
  
 # If you want to create some assets, set the assets dir first !!
@@ -115,10 +122,10 @@ visualizer.configure.simple_add_visualizer_circle(
     width=visualizer_size, height=visualizer_size,
     minimum_bar_size=logo_size//2,
     mode="symetric",
-    responsiveness=0.25,
-    pre_fft_smoothing=2,
+    responsiveness=0.6,
+    pre_fft_smoothing=0,
     pos_fft_smoothing=0,
-    subdivide=0
+    subdivide=2
 )
 
 # Center the visualizer
