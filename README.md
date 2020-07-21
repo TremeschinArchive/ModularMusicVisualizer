@@ -100,3 +100,6 @@ Configure the stuff on the file `example.py`, run it with `python example.py`
 
 I include a few free assets under the `assets/free_assets` folder, you can use them at your disposal, they were generated with my other project called [PyGradienter](https://github.com/Tremeschin/pygradienter) :)
 
+# Contributing
+
+Please read [CONTRIBUTING.md](repo/CONTRIBUTING.MD) file :)
