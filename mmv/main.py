@@ -104,30 +104,3 @@ class MMVMain():
             p.dump_stats("res.prof")
         except KeyboardInterrupt:
             sys.exit(-1)
-
-if __name__ == "__main__":
-
-    # Greeter message :)
-    Miscellaneous()
-    
-    # Create ArgumentParser
-    args = argparse.ArgumentParser(description='Arguments for Modular Music Visualizer')
-
-    # Add arguments
-    args.add_argument('-i', '--input_file', required=True, help="(string) Input audio to generate final video, if not .wav uses ffmpeg to convert")
-    args.add_argument("-p", "--preset", required=False, help="(string) Resolution and FPS presets [low, medium, high, ultra, max] (low, medium, high, ultra, max respectively)")
-    args.add_argument("-m", "--multiprocessed", required=False, action="store_true", help="(solo) Use multiprocessing with svg rasterizer")
-    args.add_argument("-w", "--workers", required=False, help="(int) Multiprocessing Process count, defaults to system number of threads")
-
-    # Parse and organize the arguments
-    args = args.parse_args()
-    args = {
-        "input_file": args.input_file,
-        "preset": args.preset,
-        "multiprocessed": args.multiprocessed,
-        "workers": args.workers,
-    }
-
-    mmv = MMVMain(cli=True)
-    mmv.setup(args)
-    mmv.run()
