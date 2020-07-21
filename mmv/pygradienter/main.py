@@ -26,10 +26,11 @@ from pygradienter.profiles.particles import PyGradienterProfileParticles
 from pygradienter.profiles.simple import PyGradienterProfileSimple
 from pygradienter.profiles.fabric import PyGradienterProfileFabric
 
-import 
+import sys
 
 class PyGradienterMain:
     def generate(self, width, height, n_images, profile, quiet=False):
+
         profile_and_respective_classes = {
             "creepy_circles": PyGradienterProfileCreepyCircles
             "mushy_colorful": PyGradienterProfileMushyColorful
@@ -43,5 +44,5 @@ class PyGradienterMain:
 
         if profile == None:
             print(f"Couldn't find profile [{profile}] on keys [{list(profile_and_respective_classes.keys())}]")
-
+            sys.exit(-1)
  
