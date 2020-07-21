@@ -19,8 +19,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.utils import Miscellaneous
 from mmv.mmvvisualizer import MMVVisualizer
+from mmv.utils import Miscellaneous
 from mmv.mmvimage import MMVImage
 from mmv.main import MMVMain
 from mmv.utils import Utils
