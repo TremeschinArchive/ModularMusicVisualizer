@@ -21,7 +21,7 @@ class PyGradienterProfileSimple():
         self.id = 0
 
         self.name = os.path.basename(__file__).replace(".py", "")
-        print("Starting PyGradienterProfile with name [%s]" % self.name)
+        print("Starting PyGradienterProfileSimple with name [%s]" % self.name)
 
     def generate_nodes(self):
 

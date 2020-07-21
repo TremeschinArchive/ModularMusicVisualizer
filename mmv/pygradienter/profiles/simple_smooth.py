@@ -20,7 +20,7 @@ class PyGradienterProfileSimpleSmooth():
         self.la = LinearAlgebra()
 
         self.name = os.path.basename(__file__).replace(".py", "")
-        print("Starting PyGradienterProfile with name [%s]" % self.name)
+        print("Starting PyGradienterProfileSimpleSmooth with name [%s]" % self.name)
 
     def generate_nodes(self):
 
