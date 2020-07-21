@@ -98,7 +98,33 @@ run `pip install -r mmv/requirements.txt` to install MMV's Python dependencies
 
 Configure the stuff on the file `example.py`, run it with `python example.py`
 
-I include a few free assets under the `assets/free_assets` folder, you can use them at your disposal, they were generated with my other project called [PyGradienter](https://github.com/Tremeschin/pygradienter) :)
+I include a few free assets under the `assets/free_assets` folder, you can use them at your disposal, they were generated with my other project called [PyGradienter](https://github.com/Tremeschin/pygradienter) that I'm merging the two here in MMV :)
+
+# Goals, what is being developed
+
+#### High priority / now
+
+- [ ] (30%) Transforming PyGradienter into a Python package, merging the two repositories into one, making PyGradienter run on Windows and only returning the image array rather than saving on the disk
+
+- [ ] (stuck) R&D alternative methods for converting SVG --> PNG under Python because Windows (or could someone write a small guide for installing cairo under Windows that works? I didn't put much effort until now on this)
+
+- [ ] (half worked) R&D alternative methods for rendering the final frame (each branch is one way I tried _- and failed or wasn't really efficient_)
+
+#### Medium priority
+
+- [ ] Profile the code, find bottlenecks, general optimization on most expensive functions
+
+- [ ] (boring) Update requirements.txt
+
+- [ ] Make a proper presentation / demo / gif about MMV and link on README
+
+#### Ideas for the future or waiting to be executed
+
+- [ ] Progression bar (square, circle, pie graph?)
+
+- [ ] Rectangle bars visualizer (only circle + linear or symetric currently)
+
+- [ ] Rain images on pygradienter and rain particle generator?
 
 # Contributing
 
