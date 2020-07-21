@@ -117,14 +117,14 @@ class AudioProcessing():
         self.fourier = Fourier()
 
     # Slice a mono and stereo audio data
-    def slice_audio(self, stereo_data, mono_data, step)
+    def slice_audio(self, stereo_data, mono_data, sample_rate, step):
 
         # The current time in seconds we're going to slice the audio based on its samplerate
         # If we offset to the opposite way, the starting point can be negative hence the max function.
         time_in_seconds = max( (1/self.context.fps) * step, 0 )
 
         # The current time in sample count to slice the audio
-        this_time_in_samples = int(time_in_seconds * self.audio.info["sample_rate"])
+        this_time_in_samples = int(time_in_seconds * sample_rate)
 
         # The slice starts at the this_time_in_samples and end the cut here
         until = int(this_time_in_samples + self.context.batch_size)
@@ -137,13 +137,23 @@ class AudioProcessing():
         mono_slice = mono_data[this_time_in_samples:until]
 
         # Empty audio slice array if we're at the end of the audio
-        audio_slice = np.zeros([2, self.context.batch_size])
+        self.audio_slice = np.zeros([2, self.context.batch_size])
 
         # Get the audio slices of the left and right channel
-        audio_slice[0][ 0:left_slice.shape[0] ] = left_slice
-        audio_slice[1][ 0:right_slice.shape[0] ] = right_slice
+        self.audio_slice[0][ 0:left_slice.shape[0] ] = left_slice
+        self.audio_slice[1][ 0:right_slice.shape[0] ] = right_slice
 
-        return audio_slice
+        # # Calculate average amplitude
+        
+        # Normalize the mono data
+        normalize_scalar = np.linalg.norm(mono_slice)
+        if normalize_scalar > 0:
+            normalized_mono_slice = mono_slice / normalize_scalar
+        else:
+            normalized_mono_slice = mono_slice
+            
+        self.average_value = np.mean(abs(normalized_mono_slice))
+
 
     def resample(self, data, original_sample_rate, new_sample_rate):
         ratio = new_sample_rate / original_sample_rate
@@ -157,22 +167,47 @@ class AudioProcessing():
     
     def equal_slices(self, array, n):
         size = len(array)
-        return [ array[i: min(i+l, size) ] for i in range(0, size, k) ]
+        return [ array[i: min(i+n, size) ] for i in range(0, size, n) ]
+    
+    def equal_bars_average(self, data, nbars, mode):
+        sorted_data = sorted(list(data.keys()))
+        slices_index = self.equal_slices(sorted_data, nbars)
+
+        return_values = [0 for _ in range(nbars)]
+        
+        if mode == "average":
+            for bar_index, list_indexes in enumerate(slices_index):
+                total_sum = 0
+                for index in list_indexes:
+                    total_sum += data[index]
+                average = total_sum / len(list_indexes)
+                return_values[bar_index] = average
+
+        elif mode == "max":
+            for bar_index, list_indexes in enumerate(slices_index):
+                values = []
+                for index in list_indexes:
+                    values.append(data[index])
+                return_values[bar_index] = max(values)
+            
+        return return_values
 
     def process(self, data, original_sample_rate):
         self.config = {
             "0": {
                 "sample_rate": 1600,
-                "start_freq": 20
+                "get_frequencies": "range",
+                "start_freq": 20,
                 "end_freq": 800,
-                "nbins": "original",
+                "nbars": "original",
             },
             "1": {
                 "sample_rate": 40000,
-                "start_freq": 800
+                "get_frequencies": "range",
+                "start_freq": 800,
                 "end_freq": 20000,
-                "nbins": "original",
-            }
+                "nbars": "300,average",
+            },
         }
 
         # The returned dictionary
@@ -182,10 +217,11 @@ class AudioProcessing():
         for key, value in self.config.items():
 
             # Get info on config
-            sample_rate = value["sample_rate"]
-            start_freq = value["start_freq"]
-            end_freq = value["end_freq"]
-            nbins = value["nbins"]
+            get_frequencies = value.get("get_frequencies")
+            sample_rate = value.get("sample_rate")
+            start_freq = value.get("start_freq")
+            end_freq = value.get("end_freq")
+            nbars = value.get("nbars")
 
             # Resample audio to target sample rate
             resampled = self.resample(data, original_sample_rate, sample_rate)
@@ -193,4 +229,18 @@ class AudioProcessing():
             # Get freqs vs fft value dictionary
             binned_fft = self.fourier.binned_fft(resampled, sample_rate)
 
+            # Do we want every frequency of the binned_fft or a set of it
+            if get_frequencies == "range":
+                wanted_binned_fft = self.frequencies_in_between(binned_fft, start_freq, end_freq)
+            elif get_frequencies == "all":
+                wanted_binned_fft = binned_fft
             
+            # Send the raw frequency vs fft dict 
+            if nbars == "original":
+                return wanted_binned_fft
+
+            # Split "300,average" --> 300, "average" --> nbars and mode
+            nbars, mode = nbars.split(",")
+
+            # Split into average bars
+            return self.equal_bars_average(wanted_binned_fft, int(nbars), mode)

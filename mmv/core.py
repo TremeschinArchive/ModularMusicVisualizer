@@ -187,43 +187,54 @@ class Core():
             audio_slice = self.audio_processing.slice_audio(
                 stereo_data = self.audio.stereo_data,
                 mono_data = self.audio.mono_data,
+                sample_rate = self.audio.info["sample_rate"],
                 step = this_step
             )
 
-            fft_audio_slice = []
+            print(audio_slice)
 
-            # Normalize the audio slice to 1
-            for i, array in enumerate(audio_slice):
-                normalize = np.linalg.norm(array)
-                if not normalize == 0:
-                    fft_audio_slice.append((array / normalize)*(2**(self.audio.info["bit_depth"] + 1)))
-                else:
-                    fft_audio_slice.append(array)
+            # fft_audio_slice = []
 
-            # Calculate the FFT on the left and right channel
-            fft = [
-                self.fourier.fft(
-                    fft_audio_slice[0],
-                    self.audio.info
-                ),
-                self.fourier.fft(
-                    fft_audio_slice[1],
-                    self.audio.info
+            # # Normalize the audio slice to 1
+            # for i, array in enumerate(audio_slice):
+            #     normalize = np.linalg.norm(array)
+            #     if not normalize == 0:
+            #         fft_audio_slice.append((array / normalize)*(2**(self.audio.info["bit_depth"] + 1)))
+            #     else:
+            #         fft_audio_slice.append(array)
+
+            # # Calculate the FFT on the left and right channel
+            # fft = [
+            #     self.fourier.fft(
+            #         fft_audio_slice[0],
+            #         self.audio.info
+            #     ),
+            #     self.fourier.fft(
+            #         fft_audio_slice[1],
+            #         self.audio.info
+            #     )
+            # ]
+
+            # # Adapt the FFT
+            # mean_fft = (fft[0] + fft[1])/2
+            # mean_audio_slice = mono_slice
+
+            # # Adapt the FFT
+            # biased_total_size = abs(sum(mean_fft)) / self.context.batch_size
+            # average_value = sum([abs(x)/(2**self.audio.info["bit_depth"]) for x in mean_audio_slice]) / len(mean_audio_slice)
+
+            self.audio_processing.average_value
+
+            ffts = []
+
+            for channel in audio_slice:
+                ffts.append(
+                    self.audio_processing.process(channel, self.audio.info["sample_rate"])
                 )
-            ]
-
-            # Adapt the FFT
-            mean_fft = (fft[0] + fft[1])/2
-            mean_audio_slice = mono_slice
-
-            # Adapt the FFT
-            biased_total_size = abs(sum(mean_fft)) / self.context.batch_size
-            average_value = sum([abs(x)/(2**self.audio.info["bit_depth"]) for x in mean_audio_slice]) / len(mean_audio_slice)
 
             fftinfo = {
-                "average_value": average_value,
-                "biased_total_size": biased_total_size,
-                "fft": fft
+                "average_value": self.audio_processing.average_value,
+                "fft": ffts
             }
 
             # Process next animation with audio info and the step count to process on
