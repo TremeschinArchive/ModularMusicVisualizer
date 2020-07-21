@@ -1,3 +1,24 @@
+"""
+===============================================================================
+
+Purpose: Main package file for MMV where the main wrapper class is located
+
+===============================================================================
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <http://www.gnu.org/licenses/>.
+
+===============================================================================
+"""
+
 from mmv.utils import Miscellaneous
 from mmv.mmvvisualizer import MMVVisualizer
 from mmv.mmvimage import MMVImage
@@ -124,4 +145,14 @@ class AudioProcessing:
                 "nbars": "200,max",
             },
         }
+    
+    def preset_bass_mid(self):
+        self.mmv.main.audio_processing.config = {
+            0: {
+                "sample_rate": 800,
+                "get_frequencies": "all",
+                "nbars": "original",
+            },
+        }
+    
     

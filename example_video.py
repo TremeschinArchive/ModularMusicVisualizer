@@ -125,7 +125,7 @@ visualizer.configure.simple_add_visualizer_circle(
     responsiveness=0.6,
     pre_fft_smoothing=0,
     pos_fft_smoothing=0,
-    subdivide=2
+    subdivide=4
 )
 
 # Center the visualizer

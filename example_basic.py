@@ -35,7 +35,7 @@ processing.quality(
 
 # The way we process and get the frequencies from the audio, highly
 # influences the frequencies bars on the visualizer itself
-processing.audio_processing.preset_balanced()
+processing.audio_processing.preset_bass_mid()
 
 # # #
  
@@ -133,7 +133,7 @@ visualizer.configure.simple_add_visualizer_circle(
     responsiveness=0.6,
     pre_fft_smoothing=0,
     pos_fft_smoothing=0,
-    subdivide=2
+    subdivide=4
 )
 
 # Center the visualizer
