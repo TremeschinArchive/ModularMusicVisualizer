@@ -49,6 +49,12 @@ class Config:
 
     def quiet(self, value=True):
         self.pygradienter.quiet = value
+    
+    def advanced(self, dictionary):
+        self.n_images(dictionary["n_images"])
+        self.width(dictionary["width"])
+        self.height(dictionary["height"])
+        self.quiet(dictionary["quiet"])
 
 
 # Main class that controls PyGradienter
