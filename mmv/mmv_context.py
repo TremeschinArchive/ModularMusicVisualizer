@@ -34,7 +34,6 @@ class Context():
         self.os = self.utils.get_os()
         
         # Directories
-        self.processing = self.ROOT + os.path.sep + "processing"
         self.data = self.ROOT + os.path.sep + "data"
         self.assets = self.ROOT + os.path.sep + "assets"
 

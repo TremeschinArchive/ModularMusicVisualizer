@@ -19,6 +19,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.common.utils import DataUtils
 from mmv.common.fourier import Fourier
 from scipy.io import wavfile
 import numpy as np
@@ -54,34 +55,30 @@ class AudioProcessing():
     def __init__(self, context):
         self.context = context
         self.fourier = Fourier()
+        self.datautils = DataUtils()
         self.config = None
 
     # Slice a mono and stereo audio data
-    def slice_audio(self, stereo_data, mono_data, sample_rate, step):
-
-        # The current time in seconds we're going to slice the audio based on its samplerate
-        # If we offset to the opposite way, the starting point can be negative hence the max function.
-        time_in_seconds = max( (1/self.context.fps) * step, 0 )
-
-        # The current time in sample count to slice the audio
-        this_time_in_samples = int(time_in_seconds * sample_rate)
-
-        # The slice starts at the this_time_in_samples and end the cut here
-        until = int(this_time_in_samples + self.context.batch_size)
-
+    def slice_audio(self, stereo_data, mono_data, sample_rate, start_cut, end_cut, batch_size=None):
+        
         # Cut the left and right points range
-        left_slice = stereo_data[0][this_time_in_samples:until]
-        right_slice = stereo_data[1][this_time_in_samples:until]
+        left_slice = stereo_data[0][start_cut:end_cut]
+        right_slice = stereo_data[1][start_cut:end_cut]
 
         # Cut the mono points range
-        mono_slice = mono_data[this_time_in_samples:until]
+        mono_slice = mono_data[start_cut:end_cut]
 
-        # Empty audio slice array if we're at the end of the audio
-        self.audio_slice = np.zeros([2, self.context.batch_size])
+        if not batch_size == None:
+            # Empty audio slice array if we're at the end of the audio
+            self.audio_slice = np.zeros([3, self.context.batch_size])
 
-        # Get the audio slices of the left and right channel
-        self.audio_slice[0][ 0:left_slice.shape[0] ] = left_slice
-        self.audio_slice[1][ 0:right_slice.shape[0] ] = right_slice
+            # Get the audio slices of the left and right channel
+            self.audio_slice[0][ 0:left_slice.shape[0] ] = left_slice
+            self.audio_slice[1][ 0:right_slice.shape[0] ] = right_slice
+            self.audio_slice[2][ 0:mono_slice.shape[0] ] = mono_slice
+
+        else:
+            self.audio_slice = [left_slice, right_slice, mono_slice]
 
         # Calculate average amplitude
         self.average_value = np.mean(np.abs(mono_slice))
@@ -93,35 +90,7 @@ class AudioProcessing():
         else:
             return samplerate.resample(data, ratio, 'sinc_best')
 
-    def frequencies_in_between(self, data, start, end):
-        return {k: v for k, v in data.items() if k > start and k < end}
     
-    def equal_slices(self, array, n):
-        size = len(array)
-        return [ array[i: min(i+n, size) ] for i in range(0, size, n) ]
-    
-    def equal_bars_average(self, data, nbars, mode):
-        sorted_data = sorted(list(data.keys()))
-        slices_index = self.equal_slices(sorted_data, nbars)
-
-        return_values = {}
-        
-        if mode == "average":
-            for bar_index, list_indexes in enumerate(slices_index):
-                total_sum = 0
-                for index in list_indexes:
-                    total_sum += data[index]
-                average = total_sum / len(list_indexes)
-                return_values[bar_index] = average
-
-        elif mode == "max":
-            for bar_index, list_indexes in enumerate(slices_index):
-                values = []
-                for index in list_indexes:
-                    values.append(data[index])
-                return_values[bar_index] = max(values)
-            
-        return return_values
 
     def process(self, data, original_sample_rate):
 
@@ -146,7 +115,7 @@ class AudioProcessing():
 
             # Do we want every frequency of the binned_fft or a set of it
             if get_frequencies == "range":
-                wanted_binned_fft = self.frequencies_in_between(binned_fft, start_freq, end_freq)
+                wanted_binned_fft = self.datautils.dictionary_items_in_between(binned_fft, start_freq, end_freq)
             elif get_frequencies == "all":
                 wanted_binned_fft = binned_fft
             
@@ -159,7 +128,7 @@ class AudioProcessing():
             nbars, mode = nbars.split(",")
 
             # Split into average bars
-            processed[key] = self.equal_bars_average(wanted_binned_fft, int(nbars), mode)
+            processed[key] = self.datautils.equal_bars_average(wanted_binned_fft, int(nbars), mode)
 
         linear_processed = []
 

@@ -139,12 +139,24 @@ class Core():
             # If this step is out of bounds because the offset, set it to its max value
             if this_step >= self.total_steps - 1:
                 this_step = self.total_steps - 1
+            
+            # The current time in seconds we're going to slice the audio based on its samplerate
+            # If we offset to the opposite way, the starting point can be negative hence the max function.
+            time_in_seconds = max( (1/self.context.fps) * this_step, 0 )
+
+            # The current time in sample count to slice the audio
+            this_time_in_samples = int(time_in_seconds * self.audio.sample_rate)
+
+            # The slice starts at the this_time_in_samples and end the cut here
+            until = int(this_time_in_samples + self.context.batch_size)
 
             self.audio_processing.slice_audio(
                 stereo_data = self.audio.stereo_data,
                 mono_data = self.audio.mono_data,
                 sample_rate = self.audio.sample_rate,
-                step = this_step
+                start_cut = this_time_in_samples,
+                end_cut = until,
+                batch_size = self.context.batch_size
             )
 
             # average_value = sum([abs(x)/(2**self.audio.info["bit_depth"]) for x in mean_audio_slice]) / len(mean_audio_slice)

@@ -166,3 +166,36 @@ class Utils():
             else:
                 return False
         return True
+
+
+class DataUtils():
+    
+    def dictionary_items_in_between(self, data, start, end):
+        return {k: v for k, v in data.items() if k > start and k < end}
+    
+    def equal_slices(self, array, n):
+        size = len(array)
+        return [ array[i: min(i+n, size) ] for i in range(0, size, n) ]
+    
+    def equal_bars_average(self, data, nbars, mode):
+        sorted_data = sorted(list(data.keys()))
+        slices_index = self.equal_slices(sorted_data, nbars)
+
+        return_values = {}
+        
+        if mode == "average":
+            for bar_index, list_indexes in enumerate(slices_index):
+                total_sum = 0
+                for index in list_indexes:
+                    total_sum += data[index]
+                average = total_sum / len(list_indexes)
+                return_values[bar_index] = average
+
+        elif mode == "max":
+            for bar_index, list_indexes in enumerate(slices_index):
+                values = []
+                for index in list_indexes:
+                    values.append(data[index])
+                return_values[bar_index] = max(values)
+            
+        return return_values

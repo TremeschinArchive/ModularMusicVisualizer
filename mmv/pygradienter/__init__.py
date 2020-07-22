@@ -21,8 +21,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from mmv.pygradienter.processing import PyGradienterProcessing
 from mmv.pygradienter.main import PyGradienterMain
-from mmv.pygradienter.utils import Miscellaneous
-from mmv.pygradienter.utils import Utils
+from mmv.common.utils import Utils
 from multiprocessing import Pool
 import copy
 import sys
@@ -31,7 +30,7 @@ import os
 
 # Unclutter PyGradienterMain class
 class Config:
-    def __init__(self, pygradientermain):
+    def __init__(self, pygradienter):
         self.pygradienter = pygradienter
     
     def n_images(self, n):

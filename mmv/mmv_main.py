@@ -76,7 +76,6 @@ class MMVMain():
 
         print(debug_prefix, "Creating Context()")
         self.context = Context(args)
-        # self.context.reset_directories()
 
         print(debug_prefix, "Creating Controller()")
         self.controller = Controller(self.context)
@@ -89,11 +88,6 @@ class MMVMain():
 
         print(debug_prefix, "Creating FFmpegWrapper()")
         self.ffmpeg = FFmpegWrapper(self.context, self.controller)
-
-        print(debug_prefix, "Making Directories")
-        self.context.utils.mkdir_dne(
-            self.context.processing
-        )
 
         print(debug_prefix, "Creating AudioFile()")
         self.audio = AudioFile(self.context)
