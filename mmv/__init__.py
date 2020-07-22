@@ -20,6 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmv.mmvvisualizer import MMVVisualizer
+from mmv.pygradienter import pygradienter
 from mmv.utils import Miscellaneous
 from mmv.mmvimage import MMVImage
 from mmv.main import MMVMain
@@ -75,6 +76,9 @@ class mmv:
     
     def image_object(self):
         return MMVImage(self.main.context)
+    
+    def pygradienter(self):
+        return pygradienter()
     
     def generator_object(self):
         return MMVGenerator(self.main.context)

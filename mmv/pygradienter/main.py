@@ -19,12 +19,12 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from pygradienter.profiles.creepy_circles import PyGradienterProfileCreepyCircles
-from pygradienter.profiles.mushy_colorful import PyGradienterProfileMushyColorful
-from pygradienter.profiles.simple_smooth import PyGradienterProfileSimpleSmooth
-from pygradienter.profiles.particles import PyGradienterProfileParticles
-from pygradienter.profiles.simple import PyGradienterProfileSimple
-from pygradienter.profiles.fabric import PyGradienterProfileFabric
+from mmv.pygradienter.profiles.creepy_circles import PyGradienterProfileCreepyCircles
+from mmv.pygradienter.profiles.mushy_colorful import PyGradienterProfileMushyColorful
+from mmv.pygradienter.profiles.simple_smooth import PyGradienterProfileSimpleSmooth
+from mmv.pygradienter.profiles.particles import PyGradienterProfileParticles
+from mmv.pygradienter.profiles.simple import PyGradienterProfileSimple
+from mmv.pygradienter.profiles.fabric import PyGradienterProfileFabric
 
 import sys
 
@@ -32,12 +32,12 @@ class PyGradienterMain:
     def generate(self, width, height, n_images, profile, quiet=False):
 
         profile_and_respective_classes = {
-            "creepy_circles": PyGradienterProfileCreepyCircles
-            "mushy_colorful": PyGradienterProfileMushyColorful
-            "simple_smooth": PyGradienterProfileSimpleSmooth
-            "particles": PyGradienterProfileParticles
-            "simple": PyGradienterProfileSimple
-            "fabric": PyGradienterProfileFabric
+            "creepy_circles": PyGradienterProfileCreepyCircles,
+            "mushy_colorful": PyGradienterProfileMushyColorful,
+            "simple_smooth": PyGradienterProfileSimpleSmooth,
+            "particles": PyGradienterProfileParticles,
+            "simple": PyGradienterProfileSimple,
+            "fabric": PyGradienterProfileFabric,
         }
 
         profile = profile_and_respective_classes.get(profile, None)

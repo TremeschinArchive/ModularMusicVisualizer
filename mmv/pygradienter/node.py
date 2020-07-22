@@ -19,7 +19,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from linearalgebra import Point
+from mmv.pygradienter.linearalgebra import Point
 
 
 # Define a PointNode object with a set color

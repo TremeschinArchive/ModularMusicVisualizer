@@ -76,12 +76,11 @@ def get_canvas_multiprocess_return(get_queue, put_queue, worker_id):
 
 
 class Core():
-    def __init__(self, context, controller, canvas, assets, fourier, ffmpeg, audio, mmvanimation, audio_processing):
+    def __init__(self, context, controller, canvas, fourier, ffmpeg, audio, mmvanimation, audio_processing):
         # Get every class
         self.context = context
         self.controller = controller
         self.canvas = canvas
-        self.assets = assets
         self.fourier = fourier
         self.ffmpeg = ffmpeg
         self.audio = audio

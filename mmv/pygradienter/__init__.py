@@ -19,10 +19,10 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from pygradienter.processing import PyGradienterProcessing
-from pygradienter.main import PyGradienterMain
-from pygradienter.utils import Miscellaneous
-from pygradienter.utils import Utils
+from mmv.pygradienter.processing import PyGradienterProcessing
+from mmv.pygradienter.main import PyGradienterMain
+from mmv.pygradienter.utils import Miscellaneous
+from mmv.pygradienter.utils import Utils
 from multiprocessing import Pool
 import copy
 import sys

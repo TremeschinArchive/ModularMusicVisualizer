@@ -20,7 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from PIL import ImageFilter
-from utils import Utils
+from mmv.utils import Utils
 from PIL import Image
 import numpy as np
 import datetime

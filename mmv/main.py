@@ -28,7 +28,6 @@ from mmv.audio import AudioFile
 from mmv.fourier import Fourier
 from mmv.context import Context
 from mmv.canvas import Canvas
-from mmv.assets import Assets
 from mmv.core import Core
 from PIL import Image
 import numpy as np
@@ -53,9 +52,6 @@ class MMVMain():
 
         print(debug_prefix, "Creating Canvas()")
         self.canvas = Canvas(self.context)
-
-        print(debug_prefix, "Creating Assets()")
-        self.assets = Assets(self.context)
 
         print(debug_prefix, "Creating Fourier()")
         self.fourier = Fourier()
@@ -82,7 +78,6 @@ class MMVMain():
             self.context,
             self.controller,
             self.canvas,
-            self.assets,
             self.fourier,
             self.ffmpeg,
             self.audio,
