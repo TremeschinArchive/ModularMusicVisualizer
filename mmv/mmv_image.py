@@ -101,6 +101,15 @@ class Configure():
             "blur": { "activation": activation }
         })
     
+    def add_module_glitch(self, activation, color_offset=False, scan_lines=False):
+        self.add_module({
+            "glitch": {
+                "activation": activation,
+                "color_offset": color_offset,
+                "scan_lines": scan_lines,
+            }
+        })
+    
     def add_module_video(self, path):
         self.add_module({
             "video": {
@@ -212,6 +221,22 @@ class Configure():
             sys.exit(-1)
             
         self.add_module_blur(intensities[intensity])
+    
+    def simple_add_glitch(self, intensity="medium", color_offset=False, scan_lines=False):
+        intensities = {
+            "low": "10*X",
+            "medium": "15*X",
+            "high": "20*X",
+        }
+        if not intensity in list(intensities.keys()):
+            print("Unhandled blur intensity [%s]" % intensity)
+            sys.exit(-1)
+            
+        self.add_module_glitch(
+            activation = intensities[intensity],
+            color_offset = color_offset,
+            scan_lines = scan_lines
+        )
     
     def simple_add_linear_resize(self, intensity="medium", smooth=0.08, activation=None):
         intensities = {
@@ -430,6 +455,21 @@ class MMVImage():
                 else:
                     self.image.gaussian_blur(ammount)
             
+            if "glitch" in modules:
+
+                this_module = modules["glitch"]
+
+                ammount = eval(this_module["activation"].replace("X", str(fftinfo["average_value"])))
+                ammount = round(ammount, self.ROUND)
+
+                color_offset = this_module["color_offset"]
+                scan_lines = this_module["scan_lines"]
+
+                if self.context.multiprocessed:
+                    self.image.pending["glitch"] = [ammount, color_offset, scan_lines]
+                else:
+                    self.image.glitch(ammount, color_offset, scan_lines)
+
             if "fade" in modules:
 
                 this_module = modules["fade"]

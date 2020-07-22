@@ -20,6 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from glitch_this import ImageGlitcher
 from PIL import ImageFilter
 from PIL import Image
 import numpy as np
@@ -37,6 +38,7 @@ class Frame():
         self.pending = {}
         self.transparency_value = 1
         self.size = 1
+        self.glitcher = ImageGlitcher()
 
     # Create new numpy array as a "frame", attribute width, height and resolution
     def new(self, width, height, transparent=False):
@@ -202,6 +204,30 @@ class Frame():
     def gaussian_blur(self, radius):
         self.image = self.image.filter(ImageFilter.GaussianBlur(radius=radius))
         self.frame = np.array(self.image)
+
+    # Uses glitch-this
+    def glitch(self, glitch_amount, color_offset=False, scan_lines=False):
+        
+        # Split the original image's channels
+        r, g, b, alpha = self.original_image.split()
+
+        self.frame = np.array(
+            self.glitcher.glitch_image(
+                self.image_array(),
+                round(glitch_amount, 2),
+                color_offset=color_offset,
+                scan_lines=scan_lines
+            )
+        )
+
+        # Split the original image's channels
+        r, g, b = Image.fromarray(self.frame).split()
+
+        # Stack the arrays into a new numpy array "as image"
+        image = (np.dstack((r, g, b, alpha))).astype(np.uint8)
+
+        self.image = Image.fromarray(image)
+        self.original_image = self.image
     
     #
     # https://stackoverflow.com/questions/52702809/copy-array-into-part-of-another-array-in-numpy
@@ -485,6 +511,14 @@ class Frame():
             module = self.pending["blur"]
             ammount = module[0]
             self.gaussian_blur(ammount)
+        
+        if "glitch" in keys:
+            module = self.pending["glitch"]
+            ammount = module[0]
+            color_offset = module[1]
+            scan_lines = module[2]
+            print("glitch", module)
+            self.glitch(glitch_amount=ammount, color_offset=color_offset, scan_lines=scan_lines)
         
         if "transparency" in keys:
             module = self.pending["transparency"]

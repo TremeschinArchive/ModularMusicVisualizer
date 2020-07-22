@@ -90,10 +90,8 @@ class AudioProcessing():
         else:
             return samplerate.resample(data, ratio, 'sinc_best')
 
-    
-
     def process(self, data, original_sample_rate):
-
+        
         # The returned dictionary
         processed = {}
 

@@ -127,7 +127,21 @@ class Canvas():
                     self.vignetting = new_vignetting
 
                     # print(debug_prefix, "vignetting", new_vignetting, "to", towards)
-        
+
+                if "glitch" in module:
+
+                    this_module = module["glitch"]
+
+                    ammount = eval(this_module["activation"].replace("X", str(fftinfo["average_value"])))
+
+                    color_offset = this_module["color_offset"]
+                    scan_lines = this_module["scan_lines"]
+
+                    if self.context.multiprocessed:
+                        self.canvas.pending["glitch"] = [ammount, color_offset, scan_lines]
+                    else:
+                        self.canvas.glitch(ammount, color_offset, scan_lines)
+                        
         # Next step of animation
         self.current_step += 1
     
