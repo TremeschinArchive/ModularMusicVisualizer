@@ -19,6 +19,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.mmv_worker import get_canvas_multiprocess_return
 from mmv.common.utils import Utils
 import multiprocessing
 import setproctitle
@@ -29,50 +30,6 @@ import time
 import copy
 import os
 import gc
-
-
-def get_canvas_multiprocess_return(get_queue, put_queue, worker_id):
-    
-    # Set process name so we know who's what on a task manager
-    setproctitle.setproctitle(f"MMV Worker {worker_id+1}")
-
-    while True:
-
-        # Unpickle our instructions        
-        instructions = pickle.loads(get_queue.get())
-
-        # Get instructions intuitive variable name
-        canvas = instructions["canvas"]
-        content = instructions["content"]
-        fftinfo = instructions["fftinfo"]
-        this_frame_index = instructions["index"]
-
-        # Empty the canvas
-        canvas.reset_canvas()
-
-        # Resole pending operations and blit item on canvas
-        for layer in sorted(content):
-            for item in content[layer]:
-                item.resolve_pending()
-        
-        for layer in sorted(content):
-            for position, item in enumerate(content[layer]):
-                item.blit(canvas)
-
-        # Resolve pending operations (post process mostly)
-        canvas.resolve_pending()
-
-        # Send the numpy array in RGB format back to the Core class for sending to FFmpeg
-        put_queue.put( [this_frame_index, canvas.canvas.get_rgb_frame_array()] )
-
-        # Memory management
-        del instructions
-        del canvas
-        del content
-        del fftinfo
-        del this_frame_index
-
-        gc.collect() # <-- This took 3 hours of headache with memory leaks
 
 
 class Core():
