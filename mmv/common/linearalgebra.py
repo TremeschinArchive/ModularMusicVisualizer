@@ -20,7 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.utils import Utils
+from mmv.common.utils import Utils
 import math
 
 

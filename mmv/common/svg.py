@@ -27,7 +27,6 @@ import wand.image
 import wand.color
 import cairosvg
 import svgwrite
-import base64
 import sys
 import os
 

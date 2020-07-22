@@ -21,7 +21,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from PIL import ImageFilter
-from mmv.utils import Utils
 from PIL import Image
 import numpy as np
 import numpy
@@ -34,8 +33,6 @@ import os
 
 class Frame():
     def __init__(self):
-        self.utils = Utils()
-
         # Multiprocessing pending things to do, ordered
         self.pending = {}
         self.transparency_value = 1
@@ -112,11 +109,6 @@ class Frame():
         # Update width, height info
         self.height = self.image.size[0]
         self.width = self.image.size[1]
-
-    # Wait until a file exist and then load it as a image
-    def load_from_path_wait(self, path, convert_to_png=False):
-        self.utils.until_exist(path)
-        self.load_from_path(path, convert_to_png=convert_to_png)
 
     # Get PIL image array from this object frame
     def image_array(self):

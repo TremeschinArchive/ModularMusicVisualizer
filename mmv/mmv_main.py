@@ -19,26 +19,57 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.mmvanimation import MMVAnimation
-from mmv.controller import Controller
-from mmv.audio import AudioProcessing
-from mmv.video import FFmpegWrapper
-from mmv.utils import Miscellaneous
-from mmv.audio import AudioFile
-from mmv.fourier import Fourier
-from mmv.context import Context
-from mmv.canvas import Canvas
-from mmv.core import Core
+from mmv.common.audio import AudioProcessing
+from mmv.common.video import FFmpegWrapper
+from mmv.mmv_animation import MMVAnimation
+from mmv.mmv_controller import Controller
+from mmv.common.audio import AudioFile
+from mmv.common.fourier import Fourier
+from mmv.mmv_context import Context
+from mmv.mmv_canvas import Canvas
+from mmv.mmv_core import Core
 from PIL import Image
 import numpy as np
 import argparse
+import shutil
 import math
 import time
 import sys
 import os
 
 
+class Miscellaneous():
+
+    def __init__(self):
+        self.version = "1.4.6dev"
+        self.greeter_message()
+
+    def greeter_message(self):
+
+        terminal_width = shutil.get_terminal_size()[0]
+
+        bias = " "*(math.floor(terminal_width/2) - 14)
+
+        message = f"""
+{"-"*terminal_width}
+{bias} __  __   __  __  __     __
+{bias}|  \/  | |  \/  | \ \   / /
+{bias}| |\/| | | |\/| |  \ \ / / 
+{bias}| |  | | | |  | |   \ V /  
+{bias}|_|  |_| |_|  |_|    \_/   
+{bias}
+{bias}  Modular Music Visualizer                        
+{bias}{(21-len("Version")-len(self.version))*" "}Version {self.version}
+{"-"*terminal_width}
+"""
+        print(message)
+
+
 class MMVMain():
+    def __init__(self, quiet=False):
+        if not quiet:
+            Miscellaneous()
+            
     def setup(self, args={}, cli=False):
 
         debug_prefix = "[MMVMain.__init__]"

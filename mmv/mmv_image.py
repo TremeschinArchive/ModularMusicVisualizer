@@ -19,12 +19,12 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.mmvvisualizer import MMVVisualizer
-from mmv.interpolation import Interpolation
-from mmv.functions import Functions
-from mmv.modifiers import *
-from mmv.frame import Frame
-from mmv.utils import Utils
+from mmv.common.interpolation import Interpolation
+from mmv.mmv_visualizer import MMVVisualizer
+from mmv.common.functions import Functions
+from mmv.mmv_modifiers import *
+from mmv.common.frame import Frame
+from mmv.common.utils import Utils
 import copy
 import cv2
 import os

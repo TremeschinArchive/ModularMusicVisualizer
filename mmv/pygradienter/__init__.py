@@ -74,5 +74,11 @@ class pygradienter():
         self.show_welcome_message = True
         self.quiet = False
 
-    def generate(self):
-        return self.main.generate()
+    def generate(self, profile):
+        return self.main.generate(
+            width=self.width,
+            height=self.height,
+            n_images=self.n_images,
+            profile=profile,
+            quiet=self.quiet
+        )

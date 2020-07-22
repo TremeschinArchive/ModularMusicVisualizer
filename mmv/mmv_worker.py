@@ -1,7 +1,7 @@
 """
 ===============================================================================
 
-Purpose: Define a Node class object
+Purpose: Wrap and execute every MMV class
 
 ===============================================================================
 
@@ -19,12 +19,3 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.linearalgebra import Point
-
-
-# Define a PointNode object with a set color
-class PointNode():
-    def __init__(self, coordinates, color, intensity):
-        self.la = Point(coordinates)
-        self.color = color
-        self.intensity = intensity

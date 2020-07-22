@@ -1,4 +1,0 @@
-numpy==1.18.5
-opensimplex==0.3
-Pillow==7.1.2
-PyYAML==5.3.1

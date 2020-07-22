@@ -20,7 +20,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.utils import Utils
 import math
 import sys
 
@@ -29,7 +28,6 @@ class Controller():
     def __init__(self, context):
 
         self.context = context
-        self.utils = Utils()
 
         self.stop = False
         self.total_steps = math.inf

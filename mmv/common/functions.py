@@ -77,7 +77,7 @@ so if 1 is (as weird as this may seem) exactly one, then 1^infinity is 1, otherw
 slightly more than 1 into that e number proportion it'll evaluate to e. This is why 1^infinity
 is undefined, calculus 1 people :)
 """
-class FitTransformIndex():
+class FitIndex():
     def __init__(self):
         self.functions = Functions()
 

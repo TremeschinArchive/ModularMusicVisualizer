@@ -46,3 +46,4 @@ class PyGradienterMain:
             print(f"Couldn't find profile [{profile}] on keys [{list(profile_and_respective_classes.keys())}]")
             sys.exit(-1)
  
+        print("Profile class", profile)

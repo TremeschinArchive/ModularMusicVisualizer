@@ -30,32 +30,6 @@ import sys
 import os
 
 
-class Miscellaneous():
-
-    def __init__(self):
-        self.version = "1.4.6dev"
-        self.greeter_message()
-
-    def greeter_message(self):
-
-        terminal_width = shutil.get_terminal_size()[0]
-
-        bias = " "*(math.floor(terminal_width/2) - 14)
-
-        message = f"""
-{"-"*terminal_width}
-{bias} __  __   __  __  __     __
-{bias}|  \/  | |  \/  | \ \   / /
-{bias}| |\/| | | |\/| |  \ \ / / 
-{bias}| |  | | | |  | |   \ V /  
-{bias}|_|  |_| |_|  |_|    \_/   
-{bias}
-{bias}  Modular Music Visualizer                        
-{bias}{(21-len("Version")-len(self.version))*" "}Version {self.version}
-{"-"*terminal_width}
-"""
-
-        print(message)
 
 
 class Utils():
@@ -150,6 +124,10 @@ class Utils():
 
         return os_name
     
+    # Get a md5 hash of a string
+    def get_hash(self, string):
+        return hashlib.md5(string.encode('utf-8')).hexdigest()
+
     # Load a yaml and return its content
     def load_yaml(self, path):
         with open(path, "r") as f:

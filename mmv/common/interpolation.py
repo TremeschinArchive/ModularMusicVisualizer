@@ -19,7 +19,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.functions import Functions
+from mmv.common.functions import Functions
 import random
 
 

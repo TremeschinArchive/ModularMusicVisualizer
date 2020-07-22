@@ -19,15 +19,15 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.coordinates import PolarCoordinates
-from mmv.interpolation import Interpolation
-from mmv.functions import FitTransformIndex
-from mmv.functions import Functions
+from mmv.common.coordinates import PolarCoordinates
+from mmv.common.interpolation import Interpolation
+from mmv.common.functions import Functions
+from mmv.common.functions import FitIndex
+from mmv.common.frame import Frame
+from mmv.common.utils import Utils
+from mmv.mmv_modifiers import *
+from mmv.common.svg import SVG
 from resampy import resample
-from mmv.modifiers import *
-from mmv.frame import Frame
-from mmv.utils import Utils
-from mmv.svg import SVG
 import svgwrite
 import random
 import math
@@ -49,7 +49,7 @@ class MMVVisualizer():
             "png"
         )
 
-        self.fit_transform_index = FitTransformIndex()
+        self.fit_transform_index = FitIndex()
         self.functions = Functions()
         self.utils = Utils()
 

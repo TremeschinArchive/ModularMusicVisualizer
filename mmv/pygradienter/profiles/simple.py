@@ -1,7 +1,7 @@
 import sys
 sys.path.append("..")
 
-from mmv.pygradienter.linearalgebra import LinearAlgebra, Point
+from mmv.common.linearalgebra import LinearAlgebra, Point
 from mmv.pygradienter.node import PointNode
 import random
 import os

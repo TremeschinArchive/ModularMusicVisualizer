@@ -1,4 +1,0 @@
-# These are the default values for a PyGradienter run unless changed from the CLI or here
-generate_n_images: 12
-width: 400
-height: 400

@@ -19,7 +19,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.fourier import Fourier
+from mmv.common.fourier import Fourier
 from scipy.io import wavfile
 import numpy as np
 import subprocess

@@ -19,13 +19,13 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.interpolation import Interpolation
-from mmv.mmvvisualizer import MMVVisualizer
-from mmv.functions import Functions
-from mmv.mmvimage import MMVImage
-from mmv.mmvgenerator import *
-from mmv.modifiers import *
-from mmv.utils import Utils
+from mmv.common.interpolation import Interpolation
+from mmv.mmv_visualizer import MMVVisualizer
+from mmv.common.functions import Functions
+from mmv.mmv_image import MMVImage
+from mmv.common.utils import Utils
+from mmv.mmv_generator import *
+from mmv.mmv_modifiers import *
 import random
 import copy
 import math

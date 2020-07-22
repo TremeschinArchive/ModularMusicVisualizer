@@ -19,19 +19,17 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.mmvvisualizer import MMVVisualizer
+from mmv.mmv_visualizer import MMVVisualizer
 from mmv.pygradienter import pygradienter
-from mmv.utils import Miscellaneous
-from mmv.mmvimage import MMVImage
-from mmv.main import MMVMain
-from mmv.utils import Utils
+from mmv.common.utils import Utils
+from mmv.mmv_image import MMVImage
+from mmv.mmv_main import MMVMain
 import sys
 import os
 
 
 class mmv:
     def __init__(self):
-        Miscellaneous()
         self.main = MMVMain()
         self.utils = Utils()
         self.main.setup(cli=False)
