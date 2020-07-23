@@ -54,12 +54,15 @@ class mmv:
         self.resolution = [width, height]
     
     def input_audio(self, path):
+        path = self.utils.get_abspath(path)
         if not os.path.exists(path):
             print("Input audio path does not exist [%s]" % path)
             sys.exit(-1)
         self.main.context.input_file = path
     
     def assets_dir(self, path):
+        path = self.utils.get_abspath(path)
+        self.utils.mkdir_dne(path)
         self.assets_dir = path
         self.main.context.assets = path
     
@@ -71,6 +74,7 @@ class mmv:
             self.main.assets.pygradienter(profile, width, height, n, delete_existing_files=delete_existing_files)
     
     def output_video(self, path):
+        path = self.utils.get_abspath(path)
         self.main.context.output_video = path
     
     def run(self):

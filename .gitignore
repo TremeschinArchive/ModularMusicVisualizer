@@ -12,8 +12,8 @@ modular-music-visualizer-venv
 .vscode
 
 # Yeah this is my identity, you should use yours here :)
-assets/tremx_assets
-!assets/free_assets/*
+mmv/assets/tremx_assets
+!mmv/assets/free_assets/*
 tremx.py
 
 # Byte-compiled / optimized / DLL files

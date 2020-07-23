@@ -38,6 +38,7 @@ class Utils():
 
     # Make directory if it does not exist
     def mkdir_dne(self, path):
+        path = self.get_abspath(path)
         if isinstance(path, list):
             for p in path:
                 os.makedirs(p, exist_ok=True)
@@ -105,6 +106,15 @@ class Utils():
     # Get the basename of a path
     def get_basename(self, path):
         return os.path.basename(path)
+    
+    # Return an absolute path always
+    def get_abspath(self, path):
+        
+        debug_prefix = "[Utils.get_abspath]"
+       
+        abspath = os.path.abspath(path)
+        print(debug_prefix, "abspath of [%s] > [%s]" % (path, abspath))
+        return abspath
 
     # Get the filename without extension /home/linux/file.ogg -> "file"
     def get_filename_no_extension(self, path):
