@@ -20,6 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import subprocess
+import hashlib
 import random
 import shutil
 import glob
@@ -28,8 +29,6 @@ import yaml
 import time
 import sys
 import os
-
-
 
 
 class Utils():

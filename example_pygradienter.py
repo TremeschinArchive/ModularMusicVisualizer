@@ -48,9 +48,6 @@ save_directory = f"{processing.assets_dir}/pygradienter/{profile}"
 # Use utils mkdir_dne function ( make directory (if) does not exist ) for saving
 processing.utils.mkdir_dne(save_directory) 
 
-# You'll see in a moment why we need os module
-import os
-
 # Enumerate through the PNG images we got from pygradienter, that is:
 # 
 # names = ["John", "Walter", "Camila"]
@@ -65,15 +62,10 @@ import os
 #
 for index, image in enumerate(generated_images):
     
-    # How much files already exist on the save directory?
-    # That's why we needed to import the os module, to use that function
-    # os.listdir that returns a list of file names in a directory
-    save_directory_file_count = len(os.listdir(save_directory))
+    # Get a unique id for the filename
+    unique_image_id = processing.get_unique_id()
 
-    # We'll save this image into this path, for not overriding previous generated content,
-    # That's why we add "save_directory_file_count" to the index of this list in the 
-    # generated_images list
-    save_file_path = f"{save_directory}/{save_directory_file_count + index}.png"
+    save_file_path = f"{save_directory}/{unique_image_id}.png"
 
     # Save the image to that path
     image.save(save_file_path)

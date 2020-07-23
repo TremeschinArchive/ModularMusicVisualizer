@@ -24,6 +24,7 @@ from mmv.pygradienter import pygradienter
 from mmv.common.utils import Utils
 from mmv.mmv_image import MMVImage
 from mmv.mmv_main import MMVMain
+import time
 import sys
 import os
 
@@ -88,6 +89,9 @@ class mmv:
     def add(self, item, layer=0):
         if self.utils.is_matching_type([item], [MMVImage]):
             self.main.core.mmvanimation.content[layer].append(item)
+        
+    def get_unique_id(self):
+        return self.utils.get_hash(str(time.time()))
 
 
 class QualityPreset:
