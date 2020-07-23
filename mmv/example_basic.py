@@ -175,5 +175,11 @@ visualizer.configure.simple_add_linear_resize(intensity="medium")
 
 processing.add(visualizer, layer=3)
 
+# # Post processing / effects
+
+generator = processing.generator_object()
+generator.particle_generator()
+generator.configure.preset_bottom_mid_top()
+
 # Run and generate the final video
 processing.run()
