@@ -562,20 +562,20 @@ class Frame():
             
         if "blur" in keys:
             module = self.pending["blur"]
-            ammount = module[0]
+            amount = module[0]
             self.gaussian_blur(
-                ammount,
+                amount,
                 from_current_frame=True
             )
         
         if "glitch" in keys:
             module = self.pending["glitch"]
-            ammount = module[0]
+            amount = module[0]
             color_offset = module[1]
             scan_lines = module[2]
             print("glitch", module)
             self.glitch(
-                glitch_amount=ammount,
+                glitch_amount=amount,
                 color_offset=color_offset,
                 scan_lines=scan_lines,
                 from_current_frame=True
@@ -583,9 +583,9 @@ class Frame():
         
         if "transparency" in keys:
             module = self.pending["transparency"]
-            ammount = module[0]
+            amount = module[0]
             self.transparency(
-                ammount,
+                amount,
                 from_current_frame=True
             )
         

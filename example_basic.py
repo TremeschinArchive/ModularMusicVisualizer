@@ -69,9 +69,9 @@ background.configure.load_image(
 )
 
 # As the background fills the video, we resize it to the video resolution
-# But we'll add a shake modifier to it by that ammount of pixels on each direction
+# But we'll add a shake modifier to it by that amount of pixels on each direction
 # So we have to over resize a bit the background so the shake doesn't make black borders
-# And start it shake ammounts off the screen
+# And start it shake amounts off the screen
 shake = 20
 background.configure.resize_to_video_resolution(
     over_resize_x = 2*shake,
@@ -81,7 +81,7 @@ background.configure.resize_to_video_resolution(
 # Set the object fixed point position off screen
 background.configure.add_path_point(-shake, -shake)
 
-# Shake by "shake" ammount of pixels at max on any direction
+# Shake by "shake" amount of pixels at max on any direction
 background.configure.simple_add_path_modifier_shake(shake)
 
 # Blur the background when the average audio amplitude increases

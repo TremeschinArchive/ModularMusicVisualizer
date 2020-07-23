@@ -399,46 +399,46 @@ class MMVImage():
                 this_module = modules["rotate"]
                 rotate = this_module["object"]
 
-                ammount = rotate.next()
-                ammount = round(ammount, self.ROUND)
+                amount = rotate.next()
+                amount = round(amount, self.ROUND)
                 
                 if self.context.multiprocessed:
-                    self.image.pending["rotate"] = [ammount]
+                    self.image.pending["rotate"] = [amount]
                 else:
-                    self.image.rotate(ammount)
+                    self.image.rotate(amount)
 
             if "resize" in modules:
 
                 this_module = modules["resize"]
         
-                ammount = fftinfo["average_value"]
+                amount = fftinfo["average_value"]
 
-                if ammount > 1:
-                    ammount = 1
-                if ammount < -0.9:
-                    ammount = -0.9
+                if amount > 1:
+                    amount = 1
+                if amount < -0.9:
+                    amount = -0.9
 
-                ammount = this_module["interpolation"](
+                amount = this_module["interpolation"](
                     self.size,
-                    eval(this_module["activation"].replace("X", str(ammount))),
+                    eval(this_module["activation"].replace("X", str(amount))),
                     self.current_step,
                     steps,
                     self.size,
                     this_module["arg_a"]
                 )
 
-                ammount = round(ammount, self.ROUND)
-                self.size = ammount
+                amount = round(amount, self.ROUND)
+                self.size = amount
 
                 if self.context.multiprocessed:
-                    self.image.pending["resize"] = [ammount]
+                    self.image.pending["resize"] = [amount]
                     offset = self.image.resize_by_ratio(
-                        ammount, get_only_offset=True
+                        amount, get_only_offset=True
                     )
                 else:
                     offset = self.image.resize_by_ratio(
                         # If we're going to rotate, resize the rotated frame which is not the original image
-                        ammount, from_current_frame="rotate" in modules
+                        amount, from_current_frame="rotate" in modules
                     )
 
                 if this_module["keep_center"]:
@@ -449,28 +449,28 @@ class MMVImage():
 
                 this_module = modules["blur"]
 
-                ammount = eval(this_module["activation"].replace("X", str(fftinfo["average_value"])))
-                ammount = round(ammount, self.ROUND)
+                amount = eval(this_module["activation"].replace("X", str(fftinfo["average_value"])))
+                amount = round(amount, self.ROUND)
 
                 if self.context.multiprocessed:
-                    self.image.pending["blur"] = [ammount]
+                    self.image.pending["blur"] = [amount]
                 else:
-                    self.image.gaussian_blur(ammount)
+                    self.image.gaussian_blur(amount)
             
             if "glitch" in modules:
 
                 this_module = modules["glitch"]
 
-                ammount = eval(this_module["activation"].replace("X", str(fftinfo["average_value"])))
-                ammount = round(ammount, self.ROUND)
+                amount = eval(this_module["activation"].replace("X", str(fftinfo["average_value"])))
+                amount = round(amount, self.ROUND)
 
                 color_offset = this_module["color_offset"]
                 scan_lines = this_module["scan_lines"]
 
                 if self.context.multiprocessed:
-                    self.image.pending["glitch"] = [ammount, color_offset, scan_lines]
+                    self.image.pending["glitch"] = [amount, color_offset, scan_lines]
                 else:
-                    self.image.glitch(ammount, color_offset, scan_lines)
+                    self.image.glitch(amount, color_offset, scan_lines)
 
             if "fade" in modules:
 
@@ -478,7 +478,7 @@ class MMVImage():
                 
                 fade = this_module["object"]
             
-                ammount = this_module["interpolation"](
+                amount = this_module["interpolation"](
                     fade.start_percentage,  
                     fade.end_percentage,
                     self.current_step,
@@ -487,12 +487,12 @@ class MMVImage():
                     this_module["arg_a"]
                 )
 
-                ammount = round(ammount, self.ROUND)
+                amount = round(amount, self.ROUND)
 
                 if self.context.multiprocessed:
-                    self.image.pending["transparency"] = [ammount]
+                    self.image.pending["transparency"] = [amount]
                 else:
-                    self.image.transparency(ammount)
+                    self.image.transparency(amount)
                     
                 fade.current_step += 1
 

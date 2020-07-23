@@ -73,7 +73,7 @@ shake = 15
 # Set the object fixed point position off screen
 background.configure.add_path_point(-shake, -shake)
 
-# Shake by "shake" ammount of pixels at max on any direction
+# Shake by "shake" amount of pixels at max on any direction
 background.configure.simple_add_path_modifier_shake(shake)
 
 # Blur the background when the average audio amplitude increases
