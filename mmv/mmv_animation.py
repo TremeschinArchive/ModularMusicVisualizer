@@ -372,11 +372,11 @@ class MMVAnimation():
                     "arg_a": 0.09,
                     "minimum": 450,
                 },
-                "glitch": {
-                    "activation": "min(max(0.1+X*3,0), 10)",
-                    "color_offset": True,
-                    "scan_lines": False,
-                }
+                # "glitch": {
+                #     "activation": "min(max(0.1+X*3,0), 10)",
+                #     "color_offset": True,
+                #     "scan_lines": False,
+                # }
             }
         }
 

@@ -324,6 +324,8 @@ class MMVImage():
         self.offset = [0, 0]
         self.image.pending = {}
 
+        self.image._reset_to_original_image()
+
         positions = this_animation["position"]
         steps = this_animation["steps"]
 
@@ -547,7 +549,7 @@ class MMVImage():
         y = int(self.y + self.offset[0])
 
         canvas.canvas.overlay_transparent(
-            self.image.frame,
+            self.image.array,
             y, x
         )
 
@@ -555,7 +557,7 @@ class MMVImage():
         # img = self.image
         # width, height, _ = img.frame.shape
         # canvas.canvas.copy_from(
-        #     self.image.frame,
+        #     self.image.array,
         #     canvas.canvas.frame,
         #     [0, 0],
         #     [x, y],

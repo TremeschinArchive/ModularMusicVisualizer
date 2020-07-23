@@ -151,8 +151,10 @@ class AudioProcessing:
     def preset_bass_mid(self):
         self.mmv.main.audio_processing.config = {
             0: {
-                "sample_rate": 800,
+                "sample_rate": 4000,
                 "get_frequencies": "all",
+                "start_freq": 30,
+                "end_freq": 2000,
                 "nbars": "original",
             },
         }

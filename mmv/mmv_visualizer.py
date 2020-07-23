@@ -242,6 +242,6 @@ class MMVVisualizer():
         y = int(self.y + self.offset[0] + self.base_offset[0])
 
         canvas.canvas.overlay_transparent(
-            self.image.frame, y, x
+            self.image.array, y, x
         )
 

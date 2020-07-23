@@ -36,9 +36,45 @@ class Frame():
     def __init__(self):
         # Multiprocessing pending things to do, ordered
         self.pending = {}
-        self.transparency_value = 1
         self.size = 1
         self.glitcher = ImageGlitcher()
+    
+    # # Internal functions
+
+    def _override(self, override):
+        if override:
+            self.original_image = copy.deepcopy(self.image)
+            self.array = np.array(self.original_image)
+    
+    # self.frame --> self.image
+    def _update_image_from_array(self):
+        self.image = Image.fromarray(self.array)
+
+    # self.image --> self.array
+    def _update_array_from_image(self):
+        self.array = np.array(self.image)
+    
+    # Update resolution from the array shape
+    def _update_resolution(self):
+        self.height = self.array.shape[0]
+        self.width = self.array.shape[1]
+
+    # self.image = self.original_image
+    def _reset_to_original_image(self):
+        if hasattr(self, 'original_image'):
+            self.image = copy.deepcopy(self.original_image)
+    
+    # Get the image we're process the effects on
+    def _get_processing_image(self, from_current_frame=False):
+        if from_current_frame:
+            if hasattr(self, 'image'):
+                return self.image
+            else:
+                return Image.fromarray(self.array)
+        else:
+            return self.original_image
+
+    # # User functions
 
     # Create new numpy array as a "frame", attribute width, height and resolution
     def new(self, width, height, transparent=False):
@@ -50,10 +86,10 @@ class Frame():
             channels = 3
         
         # Blank zeros frame based on transparency option
-        self.frame = np.zeros([height, width, channels], dtype=np.uint8)
+        self.array = np.zeros([height, width, channels], dtype=np.uint8)
 
         # This is our "loaded" image, as we're creating a new, it's the original one
-        self.original_image = Image.fromarray(self.frame)
+        self.original_image = Image.fromarray(self.array)
 
         # Update width, height info
         self.width = width
@@ -70,7 +106,7 @@ class Frame():
 
         # Set the image
         self.image = self.original_image
-        self.frame = array
+        self.array = array
 
         # Update width, height info
         self.height = array.shape[0]
@@ -106,18 +142,18 @@ class Frame():
         
         # Copy the original image PIL's Image class and sets the frame
         self.image = copy.deepcopy(self.original_image)
-        self.frame = np.array(self.image)
+        self.array = np.array(self.image)
 
         # Update width, height info
         self.height = self.image.size[0]
         self.width = self.image.size[1]
 
     # Get PIL image array from this object frame
-    def image_array(self):
-        return Image.fromarray(self.frame.astype(np.uint8))
+    def get_pil_image(self):
+        return Image.fromarray(self.array.astype(np.uint8))
     
     def get_rgb_frame_array(self):
-        return np.array( self.image_array().convert("RGB") )
+        return np.array( self.get_pil_image().convert("RGB") )
 
     # Save an image with specific instructions depending on it's extension type.
     def save(self, directory):
@@ -128,18 +164,19 @@ class Frame():
 
         # JPG and PNG uses different arguments
         if '.jpg' in directory:
-            jpegsave = self.image_array()
-            jpegsave.save(directory, format='JPEG', subsampling=0, quality=100)
+            self.get_pil_image().save(directory, format='JPEG', subsampling=0, quality=100)
 
         elif ".png" in directory:
-            save_image = self.image_array()
-            save_image.save(directory, format='PNG')
+            self.get_pil_image().save(directory, format='PNG')
     
     # Resize this frame multiplied by a scalar
+    #
     # @ratio: scalar to multiply
     # @override: set the original image to the new resized one
-    # @from_current_frame: resize not the original image but the current self.frame, overrided by override
-    def resize_by_ratio(self, ratio, override=False, from_current_frame=False, get_only_offset=False):
+    # @from_current_frame: resize not the original image but the current self.array, overrided by override
+    #
+    # Returns: offset array because of the resized new width and height according to the top left corner
+    def resize_by_ratio(self, ratio, get_only_offset=False, override=False, from_current_frame=False):
 
         debug_prefix = "[Frame.resize_by_ratio]"
 
@@ -147,73 +184,75 @@ class Frame():
         new_width = int(self.width * ratio)
         new_height = int(self.height * ratio)
 
-        if (not get_only_offset) and (not ((new_width == self.width) and (new_height == self.height))):
-            if override:
-                # Resize the original image itself and set it as the resized as well as the image var
-                self.original_image = self.original_image.resize((new_width, new_height), Image.ANTIALIAS)
-                self.image = self.original_image
+        # Already on resolution
+        if (new_width == self.width) and (new_height == self.height):
+            return [0, 0]
 
-                # Standart procedure on updating this class info
-                self.frame = np.array(self.image)
-                self.height = self.frame.shape[0]
-                self.width = self.frame.shape[1]
+        if not get_only_offset:
+            
+            processing = self._get_processing_image(from_current_frame)
+            processing = processing.resize((new_width, new_height), Image.ANTIALIAS)
 
-            else:
-                # Do we want self.image to be the self.image itself resized or the
-                if from_current_frame:
-                    toresize = self.image
-                else:
-                    toresize = self.original_image
+            self.image = processing
 
-                # Resize and update the frame info
-                self.image = toresize.resize((new_width, new_height), Image.ANTIALIAS)
-                self.frame = np.array(self.image)
+            self._override(override)
+            self._update_array_from_image()
+            self._update_resolution()
 
         # Return the offset to preserve the center
         return [
             (self.width - new_width)/2,
             (self.height - new_height)/2
         ]
-    
+
     # Resize this frame to a fixed resolution
     # @override: set the original image to the new resized one
-    def resize_to_resolution(self, width, height, override=False):
-        if override:
-            self.original_image = self.original_image.resize((width, height), Image.ANTIALIAS)
-            self.image = self.original_image
-            self.frame = np.array(self.image)
-            self.height = self.frame.shape[0]
-            self.width = self.frame.shape[1]
-        else:
-            self.image = self.original_image.resize((width, height), Image.ANTIALIAS)
-            self.frame = np.array(self.image)
+    def resize_to_resolution(self, width, height, override=False, from_current_frame=False):
+
+        processing = self._get_processing_image(from_current_frame)
+        processing = processing.resize((width, height), Image.ANTIALIAS)
+
+        self.image = processing
+
+        self._override(override)
+        self._update_array_from_image()
+        self._update_resolution()
     
     # Rotate this frame by a certain angle
     # [ WARNING ] Better only to rotate square images
     # @override: set the original image to the new rotated
-    def rotate(self, angle, override=False):
-        if override:
-            self.original_image = self.original_image.rotate(angle, resample=Image.BICUBIC)
-            self.image = self.original_image
-            self.frame = np.array(self.image)
-        else:
-            self.image = self.original_image.rotate(angle, resample=Image.BICUBIC)
-            self.frame = np.array(self.image)
+    def rotate(self, angle, override=False, from_current_frame=False):
+
+        processing = self._get_processing_image(from_current_frame)
+        processing = processing.rotate(angle, resample=Image.BICUBIC)
+
+        self.image = processing
+
+        self._override(override)
+        self._update_array_from_image()
     
     # Apply gaussian blur to the image by a certain radius
-    def gaussian_blur(self, radius):
-        self.image = self.image.filter(ImageFilter.GaussianBlur(radius=radius))
-        self.frame = np.array(self.image)
+    def gaussian_blur(self, radius, override=False, from_current_frame=False):
+        
+        processing = self._get_processing_image(from_current_frame)
+        processing = processing.filter(ImageFilter.GaussianBlur(radius=radius))
+
+        self.image = processing
+
+        self._override(override)
+        self._update_array_from_image()
 
     # Uses glitch-this
     def glitch(self, glitch_amount, color_offset=False, scan_lines=False):
+
+        processing = self._get_processing_image(from_current_frame)
         
         # Split the original image's channels
-        r, g, b, alpha = self.original_image.split()
+        r, g, b, alpha = processing.split()
 
-        self.frame = np.array(
+        glitched = np.array(
             self.glitcher.glitch_image(
-                self.image_array(),
+                Image.fromarray(processing),
                 round(glitch_amount, 2),
                 color_offset=color_offset,
                 scan_lines=scan_lines
@@ -221,14 +260,64 @@ class Frame():
         )
 
         # Split the original image's channels
-        r, g, b = Image.fromarray(self.frame).split()
+        r, g, b = processing.split()
 
         # Stack the arrays into a new numpy array "as image"
-        image = (np.dstack((r, g, b, alpha))).astype(np.uint8)
+        self.image = Image.fromarray( (np.dstack((r, g, b, alpha))).astype(np.uint8)) 
 
-        self.image = Image.fromarray(image)
-        self.original_image = self.image
-    
+        self._override(override)
+        self._update_array_from_image()
+
+    # Multiply this image's frame alpha channel by that scalar
+    # @ratio: 0 - 1 values
+    def transparency(self, ratio, override=False, from_current_frame=False):
+
+        processing = self._get_processing_image(from_current_frame)
+
+        # Split the original image's channels
+        r, g, b, alpha = processing.split()
+
+        # Multiply the alpha by that ratio
+        alpha = np.array(alpha) * ratio
+
+        # Stack the arrays into a new numpy array "as image"
+        self.image = Image.fromarray( (np.dstack((r, g, b, alpha))).astype(np.uint8) )
+
+        self._override(override)
+        self._update_array_from_image()
+
+    # Apply vignetting on this image object
+    # @x: X coordinate center of the effect
+    # @y: Y coordinate center of the effect
+    # @deviation_$: sigma of the gaussian kernel
+    def vignetting(self, x, y, deviation_x, deviation_y, override=False, from_current_frame=False):
+
+        processing = self._get_processing_image(from_current_frame)
+        
+        # Split the image into the channels
+        red, green, blue, alpha = processing.split()
+
+        # Get the rows and columns of the image
+        img = np.array(self.original_image)
+        rows, cols = img.shape[:2]
+
+        # Calculate our mask
+        a = cv2.getGaussianKernel(2*cols, deviation_x)[cols - x:2 * cols - x]
+        b = cv2.getGaussianKernel(2*rows, deviation_y)[rows - y:2 * rows - y]
+        c = b*a.T
+        d = c/c.max()
+
+        # Multiply the channels by the mask
+        red = red * d
+        green = green * d
+        blue = blue * d
+
+        # Stack the arrays into a new numpy array "as image"
+        self.image = Image.fromarray( (np.dstack((red, green, blue, alpha))).astype(np.uint8) )
+
+        self._override(override)
+        self._update_array_from_image()
+
     #
     # https://stackoverflow.com/questions/52702809/copy-array-into-part-of-another-array-in-numpy
     #
@@ -258,7 +347,7 @@ class Frame():
 
         # [ CAUTION ] If we are sure we won't be missing on arguments, this out of bounds
         # failsafe isn't required, make sure you don't need it when not failsafing, that is
-        # you agree to only copy_from the inbounds area of this object's self.frame
+        # you agree to only copy_from the inbounds area of this object's self.array
         if out_of_bounds_failsafe:
 
             # If B_start is before zero, A_start is that offset and B_start is zero,
@@ -345,9 +434,9 @@ class Frame():
         """
         
         # [ Out of Bounds ]
-        if y >= self.frame.shape[0]:
+        if y >= self.array.shape[0]:
             return
-        if x >= self.frame.shape[1]:
+        if x >= self.array.shape[1]:
             return
 
         # Offset of the cut if X or Y coordinate is negative
@@ -377,13 +466,13 @@ class Frame():
 
         # The actual cut is made but we have to limit it to the background size if this cut pos is bigger
         cut = [
-            min(cut_pos[0], self.frame.shape[0] - 1),
-            min(cut_pos[1], self.frame.shape[1] - 1)
+            min(cut_pos[0], self.array.shape[0] - 1),
+            min(cut_pos[1], self.array.shape[1] - 1)
         ]
 
         # Crop the frame
         # NOTE: This is simply the coordinate until the cut
-        crop = self.frame[
+        crop = self.array[
             y:cut[0],
             x:cut[1],
         ]
@@ -405,7 +494,7 @@ class Frame():
         # Insert out alpha composite-d image to the original place on this object's frame
         self.copy_from(
             alpha_composite,
-            self.frame,
+            self.array,
             [0, 0],
             [y, x],
             [y + crop.shape[0] - 1, x + crop.shape[1] - 1]
@@ -413,55 +502,7 @@ class Frame():
 
         # oof that was a lot
 
-    # Multiply this image's frame alpha channel by that scalar
-    # @ratio: 0 - 1 values
-    def transparency(self, ratio):
-
-        self.transparency_value = ratio
-
-        # Split the original image's channels
-        r, g, b, alpha = self.original_image.split()
-
-        # Multiply the alpha by that ratio
-        alpha = np.array(alpha) * ratio
-
-        # Stack the arrays into a new numpy array "as image"
-        image = (np.dstack((r, g, b, alpha))).astype(np.uint8)
-
-        # Load the image from the processed array and attribute the frame to it
-        self.image = Image.fromarray(image)
-        self.frame = image
     
-    # Apply vignetting on this image object
-    # @x: X coordinate center of the effect
-    # @y: Y coordinate center of the effect
-    # @deviation_$: sigma of the gaussian kernel
-    def vignetting(self, x, y, deviation_x, deviation_y):
-
-        # Split the image into the channels
-        red, green, blue, alpha = self.original_image.split()
-
-        # Get the rows and columns of the image
-        img = np.array(self.original_image)
-        rows, cols = img.shape[:2]
-
-        # Calculate our mask
-        a = cv2.getGaussianKernel(2*cols, deviation_x)[cols - x:2 * cols - x]
-        b = cv2.getGaussianKernel(2*rows, deviation_y)[rows - y:2 * rows - y]
-        c = b*a.T
-        d = c/c.max()
-
-        # Multiply the channels by the mask
-        red = red * d
-        green = green * d
-        blue = blue * d
-
-        # Stack the arrays and build our new image
-        image = (np.dstack((red, green, blue, alpha))).astype(np.uint8)
-
-        # Attribute this object frame and image
-        self.image = Image.fromarray(image)
-        self.frame = image
 
     def resolve_pending(self):
 
@@ -476,7 +517,7 @@ class Frame():
 
             self.load_from_array(
                 visualizer.next(fftinfo),
-                convert_to_png=True
+                convert_to_png=True,
             )
 
         if "video" in keys:
@@ -490,27 +531,35 @@ class Frame():
             self.load_from_array(frame, convert_to_png=True)
             self.resize_to_resolution(
                 width, height,
-                override=True
+                override=True,
+                from_current_frame=True
             )
         
         if "rotate" in keys:
             module = self.pending["rotate"]
             angle = module[0]
-            self.rotate(angle)
+            self.rotate(
+                angle,
+                from_current_frame=True
+            )
         
         if "resize" in keys:
             module = self.pending["resize"]
             ratio = module[0]
             if not self.size == ratio:
                 self.resize_by_ratio(
-                    ratio, from_current_frame="rotate" in keys
+                    ratio,
+                    from_current_frame=True
                 )
                 self.size = ratio
             
         if "blur" in keys:
             module = self.pending["blur"]
             ammount = module[0]
-            self.gaussian_blur(ammount)
+            self.gaussian_blur(
+                ammount,
+                from_current_frame=True
+            )
         
         if "glitch" in keys:
             module = self.pending["glitch"]
@@ -518,12 +567,20 @@ class Frame():
             color_offset = module[1]
             scan_lines = module[2]
             print("glitch", module)
-            self.glitch(glitch_amount=ammount, color_offset=color_offset, scan_lines=scan_lines)
+            self.glitch(
+                glitch_amount=ammount,
+                color_offset=color_offset,
+                scan_lines=scan_lines,
+                from_current_frame=True
+            )
         
         if "transparency" in keys:
             module = self.pending["transparency"]
             ammount = module[0]
-            self.transparency(ammount)
+            self.transparency(
+                ammount,
+                from_current_frame=True
+            )
         
         # ~ 0.23 seconds on 720p image
         if "vignetting" in keys:
@@ -538,5 +595,6 @@ class Frame():
             self.vignetting(
                 x, y,
                 value_x,
-                value_y
+                value_y,
+                from_current_frame=True
             )
