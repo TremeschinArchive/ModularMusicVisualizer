@@ -19,7 +19,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.mmv_generator import MMVParticleGenerator
 from mmv.mmv_visualizer import MMVVisualizer
+from mmv.mmv_generator import MMVGenerator
 from mmv.pygradienter import pygradienter
 from mmv.common.utils import Utils
 from mmv.mmv_image import MMVImage
@@ -89,6 +91,7 @@ class mmv:
     def add(self, item, layer=0):
         if self.utils.is_matching_type([item], [MMVImage]):
             self.main.core.mmvanimation.content[layer].append(item)
+        if self.utils.is_matching_type([item], [MMVGenerator])
         
     def get_unique_id(self):
         return self.utils.get_hash(str(time.time()))

@@ -1,7 +1,7 @@
 """
 ===============================================================================
 
-Purpose: Basic usage example of MMV
+Purpose: Basic usage example of MMV, video background
 
 ===============================================================================
 
@@ -32,7 +32,7 @@ Y increases downwards
 """
 
 # Import MMV module
-import mmv
+import ..mmv
 
 # Create the wrapper class
 processing = mmv.mmv()
@@ -41,7 +41,7 @@ processing = mmv.mmv()
 # Not setting the workers --> defaults to 4
 processing.performance(
     multiprocessed=True,
-    workers=6
+    workers=4
 )
 
 # Set the video quality
@@ -56,7 +56,7 @@ processing.quality(
 
 # The way we process and get the frequencies from the audio, highly
 # influences the frequencies bars on the visualizer itself
-processing.audio_processing.preset_bass_mid()
+processing.audio_processing.preset_balanced()
 
 # # #
  
@@ -73,7 +73,7 @@ processing.assets_dir("assets/free_assets")
 # # #
 
 # I/O options, input a audio, output a video
-processing.input_audio("assets/free_assets/sound/banjo.ogg")
+processing.input_audio("assets/tremx_assets/video/audio.webm")
 processing.output_video("mmv-output.mkv")
 
 # # # Background
@@ -84,20 +84,12 @@ background = processing.image_object()
 # Initialize this animation layer, we're at layer 0
 background.configure.init_animation_layer()
 
-# We can load an random image from the dir :)
-background.configure.load_image(
-    processing.random_file_from_dir("assets/free_assets/background/simple-smooth")
-)
+# We can load an video :)
+background.configure.load_video("assets/tremx_assets/video/video.mp4")
 
-# As the background fills the video, we resize it to the video resolution
-# But we'll add a shake modifier to it by that amount of pixels on each direction
-# So we have to over resize a bit the background so the shake doesn't make black borders
-# And start it shake amounts off the screen
-shake = 20
-background.configure.resize_to_video_resolution(
-    over_resize_x = 2*shake,
-    over_resize_y = 2*shake,
-)
+# On videos they are automatically resized to the output
+# resolution and find this shake value automatically
+shake = 15
 
 # Set the object fixed point position off screen
 background.configure.add_path_point(-shake, -shake)
@@ -109,7 +101,7 @@ background.configure.simple_add_path_modifier_shake(shake)
 background.configure.simple_add_linear_blur(intensity="medium")
 
 # Resize the background when the average audio amplitude increases
-background.configure.simple_add_linear_resize(intensity="high")
+background.configure.simple_add_linear_resize(intensity="low")
 
 # Add the backround object to be generated
 # The layers are a ascending order of blitted items, 0 is first, 1 is after zero
@@ -136,7 +128,7 @@ logo.configure.add_path_point(
     (processing.height // 2) - (logo_size/2),
 )
 
-logo.configure.simple_add_linear_resize(intensity="medium")
+logo.configure.simple_add_linear_resize(intensity="custom", activation="1+7*X")
 
 # We can add rotation to the object
 logo.configure.simple_add_swing_rotation()
@@ -164,7 +156,7 @@ visualizer.configure.add_path_point(
 )
 
 # visualizer.configure.simple_add_linear_blur(intensity="high")
-visualizer.configure.simple_add_linear_resize(intensity="medium")
+visualizer.configure.simple_add_linear_resize(intensity="custom", activation="1+8*X")
 
 # # We can define how much shake we want
 # visualizer.configure.simple_add_path_modifier_shake(
