@@ -46,7 +46,7 @@ def get_canvas_multiprocess_return(get_queue, put_queue, worker_id):
 
         # Resole pending operations and blit item on canvas
         for layer in sorted(content):
-            [(item.resolve_pending() for item in content[layer]]
+            [item.resolve_pending() for item in content[layer]]
         
         for layer in sorted(content):
             [item.blit(canvas) for item in content[layer]]
