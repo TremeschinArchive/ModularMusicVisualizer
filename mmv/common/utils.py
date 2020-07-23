@@ -161,10 +161,12 @@ class Utils():
     def is_matching_type(self, items, wanted):
         # print("Checking items", items, "on wanted", wanted)
         for index, item in enumerate(items):
-            if isinstance(item, tuple(wanted)):
-                del wanted[index]
-            else:
-                return False
+            for wanted_index, wanted_type in enumerate(wanted):
+                if isinstance(item, wanted_type):
+                    del wanted[wanted_index]
+                    continue
+                else:
+                    return False
         return True
 
 
