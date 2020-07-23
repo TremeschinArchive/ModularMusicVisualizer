@@ -27,6 +27,7 @@ import datetime
 import random
 import math
 import time
+import uuid
 import sys
 import os
 
@@ -68,7 +69,7 @@ class PyGradienterProcessing():
     # Main routine on making the images
     def generate(self, image_id):
 
-        random.seed(image_id)
+        random.seed(uuid.uuid4())
 
         # Add profile nodes
         for node in self.profile.generate_nodes():

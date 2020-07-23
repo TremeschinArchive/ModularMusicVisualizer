@@ -34,7 +34,7 @@ processing.assets_dir("assets/free_assets")
 pygradienter.config.resolution(200, 200)
 
 # How many images we'll be generating
-pygradienter.config.n_images(12)
+pygradienter.config.n_images(2)
 
 # The pygradienter profile we'll create
 profile = "simple_smooth"
