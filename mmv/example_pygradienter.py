@@ -20,7 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from .. import mmv
+import mmv
 
 processing = mmv.mmv()
 

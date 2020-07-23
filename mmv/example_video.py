@@ -32,7 +32,7 @@ Y increases downwards
 """
 
 # Import MMV module
-import ..mmv
+import mmv
 
 # Create the wrapper class
 processing = mmv.mmv()

@@ -91,7 +91,8 @@ class mmv:
     def add(self, item, layer=0):
         if self.utils.is_matching_type([item], [MMVImage]):
             self.main.core.mmvanimation.content[layer].append(item)
-        if self.utils.is_matching_type([item], [MMVGenerator])
+        if self.utils.is_matching_type([item], [MMVGenerator]):
+            self.main.core.mmvanimation.generators.append(item)
         
     def get_unique_id(self):
         return self.utils.get_hash(str(time.time()))
