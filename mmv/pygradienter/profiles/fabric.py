@@ -2,8 +2,8 @@ import sys
 sys.path.append("..")
 
 from mmv.common.linearalgebra import LinearAlgebra, Point
-from mmv.pygradienter.node import PointNode
-from mmv.pygradienter.noise import Noise
+from mmv.pygradienter.pyg_node import PointNode
+from mmv.pygradienter.pyg_noise import Noise
 
 import random
 import math

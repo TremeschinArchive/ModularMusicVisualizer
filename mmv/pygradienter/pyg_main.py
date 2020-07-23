@@ -25,7 +25,6 @@ from mmv.pygradienter.profiles.simple_smooth import PyGradienterProfileSimpleSmo
 from mmv.pygradienter.profiles.particles import PyGradienterProfileParticles
 from mmv.pygradienter.profiles.simple import PyGradienterProfileSimple
 from mmv.pygradienter.profiles.fabric import PyGradienterProfileFabric
-
 import sys
 
 class PyGradienterMain:
