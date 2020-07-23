@@ -31,7 +31,14 @@ import sys
 import cv2
 import os
 
+"""
+This is (yet another) wrapper for images, but more focused on modularity
+There are three variables you are interested in, those are image, original_image and array.
+original_image is kept as a backup where you can just go back and revert all the processing you do
+image is the current latest processed image, array is that image's raw data, both should be
+linked again every time we process the image variable.
 
+"""
 class Frame():
     def __init__(self):
         # Multiprocessing pending things to do, ordered
@@ -40,11 +47,11 @@ class Frame():
         self.glitcher = ImageGlitcher()
     
     # # Internal functions
-
+    
+    # if override: self.original_image <-- self.image
     def _override(self, override):
         if override:
             self.original_image = copy.deepcopy(self.image)
-            self.array = np.array(self.original_image)
     
     # self.frame --> self.image
     def _update_image_from_array(self):
