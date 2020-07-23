@@ -25,9 +25,17 @@ from mmv.pygradienter.profiles.simple_smooth import PyGradienterProfileSimpleSmo
 from mmv.pygradienter.profiles.particles import PyGradienterProfileParticles
 from mmv.pygradienter.profiles.simple import PyGradienterProfileSimple
 from mmv.pygradienter.profiles.fabric import PyGradienterProfileFabric
+import multiprocessing
+import threading
+import pickle
 import sys
 
+
 class PyGradienterMain:
+
+    def put_on_queue(self, info):
+        self.put_queue.put(info)
+
     def generate(self, width, height, n_images, profile, quiet=False):
 
         profile_and_respective_classes = {
@@ -46,3 +54,25 @@ class PyGradienterMain:
             sys.exit(-1)
  
         print("Profile class", profile)
+
+        self.put_queue = multiprocessing.Queue()
+        self.get_queue = multiprocessing.Queue()
+
+        info = {
+            "profile": profile,
+            "width": width,
+            "height": height,
+        }
+
+        for _ in range(n_images):
+            threading.Thread(
+                target=self.put_on_queue,
+                args=( pickle.dumps(info, protocol=pickle.HIGHEST_PROTOCOL), )
+            ).start()
+        
+        finished = []
+
+        for _ in range(n_images):
+            finished.append(self.get_queue.get())
+        
+        return finished

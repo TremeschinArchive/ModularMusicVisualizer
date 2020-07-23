@@ -44,18 +44,9 @@ class PyGradienterProfileSimpleSmooth():
                 ],
                 [
                     # Pixel color based on the minimum and maximum pixel colors for each channel
-                    random.randint(
-                        0,
-                        255
-                    ),
-                    random.randint(
-                        0,
-                        255
-                    ),
-                    random.randint(
-                        0,
-                        255
-                    ),
+                    random.randint(0, 255),
+                    random.randint(0, 255),
+                    random.randint(0, 255),
                     255
                 ],
                 1

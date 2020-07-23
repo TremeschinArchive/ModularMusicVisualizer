@@ -4,6 +4,10 @@
 Purpose: Set of 2D linear algebra, gotta put those LA engineering classes
 and Gram Schmidt shenanigans into practice for once
 
+Yes there is openblas, lapack and whatnot, I'm writing this myself
+because it helps me to apply what I learned and think how to implement
+stuff in Python in some other way I haven't tried yet :)
+
 ===============================================================================
 
 This program is free software: you can redistribute it and/or modify it under

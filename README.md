@@ -125,7 +125,7 @@ I include a few free assets under the `assets/free_assets` folder, you can use t
 
 - [ ] (boring) Update requirements.txt
 
-- [ ] Make a proper presentation / demo / gif about MMV and link on README
+- [x] ~~Make a proper presentation / demo / gif about MMV and link on README~~ didn't work well
 
 #### Ideas for the future or waiting to be executed
 
