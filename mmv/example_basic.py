@@ -61,7 +61,7 @@ processing.audio_processing.preset_bass_mid()
 # # #
  
 # If you want to create some assets, set the assets dir first !!
-processing.assets_dir("assets/free_assets")
+processing.assets_dir("../assets/user_assets")
 
 # Pygradienter assets only works on Linux at the moment :(
 # processing.create_pygradienter_asset(
@@ -73,7 +73,7 @@ processing.assets_dir("assets/free_assets")
 # # #
 
 # I/O options, input a audio, output a video
-processing.input_audio("assets/free_assets/sound/banjo.ogg")
+processing.input_audio("../assets/free_assets/sound/banjo.ogg")
 processing.output_video("mmv-output.mkv")
 
 # # # Background
@@ -86,7 +86,7 @@ background.configure.init_animation_layer()
 
 # We can load an random image from the dir :)
 background.configure.load_image(
-    processing.random_file_from_dir("assets/free_assets/background/simple-smooth")
+    processing.random_file_from_dir("../assets/free_assets/background/simple-smooth")
 )
 
 # As the background fills the video, we resize it to the video resolution
@@ -125,7 +125,7 @@ logo_size = (200/720)*processing.height
 
 logo = processing.image_object()
 logo.configure.init_animation_layer()
-logo.configure.load_image("assets/free_assets/mmv-logo.png")
+logo.configure.load_image("../assets/free_assets/mmv-logo.png")
 logo.configure.resize_to_resolution(logo_size, logo_size, override=True)
 
 # The starting point is a bit hard to understand, we want to center it but have to

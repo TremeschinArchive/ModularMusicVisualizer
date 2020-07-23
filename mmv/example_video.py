@@ -61,7 +61,7 @@ processing.audio_processing.preset_balanced()
 # # #
  
 # If you want to create some assets, set the assets dir first !!
-processing.assets_dir("assets/free_assets")
+processing.assets_dir("../assets/user_assets")
 
 # Pygradienter assets only works on Linux at the moment :(
 # processing.create_pygradienter_asset(
@@ -73,7 +73,7 @@ processing.assets_dir("assets/free_assets")
 # # #
 
 # I/O options, input a audio, output a video
-processing.input_audio("assets/tremx_assets/video/audio.webm")
+processing.input_audio("../assets/tremx_assets/video/audio.webm")
 processing.output_video("mmv-output.mkv")
 
 # # # Background
@@ -85,7 +85,7 @@ background = processing.image_object()
 background.configure.init_animation_layer()
 
 # We can load an video :)
-background.configure.load_video("assets/tremx_assets/video/video.mp4")
+background.configure.load_video("../assets/tremx_assets/video/video.mp4")
 
 # On videos they are automatically resized to the output
 # resolution and find this shake value automatically
@@ -117,7 +117,7 @@ logo_size = (200/720)*processing.height
 
 logo = processing.image_object()
 logo.configure.init_animation_layer()
-logo.configure.load_image("assets/free_assets/mmv-logo.png")
+logo.configure.load_image("../assets/free_assets/mmv-logo.png")
 logo.configure.resize_to_resolution(logo_size, logo_size, override=True)
 
 # The starting point is a bit hard to understand, we want to center it but have to

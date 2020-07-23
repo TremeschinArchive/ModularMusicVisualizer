@@ -67,9 +67,11 @@ Open a shell on desired dir to clone the repo
 
 `pip install -r mmv/requirements.txt`
 
-Configure the stuff on the file `example.py`, run it with `python example.py`
+You can run a example file under `mmv/example*.py` with `python mmv/example*.py` (you should know how to do it right?)
 
-I include a few free assets under the `assets/free_assets` folder, you can use them at your disposal, they were generated with my other project called [PyGradienter](https://github.com/Tremeschin/pygradienter) :)
+I include a few free assets under the `assets/free_assets` folder, you can use them at your disposal, they were generated with my other project called [PyGradienter](https://github.com/Tremeschin/pygradienter) that I'm merging the two here in MMV :)
+
+There's also the example of calling pygradienter from a MMV script
 
 ## Windows
 
@@ -105,9 +107,11 @@ run `pip install -r mmv/requirements.txt` to install MMV's Python dependencies
 
 #### I'd like some feedback if you could install everything fine and what you had to do to make it work :)
 
-Configure the stuff on the file `example.py`, run it with `python example.py`
+You can run a example file under `mmv/example*.py` with `python.exe mmv/example*.py` (replacing "*" to the file name), or just change the shell directory to the `mmv` folder and run with `python.exe example*.py`
 
 I include a few free assets under the `assets/free_assets` folder, you can use them at your disposal, they were generated with my other project called [PyGradienter](https://github.com/Tremeschin/pygradienter) that I'm merging the two here in MMV :)
+
+There's also the example of calling pygradienter from a MMV script
 
 # Goals, what is being developed
 

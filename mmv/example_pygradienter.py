@@ -28,7 +28,7 @@ processing = mmv.mmv()
 pygradienter = processing.pygradienter(workers=12)
 
 # Set where we'll be saving our assets to
-processing.assets_dir("assets/free_assets")
+processing.assets_dir("../assets/user_assets")
 
 # Set the resolution we want to create the pygradienter images
 pygradienter.config.resolution(200, 200)
