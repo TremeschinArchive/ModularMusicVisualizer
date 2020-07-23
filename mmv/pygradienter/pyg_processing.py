@@ -49,17 +49,9 @@ class PyGradienterProcessing():
         self.nodes = []
         self.ROOT = self.utils.get_root()
 
-        # Where we'll save
-        savefolder = self.ROOT + os.path.sep + "data" + os.path.sep + self.profile.name + os.path.sep + "%sx%s" % (self.width, self.height)
-        self.utils.mkdir_dne(savefolder)
-
         # Create a empty canvas
         self.new_canvas()
 
-        # Add profile nodes
-        for node in self.profile.generate_nodes():
-            self.nodes.append(node)
-        
     # Create a black canvas as a list and starting image
     def new_canvas(self):
         self.canvas = np.zeros([self.height, self.width, 4], dtype=np.uint8)    
@@ -75,6 +67,12 @@ class PyGradienterProcessing():
 
     # Main routine on making the images
     def generate(self, image_id):
+
+        random.seed(image_id)
+
+        # Add profile nodes
+        for node in self.profile.generate_nodes():
+            self.nodes.append(node)
 
         if not self.quiet:
             print("Generating image id [%s]" % image_id)

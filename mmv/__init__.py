@@ -57,6 +57,7 @@ class mmv:
         self.main.context.input_file = path
     
     def assets_dir(self, path):
+        self.assets_dir = path
         self.main.context.assets = path
     
     def create_pygradienter_asset(self, profile, width, height, n=1, delete_existing_files=False):
@@ -75,8 +76,8 @@ class mmv:
     def image_object(self):
         return MMVImage(self.main.context)
     
-    def pygradienter(self):
-        return pygradienter()
+    def pygradienter(self, workers=4):
+        return pygradienter(workers=workers)
     
     def generator_object(self):
         return MMVGenerator(self.main.context)

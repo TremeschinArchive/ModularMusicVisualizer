@@ -1,12 +1,79 @@
+"""
+===============================================================================
 
+Purpose: Basic usage example of using PyGradienter on MMV, for creating
+unique and free to use assets / images on MMV videos
 
+===============================================================================
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <http://www.gnu.org/licenses/>.
+
+===============================================================================
+"""
 
 import mmv
+
 processing = mmv.mmv()
 
-gr = processing.pygradienter()
+# Get a pygradienter object
+pygradienter = processing.pygradienter(workers=12)
 
-gr.config.resolution(200, 200)
-gr.config.n_images(1)
+# Set where we'll be saving our assets to
+processing.assets_dir("assets/free_assets")
 
-gr.generate("simple_smooth")
+# Set the resolution we want to create the pygradienter images
+pygradienter.config.resolution(200, 200)
+
+# How many images we'll be generating
+pygradienter.config.n_images(12)
+
+# The pygradienter profile we'll create
+profile = "simple_smooth"
+
+# Get the generated images from pygradienter
+generated_images = pygradienter.generate(profile)
+
+# Where we'll be saving the generated images on
+save_directory = f"{processing.assets_dir}/pygradienter/{profile}"
+
+# Use utils mkdir_dne function ( make directory (if) does not exist ) for saving
+processing.utils.mkdir_dne(save_directory) 
+
+# You'll see in a moment why we need os module
+import os
+
+# Enumerate through the PNG images we got from pygradienter, that is:
+# 
+# names = ["John", "Walter", "Camila"]
+#
+# for index, item in enumerate(names):
+#     print(index, item)
+# 
+# That prints:
+# >> 0, "John"
+# >> 1, "Walter"
+# >> 2, "Camila"
+#
+for index, image in enumerate(generated_images):
+    
+    # How much files already exist on the save directory?
+    # That's why we needed to import the os module, to use that function
+    # os.listdir that returns a list of file names in a directory
+    save_directory_file_count = len(os.listdir(save_directory))
+
+    # We'll save this image into this path, for not overriding previous generated content,
+    # That's why we add "save_directory_file_count" to the index of this list in the 
+    # generated_images list
+    save_file_path = f"{save_directory}/{save_directory_file_count + index}.png"
+
+    # Save the image to that path
+    image.save(save_file_path)

@@ -59,7 +59,7 @@ class Config:
 # Main class that controls PyGradienter
 class pygradienter():
    
-    def __init__(self):
+    def __init__(self, workers=4):
 
         # Create Utils and get this file location
         self.utils = Utils()
@@ -72,12 +72,14 @@ class pygradienter():
         self.height = 200
         self.show_welcome_message = True
         self.quiet = False
+        self.workers = workers
 
-    def generate(self, profile):
+    def generate(self, profile, workers=4):
         return self.main.generate(
             width=self.width,
             height=self.height,
             n_images=self.n_images,
             profile=profile,
-            quiet=self.quiet
+            quiet=self.quiet,
+            workers=self.workers,
         )

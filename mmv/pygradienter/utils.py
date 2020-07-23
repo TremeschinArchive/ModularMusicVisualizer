@@ -67,8 +67,6 @@ class Utils():
     def mkdir_dne(self, path):
         os.makedirs(path, exist_ok=True)
 
-
-
     # Get the directory this file is in if run from source or from a release
     def get_root(self):
         if getattr(sys, 'frozen', False):    
