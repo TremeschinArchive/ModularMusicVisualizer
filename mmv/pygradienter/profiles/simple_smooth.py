@@ -11,11 +11,10 @@ description = "Simple and clean gradients, really smooth"
 
 
 class PyGradienterProfileSimpleSmooth():
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, width, height):
 
-        self.width = self.config["width"]
-        self.height = self.config["height"]
+        self.width = width
+        self.height = height
 
         self.la = LinearAlgebra()
 

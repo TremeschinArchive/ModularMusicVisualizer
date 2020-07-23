@@ -33,14 +33,13 @@ import os
 
 # Controller routine / class that uses the profile Python script to get values
 class PyGradienterProcessing():
-    def __init__(self, profile):
+    def __init__(self, profile, width, height, quiet=False):
 
         # Load the profile and a config
-        self.profile = profile
-        self.config = profile.config
-
-        if not self.config["quiet"]:
-            print("Starting generating id [%s]" % self.profile.id)
+        self.profile = profile(width, height)
+        self.width = width
+        self.height = height
+        self.quiet = quiet
 
         # Create classes
         self.utils = Utils()
@@ -51,7 +50,7 @@ class PyGradienterProcessing():
         self.ROOT = self.utils.get_root()
 
         # Where we'll save
-        savefolder = self.ROOT + os.path.sep + "data" + os.path.sep + self.profile.name + os.path.sep + "%sx%s" % (self.config["width"], self.config["height"])
+        savefolder = self.ROOT + os.path.sep + "data" + os.path.sep + self.profile.name + os.path.sep + "%sx%s" % (self.width, self.height)
         self.utils.mkdir_dne(savefolder)
 
         # Create a empty canvas
@@ -61,35 +60,28 @@ class PyGradienterProcessing():
         for node in self.profile.generate_nodes():
             self.nodes.append(node)
         
-        # Main routine, generate the image
-        self.generate()
-
-        # Save
-        # self.save(savefolder + os.path.sep + self.utils.get_hash(self.unique_string) + ".png")
-        self.save(savefolder + os.path.sep + self.utils.get_hash(datetime.datetime.now().strftime("%d%m%Y-%H:%M:%S") + "_" + str(self.profile.id)) + ".png")
-
-        # Clean canvas as multiprocessing doesn't destroy the object on memory?
-        self.canvas = None
-
     # Create a black canvas as a list and starting image
     def new_canvas(self):
-        self.canvas = np.zeros([self.config["height"], self.config["width"], 4], dtype=np.uint8)    
+        self.canvas = np.zeros([self.height, self.width, 4], dtype=np.uint8)    
 
         # Set alpha channel to 255
         for i, _ in enumerate(self.canvas):
             for j, _ in enumerate(self.canvas[i]):
                 self.canvas[i][j][3] = 255
     
-    # Replace "width" with self.config["width"] and "height" with self.config["height"] on the setting
+    # Replace "width" with self.width and "height" with self.height on the setting
     def pos_replace(self, s):
-        return str(s).replace("width", str(self.config["width"])).replace("height", str(self.config["height"]))
+        return str(s).replace("width", str(self.width)).replace("height", str(self.height))
 
     # Main routine on making the images
-    def generate(self):
+    def generate(self, image_id):
+
+        if not self.quiet:
+            print("Generating image id [%s]" % image_id)
 
         # Loop through the image X and Y pixels
-        for y in range(self.config["height"]):
-            for x in range(self.config["width"]):
+        for y in range(self.height):
+            for x in range(self.width):
                 
                 # The sum of the distances                 
                 distances = np.zeros(len(self.nodes))
@@ -125,11 +117,14 @@ class PyGradienterProcessing():
                 # Change and activate the pixel colors by their value
                 self.canvas[y][x] = self.profile.pixel_color_transformations(this_pixel, x, y, distances)
 
+        if not self.quiet:
+            print("Finished generating image id [%s]" % image_id)
+
     # Save an image to disk                
     def save(self, path):
 
         if not self.config["quiet"]:
-            print("Save id [%s]" % self.profile.id)
+            print("Save id [%s]" % self.id)
 
         # Get a image from the numpy array, smooth it a bit and save
         img = Image.fromarray(self.canvas, mode="RGBA")

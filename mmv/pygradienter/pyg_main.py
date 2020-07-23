@@ -25,6 +25,8 @@ from mmv.pygradienter.profiles.simple_smooth import PyGradienterProfileSimpleSmo
 from mmv.pygradienter.profiles.particles import PyGradienterProfileParticles
 from mmv.pygradienter.profiles.simple import PyGradienterProfileSimple
 from mmv.pygradienter.profiles.fabric import PyGradienterProfileFabric
+from mmv.pygradienter.pyg_processing import PyGradienterProcessing
+from mmv.pygradienter.pyg_worker import pyg_generate_from_profile
 import multiprocessing
 import threading
 import pickle
@@ -36,7 +38,9 @@ class PyGradienterMain:
     def put_on_queue(self, info):
         self.put_queue.put(info)
 
-    def generate(self, width, height, n_images, profile, quiet=False):
+    def generate(self, width, height, n_images, profile, quiet=False, n_workers=4):
+
+        n_workers = min(n_images, n_workers)
 
         profile_and_respective_classes = {
             "creepy_circles": PyGradienterProfileCreepyCircles,
@@ -59,12 +63,31 @@ class PyGradienterMain:
         self.get_queue = multiprocessing.Queue()
 
         info = {
-            "profile": profile,
+            "process": PyGradienterProcessing(profile, width, height),
             "width": width,
             "height": height,
         }
 
-        for _ in range(n_images):
+        workers = []
+
+        for worker_id in range(n_workers):
+            workers.append(
+                multiprocessing.Process(
+                    target=pyg_generate_from_profile,
+                    args=(
+                        self.get_queue,
+                        self.put_queue,
+                        worker_id,
+                    )
+                )
+            )
+        
+        for i, worker in enumerate(workers):
+            print("Starting worker", i)
+            worker.start()
+
+        for index in range(n_images):
+            print("Putting on queue index", index)
             threading.Thread(
                 target=self.put_on_queue,
                 args=( pickle.dumps(info, protocol=pickle.HIGHEST_PROTOCOL), )
@@ -75,4 +98,7 @@ class PyGradienterMain:
         for _ in range(n_images):
             finished.append(self.get_queue.get())
         
+        for worker in workers:
+            worker.terminate()
+
         return finished
