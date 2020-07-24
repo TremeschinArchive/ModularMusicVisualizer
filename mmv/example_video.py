@@ -183,7 +183,7 @@ processing.add(generator)
 # Add simple vignetting on default configs on the post processing
 # Those darken the edges of the screen when the average amplitude of the audio
 # goes up, mostly with the bass. Search for vignetting, you'll see what I mean
-processing.post_processing.simple_add_vignetting()
+# processing.post_processing.simple_add_vignetting()
 
 
 # Run and generate the final video

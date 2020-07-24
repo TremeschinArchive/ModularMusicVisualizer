@@ -333,7 +333,7 @@ class MMVImage():
 
         self.ROUND = 3
     
-    # Out Canvas is an MMVImage object
+    # Our Canvas is an MMVImage object
     def create_canvas(self):
         self.configure.init_animation_layer()
         self.reset_canvas()
