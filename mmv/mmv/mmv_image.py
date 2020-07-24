@@ -293,6 +293,15 @@ class MMVImage():
         self.offset = [0, 0]
 
         self.ROUND = 3
+    
+    # Out Canvas is an MMVImage object
+    def create_canvas(self):
+        self.configure.init_animation_layer()
+        self.reset_canvas()
+        self.configure.add_path_point(0, 0)
+    
+    def reset_canvas(self):
+        self.image.new(self.context.width, self.context.height, transparent=True)
 
     # Don't pickle cv2 video  
     def __getstate__(self):
@@ -548,7 +557,7 @@ class MMVImage():
         x = int(self.x + self.offset[1])
         y = int(self.y + self.offset[0])
 
-        canvas.canvas.overlay_transparent(
+        canvas.image.overlay_transparent(
             self.image.array,
             y, x
         )

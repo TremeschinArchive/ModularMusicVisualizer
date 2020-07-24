@@ -26,7 +26,7 @@ from mmv.mmv_controller import Controller
 from mmv.common.audio import AudioFile
 from mmv.common.fourier import Fourier
 from mmv.mmv_context import Context
-from mmv.mmv_canvas import Canvas
+from mmv.mmv_image import MMVImage
 from mmv.mmv_core import Core
 from PIL import Image
 import numpy as np
@@ -41,7 +41,7 @@ import os
 class Miscellaneous():
 
     def __init__(self):
-        self.version = "1.4.7dev-potentially-broken"
+        self.version = "1.4.8-working-dev"
         self.greeter_message()
 
     def greeter_message(self):
@@ -81,7 +81,7 @@ class MMVMain():
         self.controller = Controller(self.context)
 
         print(debug_prefix, "Creating Canvas()")
-        self.canvas = Canvas(self.context)
+        self.canvas = MMVImage(self.context)
 
         print(debug_prefix, "Creating Fourier()")
         self.fourier = Fourier()

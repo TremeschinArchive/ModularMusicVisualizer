@@ -125,8 +125,8 @@ class Core():
             self.core_get_queue = multiprocessing.Queue(maxsize=queuesize)
             self.setup_multiprocessing()
             self.controller.threads["core_get_queue_loop"] = threading.Thread(target=self.core_get_queue_loop, daemon=True).start()
-        else:
-            self.canvas.reset_canvas()
+            
+        self.canvas.create_canvas()
 
         # Next animation
         for this_step in range(0, self.total_steps):

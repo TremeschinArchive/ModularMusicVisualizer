@@ -55,7 +55,7 @@ def get_canvas_multiprocess_return(get_queue, put_queue, worker_id):
         canvas.resolve_pending()
 
         # Send the numpy array in RGB format back to the Core class for sending to FFmpeg
-        put_queue.put( [this_frame_index, canvas.canvas.get_rgb_frame_array()] )
+        put_queue.put( [this_frame_index, canvas.image.get_rgb_frame_array()] )
 
         # Memory management
         del instructions

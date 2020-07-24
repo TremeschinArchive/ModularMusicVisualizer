@@ -397,7 +397,7 @@ class MMVAnimation():
             "moving_video_background": False,
             "logo": False,
             "visualizer": False,
-            "add_post_processing": True,
+            "add_post_processing": False,
             "particles": False
         }
 
@@ -469,4 +469,4 @@ class MMVAnimation():
             del self.content[ items[0] ][ items[1] ]
 
         # Post process this final frame as we added all the items
-        self.canvas.next(fftinfo)
+        self.canvas.next(fftinfo, this_step)
