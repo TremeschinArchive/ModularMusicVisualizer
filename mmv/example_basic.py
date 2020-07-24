@@ -36,7 +36,7 @@ import mmv
 
 # Create the wrapper class
 processing = mmv.mmv(
-    watch_processing_video_realtime=True
+    watch_processing_video_realtime=False
 )
 
 # Single thread render the video or multiprocessed with N workers?
