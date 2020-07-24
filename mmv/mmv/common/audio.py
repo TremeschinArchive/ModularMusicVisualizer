@@ -122,12 +122,17 @@ class AudioProcessing():
                 processed[key] = wanted_binned_fft
                 continue
 
-            # Split "300,average" --> 300, "average" --> nbars and mode
-            nbars, mode = nbars.split(",")
+            # CSV string with some alternative on adapting the nbars
+            csv = nbars.split(",")
 
-            # Split into average bars
-            processed[key] = self.datautils.equal_bars_average(wanted_binned_fft, int(nbars), mode)
-
+            # "fixed,100,max" -> type, number of bars, average method
+            if csv[0] == "fixed":
+                nbars = csv[1]
+                mode = csv[2]
+                processed[key] = self.datautils.equal_bars_average(wanted_binned_fft, int(nbars), mode)
+            else:
+                raise RuntimeError("Method of AudioProcessing.process on nbars config [%s] not implemented" % csv[0])
+            
         linear_processed = []
 
         for key, item in processed.items():

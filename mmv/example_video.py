@@ -130,7 +130,7 @@ logo.configure.add_path_point(
     (processing.height // 2) - (logo_size/2),
 )
 
-logo.configure.simple_add_linear_resize(intensity="custom", activation="1+7*X")
+logo.configure.simple_add_linear_resize(intensity="high")
 
 # We can add rotation to the object
 logo.configure.simple_add_swing_rotation()
@@ -158,7 +158,10 @@ visualizer.configure.add_path_point(
 )
 
 # visualizer.configure.simple_add_linear_blur(intensity="high")
-visualizer.configure.simple_add_linear_resize(intensity="custom", activation="1+8*X")
+visualizer.configure.simple_add_linear_resize(
+    intensity="custom",
+    activation="1+5*X"  # A bit more than the high setting
+)
 
 # # We can define how much shake we want
 # visualizer.configure.simple_add_path_modifier_shake(

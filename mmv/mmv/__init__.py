@@ -170,7 +170,7 @@ class AudioProcessing:
                 "get_frequencies": "range",
                 "start_freq": 2000,
                 "end_freq": 16000,
-                "nbars": "200,max",
+                "nbars": "fixed,200,max",
             },
         }
     
@@ -178,7 +178,7 @@ class AudioProcessing:
         self.mmv.main.audio_processing.config = {
             0: {
                 "sample_rate": 4000,
-                "get_frequencies": "all",
+                "get_frequencies": "range",
                 "start_freq": 60,
                 "end_freq": 2000,
                 "nbars": "original",
