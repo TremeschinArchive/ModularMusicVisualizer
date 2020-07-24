@@ -27,6 +27,7 @@ import ffmpeg
 import copy
 import time
 import sys
+import cv2
 
 class FFmpegWrapper():
     def __init__(self, context, controller):
@@ -75,7 +76,14 @@ class FFmpegWrapper():
                 if self.count == 0:
                     start = time.time()
                 self.lock_writing = True
-                self.pipe_subprocess.stdin.write( self.images_to_pipe.pop(self.count) )
+                image = self.images_to_pipe.pop(self.count)
+
+                if self.context.watch_processing_video_realtime and self.count > 0:
+                    cvimage = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+                    cv2.waitKey(1)
+                    cv2.imshow("Current piped frame", cvimage)
+
+                self.pipe_subprocess.stdin.write( image )
                 self.lock_writing = False
                 if self.count == self.controller.total_steps - 1:
                     self.close_pipe()

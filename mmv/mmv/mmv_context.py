@@ -58,6 +58,9 @@ class Context():
         self.multiprocessed = False
         self.multiprocessing_workers = 4
 
+        # User
+        self.watch_processing_video_realtime = False
+
         self.process_args()
 
     def process_args(self):

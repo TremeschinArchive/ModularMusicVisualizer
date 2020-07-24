@@ -32,7 +32,7 @@ import os
 
 
 class mmv:
-    def __init__(self):
+    def __init__(self, watch_processing_video_realtime=False):
         self.main = MMVMain()
         self.utils = Utils()
         self.main.setup(cli=False)
@@ -40,6 +40,8 @@ class mmv:
         self.quality()
         self.quality_preset = QualityPreset(self)
         self.audio_processing = AudioProcessing(self)
+        
+        self.main.context.watch_processing_video_realtime = watch_processing_video_realtime
 
     def performance(self, multiprocessed=False, workers=4):
         self.main.context.multiprocessed = multiprocessed

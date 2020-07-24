@@ -35,7 +35,9 @@ Y increases downwards
 import mmv
 
 # Create the wrapper class
-processing = mmv.mmv()
+processing = mmv.mmv(
+    watch_processing_video_realtime=True
+)
 
 # Single thread render the video or multiprocessed with N workers?
 # Not setting the workers --> defaults to 4
