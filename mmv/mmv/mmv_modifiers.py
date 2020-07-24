@@ -216,7 +216,8 @@ class Fade():
 
 
 class Vignetting():
-    def __init__(self, minimum, activation, center_function_x, center_function_y):
+    def __init__(self, minimum, activation, center_function_x, center_function_y, start_value=0):
+        self.value = start_value
         self.minimum = minimum
         self.activation = activation
         self.value = 0

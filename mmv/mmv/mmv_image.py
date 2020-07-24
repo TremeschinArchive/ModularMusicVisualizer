@@ -181,7 +181,7 @@ class Configure():
             }
         })
     
-    def add_vignetting_module(self, minimum, activation, center_function_x, center_function_y):
+    def add_vignetting_module(self, minimum, activation, center_function_x, center_function_y, start_value=0):
         self.add_module({
             "vignetting": {
                 "object": Vignetting(
@@ -189,16 +189,17 @@ class Configure():
                     activation = activation,
                     center_function_x = center_function_x,
                     center_function_y = center_function_y,
+                    start_value=start_value,
                 ),
                 "interpolation": copy.deepcopy(self.object.interpolation.remaining_approach),
                 "arg_a": 0.09,
             },
         })
 
-    def simple_add_vignetting(self, intensity="medium", center="centered", activation=None, center_function_x=None, center_function_y=None):
+    def simple_add_vignetting(self, intensity="medium", center="centered", activation=None, center_function_x=None, center_function_y=None, start_value=900):
         intensities = {
             "low": "0",
-            "medium": "900 - 4000*X",
+            "medium": "%s - 4000*X" % start_value,
             "high": "0",
             "custom": activation
         }
@@ -215,6 +216,7 @@ class Configure():
             activation = intensities[intensity],
             center_function_x = center_function_x,
             center_function_y = center_function_y,
+            start_value=start_value,
         )
 
     # Pre defined simple modules
@@ -565,7 +567,7 @@ class MMVImage():
                 )
 
                 # Interpolate to a new vignetting value
-                new_vignetting = this_module["interpolation"](
+                next_vignetting = this_module["interpolation"](
                     vignetting.value,
                     vignetting.towards,
                     self.current_step,
@@ -574,6 +576,8 @@ class MMVImage():
                     this_module["arg_a"]
                 )
 
+                vignetting.value = next_vignetting
+
                 vignetting.get_center()
 
                 # Apply the new vignetting effect on the center of the image
@@ -581,15 +585,15 @@ class MMVImage():
                     self.image.pending["vignetting"] = [
                         vignetting.center_x,
                         vignetting.center_y,
-                        new_vignetting,
-                        new_vignetting,
+                        next_vignetting,
+                        next_vignetting,
                     ]
                 else:
                     self.image.vignetting(
                         vignetting.center_x,
                         vignetting.center_y,
-                        new_vignetting,
-                        new_vignetting
+                        next_vignetting,
+                        next_vignetting
                     )
 
 
