@@ -29,6 +29,7 @@ import time
 import sys
 import cv2
 
+
 class FFmpegWrapper():
     def __init__(self, context, controller):
         self.context = context
@@ -75,26 +76,37 @@ class FFmpegWrapper():
             if self.count in list(self.images_to_pipe.keys()):
                 if self.count == 0:
                     start = time.time()
+                
+                # We're writing stuff
                 self.lock_writing = True
+
+                # Get the next image from the list as count is on the images to pipe dictionary keys
                 image = self.images_to_pipe.pop(self.count)
 
+                # If user set to watch the realtime video, convert RGB numpy array to BGR cv2 image
                 if self.context.watch_processing_video_realtime and self.count > 0:
                     cvimage = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-                    cv2.waitKey(1)
                     cv2.imshow("Current piped frame", cvimage)
+                    cv2.waitKey(1)
 
-                self.pipe_subprocess.stdin.write( image )
+                # Pipe the numpy RGB array as image
+                self.pipe_subprocess.stdin.write(image)
+
+                # Finished writing
                 self.lock_writing = False
+
+                # Are we finished on the expected total number of images?
                 if self.count == self.controller.total_steps - 1:
                     self.close_pipe()
+                
                 self.count += 1
 
                 # Stats
-                current_time = round((1/self.context.fps) * self.count, 2)
-                duration = round(self.context.duration, 2)
-                remaining = duration - current_time
+                current_time = round((1/self.context.fps) * self.count, 2)  # Current second we're processing
+                duration = round(self.context.duration, 2)  # Total duration in seconds
+                remaining = duration - current_time  # How much seconds left to produce
                 now = time.time()
-                took = now - start
+                took = now - start  # Total time took in this runtime
                 eta = round(self.functions.proportion(current_time, took, remaining) / 60, 2)
                 
                 print("Frame count=[%s] proc=[%.2f sec / %.2f sec] took=[%.2f min] eta=[%.2f min] sum=[%.2f min] fullpower=[%s]" % (self.count, current_time, duration, round(took/60, 2), eta, round((took/60 + eta), 2), not self.controller.core_waiting))
@@ -108,106 +120,18 @@ class FFmpegWrapper():
 
         print(debug_prefix, "Closing pipe")
 
+        # Wait for all images to be piped, noted: the last one will still be there because of .pop and
+        # will have a false signal of images to pipe being empty, we correct on the next loop
         while not len(self.images_to_pipe.keys()) == 0:
             print(debug_prefix, "Waiting for image buffer list to end, len [%s]" % len(self.images_to_pipe))
             time.sleep(0.1)
 
+        # Is there any more images left to pipe? ie, are we holding one image on memory and piping to ffmpeg
         while self.lock_writing:
             print(debug_prefix, "Lock writing is on, should only have one image?")
             time.sleep(0.1)
 
         self.stop_piping = True
 
-        print(debug_prefix, "Waiting process to finish")
+        print(debug_prefix, "Stopped pipe!!")
 
-        # self.pipe_subprocess.wait()
-
-        print(debug_prefix, "Closed!!")
-
-
-class SubprocessUtils():
-
-    def __init__(self, name, utils, context):
-
-        debug_prefix = "[SubprocessUtils.__init__]"
-
-        self.name = name
-        self.utils = utils
-        self.context = context
-
-        print(debug_prefix, "Creating SubprocessUtils with name: [%s]" % name)
-
-    # Get the commands from a list to call the subprocess
-    def from_list(self, list):
-
-        debug_prefix = "[SubprocessUtils.run]"
-
-        print(debug_prefix, "Getting command from list:")
-        print(debug_prefix, list)
-
-        self.command = list
-
-    # Run the subprocess with or without a env / working directory
-    def run(self, working_directory=None, env=None, shell=False):
-
-        debug_prefix = "[SubprocessUtils.run]"
-        
-        print(debug_prefix, "Popen SubprocessUtils with name [%s]" % self.name)
-        
-        # Copy the environment if nothing was changed and passed as argument
-        if env is None:
-            env = os.environ.copy()
-        
-        # Runs the subprocess based on if we set or not a working_directory
-        if working_directory == None:
-            self.process = subprocess.Popen(self.command, env=env, stdout=subprocess.PIPE, shell=shell)
-        else:
-            self.process = subprocess.Popen(self.command, env=env, cwd=working_directory, stdout=subprocess.PIPE, shell=shell)
-
-    # Get the newlines from the subprocess
-    # This is used for communicating Dandere2x C++ with Python, simplifies having dealing with files
-    def realtime_output(self):
-        while True:
-            # Read next line
-            output = self.process.stdout.readline()
-
-            # If output is empty and process is not alive, quit
-            if output == '' and self.process.poll() is not None:
-                break
-            
-            # Else yield the decoded output as subprocess send bytes
-            if output:
-                yield output.strip().decode("utf-8")
-
-    # Wait until the subprocess has finished
-    def wait(self):
-
-        debug_prefix = "[SubprocessUtils.wait]"
-
-        print(debug_prefix, "Waiting SubprocessUtils with name [%s] to finish" % self.name)
-
-        self.process.wait()
-
-    # Kill subprocess
-    def terminate(self):
-
-        debug_prefix = "[SubprocessUtils.terminate]"
-
-        print(debug_prefix, "Terminating SubprocessUtils with name [%s]" % self.name)
-
-        self.process.terminate()
-
-    # See if subprocess is still running
-    def is_alive(self):
-
-        debug_prefix = "[SubprocessUtils.is_alive]"
-
-        # Get the status of the subprocess
-        status = self.process.poll()
-
-        # None? alive
-        if status == None:
-            return True
-        else:
-            print(debug_prefix, "SubprocessUtils with name [%s] is not alive" % self.name)
-            return False

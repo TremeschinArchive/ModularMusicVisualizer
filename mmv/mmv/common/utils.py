@@ -179,16 +179,22 @@ class Utils():
         return True
 
 
+# Utilities in processing dictionaries, lists
 class DataUtils():
     
+    # Get a "subdictionary" from the data dictionary where the keys range in between start and end
     def dictionary_items_in_between(self, data, start, end):
         return {k: v for k, v in data.items() if k > start and k < end}
     
+    # Slice an array in (tries to) n equal slices
     def equal_slices(self, array, n):
         size = len(array)
         return [ array[i: min(i+n, size) ] for i in range(0, size, n) ]
     
+    # Creates nbars of "bins" from a dictionary data
     def equal_bars_average(self, data, nbars, mode):
+
+        # Sorted keys and equal slice 'em
         sorted_data = sorted(list(data.keys()))
         slices_index = self.equal_slices(sorted_data, nbars)
 
@@ -210,3 +216,92 @@ class DataUtils():
                 return_values[bar_index] = max(values)
             
         return return_values
+
+
+# Python's subprocess utilities because I'm lazy remembering things
+class SubprocessUtils():
+
+    def __init__(self, name, utils, context):
+
+        debug_prefix = "[SubprocessUtils.__init__]"
+
+        self.name = name
+        self.utils = utils
+        self.context = context
+
+        print(debug_prefix, "Creating SubprocessUtils with name: [%s]" % name)
+
+    # Get the commands from a list to call the subprocess
+    def from_list(self, list):
+
+        debug_prefix = "[SubprocessUtils.run]"
+
+        print(debug_prefix, "Getting command from list:")
+        print(debug_prefix, list)
+
+        self.command = list
+
+    # Run the subprocess with or without a env / working directory
+    def run(self, working_directory=None, env=None, shell=False):
+
+        debug_prefix = "[SubprocessUtils.run]"
+        
+        print(debug_prefix, "Popen SubprocessUtils with name [%s]" % self.name)
+        
+        # Copy the environment if nothing was changed and passed as argument
+        if env is None:
+            env = os.environ.copy()
+        
+        # Runs the subprocess based on if we set or not a working_directory
+        if working_directory == None:
+            self.process = subprocess.Popen(self.command, env=env, stdout=subprocess.PIPE, shell=shell)
+        else:
+            self.process = subprocess.Popen(self.command, env=env, cwd=working_directory, stdout=subprocess.PIPE, shell=shell)
+
+    # Get the newlines from the subprocess
+    # This is used for communicating Dandere2x C++ with Python, simplifies having dealing with files
+    def realtime_output(self):
+        while True:
+            # Read next line
+            output = self.process.stdout.readline()
+
+            # If output is empty and process is not alive, quit
+            if output == '' and self.process.poll() is not None:
+                break
+            
+            # Else yield the decoded output as subprocess send bytes
+            if output:
+                yield output.strip().decode("utf-8")
+
+    # Wait until the subprocess has finished
+    def wait(self):
+
+        debug_prefix = "[SubprocessUtils.wait]"
+
+        print(debug_prefix, "Waiting SubprocessUtils with name [%s] to finish" % self.name)
+
+        self.process.wait()
+
+    # Kill subprocess
+    def terminate(self):
+
+        debug_prefix = "[SubprocessUtils.terminate]"
+
+        print(debug_prefix, "Terminating SubprocessUtils with name [%s]" % self.name)
+
+        self.process.terminate()
+
+    # See if subprocess is still running
+    def is_alive(self):
+
+        debug_prefix = "[SubprocessUtils.is_alive]"
+
+        # Get the status of the subprocess
+        status = self.process.poll()
+
+        # None? alive
+        if status == None:
+            return True
+        else:
+            print(debug_prefix, "SubprocessUtils with name [%s] is not alive" % self.name)
+            return False

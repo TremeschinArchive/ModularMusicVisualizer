@@ -31,13 +31,24 @@ import sys
 import os
 
 
+# Main wrapper class for the end user, facilitates MMV in a whole
 class mmv:
+
     def __init__(self, watch_processing_video_realtime=False):
+        # Main class of MMV
         self.main = MMVMain()
+
+        # Utilities
         self.utils = Utils()
+
+        # Start MMV classes that main connects them, do not run
         self.main.setup(cli=False)
+
+        # Default options of performance and quality, 720p60
         self.performance()
         self.quality()
+
+        # Configuring options
         self.quality_preset = QualityPreset(self)
         self.audio_processing = AudioProcessing(self)
         
