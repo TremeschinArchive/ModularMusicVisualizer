@@ -43,7 +43,7 @@ processing = mmv.mmv(
 # Not setting the workers --> defaults to 4
 processing.performance(
     multiprocessed=True,
-    workers=6
+    workers=4
 )
 
 # Set the video quality
@@ -187,6 +187,12 @@ generator.particle_generator()
 generator.generator.configure.preset_bottom_mid_top()
 
 processing.add(generator)
+
+# Add simple vignetting on default configs on the post processing
+# Those darken the edges of the screen when the average amplitude of the audio
+# goes up, mostly with the bass. Search for vignetting, you'll see what I mean
+processing.post_processing.simple_add_vignetting()
+
 
 # Run and generate the final video
 processing.run()

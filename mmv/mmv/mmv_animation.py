@@ -402,7 +402,6 @@ class MMVAnimation():
         }
 
         if config["moving_background"]:
-            print("Adding moving background")
             self.add_moving_background(
                 shake = int((15/1280) * self.context.width)
             )

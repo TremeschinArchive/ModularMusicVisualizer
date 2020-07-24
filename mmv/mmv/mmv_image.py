@@ -94,6 +94,7 @@ class Configure():
 
     def add_module(self, module):
         module_name = list(module.keys())[0]
+        print("Adding module", module, module_name)
         self.object.path[self.animation_index]["modules"][module_name] = module[module_name]
 
     def add_module_blur(self, activation):
@@ -179,6 +180,42 @@ class Configure():
                 "arg_a": smooth,
             }
         })
+    
+    def add_vignetting_module(self, minimum, activation, center_function_x, center_function_y):
+        self.add_module({
+            "vignetting": {
+                "object": Vignetting(
+                    minimum = minimum,
+                    activation = activation,
+                    center_function_x = center_function_x,
+                    center_function_y = center_function_y,
+                ),
+                "interpolation": copy.deepcopy(self.object.interpolation.remaining_approach),
+                "arg_a": 0.09,
+            },
+        })
+
+    def simple_add_vignetting(self, intensity="medium", center="centered", activation=None, center_function_x=None, center_function_y=None):
+        intensities = {
+            "low": "0",
+            "medium": "900 - 4000*X",
+            "high": "0",
+            "custom": activation
+        }
+        if not intensity in list(intensities.keys()):
+            print("Unhandled resize intensity [%s]" % intensity)
+            sys.exit(-1)
+
+        if center == "centered":
+            center_function_x = Constant(self.object.image.width // 2)
+            center_function_y = Constant(self.object.image.height // 2)
+
+        self.add_vignetting_module(
+            minimum = 450,
+            activation = intensities[intensity],
+            center_function_x = center_function_x,
+            center_function_y = center_function_y,
+        )
 
     # Pre defined simple modules
 
@@ -504,6 +541,57 @@ class MMVImage():
                     self.image.transparency(amount)
                     
                 fade.current_step += 1
+        
+            # Apply vignetting
+            if "vignetting" in modules:
+
+                # The module we're working with
+                this_module = modules["vignetting"]
+
+                # TODO: needed?
+                # Limit the average
+                average = fftinfo["average_value"]
+
+                if average > 1:
+                    average = 1
+                if average < -0.9:
+                    average = -0.9
+
+                vignetting = this_module["object"]
+
+                # Where the vignetting intensity is pointing to according to our 
+                vignetting.calculate_towards(
+                    eval( vignetting.activation.replace("X", str(average)) )
+                )
+
+                # Interpolate to a new vignetting value
+                new_vignetting = this_module["interpolation"](
+                    vignetting.value,
+                    vignetting.towards,
+                    self.current_step,
+                    steps,
+                    vignetting.value,
+                    this_module["arg_a"]
+                )
+
+                vignetting.get_center()
+
+                # Apply the new vignetting effect on the center of the image
+                if self.context.multiprocessed:
+                    self.image.pending["vignetting"] = [
+                        vignetting.center_x,
+                        vignetting.center_y,
+                        new_vignetting,
+                        new_vignetting,
+                    ]
+                else:
+                    self.image.vignetting(
+                        vignetting.center_x,
+                        vignetting.center_y,
+                        new_vignetting,
+                        new_vignetting
+                    )
+
 
         # Iterate through every position module
         for position in positions:

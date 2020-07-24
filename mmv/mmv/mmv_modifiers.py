@@ -199,6 +199,9 @@ class LinearSwing():
 class Constant():
     def __init__(self, value):
         self.value = value
+    
+    def next(self):
+        return self.value
 
 # # Effects
 
@@ -210,3 +213,24 @@ class Fade():
         self.end_percentage = end_percentage
         self.finish_steps = finish_steps
         self.current_step = 0
+
+
+class Vignetting():
+    def __init__(self, minimum, activation, center_function_x, center_function_y):
+        self.minimum = minimum
+        self.activation = activation
+        self.value = 0
+        self.center_function_x = center_function_x
+        self.center_function_y = center_function_y
+        self.center_x = 0
+        self.center_y = 0
+        
+    def calculate_towards(self, value):
+        if value < self.minimum:
+            self.towards = self.minimum
+        else:
+            self.towards = value
+
+    def get_center(self):
+        self.center_x = self.center_function_x.next()
+        self.center_y = self.center_function_y.next()

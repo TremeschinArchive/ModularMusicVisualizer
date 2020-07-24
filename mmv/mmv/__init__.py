@@ -51,7 +51,8 @@ class mmv:
         # Configuring options
         self.quality_preset = QualityPreset(self)
         self.audio_processing = AudioProcessing(self)
-        
+        self.post_processing = self.main.canvas.configure
+
         self.main.context.watch_processing_video_realtime = watch_processing_video_realtime
 
     def performance(self, multiprocessed=False, workers=4):

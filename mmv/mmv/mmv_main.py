@@ -82,6 +82,7 @@ class MMVMain():
 
         print(debug_prefix, "Creating Canvas()")
         self.canvas = MMVImage(self.context)
+        self.canvas.create_canvas()
 
         print(debug_prefix, "Creating Fourier()")
         self.fourier = Fourier()
