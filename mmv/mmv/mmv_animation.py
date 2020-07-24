@@ -368,7 +368,7 @@ class MMVAnimation():
             "modules": {
                 "vignetting": {
                     "interpolation": copy.deepcopy(self.interpolation.remaining_approach),
-                    "activation": "%s - 800*X" % vignetting_start,
+                    "activation": "%s - 4000*X" % vignetting_start,
                     "arg_a": 0.09,
                     "minimum": 450,
                 },

@@ -179,7 +179,7 @@ class AudioProcessing:
             0: {
                 "sample_rate": 4000,
                 "get_frequencies": "all",
-                "start_freq": 30,
+                "start_freq": 60,
                 "end_freq": 2000,
                 "nbars": "original",
             },
