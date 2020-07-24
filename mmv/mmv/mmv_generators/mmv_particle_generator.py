@@ -30,6 +30,14 @@ import math
 import os
 
 
+class MMVParticleGeneratorConfigure:
+    def __init__(self, mmvgenerator):
+        self.mmvgenerator = mmvgenerator
+    
+    def preset_bottom_mid_top(self):
+        self.mmvgenerator.generate_function = self.mmvgenerator.preset_bottom_mid_top
+
+
 class MMVParticleGenerator():
     def __init__(self, context):
         self.context = context
@@ -37,6 +45,7 @@ class MMVParticleGenerator():
         self.interpolation = Interpolation()
         self.configure = MMVParticleGeneratorConfigure(self)
         self.type = "mmvgenerator"
+        self.generate_function = False
 
         self.is_deletable = False
 
@@ -49,26 +58,11 @@ class MMVParticleGenerator():
     def next(self, fftinfo, this_step):
         if this_step % 10 == 0:
             return {
-                "object": self.get_next(),
+                "object": self.generate_function(),
                 "layer": 3
             }
         return {"object": None}
     
-
-class MMVParticleGeneratorConfigure:
-    def __init__(self, mmvgenerator):
-        self.mmvgenerator = mmvgenerator
-        self.generate = MMVParticleGeneratorGenerate(self.mmvgenerator)
-    
-    def preset_bottom_mid_top(self):
-        self.mmvgenerator.get_next = self.generate.preset_bottom_mid_top
-
-
-class MMVParticleGeneratorGenerate:
-
-    def __init__(self, mmvgenerator):
-        self.mmvgenerator = mmvgenerator
-
     def preset_bottom_mid_top(self):
 
         particle = MMVImage(self.context)

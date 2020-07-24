@@ -198,7 +198,7 @@ class Frame():
         if not get_only_offset:
             
             processing = self._get_processing_image(from_current_frame)
-            processing = processing.resize((new_width, new_height), Image.ANTIALIAS)
+            processing = processing.resize((new_width, new_height), Image.BICUBIC)
 
             self.image = processing
 
@@ -217,7 +217,7 @@ class Frame():
     def resize_to_resolution(self, width, height, override=False, from_current_frame=False):
 
         processing = self._get_processing_image(from_current_frame)
-        processing = processing.resize((width, height), Image.ANTIALIAS)
+        processing = processing.resize((width, height), Image.BICUBIC)
 
         self.image = processing
 

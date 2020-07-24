@@ -179,7 +179,9 @@ processing.add(visualizer, layer=3)
 
 generator = processing.generator_object()
 generator.particle_generator()
-generator.configure.preset_bottom_mid_top()
+generator.generator.configure.preset_bottom_mid_top()
+
+processing.add(generator)
 
 # Run and generate the final video
 processing.run()
