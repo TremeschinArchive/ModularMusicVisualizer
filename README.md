@@ -2,11 +2,19 @@
 
 An attempt to make a free (as in freedom) and open source music visualization tool for the music production community
 
-![Demo image of MMV](repo/demo.jpg)
+## Small showcase
 
-[Link to unlisted video of the full music in the image above](https://youtu.be/BhpLwaR1Oj8)
+![Demo image of MMV](repo/demo-2.jpg)
+
+[Link to unlisted video of the full music in the image above](https://youtu.be/UXncwltx-pQ)
+
+(it's an work in progress track I'm producing)
 
 _The DAW is Ardour 6.0_
+
+*Bonus!!*
+
+[Unlisted video of old version of MMV](https://youtu.be/BhpLwaR1Oj8)
 
 # Idea
 
