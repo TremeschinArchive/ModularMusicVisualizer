@@ -19,7 +19,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.mmv_classes import *
+from mmv.mmv_types import *
 from mmv.common.interpolation import Interpolation
 from mmv.mmv_visualizer import MMVVisualizer
 from mmv.common.functions import Functions

@@ -20,7 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.mmv_classes import *
+from mmv.mmv_types import *
 from mmv.common.utils import Utils
 from mmv.common.frame import Frame
 import random
