@@ -19,40 +19,44 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.interpolation import Interpolation
 from mmv.mmv_visualizer import MMVVisualizer
-from mmv.common.functions import Functions
 from mmv.mmv_image import MMVImage
-from mmv.common.utils import Utils
 from mmv.mmv_generator import *
 from mmv.mmv_modifiers import *
+from mmv.mmv_classes import *
 import random
 import copy
 import math
 import os
 
 
-class MMVAnimation():
-    def __init__(self, context, controller, audio, canvas):
+# Store and sorta "organize" the many MMV objects we can have on a given scene
+class MMVAnimation:
+    
+    # Initialize a MMVAnimation class with required arguments
+    def __init__(self, context: Context, controller: Controller, audio: Audio, canvas: Canvas) -> None:
+        
+        # Get the classes
         self.context = context
         self.controller = controller
         self.audio = audio
         self.canvas = canvas
 
-        self.interpolation = Interpolation()
-        self.functions = Functions()
-        self.utils = Utils()
-
+        # Content are the MMV objects stored that gets rendered on the screen
+        # generators are MMVGenerators that we get new objects from
         self.content = {}
         self.generators = []
 
-        n_layers = 10
-        for n in range(n_layers):
-            self.content[n] = []
+    # Make layers until a given N value
+    def mklayers_until(self, n: int) -> None:
+        for layer_index in range(n + 1):  # n + 1 because range() is exclusive at the end ( range(2) = [0, 1] )
+            if not layer_index in self.content.keys():
+                self.content[n] = []
     
     # Call every next step of the content animations
-    def next(self, fftinfo, this_step):
+    def next(self, fftinfo: dict, this_step: int) -> None:
 
+        # Iterate through the generators
         for item in self.generators:
 
             # Get what the generator has to offer
@@ -65,14 +69,15 @@ class MMVAnimation():
             if not new_object == None:
                 self.content[new["layer"]].append(new_object)
 
-        items_to_delete = []
+        # Dictionary of layers and item indexes on that layer to delete
+        items_to_delete = {}
 
-        for layer in sorted(list(self.content.keys())):
-            for position, item in enumerate(self.content[layer]):
+        for layer_index in sorted(list(self.content.keys())):
+            for position, item in enumerate(self.content[layer_index]):
 
                 # We can delete the item as it has decided life wasn't worth anymore
                 if item.is_deletable:
-                    items_to_delete.append([layer, position])
+                    items_to_delete[layer_index] = position
                     continue
 
                 # Generate next step of animation
@@ -82,8 +87,12 @@ class MMVAnimation():
                 if not self.context.multiprocessed:
                     item.blit(self.canvas)
 
-        for items in sorted(items_to_delete, reverse=True):
-            del self.content[ items[0] ][ items[1] ]
+        # For each layer index we have items to delete
+        for layer_index in items_to_delete.keys():
+            # For each item in the REVERSED list of items indexes to delete,
+            # otherwise we break out iteration and index linking
+            for items in sorted(items_to_delete[layer_index], reverse=True):
+                del self.content[ items[0] ][ items[1] ]
 
         # Post process this final frame as we added all the items
         self.canvas.next(fftinfo, this_step)

@@ -103,8 +103,14 @@ class mmv:
     
     # Add a given object to MMVAnimation content on a given layer
     def add(self, item, layer: int=0) -> None:
+
+        # Make layers until this given layer if they don't exist
+        self.main.core.mmvanimation.mklayers_until(layer)
+
+        # Check the type and add accordingly
         if self.utils.is_matching_type([item], [MMVImage]):
             self.main.core.mmvanimation.content[layer].append(item)
+            
         if self.utils.is_matching_type([item], [MMVGenerator]):
             self.main.core.mmvanimation.generators.append(item)
 
