@@ -1,9 +1,7 @@
-import sys
-sys.path.append("..")
-
 from mmv.common.cmn_linearalgebra import LinearAlgebra, LAPoint
 from mmv.pygradienter.pyg_node import LAPointNode
 import random
+import uuid
 import os
 
 
@@ -22,6 +20,8 @@ class PyGradienterProfileSimpleSmooth():
         print("Starting PyGradienterProfileSimpleSmooth with name [%s]" % self.name)
 
     def generate_nodes(self):
+
+        random.seed(uuid.uuid4())
 
         close = 0.9
 

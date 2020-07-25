@@ -4,6 +4,7 @@ sys.path.append("..")
 from mmv.common.cmn_linearalgebra import LinearAlgebra, LAPoint
 from mmv.pygradienter.pyg_node import LAPointNode
 import random
+import uuid
 import os
 
 
@@ -11,11 +12,11 @@ description = "Simple and clean gradients"
 
 
 class PyGradienterProfileSimple():
-    def __init__(self, config):
+    def __init__(self, width, height):
         self.config = config
 
-        self.width = self.config["width"]
-        self.height = self.config["height"]
+        self.width = width
+        self.height = height
 
         self.la = LinearAlgebra()
         self.id = 0
@@ -25,6 +26,8 @@ class PyGradienterProfileSimple():
 
     def generate_nodes(self):
 
+        random.seed(uuid.uuid4())
+
         # Create N random nodes on the image
         for _ in range(2):
     
@@ -32,8 +35,8 @@ class PyGradienterProfileSimple():
             next_node = LAPointNode(
                 # Position
                 [
-                    random.randint(0, self.config["width"]),
-                    random.randint(0, self.config["height"]),
+                    random.randint(0, width),
+                    random.randint(0, height),
                 ],
                 [
                     # Pixel color based on the minimum and maximum pixel colors for each channel

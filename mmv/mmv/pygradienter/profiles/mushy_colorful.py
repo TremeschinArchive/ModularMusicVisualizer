@@ -1,6 +1,3 @@
-import sys
-sys.path.append("..")
-
 from mmv.common.cmn_linearalgebra import LinearAlgebra, LAPoint
 from mmv.pygradienter.pyg_node import LAPointNode
 import random
@@ -12,11 +9,11 @@ description = "A mushy colorful but a bit dark texturewith some reflections"
 
 
 class PyGradienterProfileMushyColorful():
-    def __init__(self, config):
+    def __init__(self, width, height):
         self.config = config
 
-        self.width = self.config["width"]
-        self.height = self.config["height"]
+        self.width = width
+        self.height = height
 
         self.la = LinearAlgebra()
         self.id = 0
@@ -27,9 +24,6 @@ class PyGradienterProfileMushyColorful():
         self.point_b = LAPoint([self.width + away, 0 + away]) # top right
         self.point_c = LAPoint([-away, self.height + away]) # bottom left
         self.point_d = LAPoint([self.width + away, self.height + away]) # bottom right
-
-        self.name = os.path.basename(__file__).replace(".py", "")
-        print("Starting PyGradienterProfileMushyColorful with name [%s]" % self.name)
 
     def generate_nodes(self):
 

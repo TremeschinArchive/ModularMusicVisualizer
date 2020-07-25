@@ -1,10 +1,8 @@
-import sys
-sys.path.append("..")
-
 from mmv.common.cmn_linearalgebra import LinearAlgebra
 from mmv.pygradienter.pyg_node import LAPointNode
 from mmv.common.cmn_linearalgebra import LAPoint
 import random
+import uuid
 import math
 import os
 
@@ -13,11 +11,10 @@ description = "(5/10 disturbing) Creepy shady circles"
 
 
 class PyGradienterProfileCreepyCircles():
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, width, height):
 
-        self.width = self.config["width"]
-        self.height = self.config["height"]
+        self.width = width
+        self.height = height
         self.diagonal = (self.width**2 + self.height**2)**0.5
 
         self.la = LinearAlgebra()
@@ -28,7 +25,7 @@ class PyGradienterProfileCreepyCircles():
 
     def generate_nodes(self):
 
-        random.seed(self.id)
+        random.seed(uuid.uuid4())
 
         if random.randint(1, 2) == 1:
             self.subtract_one_from_darkness_bias = True
@@ -42,8 +39,8 @@ class PyGradienterProfileCreepyCircles():
             next_node = LAPointNode(
                 # Position
                 [
-                    random.randint(0, self.config["width"]),
-                    random.randint(0, self.config["height"]),
+                    random.randint(0, self.width),
+                    random.randint(0, self.height),
                 ],
                 [
                     # Pixel color based on the minimum and maximum pixel colors for each channel

@@ -12,17 +12,14 @@ description = "White star-like particles"
 
 
 class PyGradienterProfileParticles():
-    def __init__(self, config):
+    def __init__(self, width, height):
         self.config = config
 
-        self.width = self.config["width"]
-        self.height = self.config["height"]
+        self.width = width
+        self.height = height
 
         self.la = LinearAlgebra()
         self.id = 0
-
-        self.name = os.path.basename(__file__).replace(".py", "")
-        print("Starting PyGradienterProfileParticles with name [%s]" % self.name)
 
     def generate_nodes(self):
 
@@ -34,8 +31,8 @@ class PyGradienterProfileParticles():
         next_node = LAPointNode(
             # Position
             [
-                self.config["width"] // 2,
-                self.config["height"] // 2,
+                width // 2,
+                height // 2,
             ],
             [
                 # Pixel color based on the minimum and maximum pixel colors for each channel
