@@ -24,11 +24,11 @@ from scipy.fftpack import fft
 import numpy as np
 
 
-class Fourier():
+class Fourier:
 
     # Calculate an Fast Fourier Transform, doesn't return DC bias (first bin)
     # and cuts up to the middle where the useful info ends
-    def fft(self, data):
+    def fft(self, data: np.ndarray) -> np.ndarray:
 
         debug_prefix = "[Fourier.fft]"
 
@@ -41,7 +41,7 @@ class Fourier():
         return transform[cut[0]:cut[1]]
 
     # For more information, https://stackoverflow.com/questions/4364823
-    def binned_fft(self, data, sample_rate):
+    def binned_fft(self, data: np.ndarray, sample_rate: int) -> dict:
 
         # The FFT length
         N = data.shape[0]
