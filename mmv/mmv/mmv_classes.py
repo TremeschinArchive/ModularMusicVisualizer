@@ -27,3 +27,15 @@ class Audio:
     pass
 class Canvas:
     pass
+class Fourier:
+    pass
+class FFmpegWrapper:
+    pass
+class AudioFile:
+    pass
+class MMVImage:
+    pass
+class MMVAnimation:
+    pass
+class AudioProcessing:
+    pass

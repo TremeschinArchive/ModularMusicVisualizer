@@ -21,6 +21,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from mmv.mmv_worker import get_canvas_multiprocess_return
 from mmv.common.utils import Utils
+from mmv.mmv_classes import *
 import multiprocessing
 import setproctitle
 import numpy as np
@@ -32,8 +33,19 @@ import os
 import gc
 
 
-class Core():
-    def __init__(self, context, controller, canvas, fourier, ffmpeg, audio, mmvanimation, audio_processing):
+class Core:
+
+    def __init__(self, 
+            context: Context,
+            controller: Controller,
+            canvas: MMVImage,
+            fourier: Fourier,
+            ffmpeg: FFmpegWrapper,
+            audio: AudioFile,
+            mmvanimation: MMVAnimation,
+            audio_processing: AudioProcessing
+        ) -> None:
+
         # Get every class
         self.context = context
         self.controller = controller
@@ -48,15 +60,18 @@ class Core():
         self.ROOT = self.context.ROOT
         self.ffmpeg.count = 0
 
-    def setup_multiprocessing(self):
+    # Create MMV Workers with Queues from here
+    def setup_multiprocessing(self) -> None:
+
         debug_prefix = "[Core.setup_multiprocessing]"
 
+        # The worker objects
         self.workers = []
 
         # Create many workers
         for worker_id in range(self.context.multiprocessing_workers):
             
-            print("Create worker with id [%s]" % worker_id)
+            print(debug_prefix, "Creating worker with id [%s]" % worker_id)
             
             # Create Process with inverted queues as there we..
             # "put what we get here and get what we put after"
@@ -70,18 +85,19 @@ class Core():
                 # When main Python process finishes, terminate all workers
                 daemon=True
             )
-            worker.name = f"MMV Worker {worker_id+1}"
+            worker.name = f"MMV Worker {worker_id + 1}"
 
             # Add the worker to the list
             self.workers.append(worker)
-            print("Created new worker")
+
+            print(debug_prefix, "Created new worker")
 
         # Wake up every worker
         for worker in self.workers:
             worker.start()
 
     # Keep getting items from the queue
-    def core_get_queue_loop(self):
+    def core_get_queue_loop(self) -> None:
         while True:
             # Get queue returns [index, image]
             get = self.core_get_queue.get()
@@ -89,33 +105,24 @@ class Core():
             image = get[1]
             self.ffmpeg.write_to_pipe(index, image)
 
-    def put_on_core_queue(self, update_dict):
-        self.core_put_queue.put(update_dict)
+    # Function for using threading to put dictionaries on the Queue
+    def put_on_core_queue(self, update: dict) -> None:
+        self.core_put_queue.put(update)
         
-    def run(self):
+    def run(self) -> None:
         
         debug_prefix = "[Core.run]"
 
         # Create the pipe write thread
-        self.controller.threads["pipe_writer_loop"] = threading.Thread(target=self.ffmpeg.pipe_writer_loop)
-        print(debug_prefix, "Created thread video.ffmpeg.pipe_writer_loop")
+        self.pipe_writer_loop_thread = threading.Thread(target=self.ffmpeg.pipe_writer_loop).start()
         
-        # Start the threads, warn the user that the output is no more linear
-        print(debug_prefix, "[WARNING] FROM NOW ON NO OUTPUT IS LINEAR AS THREADING STARTS")
-
-        # For each thread, start them
-        for thread in self.controller.threads:
-            print(debug_prefix, "Starting thread: [\"%s\"]" % thread)
-            self.controller.threads[thread].start()
-        
-        print(debug_prefix, "Started!!")
-
         # How many steps is the audio duration times the frames per second
         self.total_steps = int(self.context.duration * self.context.fps)
         self.controller.total_steps = self.total_steps
 
         print(debug_prefix, "Total steps:", self.total_steps)
 
+        # Setup multiprocessing queues
         if self.context.multiprocessed:
             self.returned_images = {}
             queuesize = self.context.multiprocessing_workers*2
@@ -129,6 +136,8 @@ class Core():
 
             global_frame_index = this_step
             
+            # # # [ Slice the audio ] # # #
+
             # Add the offset audio step (because interpolation isn't instant for smoothness)
             this_step += self.context.offset_audio_before_in_many_steps
 
@@ -155,15 +164,17 @@ class Core():
                 batch_size = self.context.batch_size
             )
 
-            # average_value = sum([abs(x)/(2**self.audio.info["bit_depth"]) for x in mean_audio_slice]) / len(mean_audio_slice)
+            # # # [ Calculate the FFTs ] # # #
 
             ffts = []
 
-            for channel in self.audio_processing.audio_slice:
+            # For each sliced channel data we have, process that
+            for channel_data in self.audio_processing.audio_slice:
                 ffts.append(
-                    self.audio_processing.process(channel, self.audio.sample_rate)
+                    self.audio_processing.process(channel_data, self.audio.sample_rate)
                 )
 
+            # The fftinfo, or call it "current time audio info", couldn't think a better var name
             fftinfo = {
                 "average_value": self.audio_processing.average_value,
                 "fft": ffts
@@ -172,14 +183,16 @@ class Core():
             # Process next animation with audio info and the step count to process on
             self.mmvanimation.next(fftinfo, this_step)
          
+            # Multiprocessing we have to send the info to the queues for the workers to get
             if self.context.multiprocessed:
 
-                while global_frame_index - self.ffmpeg.count >= self.context.multiprocessing_workers*2:
+                # Update our Core loop status, are we "awaiting" for the workers to send more images?
+                while global_frame_index - self.ffmpeg.count >= self.context.multiprocessing_workers * 2:
                     self.controller.core_waiting = True
                     time.sleep(0.05)
-                
                 self.controller.core_waiting = False
 
+                # The update dictionary
                 update_dict = {
                     "content": self.mmvanimation.content,
                     "canvas": self.canvas,
@@ -188,10 +201,13 @@ class Core():
                     "index": global_frame_index
                 }
 
-                threading.Thread(
-                    target=self.put_on_core_queue,
-                    args=( pickle.dumps(update_dict, protocol=pickle.HIGHEST_PROTOCOL), )
-                ).start()
+                # Yes threading is expensive, might leave this code here to test in the future 
+                # threading.Thread(
+                #     target=self.put_on_core_queue,
+                #     args=( pickle.dumps(update_dict, protocol=pickle.HIGHEST_PROTOCOL), )
+                # ).start()
+
+                self.core_put_queue.put(pickle.dumps(update_dict, protocol=pickle.HIGHEST_PROTOCOL))
 
                 del update_dict
                 
