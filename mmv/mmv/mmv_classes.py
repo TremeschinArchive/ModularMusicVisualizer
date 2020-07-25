@@ -39,3 +39,5 @@ class MMVAnimation:
     pass
 class AudioProcessing:
     pass
+class Queue:
+    pass

@@ -20,12 +20,13 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from multiprocessing import Queue
 import setproctitle
 import pickle
 import gc
 
 
-def get_canvas_multiprocess_return(get_queue, put_queue, worker_id):
+def get_canvas_multiprocess_return(get_queue: Queue, put_queue: Queue, worker_id: int):
     
     # Set process name so we know who's what on a task manager
     setproctitle.setproctitle(f"MMV Worker {worker_id+1}")

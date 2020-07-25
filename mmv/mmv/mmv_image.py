@@ -25,29 +25,75 @@ from mmv.common.functions import Functions
 from mmv.common.frame import Frame
 from mmv.common.utils import Utils
 from mmv.mmv_modifiers import *
+from mmv.mmv_classes import *
+from typing import Union
 import copy
 import cv2
 import os
 
 
-class Configure():
-    def __init__(self, mmvimage_object):
+"""
+NOTE: The activation functions where a str is expected, it just evaluates
+that expression and replaces "X" (capital letter x) with the average autio
+amplitude at that point.
+
+This will be documented properly in the future (I hope so)
+"""
+
+# Configure our main MMVImage, wrapper around animations
+class Configure:
+
+    # Get MMVImage object and set image index to zero
+    def __init__(self, mmvimage_object: MMVImage) -> None:
         self.object = mmvimage_object
         self.animation_index = 0
     
-    def init_animation_layer(self):
+    # Macros for initialializing this animation layer
+    def init_animation_layer(self) -> None:
         self.set_animation_empty_dictionary()
         self.set_this_animation_steps()
         self.set_animation_position_interpolation(axis="both")
+    
+    # # # [ Load Methods ] # # #
+
+    def load_image(self, path: str) -> None:
+        self.object.image.load_from_path(path, convert_to_png=True)
+
+    def load_video(self, path: str) -> None:
+        self.add_module_video(path)
+
+    # # # [ Resize Methods ] # # #
+
+    def resize_to_resolution(self,
+            width: Union[int, float],
+            height: Union[int, float],
+            override: bool=False
+        ) -> None:
+
+        self.object.image.resize_to_resolution(int(width), int(height), override=override)
+    
+    def resize_to_video_resolution(self, over_resize_x: int=0, over_resize_y: int=0) -> None:
+        self.resize_to_resolution(
+            width=self.object.context.width + over_resize_x,
+            height=self.object.context.height + over_resize_y,
+            override=True
+        )
 
     # # # [ Set Methods ] # # #
 
-    def set_animation_empty_dictionary(self):
+    # Make an empty animation layer according to this animation index, dicitonaries
+    def set_animation_empty_dictionary(self) -> None:
         self.object.path[self.animation_index] = {}
         self.object.path[self.animation_index]["position"] = []
         self.object.path[self.animation_index]["modules"] = {}
     
-    def set_animation_position_interpolation(self, axis="both", method=None, arg_a=None):
+    # X and Y needs interpolation
+    def set_animation_position_interpolation(self,
+            axis: str="both",
+            method=None,
+            arg_a=None
+        ) -> None:
+
         if axis == "both":
             for ax in ["x", "y"]:
                 self.set_animation_position_interpolation(axis=ax)
@@ -58,51 +104,49 @@ class Configure():
         self.object.path[self.animation_index]["interpolation_%s" % axis] = method
         self.object.path[self.animation_index]["interpolation_%s_arg_a" % axis] = arg_a
 
-    def set_animation_index(self, n):
+    # Override current animation index we're working on into new index
+    def set_animation_index(self, n: int) -> None:
         self.animation_index = n
 
-    def set_this_animation_steps(self, steps=math.inf):
+    # How much steps in this animation
+    def set_this_animation_steps(self, steps: float=math.inf) -> None:
         self.object.path[self.animation_index]["steps"] = steps
 
     # # # [ Next Methods ] # # #
 
-    def next_animation_index(self):
+    # Next animation index from the current one
+    def next_animation_index(self) -> None:
         self.animation_index += 1
     
     # # # [ Add Methods ] # # #
 
-    def add_path_point(self, x, y):
-        self.object.path[self.animation_index]["position"].append(Point(x, y))
-
-    def load_image(self, path):
-        self.object.image.load_from_path(path, convert_to_png=True)
-
-    def load_video(self, path):
-        self.add_module_video(path)
-    
-    def resize_to_resolution(self, width, height, override=False):
-        self.object.image.resize_to_resolution(int(width), int(height), override=override)
-    
-    def resize_to_video_resolution(self, over_resize_x=0, over_resize_y=0):
-        self.resize_to_resolution(
-            width=self.object.context.width + over_resize_x,
-            height=self.object.context.height + over_resize_y,
-            override=True
-        )
-
-    # # Generic add module
-
-    def add_module(self, module):
+    ## Generic add module ##
+    def add_module(self, module: dict) -> None:
         module_name = list(module.keys())[0]
         print("Adding module", module, module_name)
         self.object.path[self.animation_index]["modules"][module_name] = module[module_name]
+    ## Generic add module ##
 
-    def add_module_blur(self, activation):
+    # Add a Point modifier in the path
+    def add_path_point(self, x: Union[int, float], y: Union[int, float]) -> None:
+        self.object.path[self.animation_index]["position"].append(Point(x, y))
+
+    # TODO: Add path Line
+
+    # Add a Gaussian Blur module, only need activation
+    # Read comment at the beginning of this class
+    def add_module_blur(self, activation: str) -> None:
         self.add_module({
             "blur": { "activation": activation }
         })
     
-    def add_module_glitch(self, activation, color_offset=False, scan_lines=False):
+    # Add a glitch module
+    def add_module_glitch(self,
+            activation: str,
+            color_offset: bool=False,
+            scan_lines: bool=False
+        ) -> None:
+
         self.add_module({
             "glitch": {
                 "activation": activation,
@@ -111,14 +155,16 @@ class Configure():
             }
         })
     
-    def add_module_video(self, path):
+    # Add a video module, be sure to match the FPS of both the outpu
+    def add_module_video(self, path: str) -> None:
         self.add_module({
             "video": {
                 "path": path
             }
         })
     
-    def add_module_rotate(self, modifier):
+    # Add a rotate module with an modifier object with next function
+    def add_module_rotate(self, modifier: Union[SineSwing, LinearSwing]) -> None:
         self.add_module({
             "rotate": {
                 "object": modifier
@@ -127,18 +173,21 @@ class Configure():
     
     # Is this even python?
     def add_module_visualizer(self, 
-                              vis_type,
-                              vis_mode,
-                              width, height,
-                              minimum_bar_size,
-                              activation_function,
-                              activation_function_arg_a,
-                              fourier_interpolation_function,
-                              fourier_interpolation_activation,
-                              fourier_interpolation_arg_a,
-                              fourier_interpolation_steps,
-                              pre_fft_smoothing, pos_fft_smoothing,
-                              subdivide ):
+            vis_type: str,
+            vis_mode: str,
+            width: int, height: int,
+            minimum_bar_size: Union[float, int],
+            activation_function,
+            activation_function_arg_a: Union[float, int],
+            fourier_interpolation_function,
+            fourier_interpolation_activation: str,
+            fourier_interpolation_arg_a: Union[float, int],
+            fourier_interpolation_steps: int,
+            pre_fft_smoothing: int,
+            pos_fft_smoothing: int,
+            subdivide: int
+        ) -> None:
+
         self.add_module({
             "visualizer": {
                 "object": MMVVisualizer(
@@ -171,7 +220,14 @@ class Configure():
             }
         })
     
-    def add_module_resize(self, keep_center, interpolation, activation, smooth):
+    # Add resize by ratio module
+    def add_module_resize(self,
+            keep_center: bool,
+            interpolation,
+            activation: str,
+            smooth: Union[float, int]
+        ) -> None:
+
         self.add_module({
             "resize": {
                 "keep_center": True,
@@ -181,7 +237,15 @@ class Configure():
             }
         })
     
-    def add_module_vignetting(self, minimum, activation, center_function_x, center_function_y, start_value=0):
+    # Add vignetting module with minimum values
+    def add_module_vignetting(self,
+            minimum: Union[float, int],
+            activation: str,
+            center_function_x,
+            center_function_y,
+            start_value=0
+        ) -> None:
+
         self.add_module({
             "vignetting": {
                 "object": Vignetting(
@@ -199,8 +263,16 @@ class Configure():
 
     # # # # [ Pre defined simple modules ] # # # #
 
+    # Just add a vignetting module without much trouble with an intensity
+    def simple_add_vignetting(self,
+            intensity: str="medium",
+            center: str="centered",
+            activation: bool=None,
+            center_function_x=None,
+            center_function_y=None,
+            start_value: Union[float, int]=900
+        ) -> None:
 
-    def simple_add_vignetting(self, intensity="medium", center="centered", activation=None, center_function_x=None, center_function_y=None, start_value=900):
         intensities = {
             "low": "0",
             "medium": "%s - 4000*X" % start_value,
@@ -223,7 +295,18 @@ class Configure():
             start_value=start_value,
         )
 
-    def simple_add_visualizer_circle(self, minimum_bar_size, width, height, mode="symetric", responsiveness=0.25, pre_fft_smoothing=2, pos_fft_smoothing=0, subdivide=2):
+    # Add a visualizer module
+    def simple_add_visualizer_circle(self,
+            minimum_bar_size: Union[float, int],
+            width: Union[float, int],
+            height: Union[float, int],
+            mode: str="symetric",
+            responsiveness: Union[float, int]=0.25,
+            pre_fft_smoothing: int=2,
+            pos_fft_smoothing: int=0,
+            subdivide:int=2
+        ) -> None:
+
         self.add_module_visualizer(
             vis_type="circle", vis_mode=mode,
             width=width, height=height,
@@ -239,7 +322,13 @@ class Configure():
             subdivide=subdivide
         )
     
-    def simple_add_path_modifier_shake(self, shake_max_distance, x_smoothness=0.01, y_smoothness=0.02):
+    # Add a shake modifier on the pathing
+    def simple_add_path_modifier_shake(self,
+            shake_max_distance: Union[float, int],
+            x_smoothness: Union[float, int]=0.01,
+            y_smoothness: Union[float, int]=0.02
+        ) -> None:
+
         self.object.path[self.animation_index]["position"].append(
             Shake({
                 "interpolation_x": copy.deepcopy(self.object.interpolation.remaining_approach),
@@ -251,11 +340,17 @@ class Configure():
             })
         )
     
-    def simple_add_linear_blur(self, intensity="medium"):
+    # Blur the object based on an activation function
+    def simple_add_linear_blur(self,
+            intensity: str="medium",
+            custom: str=""
+        ) -> None:
+
         intensities = {
             "low": "10*X",
             "medium": "15*X",
             "high": "20*X",
+            "custom": custom
         }
         if not intensity in list(intensities.keys()):
             print("Unhandled blur intensity [%s]" % intensity)
@@ -263,7 +358,13 @@ class Configure():
             
         self.add_module_blur(intensities[intensity])
     
-    def simple_add_glitch(self, intensity="medium", color_offset=False, scan_lines=False):
+    # Add simple glitch effect based on an activation function
+    def simple_add_glitch(self,
+            intensity: str="medium",
+            color_offset: bool=False,
+            scan_lines: bool=False
+        ) -> None:
+
         intensities = {
             "low": "10*X",
             "medium": "15*X",
@@ -279,7 +380,13 @@ class Configure():
             scan_lines = scan_lines
         )
     
-    def simple_add_linear_resize(self, intensity="medium", smooth=0.08, activation=None):
+    # Add simple linear resize based on an activation function
+    def simple_add_linear_resize(self,
+            intensity: str="medium",
+            smooth: Union[float, int]=0.08,
+            activation: bool=None
+        ) -> None:
+
         intensities = {
             "low": "1 + 0.5*X",
             "medium": "1 + 2.5*X",
@@ -287,8 +394,7 @@ class Configure():
             "custom": activation
         }
         if not intensity in list(intensities.keys()):
-            print("Unhandled resize intensity [%s]" % intensity)
-            sys.exit(-1)
+            raise RuntimeError("Unhandled resize intensity [%s]" % intensity)
 
         self.add_module_resize(
             keep_center=True,
@@ -297,22 +403,32 @@ class Configure():
             smooth=smooth
         )
     
-    def simple_add_swing_rotation(self, max_angle=6, smooth=100):
+    # Add simple swing rotation, go back and forth
+    def simple_add_swing_rotation(self,
+            max_angle: Union[float, int]=6,
+            smooth: Union[float, int]=100
+        ) -> None:
+
         self.add_module_rotate( SineSwing(max_angle, smooth) )
     
-    def simple_add_linear_rotation(self, smooth=10):
+    # Rotate to one direction continuously
+    def simple_add_linear_rotation(self, smooth: int=10) -> None:
         self.add_module_rotate( LinearSwing(smooth) )
 
 
-class MMVImage():
-    def __init__(self, context):
+# Basically everything on MMV as we have to render images
+class MMVImage:
+
+    def __init__(self, context: Context) -> None:
         
         debug_prefix = "[MMVImage.__init__]"
         
         self.context = context
 
+        # The "animation" and path this object will follow
         self.path = {}
 
+        # Create classes
         self.interpolation = Interpolation()
         self.configure = Configure(self)
         self.functions = Functions()
@@ -336,12 +452,12 @@ class MMVImage():
         self.ROUND = 3
     
     # Our Canvas is an MMVImage object
-    def create_canvas(self):
+    def create_canvas(self) -> None:
         self.configure.init_animation_layer()
         self.reset_canvas()
         self.configure.add_path_point(0, 0)
     
-    def reset_canvas(self):
+    def reset_canvas(self) -> None:
         self.image.new(self.context.width, self.context.height, transparent=True)
 
     # Don't pickle cv2 video  
@@ -352,7 +468,7 @@ class MMVImage():
         return state
     
     # Next step of animation
-    def next(self, fftinfo, this_step):
+    def next(self, fftinfo: dict, this_step: int) -> None:
 
         self.current_step += 1
 
@@ -646,7 +762,7 @@ class MMVImage():
                 self.offset[1] += position.y
 
     # Blit this item on the canvas
-    def blit(self, canvas):
+    def blit(self, canvas: MMVImage) -> None:
 
         x = int(self.x + self.offset[1])
         y = int(self.y + self.offset[0])
@@ -667,5 +783,5 @@ class MMVImage():
         #     [x + width - 1, y + height - 1]
         # )
 
-    def resolve_pending(self):
+    def resolve_pending(self) -> None:
         self.image.resolve_pending()

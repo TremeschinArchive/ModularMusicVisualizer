@@ -25,18 +25,19 @@ from mmv.mmv_visualizer import MMVVisualizer
 from mmv.common.utils import Utils
 from mmv.mmv_image import MMVImage
 from mmv.mmv_modifiers import *
+from mmv.mmv_classes import *
 import random
 import copy
 import math
 import os
 
 
-class MMVGenerator():
-    def __init__(self, context):
+class MMVGenerator:
+    def __init__(self, context: Context):
         self.context = context
         self.generator = None
 
-    def next(self, fftinfo, this_step):
+    def next(self, fftinfo: dict, this_step: int):
         return self.generator.next(fftinfo, this_step)
 
     def particle_generator(self):

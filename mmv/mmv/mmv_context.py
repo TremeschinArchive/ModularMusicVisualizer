@@ -23,8 +23,8 @@ from mmv.common.utils import Utils
 import os
 
 
-class Context():
-    def __init__(self, args):
+class Context:
+    def __init__(self, args: dict):
 
         self.args = args
 
