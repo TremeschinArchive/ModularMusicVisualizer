@@ -24,13 +24,15 @@ import os
 
 
 class Context:
-    def __init__(self, args: dict):
+    def __init__(self, args: dict) -> None:
 
         self.args = args
 
+        # Utils class and ROOT dir
         self.utils = Utils()
         self.ROOT = self.utils.ROOT
 
+        # The operating system we're workingon
         self.os = self.utils.get_os()
         
         # Directories
@@ -60,28 +62,3 @@ class Context:
 
         # User
         self.watch_processing_video_realtime = False
-
-        self.process_args()
-
-    def process_args(self):
-        
-        keys = list(self.args.keys())
-        
-        # User chose a preset
-        if not (preset := self.args["preset"] if "preset" in keys else None) == None:
-            self.preset(preset)
-
-        if not (multiprocessed := self.args["multiprocessed"] if "multiprocessed" in keys else None) == None:
-            self.multiprocessed = multiprocessed
-        
-        if not (workers := int(self.args["workers"]) if "workers" in keys else None) == None:
-            self.multiprocessing_workers = workers
-        
-        if not (input_file := self.args["input_file"] if "input_file" in keys else None) == None:
-            self.input_file = input_file
-
-    # Delete and create (reset) the runtime directories
-    def reset_directories(self):
-        for d in []:
-            self.utils.rmdir(d)
-            self.utils.mkdir_dne(d)
