@@ -20,6 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.mmv_types import *
 from glitch_this import ImageGlitcher
 from PIL import ImageFilter
 from PIL import Image
@@ -39,8 +40,9 @@ image is the current latest processed image, array is that image's raw data, bot
 linked again every time we process the image variable.
 
 """
-class Frame():
-    def __init__(self):
+class Frame:
+
+    def __init__(self) -> None:
         # Multiprocessing pending things to do, ordered
         self.pending = {}
         self.size = 1
@@ -49,30 +51,30 @@ class Frame():
     # # Internal functions
     
     # if override: self.original_image <-- self.image
-    def _override(self, override):
+    def _override(self, override: bool) -> None:
         if override:
             self.original_image = copy.deepcopy(self.image)
     
     # self.frame --> self.image
-    def _update_image_from_array(self):
+    def _update_image_from_array(self) -> None:
         self.image = Image.fromarray(self.array)
 
     # self.image --> self.array
-    def _update_array_from_image(self):
+    def _update_array_from_image(self) -> None:
         self.array = np.array(self.image)
     
     # Update resolution from the array shape
-    def _update_resolution(self):
+    def _update_resolution(self) -> None:
         self.height = self.array.shape[0]
         self.width = self.array.shape[1]
 
     # self.image = self.original_image
-    def _reset_to_original_image(self):
+    def _reset_to_original_image(self) -> None:
         if hasattr(self, 'original_image'):
             self.image = copy.deepcopy(self.original_image)
     
     # Get the image we're process the effects on
-    def _get_processing_image(self, from_current_frame=False):
+    def _get_processing_image(self, from_current_frame: bool=False) -> Image:
         if from_current_frame:
             if hasattr(self, 'image'):
                 return self.image
@@ -84,7 +86,7 @@ class Frame():
     # # User functions
 
     # Create new numpy array as a "frame", attribute width, height and resolution
-    def new(self, width, height, transparent=False):
+    def new(self, width: Number, height: Number, transparent: bool=False) -> None:
 
         # Transparent is RGBA, not transparent is RGB
         if transparent:
@@ -103,7 +105,7 @@ class Frame():
         self.height = height
 
     # Load this image by array
-    def load_from_array(self, array, convert_to_png=False):
+    def load_from_array(self, array: np.ndarray, convert_to_png: bool=False) -> None:
         # Load the array as image and set it as the frame
         self.original_image = Image.fromarray(array)
 
@@ -120,7 +122,7 @@ class Frame():
         self.width = array.shape[1]
 
     # Load image from a given path
-    def load_from_path(self, path, convert_to_png=False):
+    def load_from_path(self, path: str, convert_to_png: bool=False) -> None:
 
         debug_prefix = "[Frame.load_from_path]"
 
@@ -156,14 +158,14 @@ class Frame():
         self.width = self.image.size[1]
 
     # Get PIL image array from this object frame
-    def get_pil_image(self):
+    def get_pil_image(self) -> Image:
         return Image.fromarray(self.array.astype(np.uint8))
     
-    def get_rgb_frame_array(self):
+    def get_rgb_frame_array(self) -> np.ndarray:
         return np.array( self.get_pil_image().convert("RGB") )
 
     # Save an image with specific instructions depending on it's extension type.
-    def save(self, directory):
+    def save(self, directory: str) -> None:
 
         debug_prefix = "[Frame.save]"
 
@@ -183,7 +185,12 @@ class Frame():
     # @from_current_frame: resize not the original image but the current self.array, overrided by override
     #
     # Returns: offset array because of the resized new width and height according to the top left corner
-    def resize_by_ratio(self, ratio, get_only_offset=False, override=False, from_current_frame=False):
+    def resize_by_ratio(self,
+            ratio: Number,
+            get_only_offset: bool=False,
+            override: bool=False,
+            from_current_frame: bool=False
+        ) -> list:  # Returns the offset because the resize
 
         debug_prefix = "[Frame.resize_by_ratio]"
 
@@ -214,7 +221,12 @@ class Frame():
 
     # Resize this frame to a fixed resolution
     # @override: set the original image to the new resized one
-    def resize_to_resolution(self, width, height, override=False, from_current_frame=False):
+    def resize_to_resolution(self,
+            width: Number,
+            height: Number,
+            override: bool=False,
+            from_current_frame: bool=False
+        ) -> None:
 
         processing = self._get_processing_image(from_current_frame)
         processing = processing.resize((width, height), Image.BICUBIC)
@@ -228,7 +240,11 @@ class Frame():
     # Rotate this frame by a certain angle
     # [ WARNING ] Better only to rotate square images
     # @override: set the original image to the new rotated
-    def rotate(self, angle, override=False, from_current_frame=False):
+    def rotate(self,
+            angle: Number,
+            override: bool=False,
+            from_current_frame: bool=False
+        ) -> None:
 
         processing = self._get_processing_image(from_current_frame)
         processing = processing.rotate(angle, resample=Image.BICUBIC)
@@ -239,7 +255,11 @@ class Frame():
         self._update_array_from_image()
     
     # Apply gaussian blur to the image by a certain radius
-    def gaussian_blur(self, radius, override=False, from_current_frame=False):
+    def gaussian_blur(self,
+            radius: Number,
+            override: bool=False,
+            from_current_frame: bool=False
+        ) -> None:
         
         processing = self._get_processing_image(from_current_frame)
         processing = processing.filter(ImageFilter.GaussianBlur(radius=radius))
@@ -250,7 +270,11 @@ class Frame():
         self._update_array_from_image()
 
     # Uses glitch-this
-    def glitch(self, glitch_amount, color_offset=False, scan_lines=False):
+    def glitch(self,
+            glitch_amount: Number,
+            color_offset: bool=False,
+            scan_lines: bool=False
+        ) -> None:
 
         processing = self._get_processing_image(from_current_frame)
         
@@ -277,7 +301,11 @@ class Frame():
 
     # Multiply this image's frame alpha channel by that scalar
     # @ratio: 0 - 1 values
-    def transparency(self, ratio, override=False, from_current_frame=False):
+    def transparency(self,
+            ratio: Number,
+            override: bool=False,
+            from_current_frame: bool=False
+        ) -> None:
 
         processing = self._get_processing_image(from_current_frame)
 
@@ -297,7 +325,14 @@ class Frame():
     # @x: X coordinate center of the effect
     # @y: Y coordinate center of the effect
     # @deviation_$: sigma of the gaussian kernel
-    def vignetting(self, x, y, deviation_x, deviation_y, override=False, from_current_frame=False):
+    def vignetting(self,
+            x: Number,
+            y: Number,
+            deviation_x: Number,
+            deviation_y: Number,
+            override: bool=False,
+            from_current_frame: bool=False
+        ) -> None:
 
         processing = self._get_processing_image(from_current_frame)
         
@@ -336,7 +371,15 @@ class Frame():
     #   - On reffering, Y is first then X
     #     eg. the rectangular coordinate point (3, -4) is (4, 3) here (Y signal flipped)
     #                                                                                       ~ Have fun
-    def copy_from(self, A, B, A_start, B_start, B_end, out_of_bounds_failsafe=True):
+    def copy_from(self,
+            A: numpy.ndarray,
+            B: numpy.ndarray,
+            A_start: list,
+            B_start: list,
+            B_end: list,
+            out_of_bounds_failsafe: bool=True
+        ) -> None:
+
         """
         A_start is the index with respect to A of the upper left corner of the overlap
         B_start is the index with respect to B of the upper left corner of the overlap
@@ -431,7 +474,12 @@ class Frame():
             sys.exit(-1)
 
     # Same as .copy_from but make an alpha composite on that point
-    def overlay_transparent(self, overlay, x, y):
+    def overlay_transparent(self,
+            overlay: numpy.ndarray,
+            x: Number,
+            y: Number
+        ) -> None:
+
         """
         We crop this object's frame to the same size as the overlay then make an alpha composite
         with both as PIL only makes this function with two full Image classes, this is a huge
@@ -511,7 +559,7 @@ class Frame():
 
     
 
-    def resolve_pending(self):
+    def resolve_pending(self) -> None:
 
         keys = list(self.pending.keys())
 
