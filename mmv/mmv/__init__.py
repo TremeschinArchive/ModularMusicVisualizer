@@ -26,6 +26,7 @@ from mmv.pygradienter import pygradienter
 from mmv.common.utils import Utils
 from mmv.mmv_image import MMVImage
 from mmv.mmv_main import MMVMain
+import uuid
 import time
 import sys
 import os
@@ -34,7 +35,9 @@ import os
 # Main wrapper class for the end user, facilitates MMV in a whole
 class mmv:
 
-    def __init__(self, watch_processing_video_realtime=False):
+    # Start default configs, creates wrapper classes
+    def __init__(self, watch_processing_video_realtime: bool=False) -> None:
+
         # Main class of MMV
         self.main = MMVMain()
 
@@ -50,16 +53,23 @@ class mmv:
 
         # Configuring options
         self.quality_preset = QualityPreset(self)
-        self.audio_processing = AudioProcessing(self)
+        self.audio_processing = AudioProcessingPresets(self)
         self.post_processing = self.main.canvas.configure
 
+        # Has the user chosen to watch the processing video realtime?
         self.main.context.watch_processing_video_realtime = watch_processing_video_realtime
 
-    def performance(self, multiprocessed=False, workers=4):
+    # Execute MMV with the configurations we've done
+    def run(self) -> None:
+        self.main.run()
+
+    # Performance settings, if we'll be running linearly or with N MMV Workers
+    def performance(self, multiprocessed: bool=False, workers: int=4) -> None:
         self.main.context.multiprocessed = multiprocessed
         self.main.context.multiprocessing_workers = workers
     
-    def quality(self, width=1280, height=720, fps=60):
+    # Define output video width, height and frames per second
+    def quality(self, width: int=1280, height: int=720, fps: int=60) -> None:
         self.main.context.width = width
         self.main.context.height = height
         self.main.context.fps = fps
@@ -67,88 +77,104 @@ class mmv:
         self.height = height
         self.resolution = [width, height]
     
-    def input_audio(self, path):
+    # Set the input audio file, raise exception if it does not exist
+    def input_audio(self, path: str) -> None:
         path = self.utils.get_abspath(path)
         if not os.path.exists(path):
-            print("Input audio path does not exist [%s]" % path)
-            sys.exit(-1)
+            raise FileNotFoundError("Input audio path does not exist [%s]" % path)
         self.main.context.input_file = path
     
-    def assets_dir(self, path):
+    # Output path where we'll be saving the final video
+    def output_video(self, path: str) -> None:
+        path = self.utils.get_abspath(path)
+        self.main.context.output_video = path
+
+    # Set the assets dir
+    def assets_dir(self, path: str) -> None:
+        # Remove the last "/"", pathing intuition under MMV scripts gets easier
+        if path.endswith("/"):
+            path = path[:-1]
         path = self.utils.get_abspath(path)
         self.utils.mkdir_dne(path)
         self.assets_dir = path
         self.main.context.assets = path
     
-    def create_pygradienter_asset(self, profile, width, height, n=1, delete_existing_files=False):
-        if self.main.context.os == "windows":
-            print("PyGradienter only works under Linux for now :(")
-            input("Press enter to continue")
-        else:
-            self.main.assets.pygradienter(profile, width, height, n, delete_existing_files=delete_existing_files)
+    # # [ MMV Objects ] # #
     
-    def output_video(self, path):
-        path = self.utils.get_abspath(path)
-        self.main.context.output_video = path
-    
-    def run(self):
-        self.main.run()
-    
-    def image_object(self):
-        return MMVImage(self.main.context)
-    
-    def pygradienter(self, workers=4):
-        return pygradienter(workers=workers)
-    
-    def generator_object(self):
-        return MMVGenerator(self.main.context)
-
-    def random_file_from_dir(self, path):
-        return self.utils.random_file_from_dir(path)
-    
-    def add(self, item, layer=0):
+    # Add a given object to MMVAnimation content on a given layer
+    def add(self, item, layer: int=0) -> None:
         if self.utils.is_matching_type([item], [MMVImage]):
             self.main.core.mmvanimation.content[layer].append(item)
         if self.utils.is_matching_type([item], [MMVGenerator]):
             self.main.core.mmvanimation.generators.append(item)
+
+    # Get a blank MMVImage object
+    def image_object(self) -> None:
+        return MMVImage(self.main.context)
+    
+    # Get a pygradienter object with many workers for rendering
+    def pygradienter(self, workers=4):
+        return pygradienter(workers=workers)
+    
+    # Get a blank MMVGenerator object
+    def generator_object(self):
+        return MMVGenerator(self.main.context)
+
+    # # [ Utilities ] # #
+
+    def random_file_from_dir(self, path):
+        return self.utils.random_file_from_dir(path)
         
     def get_unique_id(self):
-        return self.utils.get_hash(str(time.time()))
+        return self.utils.get_hash(str(uuid.uuid4()))
 
 
+# Presets on width and height
 class QualityPreset:
-    def __init__(self, mmv):
+
+    # Get this file main mmv class
+    def __init__(self, mmv) -> None:
         self.mmv = mmv
     
-    def sd24(self):
+    # Standard definition, 480p @ 24 fps
+    def sd24(self) -> None:
         self.mmv.main.context.width = 854 
         self.mmv.main.context.height = 480
         self.mmv.main.context.fps = 24
     
-    def hd30(self):
+    # (old) HD definition, 720p @ 30 fps
+    def hd30(self) -> None:
         self.mmv.main.context.width = 1280 
         self.mmv.main.context.height = 720
         self.mmv.main.context.fps = 30
     
-    def fullhd60(self):
+    # Full HD definition, 1080p @ 60 fps
+    def fullhd60(self) -> None:
         self.mmv.main.context.width = 1920 
         self.mmv.main.context.height = 1080
         self.mmv.main.context.fps = 60
 
-    def quadhd60(self):
+    # Quad HD (4x720p) definition, 1440p @ 60 fps
+    def quadhd60(self) -> None:
         self.mmv.main.context.width = 2560
         self.mmv.main.context.height = 1440
         self.mmv.main.context.fps = 60
 
 
-class AudioProcessing:
-    def __init__(self, mmv):
+# Presets on the audio processing, like how and where to apply FFTs, frequencies we want
+class AudioProcessingPresets:
+
+    # Get this file main mmv class
+    def __init__(self, mmv: mmv) -> None:
         self.mmv = mmv
     
-    def preset_custom(self, config):
+    # Custom preset, sends directly those dictionaries
+    def preset_custom(self, config: dict) -> None:
         self.mmv.main.audio_processing.config = config
 
-    def preset_balanced(self):
+    # A balanced preset between the bass, mid and high frequencies
+    # Good for general type of music
+    def preset_balanced(self) -> None:
         self.mmv.main.audio_processing.config = {
             0: {
                 "sample_rate": 440,
@@ -175,7 +201,9 @@ class AudioProcessing:
             },
         }
     
-    def preset_bass_mid(self):
+    # Get some bazz, som' mid freq
+    # Good for heavy low frequencies music
+    def preset_bass_mid(self) -> None:
         self.mmv.main.audio_processing.config = {
             0: {
                 "sample_rate": 4000,
@@ -185,5 +213,4 @@ class AudioProcessing:
                 "nbars": "original",
             },
         }
-    
     
