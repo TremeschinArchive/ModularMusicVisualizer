@@ -92,7 +92,7 @@ class MMVAnimation:
             # For each item in the REVERSED list of items indexes to delete,
             # otherwise we break out iteration and index linking
             for items in sorted(items_to_delete[layer_index], reverse=True):
-                del self.content[ items[0] ][ items[1] ]
+                del self.content[ layer_index ][ items ]
 
         # Post process this final frame as we added all the items
         self.canvas.next(fftinfo, this_step)
