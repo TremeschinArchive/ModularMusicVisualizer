@@ -55,10 +55,10 @@ class Core:
         self.audio = audio
         self.mmvanimation = mmvanimation
         self.audio_processing = audio_processing
-        self.utils = Utils()
 
+        # Utils and ROOT dir
+        self.utils = Utils()
         self.ROOT = self.context.ROOT
-        self.ffmpeg.count = 0
 
     # Create MMV Workers with Queues from here
     def setup_multiprocessing(self) -> None:
@@ -108,7 +108,8 @@ class Core:
     # Function for using threading to put dictionaries on the Queue
     def put_on_core_queue(self, update: dict) -> None:
         self.core_put_queue.put(update)
-        
+    
+    # Execute MMV, core loop
     def run(self) -> None:
         
         debug_prefix = "[Core.run]"
@@ -134,6 +135,7 @@ class Core:
         # Next animation
         for this_step in range(0, self.total_steps):
 
+            # The "raw" frame index we're at
             global_frame_index = this_step
             
             # # # [ Slice the audio ] # # #
@@ -155,6 +157,7 @@ class Core:
             # The slice starts at the this_time_in_samples and end the cut here
             until = int(this_time_in_samples + self.context.batch_size)
 
+            # Slice the audio
             self.audio_processing.slice_audio(
                 stereo_data = self.audio.stereo_data,
                 mono_data = self.audio.mono_data,
@@ -166,19 +169,17 @@ class Core:
 
             # # # [ Calculate the FFTs ] # # #
 
-            ffts = []
-
-            # For each sliced channel data we have, process that
-            for channel_data in self.audio_processing.audio_slice:
-                ffts.append(
-                    self.audio_processing.process(channel_data, self.audio.sample_rate)
-                )
-
             # The fftinfo, or call it "current time audio info", couldn't think a better var name
             fftinfo = {
                 "average_value": self.audio_processing.average_value,
-                "fft": ffts
+                "fft": [
+                    # For each sliced channel data we have, process that into the FFTs list
+                    self.audio_processing.process(channel_data, self.audio.sample_rate)
+                    for channel_data in self.audio_processing.audio_slice
+                ]
             }
+
+            # # # [ Next steps ] # # #
 
             # Process next animation with audio info and the step count to process on
             self.mmvanimation.next(fftinfo, this_step)
@@ -201,7 +202,7 @@ class Core:
                     "index": global_frame_index
                 }
 
-                # Yes threading is expensive, might leave this code here to test in the future 
+                # # Yes threading is expensive, might leave this code here to test in the future 
                 # threading.Thread(
                 #     target=self.put_on_core_queue,
                 #     args=( pickle.dumps(update_dict, protocol=pickle.HIGHEST_PROTOCOL), )
