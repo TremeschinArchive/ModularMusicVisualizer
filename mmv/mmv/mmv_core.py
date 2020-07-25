@@ -116,8 +116,6 @@ class Core():
 
         print(debug_prefix, "Total steps:", self.total_steps)
 
-        self.mmvanimation.generate()
-
         if self.context.multiprocessed:
             self.returned_images = {}
             queuesize = self.context.multiprocessing_workers*2
