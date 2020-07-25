@@ -30,12 +30,10 @@ import librosa
 import os
 
 
-class AudioFile():
-    def __init__(self, context):
-        self.context = context
+class AudioFile:
 
     # Read a .wav file from disk and gets the values on a list
-    def read(self, path):
+    def read(self, path: str) -> None:
 
         debug_prefix = "[Audio.read]"
 
@@ -46,20 +44,26 @@ class AudioFile():
         self.mono_data = (self.stereo_data[0] + self.stereo_data[1]) / 2
 
         self.duration = self.stereo_data.shape[1] / self.sample_rate
-        self.context.duration = self.duration
         self.channels = self.stereo_data.shape[1]
         
         print(debug_prefix, "Duration = %ss" % self.duration)
 
-class AudioProcessing():
-    def __init__(self, context):
-        self.context = context
+
+class AudioProcessing:
+    def __init__(self) -> None:
         self.fourier = Fourier()
         self.datautils = DataUtils()
         self.config = None
 
     # Slice a mono and stereo audio data
-    def slice_audio(self, stereo_data, mono_data, sample_rate, start_cut, end_cut, batch_size=None):
+    def slice_audio(self,
+            stereo_data: np.ndarray,
+            mono_data: np.ndarray,
+            sample_rate: int,
+            start_cut: int,
+            end_cut: int,
+            batch_size: int=None
+        ) -> None:
         
         # Cut the left and right points range
         left_slice = stereo_data[0][start_cut:end_cut]
@@ -70,7 +74,7 @@ class AudioProcessing():
 
         if not batch_size == None:
             # Empty audio slice array if we're at the end of the audio
-            self.audio_slice = np.zeros([3, self.context.batch_size])
+            self.audio_slice = np.zeros([3, batch_size])
 
             # Get the audio slices of the left and right channel
             self.audio_slice[0][ 0:left_slice.shape[0] ] = left_slice
@@ -83,14 +87,22 @@ class AudioProcessing():
         # Calculate average amplitude
         self.average_value = np.mean(np.abs(mono_slice))
 
-    def resample(self, data, original_sample_rate, new_sample_rate):
+    def resample(self,
+            data: np.ndarray,
+            original_sample_rate: int,
+            new_sample_rate: int
+        ) -> None:
+
         ratio = new_sample_rate / original_sample_rate
         if ratio == 1:
             return data
         else:
             return samplerate.resample(data, ratio, 'sinc_best')
 
-    def process(self, data, original_sample_rate):
+    def process(self,
+            data: np.ndarray,
+            original_sample_rate: int
+        ) -> None:
         
         # The returned dictionary
         processed = {}

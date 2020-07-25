@@ -93,10 +93,10 @@ class MMVMain:
         self.ffmpeg = FFmpegWrapper(self.context, self.controller)
 
         print(debug_prefix, "Creating AudioFile()")
-        self.audio = AudioFile(self.context)
+        self.audio = AudioFile()
 
         print(debug_prefix, "Creating AudioProcessing()")
-        self.audio_processing = AudioProcessing(self.context)
+        self.audio_processing = AudioProcessing()
 
         print(debug_prefix, "Creating MMVAnimation()")
         self.mmvanimation = MMVAnimation(self.context, self.controller, self.audio, self.canvas)

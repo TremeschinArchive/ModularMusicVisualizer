@@ -123,10 +123,13 @@ class Core:
         debug_prefix = "[Core.run]"
 
         # Create the pipe write thread
-        self.pipe_writer_loop_thread = threading.Thread(target=self.ffmpeg.pipe_writer_loop).start()
+        self.pipe_writer_loop_thread = threading.Thread(
+            target=self.ffmpeg.pipe_writer_loop,
+            args=(self.audio.duration,)
+        ).start()
         
         # How many steps is the audio duration times the frames per second
-        self.total_steps = int(self.context.duration * self.context.fps)
+        self.total_steps = int(self.audio.duration * self.context.fps)
         self.controller.total_steps = self.total_steps
 
         print(debug_prefix, "Total steps:", self.total_steps)

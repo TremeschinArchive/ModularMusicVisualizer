@@ -20,6 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmv.common.cmn_functions import Functions
+from mmv.common.cmn_types import *
 from PIL import Image
 import numpy as np
 import subprocess
@@ -66,7 +67,7 @@ class FFmpegWrapper():
         del image
 
     # Thread save the images to the pipe, this way processing.py can do its job while we write the images
-    def pipe_writer_loop(self):
+    def pipe_writer_loop(self, duration_seconds: Number):
 
         debug_prefix = "[FFmpegWrapper.pipe_writer_loop]"
 
@@ -103,7 +104,7 @@ class FFmpegWrapper():
 
                 # Stats
                 current_time = round((1/self.context.fps) * self.count, 2)  # Current second we're processing
-                duration = round(self.context.duration, 2)  # Total duration in seconds
+                duration = round(duration_seconds, 2)  # Total duration in seconds
                 remaining = duration - current_time  # How much seconds left to produce
                 now = time.time()
                 took = now - start  # Total time took in this runtime
