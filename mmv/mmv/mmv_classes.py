@@ -18,6 +18,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
+from typing import NewType, Union
+
+Number = Union[float, int]
 
 class Context:
     pass

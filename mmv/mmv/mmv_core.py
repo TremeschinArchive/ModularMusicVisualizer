@@ -19,9 +19,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.mmv_classes import *
 from mmv.mmv_worker import get_canvas_multiprocess_return
 from mmv.common.utils import Utils
-from mmv.mmv_classes import *
 import multiprocessing
 import setproctitle
 import numpy as np

@@ -20,6 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.mmv_classes import *
 from mmv.common.utils import Utils
 from mmv.common.frame import Frame
 import random
@@ -31,32 +32,32 @@ import os
 
 # Basic
 
-class Line():
+class Line:
     # @start, end: 2d coordinate list [0, 2]
-    def __init__(self, start, end):
+    def __init__(self, start: Number, end: Number) -> None:
         self.start = start
         self.end = end
 
-class Point():
-    def __init__(self, x, y):
+class Point:
+    def __init__(self, x: Number, y: Number) -> None:
         self.x = x
         self.y = y
 
 # Linear Algebra / "Physics" / motion?
 
-class VelocityVector():
-    def __init__(self, x, y):
+class VelocityVector:
+    def __init__(self, x: Number, y: Number) -> None:
         self.x = x
         self.y = y
 
-class Shake():
+class Shake:
     # @config: dict
     #    @"interpolation_$": Interpolation function on that $ axis
     #    @"arg_$": Interpolation argument letter $, see Interpolation class
     #    @"$_steps": How much steps to end interpolation
     #    @"distance": Max shake distance in any square direction
     #    
-    def __init__(self, config):
+    def __init__(self, config: dict) -> None:
 
         # Get config
         self.interpolation_x = config["interpolation_x"]
@@ -80,11 +81,11 @@ class Shake():
         self.current_y_step = 0
 
         # Get a next random point as we're starting on (0, 0)
-        self.next_random_point("both")
+        self.next_random_point(who="both")
     
     # Generate a next random coordinate to shake to according to the max distance
     # @who: "x", "y" or "both"
-    def next_random_point(self, who):
+    def next_random_point(self, who: str) -> None:
         if who == "x":
             self.towards_x = random.randint(-self.distance, self.distance)
         elif who == "y":
@@ -95,7 +96,7 @@ class Shake():
     
     # Next step of this X and Y towards the current random point
     # @who: "x", "y" or "both"
-    def next(self, who="both"):
+    def next(self, who: str="both") -> None:
         
         if who == "both":
             self.next("x")
@@ -168,55 +169,67 @@ class Shake():
             )
 
 # Swing back and forth in the lines of a sine wave
-class SineSwing():
+class SineSwing:
     # @max_value: Maximum amplitute of the sine wave
     # @smooth: Add this part of 1 (1/smooth) on each next step to current X
-    def __init__(self, max_value, smooth):
+    def __init__(self, max_value: Number, smooth: Number) -> None:
         self.smooth = smooth
         self.max_value = max_value
         self.x = 0
     
     # Return next value of the iteration
-    def next(self):
+    def next(self) -> Number:
         self.x += 1 / self.smooth
         return self.max_value * math.sin(self.x)
 
 
 # Swing to one direction
-class LinearSwing():
+class LinearSwing:
     # @smooth: Add this part of 1 (1/smooth) on each next step to current X
-    def __init__(self, smooth):
+    def __init__(self, smooth: Number) -> None:
         self.smooth = smooth
         self.x = 0
     
     # Return next value of the iteration
-    def next(self):
+    def next(self) -> Number:
         self.x += 1 / self.smooth
         return self.x
 
 # # Values
 
-class Constant():
-    def __init__(self, value):
+class Constant:
+    def __init__(self, value: Number) -> None:
         self.value = value
     
-    def next(self):
+    def next(self) -> Number:
         return self.value
 
 # # Effects
 
-class Fade():
+class Fade:
     # @start_percentage, end_percentage: Ranges from 0 to 1, 0 being transparent and 1 opaque
     # @finish_steps: In how many steps to finish the fade
-    def __init__(self, start_percentage, end_percentage, finish_steps):
+    def __init__(self,
+            start_percentage: Number,
+            end_percentage: Number,
+            finish_steps: Number
+        ) -> None:
+
         self.start_percentage = start_percentage
         self.end_percentage = end_percentage
         self.finish_steps = finish_steps
         self.current_step = 0
 
 
-class Vignetting():
-    def __init__(self, minimum, activation, center_function_x, center_function_y, start_value=0):
+class Vignetting:
+    def __init__(self,
+            minimum: Number,
+            activation: str,
+            center_function_x,
+            center_function_y,
+            start_value: Number=0
+        ) -> None:
+
         self.value = start_value
         self.minimum = minimum
         self.activation = activation
@@ -226,12 +239,13 @@ class Vignetting():
         self.center_x = 0
         self.center_y = 0
         
-    def calculate_towards(self, value):
+    def calculate_towards(self, value: Number) -> None:
         if value < self.minimum:
             self.towards = self.minimum
         else:
             self.towards = value
 
-    def get_center(self):
+    def get_center(self) -> None:
         self.center_x = self.center_function_x.next()
         self.center_y = self.center_function_y.next()
+    

@@ -19,11 +19,11 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.mmv_classes import *
 from mmv.mmv_visualizer import MMVVisualizer
 from mmv.mmv_image import MMVImage
 from mmv.mmv_generator import *
 from mmv.mmv_modifiers import *
-from mmv.mmv_classes import *
 import random
 import copy
 import math
