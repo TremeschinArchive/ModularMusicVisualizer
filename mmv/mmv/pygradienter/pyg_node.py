@@ -19,12 +19,12 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.linearalgebra import Point
+from mmv.common.cmn_linearalgebra import LAPoint
 
 
-# Define a PointNode object with a set color
-class PointNode():
+# Define a LAPointNode object with a set color
+class LAPointNode():
     def __init__(self, coordinates, color, intensity):
-        self.la = Point(coordinates)
+        self.la = LAPoint(coordinates)
         self.color = color
         self.intensity = intensity

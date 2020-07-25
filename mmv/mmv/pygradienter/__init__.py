@@ -21,7 +21,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from mmv.pygradienter.pyg_processing import PyGradienterProcessing
 from mmv.pygradienter.pyg_main import PyGradienterMain
-from mmv.common.utils import Utils
+from mmv.common.cmn_utils import Utils
 from multiprocessing import Pool
 import copy
 import sys

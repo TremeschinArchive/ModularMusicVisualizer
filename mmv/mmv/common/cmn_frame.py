@@ -20,7 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.mmv_types import *
+from mmv.common.cmn_types import *
 from glitch_this import ImageGlitcher
 from PIL import ImageFilter
 from PIL import Image

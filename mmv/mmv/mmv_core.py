@@ -19,9 +19,17 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.mmv_types import *
 from mmv.mmv_worker import get_canvas_multiprocess_return
-from mmv.common.utils import Utils
+from mmv.common.cmn_audio import AudioProcessing
+from mmv.common.cmn_video import FFmpegWrapper
+from mmv.common.cmn_fourier import Fourier
+from mmv.common.cmn_audio import AudioFile
+from mmv.mmv_animation import MMVAnimation
+from mmv.mmv_controller import Controller
+from mmv.common.cmn_utils import Utils
+from mmv.mmv_context import Context
+from mmv.mmv_image import MMVImage
+from mmv.common.cmn_types import *
 import multiprocessing
 import setproctitle
 import numpy as np

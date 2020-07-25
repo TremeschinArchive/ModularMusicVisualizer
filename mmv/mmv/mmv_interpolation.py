@@ -19,8 +19,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.interpolation import Interpolation
-from mmv.common.functions import Functions
+from mmv.common.cmn_interpolation import Interpolation
+from mmv.common.cmn_functions import Functions
 
 
 class MMVInterpolation():

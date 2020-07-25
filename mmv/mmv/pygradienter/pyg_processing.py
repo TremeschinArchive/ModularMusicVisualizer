@@ -19,7 +19,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.utils import Utils
+from mmv.common.cmn_utils import Utils
 from PIL import ImageFilter
 from PIL import Image
 import numpy as np

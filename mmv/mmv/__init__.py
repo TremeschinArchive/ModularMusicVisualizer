@@ -23,7 +23,7 @@ from mmv.mmv_generator import MMVParticleGenerator
 from mmv.mmv_visualizer import MMVVisualizer
 from mmv.mmv_generator import MMVGenerator
 from mmv.pygradienter import pygradienter
-from mmv.common.utils import Utils
+from mmv.common.cmn_utils import Utils
 from mmv.mmv_image import MMVImage
 from mmv.mmv_main import MMVMain
 import uuid

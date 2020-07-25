@@ -1,8 +1,8 @@
 import sys
 sys.path.append("..")
 
-from mmv.common.linearalgebra import LinearAlgebra, Point
-from mmv.pygradienter.pyg_node import PointNode
+from mmv.common.cmn_linearalgebra import LinearAlgebra, LAPoint
+from mmv.pygradienter.pyg_node import LAPointNode
 import random
 import math
 import os
@@ -31,7 +31,7 @@ class PyGradienterProfileParticles():
         self.random_exponent = random.uniform(0.2, 2.4)
         
         # White note at the center
-        next_node = PointNode(
+        next_node = LAPointNode(
             # Position
             [
                 self.config["width"] // 2,
@@ -57,7 +57,7 @@ class PyGradienterProfileParticles():
 
         #
 
-        point = Point(
+        point = LAPoint(
             [
                 x,
                 y

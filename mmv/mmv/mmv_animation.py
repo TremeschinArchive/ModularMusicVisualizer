@@ -19,9 +19,12 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.mmv_types import *
 from mmv.mmv_visualizer import MMVVisualizer
+from mmv.mmv_controller import Controller
+from mmv.common.cmn_audio import AudioFile
+from mmv.mmv_context import Context
 from mmv.mmv_image import MMVImage
+from mmv.common.cmn_types import *
 from mmv.mmv_generator import *
 from mmv.mmv_modifiers import *
 import random
@@ -34,7 +37,7 @@ import os
 class MMVAnimation:
     
     # Initialize a MMVAnimation class with required arguments
-    def __init__(self, context: Context, controller: Controller, audio: Audio, canvas: Canvas) -> None:
+    def __init__(self, context: Context, controller: Controller, audio: AudioFile, canvas: MMVImage) -> None:
         
         # Get the classes
         self.context = context

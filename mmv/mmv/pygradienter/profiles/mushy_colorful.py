@@ -1,8 +1,8 @@
 import sys
 sys.path.append("..")
 
-from mmv.common.linearalgebra import LinearAlgebra, Point
-from mmv.pygradienter.pyg_node import PointNode
+from mmv.common.cmn_linearalgebra import LinearAlgebra, LAPoint
+from mmv.pygradienter.pyg_node import LAPointNode
 import random
 import math
 import os
@@ -23,10 +23,10 @@ class PyGradienterProfileMushyColorful():
 
         away = 100
 
-        self.point_a = Point([-away, -away]) # top left
-        self.point_b = Point([self.width + away, 0 + away]) # top right
-        self.point_c = Point([-away, self.height + away]) # bottom left
-        self.point_d = Point([self.width + away, self.height + away]) # bottom right
+        self.point_a = LAPoint([-away, -away]) # top left
+        self.point_b = LAPoint([self.width + away, 0 + away]) # top right
+        self.point_c = LAPoint([-away, self.height + away]) # bottom left
+        self.point_d = LAPoint([self.width + away, self.height + away]) # bottom right
 
         self.name = os.path.basename(__file__).replace(".py", "")
         print("Starting PyGradienterProfileMushyColorful with name [%s]" % self.name)
@@ -39,7 +39,7 @@ class PyGradienterProfileMushyColorful():
         for _ in range(2):
     
             # Create a random Node object with our input
-            next_node = PointNode(
+            next_node = LAPointNode(
                 # Position
                 [
                     random.choice(random.choice([
@@ -80,7 +80,7 @@ class PyGradienterProfileMushyColorful():
 
         #
 
-        point = Point(
+        point = LAPoint(
             [
                 x,
                 y
@@ -99,19 +99,19 @@ class PyGradienterProfileMushyColorful():
 
         r *= math.tanh(math.pi - abs(self.la.angle_between_three_points(
             self.point_a,
-            Point([x, y]),
+            LAPoint([x, y]),
             self.point_b
         )))
 
         g *= math.tanh(math.pi - abs(self.la.angle_between_three_points(
             self.point_b,
-            Point([x, y]),
+            LAPoint([x, y]),
             self.point_c
         )))
 
         b *= math.tanh(math.pi - abs(self.la.angle_between_three_points(
             self.point_c,
-            Point([x, y]),
+            LAPoint([x, y]),
             self.point_d
         )))
 

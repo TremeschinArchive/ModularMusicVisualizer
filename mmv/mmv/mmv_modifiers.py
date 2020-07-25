@@ -20,9 +20,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.mmv_types import *
-from mmv.common.utils import Utils
-from mmv.common.frame import Frame
+from mmv.common.cmn_types import *
+from mmv.common.cmn_utils import Utils
+from mmv.common.cmn_frame import Frame
 import random
 import math
 import os

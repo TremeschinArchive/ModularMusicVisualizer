@@ -24,7 +24,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.utils import Utils
+from mmv.common.cmn_utils import Utils
 import math
 
 
@@ -37,15 +37,15 @@ class LinearAlgebra():
     # Distance between two objects
     def distance(self, A, B):
         # Distance between two points
-        if self.utils.is_matching_type([A, B], [Point, Point]):
+        if self.utils.is_matching_type([A, B], [LAPoint, LAPoint]):
             if len(A.coordinates) == len(B.coordinates):
                 return ( sum([ (A.coordinates[i] - B.coordinates[i])**2 for i, _ in enumerate(A.coordinates) ]) )**0.5
             else:
                 print("[LA ERROR] Dot product between vectors of different sizes: [%s] and [%s]" % A.coordinates, B.coordinates)
     
-    # Dot product between two Vectors
+    # Dot product between two LAVectors
     def dot_product(self, A, B):
-        if self.utils.is_matching_type([A, B], [Vector, Vector]):
+        if self.utils.is_matching_type([A, B], [LAVector, LAVector]):
             if len(A.coordinates) == len(B.coordinates):
                 # Sum the multiplication of x1.x2.x3..xK + y1.y2.y3..yK + z1.z2.z3..zK +.. n1.n2.n3..nK
                 return sum([A.coordinates[i] * B.coordinates[i] for i, _ in enumerate(A.coordinates)])
@@ -56,7 +56,7 @@ class LinearAlgebra():
 
     # Get the angle between two vectors in radians
     def angle_between_two_vectors(self, A, B):
-        if self.utils.is_matching_type([A, B], [Vector, Vector]):
+        if self.utils.is_matching_type([A, B], [LAVector, LAVector]):
             # The formula is ths one:
             # cos(angle) = a.b / |a||b|
             # We then just have to calculate angle = cos-1 ( a.b / |a||b| )
@@ -84,11 +84,11 @@ class LinearAlgebra():
 
     # B is the mid point, so get the angle between the two vectors: BA and BC
     def angle_between_three_points(self, A, B, C):
-        if self.utils.is_matching_type([A, B, C], [Point, Point, Point]):
+        if self.utils.is_matching_type([A, B, C], [LAPoint, LAPoint, LAPoint]):
 
             # Create two vector objects
-            va = Vector()
-            vb = Vector()
+            va = LAVector()
+            vb = LAVector()
 
             # Build them with the points
             va.from_two_points(B, A)
@@ -100,13 +100,13 @@ class LinearAlgebra():
         else:
             print("[LA ERROR] Can only calculate angle between two vectors in this function")
 
-# Define a Point object with N dimentions
-class Point():
+# Define a LAPoint object with N dimentions
+class LAPoint():
     def __init__(self, coordinates):
         self.coordinates = coordinates
 
-# Define a Vector object with N dimentions
-class Vector():
+# Define a LAVector object with N dimentions
+class LAVector():
     def __init__(self):
         self.utils = Utils()
 
@@ -119,13 +119,13 @@ class Vector():
         # To get the direction and orientation of a vector based on two points, we have:
         # AB = B - A
         # So the result of B - A = (b1 - a1, b2 - a2, b3 - a3..., bn - an)
-        if self.utils.is_matching_type([A, B], [Point, Point]):
+        if self.utils.is_matching_type([A, B], [LAPoint, LAPoint]):
             if len(A.coordinates) == len(B.coordinates):
                 self.coordinates = [B.coordinates[i] - A.coordinates[i] for i, _ in enumerate(A.coordinates)]
             else:
                 print("[LA POINT ERROR] Two points with different spaces")
         else:
-            print("[LA VECTOR ERROR] Arguments aren't two Point types")
+            print("[LA VECTOR ERROR] Arguments aren't two LAPoint types")
 
     # Calculate the magnitude of a vector
     def magnitude(self):
@@ -136,17 +136,17 @@ class Vector():
 '''
 # Here's some examples how this works
 
-a = Vector()
+a = LAVector()
 a.from_two_points(
-    Point([9, 10]),
-    Point([7, 6])
+    LAPoint([9, 10]),
+    LAPoint([7, 6])
 )
 
-b = Vector()
+b = LAVector()
 b.from_coordinates([3, 4])
 
-c = Point([1,2,3,4,5])
-d = Point([6,3,6,5,7])
+c = LAPoint([1,2,3,4,5])
+d = LAPoint([6,3,6,5,7])
 
 l = LinearAlgebra()
 
@@ -155,9 +155,9 @@ print(a.magnitude())
 print(l.distance(c, d))
 
 print(l.angle_between_three_points(
-    Point([0, 5]),
-    Point([0, 0]),
-    Point([5, 0]),
+    LAPoint([0, 5]),
+    LAPoint([0, 0]),
+    LAPoint([5, 0]),
 ))
 
 '''

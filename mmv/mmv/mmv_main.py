@@ -19,12 +19,12 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.audio import AudioProcessing
-from mmv.common.video import FFmpegWrapper
+from mmv.common.cmn_audio import AudioProcessing
+from mmv.common.cmn_video import FFmpegWrapper
 from mmv.mmv_animation import MMVAnimation
+from mmv.common.cmn_audio import AudioFile
+from mmv.common.cmn_fourier import Fourier
 from mmv.mmv_controller import Controller
-from mmv.common.audio import AudioFile
-from mmv.common.fourier import Fourier
 from mmv.mmv_context import Context
 from mmv.mmv_image import MMVImage
 from mmv.mmv_core import Core

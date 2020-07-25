@@ -1,9 +1,9 @@
 import sys
 sys.path.append("..")
 
-from mmv.common.linearalgebra import LinearAlgebra
-from mmv.pygradienter.pyg_node import PointNode
-from mmv.common.linearalgebra import Point
+from mmv.common.cmn_linearalgebra import LinearAlgebra
+from mmv.pygradienter.pyg_node import LAPointNode
+from mmv.common.cmn_linearalgebra import LAPoint
 import random
 import math
 import os
@@ -39,7 +39,7 @@ class PyGradienterProfileCreepyCircles():
         for _ in range(random.randint(1, 4)):
     
             # Create a random Node object with our input
-            next_node = PointNode(
+            next_node = LAPointNode(
                 # Position
                 [
                     random.randint(0, self.config["width"]),
@@ -74,7 +74,7 @@ class PyGradienterProfileCreepyCircles():
 
         #
 
-        point = Point(
+        point = LAPoint(
             [
                 x,
                 y

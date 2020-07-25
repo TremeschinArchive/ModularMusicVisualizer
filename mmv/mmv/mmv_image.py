@@ -19,17 +19,389 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.mmv_types import *
-from mmv.common.interpolation import Interpolation
+from mmv.common.cmn_interpolation import Interpolation
+from mmv.common.cmn_functions import Functions
 from mmv.mmv_visualizer import MMVVisualizer
-from mmv.common.functions import Functions
-from mmv.common.frame import Frame
-from mmv.common.utils import Utils
+from mmv.common.cmn_frame import Frame
+from mmv.common.cmn_utils import Utils
+from mmv.mmv_context import Context
+from mmv.common.cmn_types import *
 from mmv.mmv_modifiers import *
 from typing import Union
 import copy
 import cv2
 import os
+
+
+# Basically everything on MMV as we have to render images
+class MMVImage:
+
+    def __init__(self, context: Context) -> None:
+        
+        debug_prefix = "[MMVImage.__init__]"
+        
+        self.context = context
+
+        # The "animation" and path this object will follow
+        self.path = {}
+
+        # Create classes
+        self.interpolation = Interpolation()
+        self.configure = Configure(self)
+        self.functions = Functions()
+        self.utils = Utils()
+        self.image = Frame()
+
+        self.x = 0
+        self.y = 0
+        self.size = 1
+        self.current_animation = 0
+        self.current_step = -1
+        self.is_deletable = False
+        self.type = "mmvimage"
+
+        # If we want to get the images from a video, be sure to match the fps!!
+        self.video = None
+
+        # Offset is the animations and motions this frame offset
+        self.offset = [0, 0]
+
+        self.ROUND = 3
+    
+    # Our Canvas is an MMVImage object
+    def create_canvas(self) -> None:
+        self.configure.init_animation_layer()
+        self.reset_canvas()
+        self.configure.add_path_point(0, 0)
+    
+    def reset_canvas(self) -> None:
+        self.image.new(self.context.width, self.context.height, transparent=True)
+
+    # Don't pickle cv2 video  
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        if "video" in state:
+            del state["video"]
+        return state
+    
+    # Next step of animation
+    def next(self, fftinfo: dict, this_step: int) -> None:
+
+        self.current_step += 1
+
+        # Animation has ended, this current_animation isn't present on path.keys
+        if not self.current_animation in list(self.path.keys()):
+            self.is_deletable = True
+            return
+
+        # The animation we're currently playing
+        this_animation = self.path[self.current_animation]
+
+        # The current step is one above the steps we've been told, next animation
+        if self.current_step == this_animation["steps"] + 1:
+            self.current_animation += 1
+            self.current_step = 0
+            return
+        
+        # Reset offset, pending
+        self.offset = [0, 0]
+        self.image.pending = {}
+
+        self.image._reset_to_original_image()
+
+        positions = this_animation["position"]
+        steps = this_animation["steps"]
+
+        if "modules" in this_animation:
+            
+            modules = this_animation["modules"]
+
+            if "visualizer" in modules:
+
+                this_module = modules["visualizer"]
+
+                visualizer = this_module["object"]
+
+                if self.context.multiprocessed:
+                    visualizer.next(fftinfo, is_multiprocessing=True)
+                    self.image.pending["visualizer"] = [
+                        copy.deepcopy(visualizer), fftinfo
+                    ]
+                    self.image.width = visualizer.config["width"]
+                    self.image.height = visualizer.config["height"]
+
+                else:
+                    self.image.load_from_array(
+                        visualizer.next(fftinfo),
+                        convert_to_png=True
+                    )
+
+            # The video module must be before everything as it gets the new frame                
+            if "video" in modules:
+
+                this_module = modules["video"]
+
+                # We haven't set a video capture or it has ended
+                if self.video == None:
+                    self.video = cv2.VideoCapture(this_module["path"])
+
+                # Can we read next frame? if not, go back to frame 0 for a loop
+                ok, frame = self.video.read()
+                if not ok:  # cry
+                    self.video.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                    ok, frame = self.video.read()
+                
+                # CV2 utilizes BGR matrix, but we need RGB
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+                shake = 0
+
+                for position in positions:
+                    if self.utils.is_matching_type([position], [Shake]):
+                        shake = position.distance
+
+                width = self.context.width + (2*shake)
+                height = self.context.height + (2*shake)
+                
+                if self.context.multiprocessed:
+                    self.image.pending["video"] = [
+                        copy.deepcopy(frame),
+                        width, height
+                    ]
+                    self.image.width = width
+                    self.image.height = height
+                else:
+                    self.image.load_from_array(frame, convert_to_png=True)
+                    self.image.resize_to_resolution(
+                        width, height,
+                        override=True
+                    )
+
+            if "rotate" in modules:
+
+                this_module = modules["rotate"]
+                rotate = this_module["object"]
+
+                amount = rotate.next()
+                amount = round(amount, self.ROUND)
+                
+                if self.context.multiprocessed:
+                    self.image.pending["rotate"] = [amount]
+                else:
+                    self.image.rotate(amount)
+
+            if "resize" in modules:
+
+                this_module = modules["resize"]
+        
+                amount = fftinfo["average_value"]
+
+                if amount > 1:
+                    amount = 1
+                if amount < -0.9:
+                    amount = -0.9
+
+                amount = this_module["interpolation"](
+                    self.size,
+                    eval(this_module["activation"].replace("X", str(amount))),
+                    self.current_step,
+                    steps,
+                    self.size,
+                    this_module["arg_a"]
+                )
+
+                amount = round(amount, self.ROUND)
+                self.size = amount
+
+                if self.context.multiprocessed:
+                    self.image.pending["resize"] = [amount]
+                    offset = self.image.resize_by_ratio(
+                        amount, get_only_offset=True
+                    )
+                else:
+                    offset = self.image.resize_by_ratio(
+                        # If we're going to rotate, resize the rotated frame which is not the original image
+                        amount, from_current_frame="rotate" in modules
+                    )
+
+                if this_module["keep_center"]:
+                    self.offset[0] += offset[0]
+                    self.offset[1] += offset[1]
+
+            if "blur" in modules:
+
+                this_module = modules["blur"]
+
+                amount = eval(this_module["activation"].replace("X", str(fftinfo["average_value"])))
+                amount = round(amount, self.ROUND)
+
+                if self.context.multiprocessed:
+                    self.image.pending["blur"] = [amount]
+                else:
+                    self.image.gaussian_blur(amount)
+            
+            if "glitch" in modules:
+
+                this_module = modules["glitch"]
+
+                amount = eval(this_module["activation"].replace("X", str(fftinfo["average_value"])))
+                amount = round(amount, self.ROUND)
+
+                color_offset = this_module["color_offset"]
+                scan_lines = this_module["scan_lines"]
+
+                if self.context.multiprocessed:
+                    self.image.pending["glitch"] = [amount, color_offset, scan_lines]
+                else:
+                    self.image.glitch(amount, color_offset, scan_lines)
+
+            if "fade" in modules:
+
+                this_module = modules["fade"]
+                
+                fade = this_module["object"]
+            
+                amount = this_module["interpolation"](
+                    fade.start_percentage,  
+                    fade.end_percentage,
+                    self.current_step,
+                    fade.finish_steps,
+                    fade.current_step,
+                    this_module["arg_a"]
+                )
+
+                amount = round(amount, self.ROUND)
+
+                if self.context.multiprocessed:
+                    self.image.pending["transparency"] = [amount]
+                else:
+                    self.image.transparency(amount)
+                    
+                fade.current_step += 1
+        
+            # Apply vignetting
+            if "vignetting" in modules:
+
+                # The module we're working with
+                this_module = modules["vignetting"]
+
+                # TODO: needed?
+                # Limit the average
+                average = fftinfo["average_value"]
+
+                if average > 1:
+                    average = 1
+                if average < -0.9:
+                    average = -0.9
+
+                vignetting = this_module["object"]
+
+                # Where the vignetting intensity is pointing to according to our 
+                vignetting.calculate_towards(
+                    eval( vignetting.activation.replace("X", str(average)) )
+                )
+
+                # Interpolate to a new vignetting value
+                next_vignetting = this_module["interpolation"](
+                    vignetting.value,
+                    vignetting.towards,
+                    self.current_step,
+                    steps,
+                    vignetting.value,
+                    this_module["arg_a"]
+                )
+
+                vignetting.value = next_vignetting
+
+                vignetting.get_center()
+
+                # Apply the new vignetting effect on the center of the image
+                if self.context.multiprocessed:
+                    self.image.pending["vignetting"] = [
+                        vignetting.center_x,
+                        vignetting.center_y,
+                        next_vignetting,
+                        next_vignetting,
+                    ]
+                else:
+                    self.image.vignetting(
+                        vignetting.center_x,
+                        vignetting.center_y,
+                        next_vignetting,
+                        next_vignetting
+                    )
+
+
+        # Iterate through every position module
+        for position in positions:
+            
+            # # Override modules
+
+            # Move according to a Point (be stationary)
+            if self.utils.is_matching_type([position], [Point]):
+                # Atribute (x, y) to Point's x and y
+                self.x = int(position.y)
+                self.y = int(position.x)
+
+            # Move according to a Line (interpolate current steps)
+            if self.utils.is_matching_type([position], [Line]):
+
+                # Where we start and end
+                start_coordinate = position.start
+                end_coordinate = position.end
+
+                # Interpolate X coordinate on line
+                self.x = this_animation["interpolation_x"](
+                    start_coordinate[1],  
+                    end_coordinate[1],
+                    self.current_step,
+                    steps,
+                    self.x,
+                    this_animation["interpolation_x_arg_a"]
+                )
+
+                # Interpolate Y coordinate on line
+                self.y = this_animation["interpolation_y"](
+                    start_coordinate[0],  
+                    end_coordinate[0],
+                    self.current_step,
+                    steps,
+                    self.y,
+                    this_animation["interpolation_y_arg_a"]
+                )
+            
+            # # Offset modules
+
+            # Get next shake offset value
+            if self.utils.is_matching_type([position], [Shake]):
+                position.next()
+                self.offset[0] += position.x
+                self.offset[1] += position.y
+
+    # Blit this item on the canvas
+    def blit(self, canvas: Frame) -> None:
+
+        x = int(self.x + self.offset[1])
+        y = int(self.y + self.offset[0])
+
+        canvas.overlay_transparent(
+            self.image.array,
+            y, x
+        )
+
+        # This is for trivia / future, how it used to work until overlay_transparent wasn't slow anymore
+        # img = self.image
+        # width, height, _ = img.frame.shape
+        # canvas.canvas.copy_from(
+        #     self.image.array,
+        #     canvas.canvas.frame,
+        #     [0, 0],
+        #     [x, y],
+        #     [x + width - 1, y + height - 1]
+        # )
+
+    def resolve_pending(self) -> None:
+        self.image.resolve_pending()
 
 
 """
@@ -414,374 +786,3 @@ class Configure:
     # Rotate to one direction continuously
     def simple_add_linear_rotation(self, smooth: int=10) -> None:
         self.add_module_rotate( LinearSwing(smooth) )
-
-
-# Basically everything on MMV as we have to render images
-class MMVImage:
-
-    def __init__(self, context: Context) -> None:
-        
-        debug_prefix = "[MMVImage.__init__]"
-        
-        self.context = context
-
-        # The "animation" and path this object will follow
-        self.path = {}
-
-        # Create classes
-        self.interpolation = Interpolation()
-        self.configure = Configure(self)
-        self.functions = Functions()
-        self.utils = Utils()
-        self.image = Frame()
-
-        self.x = 0
-        self.y = 0
-        self.size = 1
-        self.current_animation = 0
-        self.current_step = -1
-        self.is_deletable = False
-        self.type = "mmvimage"
-
-        # If we want to get the images from a video, be sure to match the fps!!
-        self.video = None
-
-        # Offset is the animations and motions this frame offset
-        self.offset = [0, 0]
-
-        self.ROUND = 3
-    
-    # Our Canvas is an MMVImage object
-    def create_canvas(self) -> None:
-        self.configure.init_animation_layer()
-        self.reset_canvas()
-        self.configure.add_path_point(0, 0)
-    
-    def reset_canvas(self) -> None:
-        self.image.new(self.context.width, self.context.height, transparent=True)
-
-    # Don't pickle cv2 video  
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        if "video" in state:
-            del state["video"]
-        return state
-    
-    # Next step of animation
-    def next(self, fftinfo: dict, this_step: int) -> None:
-
-        self.current_step += 1
-
-        # Animation has ended, this current_animation isn't present on path.keys
-        if not self.current_animation in list(self.path.keys()):
-            self.is_deletable = True
-            return
-
-        # The animation we're currently playing
-        this_animation = self.path[self.current_animation]
-
-        # The current step is one above the steps we've been told, next animation
-        if self.current_step == this_animation["steps"] + 1:
-            self.current_animation += 1
-            self.current_step = 0
-            return
-        
-        # Reset offset, pending
-        self.offset = [0, 0]
-        self.image.pending = {}
-
-        self.image._reset_to_original_image()
-
-        positions = this_animation["position"]
-        steps = this_animation["steps"]
-
-        if "modules" in this_animation:
-            
-            modules = this_animation["modules"]
-
-            if "visualizer" in modules:
-
-                this_module = modules["visualizer"]
-
-                visualizer = this_module["object"]
-
-                if self.context.multiprocessed:
-                    visualizer.next(fftinfo, is_multiprocessing=True)
-                    self.image.pending["visualizer"] = [
-                        copy.deepcopy(visualizer), fftinfo
-                    ]
-                    self.image.width = visualizer.config["width"]
-                    self.image.height = visualizer.config["height"]
-
-                else:
-                    self.image.load_from_array(
-                        visualizer.next(fftinfo),
-                        convert_to_png=True
-                    )
-
-            # The video module must be before everything as it gets the new frame                
-            if "video" in modules:
-
-                this_module = modules["video"]
-
-                # We haven't set a video capture or it has ended
-                if self.video == None:
-                    self.video = cv2.VideoCapture(this_module["path"])
-
-                # Can we read next frame? if not, go back to frame 0 for a loop
-                ok, frame = self.video.read()
-                if not ok:  # cry
-                    self.video.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                    ok, frame = self.video.read()
-                
-                # CV2 utilizes BGR matrix, but we need RGB
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-                shake = 0
-
-                for position in positions:
-                    if self.utils.is_matching_type([position], [Shake]):
-                        shake = position.distance
-
-                width = self.context.width + (2*shake)
-                height = self.context.height + (2*shake)
-                
-                if self.context.multiprocessed:
-                    self.image.pending["video"] = [
-                        copy.deepcopy(frame),
-                        width, height
-                    ]
-                    self.image.width = width
-                    self.image.height = height
-                else:
-                    self.image.load_from_array(frame, convert_to_png=True)
-                    self.image.resize_to_resolution(
-                        width, height,
-                        override=True
-                    )
-
-            if "rotate" in modules:
-
-                this_module = modules["rotate"]
-                rotate = this_module["object"]
-
-                amount = rotate.next()
-                amount = round(amount, self.ROUND)
-                
-                if self.context.multiprocessed:
-                    self.image.pending["rotate"] = [amount]
-                else:
-                    self.image.rotate(amount)
-
-            if "resize" in modules:
-
-                this_module = modules["resize"]
-        
-                amount = fftinfo["average_value"]
-
-                if amount > 1:
-                    amount = 1
-                if amount < -0.9:
-                    amount = -0.9
-
-                amount = this_module["interpolation"](
-                    self.size,
-                    eval(this_module["activation"].replace("X", str(amount))),
-                    self.current_step,
-                    steps,
-                    self.size,
-                    this_module["arg_a"]
-                )
-
-                amount = round(amount, self.ROUND)
-                self.size = amount
-
-                if self.context.multiprocessed:
-                    self.image.pending["resize"] = [amount]
-                    offset = self.image.resize_by_ratio(
-                        amount, get_only_offset=True
-                    )
-                else:
-                    offset = self.image.resize_by_ratio(
-                        # If we're going to rotate, resize the rotated frame which is not the original image
-                        amount, from_current_frame="rotate" in modules
-                    )
-
-                if this_module["keep_center"]:
-                    self.offset[0] += offset[0]
-                    self.offset[1] += offset[1]
-
-            if "blur" in modules:
-
-                this_module = modules["blur"]
-
-                amount = eval(this_module["activation"].replace("X", str(fftinfo["average_value"])))
-                amount = round(amount, self.ROUND)
-
-                if self.context.multiprocessed:
-                    self.image.pending["blur"] = [amount]
-                else:
-                    self.image.gaussian_blur(amount)
-            
-            if "glitch" in modules:
-
-                this_module = modules["glitch"]
-
-                amount = eval(this_module["activation"].replace("X", str(fftinfo["average_value"])))
-                amount = round(amount, self.ROUND)
-
-                color_offset = this_module["color_offset"]
-                scan_lines = this_module["scan_lines"]
-
-                if self.context.multiprocessed:
-                    self.image.pending["glitch"] = [amount, color_offset, scan_lines]
-                else:
-                    self.image.glitch(amount, color_offset, scan_lines)
-
-            if "fade" in modules:
-
-                this_module = modules["fade"]
-                
-                fade = this_module["object"]
-            
-                amount = this_module["interpolation"](
-                    fade.start_percentage,  
-                    fade.end_percentage,
-                    self.current_step,
-                    fade.finish_steps,
-                    fade.current_step,
-                    this_module["arg_a"]
-                )
-
-                amount = round(amount, self.ROUND)
-
-                if self.context.multiprocessed:
-                    self.image.pending["transparency"] = [amount]
-                else:
-                    self.image.transparency(amount)
-                    
-                fade.current_step += 1
-        
-            # Apply vignetting
-            if "vignetting" in modules:
-
-                # The module we're working with
-                this_module = modules["vignetting"]
-
-                # TODO: needed?
-                # Limit the average
-                average = fftinfo["average_value"]
-
-                if average > 1:
-                    average = 1
-                if average < -0.9:
-                    average = -0.9
-
-                vignetting = this_module["object"]
-
-                # Where the vignetting intensity is pointing to according to our 
-                vignetting.calculate_towards(
-                    eval( vignetting.activation.replace("X", str(average)) )
-                )
-
-                # Interpolate to a new vignetting value
-                next_vignetting = this_module["interpolation"](
-                    vignetting.value,
-                    vignetting.towards,
-                    self.current_step,
-                    steps,
-                    vignetting.value,
-                    this_module["arg_a"]
-                )
-
-                vignetting.value = next_vignetting
-
-                vignetting.get_center()
-
-                # Apply the new vignetting effect on the center of the image
-                if self.context.multiprocessed:
-                    self.image.pending["vignetting"] = [
-                        vignetting.center_x,
-                        vignetting.center_y,
-                        next_vignetting,
-                        next_vignetting,
-                    ]
-                else:
-                    self.image.vignetting(
-                        vignetting.center_x,
-                        vignetting.center_y,
-                        next_vignetting,
-                        next_vignetting
-                    )
-
-
-        # Iterate through every position module
-        for position in positions:
-            
-            # # Override modules
-
-            # Move according to a Point (be stationary)
-            if self.utils.is_matching_type([position], [Point]):
-                # Atribute (x, y) to Point's x and y
-                self.x = int(position.y)
-                self.y = int(position.x)
-
-            # Move according to a Line (interpolate current steps)
-            if self.utils.is_matching_type([position], [Line]):
-
-                # Where we start and end
-                start_coordinate = position.start
-                end_coordinate = position.end
-
-                # Interpolate X coordinate on line
-                self.x = this_animation["interpolation_x"](
-                    start_coordinate[1],  
-                    end_coordinate[1],
-                    self.current_step,
-                    steps,
-                    self.x,
-                    this_animation["interpolation_x_arg_a"]
-                )
-
-                # Interpolate Y coordinate on line
-                self.y = this_animation["interpolation_y"](
-                    start_coordinate[0],  
-                    end_coordinate[0],
-                    self.current_step,
-                    steps,
-                    self.y,
-                    this_animation["interpolation_y_arg_a"]
-                )
-            
-            # # Offset modules
-
-            # Get next shake offset value
-            if self.utils.is_matching_type([position], [Shake]):
-                position.next()
-                self.offset[0] += position.x
-                self.offset[1] += position.y
-
-    # Blit this item on the canvas
-    def blit(self, canvas: MMVImage) -> None:
-
-        x = int(self.x + self.offset[1])
-        y = int(self.y + self.offset[0])
-
-        canvas.image.overlay_transparent(
-            self.image.array,
-            y, x
-        )
-
-        # This is for trivia / future, how it used to work until overlay_transparent wasn't slow anymore
-        # img = self.image
-        # width, height, _ = img.frame.shape
-        # canvas.canvas.copy_from(
-        #     self.image.array,
-        #     canvas.canvas.frame,
-        #     [0, 0],
-        #     [x, y],
-        #     [x + width - 1, y + height - 1]
-        # )
-
-    def resolve_pending(self) -> None:
-        self.image.resolve_pending()

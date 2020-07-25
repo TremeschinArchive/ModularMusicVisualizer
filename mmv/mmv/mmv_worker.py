@@ -50,7 +50,7 @@ def get_canvas_multiprocess_return(get_queue: Queue, put_queue: Queue, worker_id
             [item.resolve_pending() for item in content[layer]]
         
         for layer in sorted(content):
-            [item.blit(canvas) for item in content[layer]]
+            [item.blit(canvas.image) for item in content[layer]]
 
         # We blit into the array but pending operations are done with the PIL Image
         canvas.image._update_image_from_array()

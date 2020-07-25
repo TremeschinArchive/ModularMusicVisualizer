@@ -19,7 +19,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.functions import Functions
+from mmv.common.cmn_functions import Functions
 from PIL import Image
 import numpy as np
 import subprocess

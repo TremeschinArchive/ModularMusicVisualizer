@@ -20,9 +20,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmv.mmv_modifiers import *
-from mmv.common.interpolation import Interpolation
+from mmv.common.cmn_interpolation import Interpolation
 from mmv.mmv_visualizer import MMVVisualizer
-from mmv.common.utils import Utils
+from mmv.common.cmn_utils import Utils
 from mmv.mmv_image import MMVImage
 import random
 import copy

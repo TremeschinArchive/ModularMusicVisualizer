@@ -1,8 +1,8 @@
 import sys
 sys.path.append("..")
 
-from mmv.common.linearalgebra import LinearAlgebra, Point
-from mmv.pygradienter.pyg_node import PointNode
+from mmv.common.cmn_linearalgebra import LinearAlgebra, LAPoint
+from mmv.pygradienter.pyg_node import LAPointNode
 import random
 import os
 
@@ -29,7 +29,7 @@ class PyGradienterProfileSimple():
         for _ in range(2):
     
             # Create a random Node object with our input
-            next_node = PointNode(
+            next_node = LAPointNode(
                 # Position
                 [
                     random.randint(0, self.config["width"]),
@@ -57,7 +57,7 @@ class PyGradienterProfileSimple():
             yield next_node
 
     def calculate_distance_between_nodes(self, point, node):
-        point = Point(
+        point = LAPoint(
             [
                 point[0],
                 point[1]

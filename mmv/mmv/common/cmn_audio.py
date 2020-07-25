@@ -19,8 +19,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.utils import DataUtils
-from mmv.common.fourier import Fourier
+from mmv.common.cmn_utils import DataUtils
+from mmv.common.cmn_fourier import Fourier
 from scipy.io import wavfile
 import numpy as np
 import subprocess

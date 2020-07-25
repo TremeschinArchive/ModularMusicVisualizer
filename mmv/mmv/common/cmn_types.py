@@ -1,7 +1,7 @@
 """
 ===============================================================================
 
-Purpose: Forward declaration for type hinting MMV related classes
+Purpose: Some type utils for type hinting
 
 ===============================================================================
 
@@ -21,26 +21,3 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from typing import NewType, Union
 
 Number = Union[float, int]
-
-class Context:
-    pass
-class Controller:
-    pass
-class Audio:
-    pass
-class Canvas:
-    pass
-class Fourier:
-    pass
-class FFmpegWrapper:
-    pass
-class AudioFile:
-    pass
-class MMVImage:
-    pass
-class MMVAnimation:
-    pass
-class AudioProcessing:
-    pass
-class Queue:
-    pass
