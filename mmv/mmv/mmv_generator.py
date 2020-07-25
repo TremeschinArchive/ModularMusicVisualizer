@@ -33,13 +33,13 @@ import os
 
 
 class MMVGenerator:
-    def __init__(self, context: Context):
+    def __init__(self, context: Context) -> None:
         self.context = context
         self.generator = None
 
-    def next(self, fftinfo: dict, this_step: int):
+    def next(self, fftinfo: dict, this_step: int) -> dict:
         return self.generator.next(fftinfo, this_step)
 
-    def particle_generator(self):
+    def particle_generator(self) -> None:
         self.generator = MMVParticleGenerator(self.context)
         
