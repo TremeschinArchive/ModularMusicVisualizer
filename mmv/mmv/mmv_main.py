@@ -40,11 +40,11 @@ import os
 
 class Miscellaneous():
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.version = "1.4.8-working-dev"
         self.greeter_message()
 
-    def greeter_message(self):
+    def greeter_message(self) -> None:
 
         terminal_width = shutil.get_terminal_size()[0]
 
@@ -65,12 +65,14 @@ class Miscellaneous():
         print(message)
 
 
-class MMVMain():
-    def __init__(self, quiet=False):
+class MMVMain:
+
+    def __init__(self, quiet: bool=False) -> None:
         if not quiet:
             Miscellaneous()
-            
-    def setup(self, args={}, cli=False):
+    
+    # Creates classes and send to Core
+    def setup(self, args: dict={}, cli: bool=False) -> None:
 
         debug_prefix = "[MMVMain.__init__]"
 
@@ -111,8 +113,10 @@ class MMVMain():
             self.audio_processing,
         )
 
-    def run(self):
+    # Execute the program
+    def run(self) -> None:
         
+        # Read the audio and start FFmpeg pipe
         self.audio.read(self.context.input_file)
         self.ffmpeg.pipe_one_time(self.context.output_video)
 
