@@ -77,7 +77,13 @@ class MMVAnimation:
 
                 # We can delete the item as it has decided life wasn't worth anymore
                 if item.is_deletable:
-                    items_to_delete[layer_index] = position
+                    
+                    # Create empty list if key doesn't exist
+                    if layer_index not in items_to_delete:
+                        items_to_delete[layer_index] = []
+
+                    # Append item position on layer index
+                    items_to_delete[layer_index].append(position)
                     continue
 
                 # Generate next step of animation
