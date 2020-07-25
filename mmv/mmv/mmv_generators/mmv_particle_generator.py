@@ -36,6 +36,10 @@ class MMVParticleGeneratorConfigure:
     
     def preset_bottom_mid_top(self):
         self.mmvgenerator.generate_function = self.mmvgenerator.preset_bottom_mid_top
+    
+    def preset_middle_out(self):
+        self.mmvgenerator.generate_function = self.mmvgenerator.preset_middle_out
+
 
 
 class MMVParticleGenerator():
@@ -158,3 +162,97 @@ class MMVParticleGenerator():
 
         return particle
 
+
+
+    def preset_middle_out(self):
+
+        particle = MMVImage(self.context)
+
+        particle.image.load_from_path(
+            self.utils.random_file_from_dir (
+                self.context.assets + os.path.sep + "particles"
+            )
+        )
+        
+        horizontal_randomness = 50
+        vertical_randomness_min = self.context.height//1.7
+        vertical_randomness_max = self.context.height//2.3
+
+        half_screen_x = self.context.width // 2
+        half_screen_y = self.context.height // 2
+
+        x1 = half_screen_x
+        y1 = half_screen_y
+
+        x2 = x1 + random.randint(-half_screen_x, half_screen_x)
+        y2 = y1 + random.randint(-half_screen_y, half_screen_y)
+
+        particle_shake = Shake({
+            "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
+            "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
+            "x_steps": "end_interpolation",
+            "y_steps": "end_interpolation",
+            "distance": 18,
+            "arg_a": 0.01,
+            "arg_b": 0.04,
+        })
+
+        fast = 0.05
+        fade_intensity = random.uniform(0.1, 0.7)
+
+        this_steps = random.randint(50, 100)
+        particle.path[0] = {
+            "position": [
+                Line(
+                    (x1, y1),
+                    (x2, y2),
+                ),
+                particle_shake
+            ],
+            "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
+            "interpolation_x_arg_a": fast,
+            "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
+            "interpolation_y_arg_a": fast,
+            "steps": this_steps,
+            "modules": {
+                "fade": {
+                    "interpolation": copy.deepcopy(self.interpolation.linear),
+                    "arg_a": None,
+                    "object": Fade(
+                        start_percentage=0,
+                        end_percentage=fade_intensity,
+                        finish_steps=50,
+                    )
+                }
+            }
+            
+        }
+        this_steps = random.randint(150, 200)
+        particle.path[1] = {
+            "position": [
+                Point(x2, y2)
+            ],
+            "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
+            "interpolation_x_arg_a": fast,
+            "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
+            "interpolation_y_arg_a": fast,
+            "steps": this_steps,
+            "modules": {
+                "fade": {
+                    "interpolation": copy.deepcopy(self.interpolation.linear),
+                    "arg_a": None,
+                    "object": Fade(
+                        start_percentage=fade_intensity,
+                        end_percentage=0,
+                        finish_steps=this_steps,
+                    )
+                }
+            }
+        }
+
+        particle.image.resize_by_ratio(
+            random.uniform(0.1, 0.3),
+            override=True
+        )
+
+        return particle
