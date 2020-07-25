@@ -171,7 +171,7 @@ class Configure():
             }
         })
     
-    def add_resize_module(self, keep_center, interpolation, activation, smooth):
+    def add_module_resize(self, keep_center, interpolation, activation, smooth):
         self.add_module({
             "resize": {
                 "keep_center": True,
@@ -181,7 +181,7 @@ class Configure():
             }
         })
     
-    def add_vignetting_module(self, minimum, activation, center_function_x, center_function_y, start_value=0):
+    def add_module_vignetting(self, minimum, activation, center_function_x, center_function_y, start_value=0):
         self.add_module({
             "vignetting": {
                 "object": Vignetting(
@@ -195,6 +195,10 @@ class Configure():
                 "arg_a": 0.09,
             },
         })
+
+
+    # # # # [ Pre defined simple modules ] # # # #
+
 
     def simple_add_vignetting(self, intensity="medium", center="centered", activation=None, center_function_x=None, center_function_y=None, start_value=900):
         intensities = {
@@ -211,15 +215,13 @@ class Configure():
             center_function_x = Constant(self.object.image.width // 2)
             center_function_y = Constant(self.object.image.height // 2)
 
-        self.add_vignetting_module(
+        self.add_module_vignetting(
             minimum = 450,
             activation = intensities[intensity],
             center_function_x = center_function_x,
             center_function_y = center_function_y,
             start_value=start_value,
         )
-
-    # Pre defined simple modules
 
     def simple_add_visualizer_circle(self, minimum_bar_size, width, height, mode="symetric", responsiveness=0.25, pre_fft_smoothing=2, pos_fft_smoothing=0, subdivide=2):
         self.add_module_visualizer(
@@ -288,7 +290,7 @@ class Configure():
             print("Unhandled resize intensity [%s]" % intensity)
             sys.exit(-1)
 
-        self.add_resize_module(
+        self.add_module_resize(
             keep_center=True,
             interpolation=copy.deepcopy(self.object.interpolation.remaining_approach),
             activation=intensities[intensity],
