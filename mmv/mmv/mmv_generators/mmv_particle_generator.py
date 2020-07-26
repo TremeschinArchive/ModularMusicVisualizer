@@ -107,62 +107,70 @@ class MMVParticleGenerator():
         fade_intensity = random.uniform(0.1, 0.7)
 
         this_steps = random.randint(50, 100)
-        particle.path[0] = {
-            "position": [
-                Line(
-                    (x1, y1),
-                    (x2, y2),
-                ),
-                particle_shake
-            ],
-            "interpolation_x": MMVInterpolation({
-                "function": "remaining_approach",
-                "aggressive": fast,
-            }),
-            "interpolation_y": MMVInterpolation({
-                "function": "remaining_approach",
-                "aggressive": fast,
-            }),
-            "steps": this_steps,
+        particle.animation[0] = {
+            "position": {
+                "path": [
+                    Line(
+                        (x1, y1),
+                        (x2, y2),
+                    ),
+                    particle_shake
+                ],
+                "interpolation_x": MMVInterpolation({
+                    "function": "remaining_approach",
+                    "aggressive": fast,
+                }),
+                "interpolation_y": MMVInterpolation({
+                    "function": "remaining_approach",
+                    "aggressive": fast,
+                }),
+            },
+            "animation": {
+                "steps": this_steps,
+            },
             "modules": {
-                "fade": {
-                    "interpolation": MMVInterpolation({
-                        "function": "linear",
-                        "total_steps": 50,
-                        "start": 0,
-                        "end": fade_intensity
-                    })
-                }
+                # "fade": {
+                #     "interpolation": MMVInterpolation({
+                #         "function": "linear",
+                #         "total_steps": 50,
+                #         "start": 0,
+                #         "end": fade_intensity
+                #     })
+                # }
             }
             
         }
         this_steps = random.randint(150, 200)
-        particle.path[1] = {
-            "position": [
-                Line(
-                    (x2, y2),
-                    (x3, y3),
-                ),
-                particle_shake
-            ],
-            "interpolation_x": MMVInterpolation({
-                "function": "remaining_approach",
-                "aggressive": fast,
-            }),
-            "interpolation_y": MMVInterpolation({
-                "function": "remaining_approach",
-                "aggressive": fast,
-            }),
-            "steps": this_steps,
+        particle.animation[1] = {
+            "position": {
+                "path": [
+                    Line(
+                        (x2, y2),
+                        (x3, y3),
+                    ),
+                    particle_shake
+                ],
+                "interpolation_x": MMVInterpolation({
+                    "function": "remaining_approach",
+                    "aggressive": fast,
+                }),
+                "interpolation_y": MMVInterpolation({
+                    "function": "remaining_approach",
+                    "aggressive": fast,
+                }),
+            },
+            "animation": {
+                "steps": this_steps
+            },
             "modules": {
-                "fade": {
-                    "interpolation": MMVInterpolation({
-                        "function": "linear",
-                        "total_steps": this_steps,
-                        "start": fade_intensity,
-                        "end": 0
-                    })
-                }
+                # "fade": {
+                #     "interpolation": MMVInterpolation({
+                #         "function": "linear",
+                #         "total_steps": this_steps,
+                #         "start": fade_intensity,
+                #         "end": 0
+                #     })
+                # }
             }
         }
 

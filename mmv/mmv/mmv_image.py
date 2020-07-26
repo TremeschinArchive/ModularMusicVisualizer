@@ -43,7 +43,7 @@ class MMVImage:
         self.context = context
 
         # The "animation" and path this object will follow
-        self.path = {}
+        self.animation = {}
 
         # Create classes
         self.configure = Configure(self)
@@ -89,15 +89,18 @@ class MMVImage:
         self.current_step += 1
 
         # Animation has ended, this current_animation isn't present on path.keys
-        if not self.current_animation in list(self.path.keys()):
+        if not self.current_animation in list(self.animation.keys()):
             self.is_deletable = True
             return
 
         # The animation we're currently playing
-        this_animation = self.path[self.current_animation]
+        this_animation = self.animation[self.current_animation]
+
+        animation = this_animation["animation"]
+        steps = animation["steps"]
 
         # The current step is one above the steps we've been told, next animation
-        if self.current_step == this_animation["steps"] + 1:
+        if self.current_step == steps + 1:
             self.current_animation += 1
             self.current_step = 0
             return
@@ -108,8 +111,8 @@ class MMVImage:
 
         self.image._reset_to_original_image()
 
-        positions = this_animation["position"]
-        steps = this_animation["steps"]
+        position = this_animation["position"]
+        path = position["path"]
 
         if "modules" in this_animation:
             
@@ -142,7 +145,7 @@ class MMVImage:
 
                 # We haven't set a video capture or it has ended
                 if self.video == None:
-                    self.video = cv2.VideoCapture(this_module["path"])
+                    self.video = cv2.VideoCapture(path)
 
                 # Can we read next frame? if not, go back to frame 0 for a loop
                 ok, frame = self.video.read()
@@ -322,25 +325,25 @@ class MMVImage:
 
 
         # Iterate through every position module
-        for position in positions:
+        for modifier in path:
             
             # # Override modules
 
             # Move according to a Point (be stationary)
-            if self.utils.is_matching_type([position], [Point]):
+            if self.utils.is_matching_type([modifier], [Point]):
                 # Atribute (x, y) to Point's x and y
-                self.x = int(position.y)
-                self.y = int(position.x)
+                self.x = int(modifier.y)
+                self.y = int(modifier.x)
 
             # Move according to a Line (interpolate current steps)
-            if self.utils.is_matching_type([position], [Line]):
+            if self.utils.is_matching_type([modifier], [Line]):
 
                 # Where we start and end
-                start_coordinate = position.start
-                end_coordinate = position.end
+                start_coordinate = modifier.start
+                end_coordinate = modifier.end
 
-                interpolation_x = this_animation["interpolation_x"]
-                interpolation_y = this_animation["interpolation_y"]
+                interpolation_x = position["interpolation_x"]
+                interpolation_y = position["interpolation_y"]
 
                 interpolation_x.init(start_coordinate[1], end_coordinate[1])
                 interpolation_y.init(start_coordinate[0], end_coordinate[0])
@@ -354,10 +357,10 @@ class MMVImage:
             # # Offset modules
 
             # Get next shake offset value
-            if self.utils.is_matching_type([position], [Shake]):
-                position.next()
-                self.offset[0] += position.x
-                self.offset[1] += position.y
+            if self.utils.is_matching_type([modifier], [Shake]):
+                modifier.next()
+                self.offset[0] += modifier.x
+                self.offset[1] += modifier.y
 
     # Blit this item on the canvas
     def blit(self, canvas: Frame) -> None:
@@ -436,9 +439,10 @@ class Configure:
 
     # Make an empty animation layer according to this animation index, dicitonaries
     def set_animation_empty_dictionary(self) -> None:
-        self.object.path[self.animation_index] = {}
-        self.object.path[self.animation_index]["position"] = []
-        self.object.path[self.animation_index]["modules"] = {}
+        self.object.animation[self.animation_index] = {}
+        self.object.animation[self.animation_index]["position"] = {"path": []}
+        self.object.animation[self.animation_index]["modules"] = {}
+        self.object.animation[self.animation_index]["animation"] = {}
     
     # X and Y needs interpolation
     def set_animation_position_interpolation(self,
@@ -454,8 +458,7 @@ class Configure:
             print("Unhandled interpolation method [%s]" % method)
             sys.exit(-1)
         
-        self.object.path[self.animation_index]["interpolation_%s" % axis] = method
-        self.object.path[self.animation_index]["interpolation_%s_arg_a" % axis] = arg_a
+        self.object.animation[self.animation_index]["position"]["interpolation_%s" % axis] = method
 
     # Override current animation index we're working on into new index
     def set_animation_index(self, n: int) -> None:
@@ -463,7 +466,7 @@ class Configure:
 
     # How much steps in this animation
     def set_this_animation_steps(self, steps: float=math.inf) -> None:
-        self.object.path[self.animation_index]["steps"] = steps
+        self.object.animation[self.animation_index]["animation"]["steps"] = steps
 
     # # # [ Next Methods ] # # #
 
@@ -477,12 +480,12 @@ class Configure:
     def add_module(self, module: dict) -> None:
         module_name = list(module.keys())[0]
         print("Adding module", module, module_name)
-        self.object.path[self.animation_index]["modules"][module_name] = module[module_name]
+        self.object.animation[self.animation_index]["modules"][module_name] = module[module_name]
     ## Generic add module ##
 
     # Add a Point modifier in the path
     def add_path_point(self, x: Union[int, float], y: Union[int, float]) -> None:
-        self.object.path[self.animation_index]["position"].append(Point(x, y))
+        self.object.animation[self.animation_index]["position"]["path"].append(Point(x, y))
 
     # TODO: Add path Line
 
@@ -675,7 +678,7 @@ class Configure:
             y_smoothness: Number=0.02
         ) -> None:
 
-        self.object.path[self.animation_index]["position"].append(
+        self.object.animation[self.animation_index]["position"]["path"].append(
             Shake({
                 "interpolation_x": MMVInterpolation({
                     "function": "remaining_approach",
