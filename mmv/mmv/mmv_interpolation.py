@@ -50,7 +50,6 @@ class MMVInterpolation:
         # Get options for a remaining approach interpolation
         if interpolation_function_name == "remaining_approach":
             # Set the function
-            self.interpolation_function = self.interpolation.remaining_approach
             self.next_interpolation = self.remaining_approach
 
             # Options of the interpolation function
@@ -61,7 +60,6 @@ class MMVInterpolation:
         # Get options for a linear interpolation
         elif interpolation_function_name == "linear":
             # Set the function
-            self.interpolation_function = self.interpolation.linear
             self.next_interpolation = self.linear
 
             # Options of the interpolation function
@@ -71,7 +69,6 @@ class MMVInterpolation:
         # Get options for a sigmoid interpolation
         elif interpolation_function_name == "sigmoid":
             # Set the function
-            self.interpolation_function = self.interpolation.sigmoid
             self.next_interpolation = self.sigmoid
 
             # Options of the interpolation function
@@ -84,19 +81,17 @@ class MMVInterpolation:
 
     def next(self) -> Number:
 
-        if not self.finished:
-            
-            self.current_value = self.next_interpolation()
+        self.current_value = self.next_interpolation()
 
-            if abs(self.current_value - self.target_value) < 1:
-                self.finished = True
+        if abs(self.current_value - self.target_value) < 1:
+            self.finished = True
 
-            self.current_step += 1
+        self.current_step += 1
 
         return self.current_value
     
     def remaining_approach(self) -> Number:
-        return self.interpolation_function(
+        return self.interpolation.remaining_approach(
             start_value = self.start_value,
             target_value = self.target_value,
             current_step = self.current_step,
@@ -106,7 +101,7 @@ class MMVInterpolation:
         )
     
     def linear(self) -> Number:
-        return self.interpolation_function(
+        return self.interpolation.linear(
             start_value = self.start_value,
             target_value = self.target_value,
             current_step = self.current_step,
@@ -114,7 +109,7 @@ class MMVInterpolation:
         )
     
     def sigmoid(self) -> Number:
-        return self.interpolation_function(
+        return self.interpolation.sigmoid(
             start_value = self.start_value,
             target_value = self.target_value,
             smooth = self.smooth,
