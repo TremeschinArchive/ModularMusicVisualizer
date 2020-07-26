@@ -89,19 +89,20 @@ class MMVParticleGenerator():
         x3 = x2 + random.randint(-horizontal_randomness, horizontal_randomness)
         y3 = y2 + random.randint(-vertical_randomness_min, -vertical_randomness_max)
 
-        particle_shake = Shake({
-            "interpolation_x": MMVInterpolation({
+        particle_shake = Shake(
+            interpolation_x = MMVInterpolation({
                 "function": "remaining_approach",
                 "aggressive": 0.01,
                 "start": 0,
             }),
-            "interpolation_y": MMVInterpolation({
+            interpolation_y = MMVInterpolation({
                 "function": "remaining_approach",
                 "aggressive": 0.04,
                 "start": 0,
             }),
-            "distance": 18,
-        })
+            distance = 18,
+            mode = ModifierMode.OFFSET_VALUE,
+        )
 
         fast = 0.04
         fade_intensity = random.uniform(0.1, 0.7)
@@ -121,6 +122,7 @@ class MMVParticleGenerator():
                             "function": "remaining_approach",
                             "aggressive": fast,
                         }),
+                        mode = ModifierMode.OVERRIDE_VALUE,
                     ),
                     particle_shake
                 ],
@@ -155,6 +157,7 @@ class MMVParticleGenerator():
                             "function": "remaining_approach",
                             "aggressive": fast,
                         }),
+                        mode = ModifierMode.OVERRIDE_VALUE,
                     ),
                     particle_shake
                 ],

@@ -24,10 +24,43 @@ from mmv.mmv_interpolation import MMVInterpolation
 from mmv.common.cmn_utils import Utils
 from mmv.common.cmn_frame import Frame
 from mmv.common.cmn_types import *
+from enum import Enum
 import random
 import math
 import os
 
+
+# Modes the path modifiers can use
+class ModifierMode(Enum):
+    OVERRIDE_VALUE = 1
+    OVERRIDE_VALUE_KEEP_OFFSET_VALUE = 2
+    ADD_TO_VALUE = 3
+    OFFSET_VALUE = 4
+
+# original_value: N-dimentional list or original values of the object
+# original_offset: N-dimentional list or original offset values of the object
+# modifier_value: N-dimentional list of the modifier values
+def return_by_mode(mode, original_value: list, original_offset: list, modifier_value: list):
+    if mode == ModifierMode.OVERRIDE_VALUE:
+        return [
+            modifier_value,
+            [0] * len(modifier_value),
+        ]
+    if mode == ModifierMode.OVERRIDE_VALUE_KEEP_OFFSET_VALUE:
+        return [
+            modifier_value,
+            original_offset,
+        ]
+    elif mode == ModifierMode.ADD_TO_VALUE:
+        return [
+            [a + b for a, b in zip(original_value, modifier_value)],
+            original_offset
+        ]
+    elif mode == ModifierMode.OFFSET_VALUE:
+        return [
+            original_value,
+            [a + b for a, b in zip(original_offset, modifier_value)],
+        ]
 
 # # Paths
 
@@ -40,24 +73,45 @@ class Line:
             end: list,
             interpolation_x: MMVInterpolation,
             interpolation_y: MMVInterpolation,
+            mode = ModifierMode.OVERRIDE_VALUE,
+
         ) -> None:
 
         self.start = start
         self.end = end
         self.interpolation_x = interpolation_x
         self.interpolation_y = interpolation_y
+        self.mode = mode
 
         self.interpolation_x.init(start[1], end[1])
         self.interpolation_y.init(start[0], end[0])
 
-    def next(self) -> None:
+    # Next step
+    def next(self, x: Number, y: Number, ox: Number, oy: Number) -> list:
+
+        # Calculate interpolation
         self.interpolation_x.next()
         self.interpolation_y.next()
 
+        # Interpolation values into a list
+        self.x = self.interpolation_x.current_value
+        self.y = self.interpolation_y.current_value
+
+        return return_by_mode(self.mode, [x, y], [ox, oy], [self.x, self.y])
+
 class Point:
-    def __init__(self, x: Number, y: Number) -> None:
+    def __init__(self,
+            x: Number,
+            y: Number,
+            mode = ModifierMode.OVERRIDE_VALUE,
+        ) -> None:
+
         self.x = x
         self.y = y
+        self.mode = mode
+    
+    def next(self, x: Number, y: Number, ox: Number, oy: Number) -> list:
+        return return_by_mode(self.mode, [x, y], [ox, oy], [self.x, self.y])
 
 # Linear Algebra / "Physics" / motion?
 
@@ -73,16 +127,18 @@ class Shake:
     #    @"$_steps": How much steps to end interpolation
     #    @"distance": Max shake distance in any square direction
     #    
-    def __init__(self, config: dict) -> None:
+    def __init__(self,
+            distance: Number,
+            interpolation_x: MMVInterpolation,
+            interpolation_y: MMVInterpolation,
+            mode = ModifierMode.OFFSET_VALUE,
+        ) -> None:
 
         # Get config
-        self.interpolation_x = config["interpolation_x"]
-        self.interpolation_y = config["interpolation_y"]
-
-        self.distance = config["distance"]
-
-        self.interpolation_x.total_steps = config.get("x_steps")
-        self.interpolation_y.total_steps = config.get("y_steps")
+        self.interpolation_x = interpolation_x
+        self.interpolation_y = interpolation_y
+        self.distance = distance
+        self.mode = mode
 
         # Start at the center point
         self.x = 0
@@ -113,33 +169,27 @@ class Shake:
         self.interpolation_y.current_value = self.y
     
     # Next step of this X and Y towards the current random point
-    # @who: "x", "y" or "both"
-    def next(self, who: str="both") -> None:
+    # x: object's x coordinate
+    # y: object's y coordinate
+    # ox: object's x offset
+    # oy: object's y offset
+    def next(self, x: Number, y: Number, ox: Number, oy: Number) -> list:
         
-        if who == "both":
-            self.next("x")
-            self.next("y")
+        # Calculate next interpolation
+        self.x = self.interpolation_x.next()
 
-        # X axis
-        if who == "x":
+        if self.interpolation_x.finished:
+            self.next_random_point("x")
+            self.interpolation_x.finished = False
 
-            # Calculate next interpolation
-            self.x = round( self.interpolation_x.next(), 2 )
+        # Calculate next interpolation
+        self.y = self.interpolation_y.next()
 
-            if self.interpolation_x.finished:
-                self.next_random_point("x")
-                self.interpolation_x.finished = False
+        if self.interpolation_y.finished:
+            self.next_random_point("y")
+            self.interpolation_y.finished = False
 
-        # Y axis
-        if who == "y":
-
-            # Calculate next interpolation
-            self.y = round( self.interpolation_y.next(), 2 )
-
-            if self.interpolation_y.finished:
-                self.next_random_point("y")
-                self.interpolation_y.finished = False
-
+        return return_by_mode(self.mode, [x, y], [ox, oy], [self.x, self.y])
 
 # Swing back and forth in the lines of a sine wave
 class SineSwing:

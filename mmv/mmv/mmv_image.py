@@ -329,34 +329,23 @@ class MMVImage:
             
             # # Override modules
 
+            argument = [self.x, self.y] + self.offset
+
             # Move according to a Point (be stationary)
             if self.utils.is_matching_type([modifier], [Point]):
                 # Atribute (x, y) to Point's x and y
-                self.x = int(modifier.y)
-                self.y = int(modifier.x)
+                [self.x, self.y], self.offset = modifier.next(*argument)
 
             # Move according to a Line (interpolate current steps)
             if self.utils.is_matching_type([modifier], [Line]):
+                # Interpolate and unpack next coordinate
+                [self.x, self.y], self.offset = modifier.next(*argument)
 
-                # Where we start and end
-                start_coordinate = modifier.start
-                end_coordinate = modifier.end
-
-                modifier.next()
-
-                # Interpolate X coordinate on line
-                self.x = modifier.interpolation_x.current_value
-
-                # Interpolate Y coordinate on line
-                self.y = modifier.interpolation_y.current_value
-            
             # # Offset modules
 
             # Get next shake offset value
             if self.utils.is_matching_type([modifier], [Shake]):
-                modifier.next()
-                self.offset[0] += modifier.x
-                self.offset[1] += modifier.y
+                [self.x, self.y], self.offset = modifier.next(*argument)
 
     # Blit this item on the canvas
     def blit(self, canvas: Frame) -> None:
