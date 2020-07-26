@@ -39,10 +39,44 @@ class MMVInterpolation:
         self.configure()
 
     def configure(self) -> None:
-        if self.config["function"] == "remaining_approach":
+
+        interpolation_function_name = self.config.get("function")
+
+        if interpolation_function_name == "remaining_approach":
+            # Set the function
             self.interpolation_function = self.interpolation.remaining_approach
+            self.next_interpolation = self.remaining_approach
+
+            # Options of the interpolation function
+            self.aggressive = self.config["aggressive"]
+            self.aggressive_randomness = self.config.get("aggressive_randomness")
         
-    def next(self, **kwargs) -> None:
+        elif interpolation_function_name == "linear":
+            # Set the function
+            self.interpolation_function = self.interpolation.linear
+            self.next_interpolation = self.linear
+
+            # Options of the interpolation function
+            self.total_steps = self.config.get("total_steps")
+
+    def next(self) -> Number:
+        self.current_step += 1
+        return self.next_interpolation()
+    
+    def remaining_approach(self) -> None:
         self.interpolation_function(
-            
+            start_value = self.start_value
+            target_value = self.target_value
+            current_step = self.current_step
+            current_value = self.current_value
+            aggressive = self.aggressive
+            aggressive_randomness = self.aggressive_randomness,
+        )
+    
+    def linear(self) -> None:
+        self.interpolation_function(
+            start_value = self.start_value,
+            target_value = self.target_value,
+            current_step = self.current_step,
+            total_steps = self.total_steps,
         )
