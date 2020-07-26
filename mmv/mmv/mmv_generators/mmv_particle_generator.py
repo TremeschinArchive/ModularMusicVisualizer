@@ -240,7 +240,7 @@ class MMVParticleGenerator():
                 "fade": {
                     "interpolation": copy.deepcopy(self.interpolation.linear),
                     "arg_a": None,
-                    "object": Fade(
+                    "object": MMVModifierFade(
                         start_percentage=0,
                         end_percentage=fade_intensity,
                         finish_steps=50,
@@ -263,7 +263,7 @@ class MMVParticleGenerator():
                 "fade": {
                     "interpolation": copy.deepcopy(self.interpolation.linear),
                     "arg_a": None,
-                    "object": Fade(
+                    "object": MMVModifierFade(
                         start_percentage=fade_intensity,
                         end_percentage=0,
                         finish_steps=this_steps,

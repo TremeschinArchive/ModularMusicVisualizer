@@ -237,7 +237,7 @@ class MMVModifierConstant:
 
 # # Effects
 
-class Fade:
+class MMVModifierFade:
     # @start_percentage, end_percentage: Ranges from 0 to 1, 0 being transparent and 1 opaque
     # @finish_steps: In how many steps to finish the fade
     def __init__(self,
