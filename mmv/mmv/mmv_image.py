@@ -260,11 +260,11 @@ class MMVImage:
             if "fade" in modules:
 
                 this_module = modules["fade"]
-                interpolation = this_module["interpolation"]
 
-                amount = interpolation.next()
+                amount = this_module["interpolation"].next()
             
                 amount = round(amount, self.ROUND)
+                print("trans", amount)
 
                 if self.context.multiprocessed:
                     self.image.pending["transparency"] = [amount]
@@ -342,17 +342,13 @@ class MMVImage:
                 start_coordinate = modifier.start
                 end_coordinate = modifier.end
 
-                interpolation_x = position["interpolation_x"]
-                interpolation_y = position["interpolation_y"]
-
-                interpolation_x.init(start_coordinate[1], end_coordinate[1])
-                interpolation_y.init(start_coordinate[0], end_coordinate[0])
+                modifier.next()
 
                 # Interpolate X coordinate on line
-                self.x = interpolation_x.next()
+                self.x = modifier.interpolation_x.current_value
 
                 # Interpolate Y coordinate on line
-                self.y = interpolation_y.next()
+                self.y = modifier.interpolation_y.current_value
             
             # # Offset modules
 

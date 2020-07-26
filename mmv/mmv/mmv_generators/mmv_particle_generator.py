@@ -103,7 +103,7 @@ class MMVParticleGenerator():
             "distance": 18,
         })
 
-        fast = 0.05
+        fast = 0.04
         fade_intensity = random.uniform(0.1, 0.7)
 
         this_steps = random.randint(50, 100)
@@ -111,66 +111,66 @@ class MMVParticleGenerator():
             "position": {
                 "path": [
                     Line(
-                        (x1, y1),
-                        (x2, y2),
+                        start = (x1, y1),
+                        end = (x2, y2),
+                        interpolation_x = MMVInterpolation({
+                            "function": "remaining_approach",
+                            "aggressive": fast,
+                        }),
+                        interpolation_y = MMVInterpolation({
+                            "function": "remaining_approach",
+                            "aggressive": fast,
+                        }),
                     ),
                     particle_shake
                 ],
-                "interpolation_x": MMVInterpolation({
-                    "function": "remaining_approach",
-                    "aggressive": fast,
-                }),
-                "interpolation_y": MMVInterpolation({
-                    "function": "remaining_approach",
-                    "aggressive": fast,
-                }),
             },
             "animation": {
                 "steps": this_steps,
             },
             "modules": {
-                # "fade": {
-                #     "interpolation": MMVInterpolation({
-                #         "function": "linear",
-                #         "total_steps": 50,
-                #         "start": 0,
-                #         "end": fade_intensity
-                #     })
-                # }
+                "fade": {
+                    "interpolation": MMVInterpolation({
+                        "function": "linear",
+                        "total_steps": 30,
+                        "start": 0,
+                        "end": fade_intensity
+                    })
+                }
             }
-            
         }
+        
         this_steps = random.randint(150, 200)
         particle.animation[1] = {
             "position": {
                 "path": [
                     Line(
-                        (x2, y2),
-                        (x3, y3),
+                        start = (x2, y2),
+                        end = (x3, y3),
+                        interpolation_x = MMVInterpolation({
+                            "function": "remaining_approach",
+                            "aggressive": fast,
+                        }),
+                        interpolation_y = MMVInterpolation({
+                            "function": "remaining_approach",
+                            "aggressive": fast,
+                        }),
                     ),
                     particle_shake
                 ],
-                "interpolation_x": MMVInterpolation({
-                    "function": "remaining_approach",
-                    "aggressive": fast,
-                }),
-                "interpolation_y": MMVInterpolation({
-                    "function": "remaining_approach",
-                    "aggressive": fast,
-                }),
             },
             "animation": {
                 "steps": this_steps
             },
             "modules": {
-                # "fade": {
-                #     "interpolation": MMVInterpolation({
-                #         "function": "linear",
-                #         "total_steps": this_steps,
-                #         "start": fade_intensity,
-                #         "end": 0
-                #     })
-                # }
+                "fade": {
+                    "interpolation": MMVInterpolation({
+                        "function": "linear",
+                        "total_steps": this_steps,
+                        "start": fade_intensity,
+                        "end": 0
+                    })
+                }
             }
         }
 

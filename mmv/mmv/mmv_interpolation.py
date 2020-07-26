@@ -79,14 +79,15 @@ class MMVInterpolation:
 
     def next(self) -> Number:
 
-        self.current_value = self.next_interpolation()
+        if not self.finished:
+            
+            self.current_value = self.next_interpolation()
 
-        print(self.current_value, self.target_value)
+            if abs(self.current_value - self.target_value) < 1:
+                self.finished = True
 
-        if abs(self.current_value - self.target_value) < 1:
-            self.finished = True
+            self.current_step += 1
 
-        self.current_step += 1
         return self.current_value
     
     def remaining_approach(self) -> Number:

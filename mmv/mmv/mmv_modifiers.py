@@ -20,9 +20,10 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.cmn_types import *
+from mmv.mmv_interpolation import MMVInterpolation
 from mmv.common.cmn_utils import Utils
 from mmv.common.cmn_frame import Frame
+from mmv.common.cmn_types import *
 import random
 import math
 import os
@@ -34,9 +35,24 @@ import os
 
 class Line:
     # @start, end: 2d coordinate list [0, 2]
-    def __init__(self, start: Number, end: Number) -> None:
+    def __init__(self, 
+            start: list,
+            end: list,
+            interpolation_x: MMVInterpolation,
+            interpolation_y: MMVInterpolation,
+        ) -> None:
+
         self.start = start
         self.end = end
+        self.interpolation_x = interpolation_x
+        self.interpolation_y = interpolation_y
+
+        self.interpolation_x.init(start[1], end[1])
+        self.interpolation_y.init(start[0], end[0])
+
+    def next(self) -> None:
+        self.interpolation_x.next()
+        self.interpolation_y.next()
 
 class Point:
     def __init__(self, x: Number, y: Number) -> None:
