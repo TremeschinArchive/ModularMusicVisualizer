@@ -252,7 +252,7 @@ class MMVParticleGenerator():
         this_steps = random.randint(150, 200)
         particle.path[1] = {
             "position": [
-                Point(x2, y2)
+                MMVModifierPoint(x2, y2)
             ],
             "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
             "interpolation_x_arg_a": fast,

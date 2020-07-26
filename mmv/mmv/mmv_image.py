@@ -332,7 +332,7 @@ class MMVImage:
             argument = [self.x, self.y] + self.offset
 
             # Move according to a Point (be stationary)
-            if self.utils.is_matching_type([modifier], [Point]):
+            if self.utils.is_matching_type([modifier], [MMVModifierPoint]):
                 # Atribute (x, y) to Point's x and y
                 [self.x, self.y], self.offset = modifier.next(*argument)
 
@@ -470,7 +470,7 @@ class Configure:
 
     # Add a Point modifier in the path
     def add_path_point(self, x: Union[int, float], y: Union[int, float]) -> None:
-        self.object.animation[self.animation_index]["position"]["path"].append(Point(x, y))
+        self.object.animation[self.animation_index]["position"]["path"].append(MMVModifierPoint(x, y))
 
     # TODO: Add path MMVModifierLine
 

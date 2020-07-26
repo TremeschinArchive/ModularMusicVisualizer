@@ -3,7 +3,7 @@
         temp = MMVImage(self.context)
         temp.path[0] = {
             "position": [
-                Point(-shake, -shake),
+                MMVModifierPoint(-shake, -shake),
                 MMVModifierShake({
                     "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
                     "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
@@ -46,7 +46,7 @@
         temp = MMVImage(self.context)
         temp.path[0] = {
             "position": [
-                Point(-shake, -shake),
+                MMVModifierPoint(-shake, -shake),
                 MMVModifierShake({
                     "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
                     "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
@@ -84,7 +84,7 @@
         temp = MMVImage(self.context)
         temp.path[0] = {
             "position": [
-                Point(-shake, -shake),
+                MMVModifierPoint(-shake, -shake),
                 MMVModifierShake({
                     "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
                     "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
@@ -116,7 +116,7 @@
         temp = MMVImage(self.context)
         temp.path[0] = {
             "position": [
-                Point(-shake1, -shake1),
+                MMVModifierPoint(-shake1, -shake1),
                 MMVModifierShake({
                     "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
                     "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
@@ -155,7 +155,7 @@
         temp2 = MMVImage(self.context)
         temp2.path[0] = {
             "position": [
-                Point(-shake2, -shake2),
+                MMVModifierPoint(-shake2, -shake2),
                 MMVModifierShake({
                     "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
                     "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
@@ -198,7 +198,7 @@
         temp = MMVImage(self.context)
         temp.path[0] = {
             "position": [
-                Point(
+                MMVModifierPoint(
                     self.context.width // 2 - (self.logo_size/2),
                     self.context.height // 2 - (self.logo_size/2)
                 ),
@@ -246,7 +246,7 @@
         temp = MMVImage(self.context)
         temp.path[0] = {
             "position": [
-                Point(
+                MMVModifierPoint(
                     self.context.width // 2 - (visualizer_size/2),
                     self.context.height // 2 - (visualizer_size/2)
                 ),

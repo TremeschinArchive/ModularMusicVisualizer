@@ -107,7 +107,7 @@ class MMVModifierLine:
 
         return return_by_mode(self.mode, [x, y], [ox, oy], [self.x, self.y])
 
-class Point:
+class MMVModifierPoint:
     def __init__(self,
             x: Number,
             y: Number,
