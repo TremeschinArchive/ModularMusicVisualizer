@@ -71,5 +71,5 @@ class Interpolation:
 
         distance = (target_value - start_value)
         where = self.functions.proportion(total, 1, current)
-        walk = distanc e* self.functions.sigmoid(where, smooth)
+        walk = distance * self.functions.sigmoid(where, smooth)
         return a + walk

@@ -19,7 +19,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.cmn_interpolation import Interpolation
+from mmv.mmv_interpolation import MMVInterpolation
 from mmv.common.cmn_functions import Functions
 from mmv.mmv_visualizer import MMVVisualizer
 from mmv.common.cmn_frame import Frame
@@ -46,7 +46,6 @@ class MMVImage:
         self.path = {}
 
         # Create classes
-        self.interpolation = Interpolation()
         self.configure = Configure(self)
         self.functions = Functions()
         self.utils = Utils()
@@ -258,18 +257,10 @@ class MMVImage:
             if "fade" in modules:
 
                 this_module = modules["fade"]
-                
-                fade = this_module["object"]
-            
-                amount = this_module["interpolation"](
-                    fade.start_percentage,  
-                    fade.end_percentage,
-                    self.current_step,
-                    fade.finish_steps,
-                    fade.current_step,
-                    this_module["arg_a"]
-                )
+                interpolation = this_module["interpolation"]
 
+                amount = interpolation.next()
+            
                 amount = round(amount, self.ROUND)
 
                 if self.context.multiprocessed:
@@ -277,8 +268,6 @@ class MMVImage:
                 else:
                     self.image.transparency(amount)
                     
-                fade.current_step += 1
-        
             # Apply vignetting
             if "vignetting" in modules:
 
@@ -350,25 +339,17 @@ class MMVImage:
                 start_coordinate = position.start
                 end_coordinate = position.end
 
+                interpolation_x = this_animation["interpolation_x"]
+                interpolation_y = this_animation["interpolation_y"]
+
+                interpolation_x.init(start_coordinate[0], end_coordinate[1])
+                interpolation_y.init(start_coordinate[0], end_coordinate[1])
+
                 # Interpolate X coordinate on line
-                self.x = this_animation["interpolation_x"](
-                    start_coordinate[1],  
-                    end_coordinate[1],
-                    self.current_step,
-                    steps,
-                    self.x,
-                    this_animation["interpolation_x_arg_a"]
-                )
+                self.x = interpolation_x.next()
 
                 # Interpolate Y coordinate on line
-                self.y = this_animation["interpolation_y"](
-                    start_coordinate[0],  
-                    end_coordinate[0],
-                    self.current_step,
-                    steps,
-                    self.y,
-                    this_animation["interpolation_y_arg_a"]
-                )
+                self.y = interpolation_y.next()
             
             # # Offset modules
 
@@ -548,13 +529,10 @@ class Configure:
             vis_type: str,
             vis_mode: str,
             width: int, height: int,
-            minimum_bar_size: Union[float, int],
+            minimum_bar_size: Number,
             activation_function,
-            activation_function_arg_a: Union[float, int],
+            activation_function_arg_a: Number,
             fourier_interpolation_function,
-            fourier_interpolation_activation: str,
-            fourier_interpolation_arg_a: Union[float, int],
-            fourier_interpolation_steps: int,
             pre_fft_smoothing: int,
             pos_fft_smoothing: int,
             subdivide: int
@@ -577,9 +555,6 @@ class Configure:
                         "fourier": {
                             "interpolation": {
                                 "function": fourier_interpolation_function,
-                                "activation": fourier_interpolation_activation,
-                                "arg_a": fourier_interpolation_arg_a,
-                                "steps": fourier_interpolation_steps
                             },
                             "fitfourier": {
                                 "pre_fft_smoothing": pre_fft_smoothing,
@@ -597,7 +572,6 @@ class Configure:
             keep_center: bool,
             interpolation,
             activation: str,
-            smooth: Union[float, int]
         ) -> None:
 
         self.add_module({
@@ -605,13 +579,12 @@ class Configure:
                 "keep_center": True,
                 "interpolation": interpolation,
                 "activation": activation,
-                "arg_a": smooth,
             }
         })
     
     # Add vignetting module with minimum values
     def add_module_vignetting(self,
-            minimum: Union[float, int],
+            minimum: Number,
             activation: str,
             center_function_x,
             center_function_y,
@@ -642,7 +615,7 @@ class Configure:
             activation: bool=None,
             center_function_x=None,
             center_function_y=None,
-            start_value: Union[float, int]=900
+            start_value: Number=900
         ) -> None:
 
         intensities = {
@@ -669,46 +642,50 @@ class Configure:
 
     # Add a visualizer module
     def simple_add_visualizer_circle(self,
-            minimum_bar_size: Union[float, int],
-            width: Union[float, int],
-            height: Union[float, int],
+            minimum_bar_size: Number,
+            width: Number,
+            height: Number,
             mode: str="symetric",
-            responsiveness: Union[float, int]=0.25,
+            responsiveness: Number=0.25,
             pre_fft_smoothing: int=2,
             pos_fft_smoothing: int=0,
             subdivide:int=2
         ) -> None:
 
         self.add_module_visualizer(
-            vis_type="circle", vis_mode=mode,
-            width=width, height=height,
-            minimum_bar_size=minimum_bar_size,
-            activation_function=copy.deepcopy(self.object.functions.sigmoid),
-            activation_function_arg_a=10,
-            fourier_interpolation_function=copy.deepcopy(self.object.interpolation.remaining_approach),
-            fourier_interpolation_activation="X",
-            fourier_interpolation_arg_a=responsiveness,
-            fourier_interpolation_steps=math.inf,
-            pre_fft_smoothing=pre_fft_smoothing,
-            pos_fft_smoothing=pos_fft_smoothing,
-            subdivide=subdivide
+            vis_type = "circle", vis_mode = mode,
+            width = width, height = height,
+            minimum_bar_size = minimum_bar_size,
+            activation_function = copy.deepcopy(self.object.functions.sigmoid),
+            fourier_interpolation_function = MMVInterpolation({
+                "function": "sigmoid",
+                "smooth": responsiveness,
+            }),
+            pre_fft_smoothing = pre_fft_smoothing,
+            pos_fft_smoothing = pos_fft_smoothing,
+            subdivide = subdivide
+
+            
         )
     
     # Add a shake modifier on the pathing
     def simple_add_path_modifier_shake(self,
-            shake_max_distance: Union[float, int],
-            x_smoothness: Union[float, int]=0.01,
-            y_smoothness: Union[float, int]=0.02
+            shake_max_distance: Number,
+            x_smoothness: Number=0.01,
+            y_smoothness: Number=0.02
         ) -> None:
 
         self.object.path[self.animation_index]["position"].append(
             Shake({
-                "interpolation_x": copy.deepcopy(self.object.interpolation.remaining_approach),
-                "interpolation_y": copy.deepcopy(self.object.interpolation.remaining_approach),
-                "x_steps": "end_interpolation", "y_steps": "end_interpolation",
+                "interpolation_x": MMVInterpolation({
+                    "function": "remaining_approach",
+                    "aggressive": x_smoothness,
+                }),
+                "interpolation_y": MMVInterpolation({
+                    "function": "remaining_approach",
+                    "aggressive": y_smoothness,
+                }),
                 "distance": shake_max_distance,
-                "arg_a": x_smoothness,
-                "arg_b": y_smoothness,
             })
         )
     
@@ -755,7 +732,7 @@ class Configure:
     # Add simple linear resize based on an activation function
     def simple_add_linear_resize(self,
             intensity: str="medium",
-            smooth: Union[float, int]=0.08,
+            smooth: Number=0.08,
             activation: bool=None
         ) -> None:
 
@@ -769,16 +746,18 @@ class Configure:
             raise RuntimeError("Unhandled resize intensity [%s]" % intensity)
 
         self.add_module_resize(
-            keep_center=True,
-            interpolation=copy.deepcopy(self.object.interpolation.remaining_approach),
+            keep_center = True,
+            interpolation = MMVInterpolation({
+                "function": "remaining_approach",
+                "aggressive": smooth,
+            }),
             activation=intensities[intensity],
-            smooth=smooth
         )
     
     # Add simple swing rotation, go back and forth
     def simple_add_swing_rotation(self,
-            max_angle: Union[float, int]=6,
-            smooth: Union[float, int]=100
+            max_angle: Number=6,
+            smooth: Number=100
         ) -> None:
 
         self.add_module_rotate( SineSwing(max_angle, smooth) )

@@ -62,11 +62,11 @@ class Shake:
         # Get config
         self.interpolation_x = config["interpolation_x"]
         self.interpolation_y = config["interpolation_y"]
+
         self.distance = config["distance"]
-        self.x_steps = config["x_steps"]
-        self.y_steps = config["y_steps"]
-        self.arg_a = config["arg_a"]
-        self.arg_b = config["arg_b"]
+
+        self.interpolation_x.total_steps = config.get("x_steps")
+        self.interpolation_y.total_steps = config.get("y_steps")
 
         # Start at the center point
         self.x = 0
@@ -75,10 +75,6 @@ class Shake:
         # Where we're going to interpolate next
         self.towards_x = 0
         self.towards_y = 0
-
-        # Count of steps on each axis
-        self.current_x_step = 0
-        self.current_y_step = 0
 
         # Get a next random point as we're starting on (0, 0)
         self.next_random_point(who="both")
@@ -93,6 +89,12 @@ class Shake:
         elif who == "both":
             self.next_random_point("x")
             self.next_random_point("y")
+        
+        self.interpolation_x.target_value = self.towards_x
+        self.interpolation_y.target_value = self.towards_y
+
+        self.interpolation_x.current_value = self.x
+        self.interpolation_y.current_value = self.y
     
     # Next step of this X and Y towards the current random point
     # @who: "x", "y" or "both"
@@ -105,68 +107,23 @@ class Shake:
         # X axis
         if who == "x":
 
-            if isinstance(self.current_x_step, int):
-                self.current_x_step += 1
-
-            if self.x_steps == "end_interpolation":
-                # If X is within two pixels of the target, end interpolation
-                if abs(self.x - self.towards_x) < 2:
-                    self.x = self.towards_x
-                    self.next_random_point("x")
-                    self.current_x_step = 0
-                    return
-            else:
-                if self.current_x_step == self.x_steps + 1:
-                    self.next_random_point("x")
-                    self.current_x_step = 0
-                    return
-
             # Calculate next interpolation
-            self.x = round(
-                self.interpolation_x(
-                    self.x,
-                    self.towards_x,
-                    self.current_x_step,
-                    self.x_steps,
-                    self.x,
-                    self.arg_a,
-                    self.arg_b
-                ),
-                2
-            )
+            self.x = round( self.interpolation_x.next(), 2 )
+
+            if self.interpolation_x.finished:
+                self.next_random_point("x")
+                self.interpolation_x.finished = False
 
         # Y axis
         if who == "y":
-            
-            if isinstance(self.current_y_step, int):
-                self.current_y_step += 1
-
-            if self.y_steps == "end_interpolation":
-                # If Y is within two pixels of the target, end interpolation
-                if abs(self.y - self.towards_y) < 2:
-                    self.y = self.towards_y
-                    self.next_random_point("y")
-                    self.current_y_step = 0
-                    return
-            else:
-                if self.current_y_step == self.y_steps + 1:
-                    self.next_random_point("y")
-                    self.current_y_step = 0
-                    return
 
             # Calculate next interpolation
-            self.y = round(
-                self.interpolation_y(
-                    self.y,
-                    self.towards_y,
-                    self.current_y_step,
-                    self.y_steps,
-                    self.y,
-                    self.arg_a,
-                    self.arg_b
-                ),
-                2
-            )
+            self.y = round( self.interpolation_y.next(), 2 )
+
+            if self.interpolation_y.finished:
+                self.next_random_point("y")
+                self.interpolation_y.finished = False
+
 
 # Swing back and forth in the lines of a sine wave
 class SineSwing:

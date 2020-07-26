@@ -70,7 +70,9 @@ class MMVAnimation:
 
             # Object is not null, add it to the said layer
             if not new_object == None:
-                self.content[new["layer"]].append(new_object)
+                layer = new["layer"]
+                self.mklayers_until(layer)
+                self.content[layer].append(new_object)
 
         # Dictionary of layers and item indexes on that layer to delete
         items_to_delete = {}

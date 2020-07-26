@@ -19,11 +19,12 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.mmv_modifiers import *
 from mmv.common.cmn_interpolation import Interpolation
+from mmv.mmv_interpolation import MMVInterpolation
 from mmv.mmv_visualizer import MMVVisualizer
 from mmv.common.cmn_utils import Utils
 from mmv.mmv_image import MMVImage
+from mmv.mmv_modifiers import *
 import random
 import copy
 import math
@@ -89,13 +90,17 @@ class MMVParticleGenerator():
         y3 = y2 + random.randint(-vertical_randomness_min, -vertical_randomness_max)
 
         particle_shake = Shake({
-            "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
-            "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
-            "x_steps": "end_interpolation",
-            "y_steps": "end_interpolation",
+            "interpolation_x": MMVInterpolation({
+                "function": "remaining_approach",
+                "aggressive": 0.01,
+                "start": 0,
+            }),
+            "interpolation_y": MMVInterpolation({
+                "function": "remaining_approach",
+                "aggressive": 0.04,
+                "start": 0,
+            }),
             "distance": 18,
-            "arg_a": 0.01,
-            "arg_b": 0.04,
         })
 
         fast = 0.05
@@ -110,20 +115,23 @@ class MMVParticleGenerator():
                 ),
                 particle_shake
             ],
-            "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
-            "interpolation_x_arg_a": fast,
-            "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
-            "interpolation_y_arg_a": fast,
+            "interpolation_x": MMVInterpolation({
+                "function": "remaining_approach",
+                "aggressive": 0.04,
+            }),
+            "interpolation_y": MMVInterpolation({
+                "function": "remaining_approach",
+                "aggressive": 0.03,
+            }),
             "steps": this_steps,
             "modules": {
                 "fade": {
-                    "interpolation": copy.deepcopy(self.interpolation.linear),
-                    "arg_a": None,
-                    "object": Fade(
-                        start_percentage=0,
-                        end_percentage=fade_intensity,
-                        finish_steps=50,
-                    )
+                    "interpolation": MMVInterpolation({
+                        "function": "linear",
+                        "total_steps": 50,
+                        "start": 0,
+                        "end": fade_intensity
+                    })
                 }
             }
             
@@ -144,13 +152,12 @@ class MMVParticleGenerator():
             "steps": this_steps,
             "modules": {
                 "fade": {
-                    "interpolation": copy.deepcopy(self.interpolation.linear),
-                    "arg_a": None,
-                    "object": Fade(
-                        start_percentage=fade_intensity,
-                        end_percentage=0,
-                        finish_steps=this_steps,
-                    )
+                    "interpolation": MMVInterpolation({
+                        "function": "linear",
+                        "total_steps": this_steps,
+                        "start": fade_intensity,
+                        "end": 0
+                    })
                 }
             }
         }
