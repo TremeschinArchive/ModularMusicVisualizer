@@ -103,7 +103,7 @@ background.configure.simple_add_path_modifier_shake(shake)
 background.configure.simple_add_linear_blur(intensity="medium")
 
 # Resize the background when the average audio amplitude increases
-background.configure.simple_add_linear_resize(intensity="low")
+background.configure.simple_add_scalar_resize(intensity="low")
 
 # Add the backround object to be generated
 # The layers are a ascending order of blitted items, 0 is first, 1 is after zero
@@ -130,7 +130,7 @@ logo.configure.add_path_point(
     (processing.height // 2) - (logo_size/2),
 )
 
-logo.configure.simple_add_linear_resize(intensity="high")
+logo.configure.simple_add_scalar_resize(intensity="high")
 
 # We can add rotation to the object
 logo.configure.simple_add_swing_rotation()
@@ -158,7 +158,7 @@ visualizer.configure.add_path_point(
 )
 
 # visualizer.configure.simple_add_linear_blur(intensity="high")
-visualizer.configure.simple_add_linear_resize(
+visualizer.configure.simple_add_scalar_resize(
     intensity="custom",
     activation="1+5*X"  # A bit more than the high setting
 )

@@ -172,7 +172,6 @@ class MMVImageConfigure:
             width: int, height: int,
             minimum_bar_size: Number,
             activation_function,
-            activation_function_arg_a: Number,
             fourier_interpolation_function,
             pre_fft_smoothing: int,
             pos_fft_smoothing: int,
@@ -191,7 +190,6 @@ class MMVImageConfigure:
                         "minimum_bar_size": minimum_bar_size,
                         "activation": {
                             "function": activation_function,
-                            "arg_a": activation_function_arg_a,
                         },
                         "fourier": {
                             "interpolation": {
@@ -213,13 +211,17 @@ class MMVImageConfigure:
             keep_center: bool,
             interpolation,
             activation: str,
+            start_value: Number=1,
         ) -> None:
 
         self.add_module({
             "resize": {
+                "object": MMVModifierScalarResize(
+                    activation = activation,
+                    interpolation = interpolation,
+                    start_value = start_value
+                ),
                 "keep_center": True,
-                "interpolation": interpolation,
-                "activation": activation,
             }
         })
     
@@ -240,9 +242,11 @@ class MMVImageConfigure:
                     center_function_x = center_function_x,
                     center_function_y = center_function_y,
                     start_value=start_value,
+                    interpolation = MMVInterpolation({
+                        "function": "remaining_approach",
+                        "aggressive": 0.09,
+                    }),
                 ),
-                "interpolation": copy.deepcopy(self.object.interpolation.remaining_approach),
-                "arg_a": 0.09,
             },
         })
 
@@ -297,7 +301,7 @@ class MMVImageConfigure:
             vis_type = "circle", vis_mode = mode,
             width = width, height = height,
             minimum_bar_size = minimum_bar_size,
-            activation_function = copy.deepcopy(self.object.functions.sigmoid),
+            activation_function = self.object.functions.sigmoid,
             fourier_interpolation_function = MMVInterpolation({
                 "function": "sigmoid",
                 "smooth": responsiveness,
@@ -305,8 +309,6 @@ class MMVImageConfigure:
             pre_fft_smoothing = pre_fft_smoothing,
             pos_fft_smoothing = pos_fft_smoothing,
             subdivide = subdivide
-
-            
         )
     
     # Add a shake modifier on the pathing
@@ -371,7 +373,7 @@ class MMVImageConfigure:
         )
     
     # Add simple linear resize based on an activation function
-    def simple_add_linear_resize(self,
+    def simple_add_scalar_resize(self,
             intensity: str="medium",
             smooth: Number=0.08,
             activation: bool=None

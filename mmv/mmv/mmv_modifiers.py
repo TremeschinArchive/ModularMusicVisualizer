@@ -260,25 +260,59 @@ class MMVModifierVignetting:
             activation: str,
             center_function_x,
             center_function_y,
+            interpolation,
             start_value: Number=0
         ) -> None:
 
-        self.value = start_value
         self.minimum = minimum
         self.activation = activation
-        self.value = 0
         self.center_function_x = center_function_x
         self.center_function_y = center_function_y
         self.center_x = 0
         self.center_y = 0
+        self.interpolation = interpolation
+        self.interpolation.start_value = start_value
+        self.value = 0
         
-    def calculate_towards(self, value: Number) -> None:
+    def next(self, value: Number) -> None:
+
+        value = eval( self.activation.replace("X", str(value)) )
+
         if value < self.minimum:
             self.towards = self.minimum
         else:
             self.towards = value
+        
+        self.interpolation.target_value = self.towards
+        self.interpolation.next()
+        self.value = self.interpolation.current_value
+
+    def get_value(self) -> Number:
+        return self.value
 
     def get_center(self) -> None:
         self.center_x = self.center_function_x.next()
         self.center_y = self.center_function_y.next()
-    
+
+
+class MMVModifierScalarResize:
+    def __init__(self,
+            activation: str,
+            interpolation,
+            start_value: Number=1,
+        ) -> None:
+
+        self.activation = activation
+        self.interpolation = interpolation
+        self.interpolation.start_value = start_value
+
+    def next(self, value: Number) -> None:
+
+        towards = eval( self.activation.replace("X", str(value)) )
+
+        self.interpolation.target_value = towards
+        self.interpolation.next()
+        self.value = self.interpolation.current_value
+
+    def get_value(self) -> Number:
+        return self.value

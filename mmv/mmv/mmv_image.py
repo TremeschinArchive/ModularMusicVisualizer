@@ -193,19 +193,11 @@ class MMVImage:
 
             if "resize" in modules:
                 this_module = modules["resize"]
-                
-                interpolation = this_module["interpolation"]
+                resize = this_module["object"]
 
-                interpolation.set_target(
-                    eval( this_module["activation"].replace(
-                            "X", str(fftinfo["average_value"])
-                        )
-                    )
-                )
-
-                interpolation.next()
-
-                self.size = interpolation.current_value
+                # Where the vignetting intensity is pointing to according to our 
+                resize.next(fftinfo["average_value"])
+                self.size = resize.get_value()
 
                 if self.context.multiprocessed:
                     self.image.pending["resize"] = [self.size]
@@ -265,38 +257,13 @@ class MMVImage:
             # Apply vignetting
             if "vignetting" in modules:
 
-                # The module we're working with
                 this_module = modules["vignetting"]
-
-                # TODO: needed?
-                # Limit the average
-                average = fftinfo["average_value"]
-
-                if average > 1:
-                    average = 1
-                if average < -0.9:
-                    average = -0.9
-
                 vignetting = this_module["object"]
 
                 # Where the vignetting intensity is pointing to according to our 
-                vignetting.calculate_towards(
-                    eval( vignetting.activation.replace("X", str(average)) )
-                )
-
-                # Interpolate to a new vignetting value
-                next_vignetting = this_module["interpolation"](
-                    vignetting.value,
-                    vignetting.towards,
-                    self.current_step,
-                    steps,
-                    vignetting.value,
-                    this_module["arg_a"]
-                )
-
-                vignetting.value = next_vignetting
-
+                vignetting.next(fftinfo["average_value"])
                 vignetting.get_center()
+                next_vignetting = vignetting.get_value()
 
                 # Apply the new vignetting effect on the center of the image
                 if self.context.multiprocessed:
