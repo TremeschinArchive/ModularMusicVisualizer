@@ -40,22 +40,30 @@ class ModifierMode(Enum):
 # original_value: N-dimentional list or original values of the object
 # original_offset: N-dimentional list or original offset values of the object
 # modifier_value: N-dimentional list of the modifier values
-def return_by_mode(mode, original_value: list, original_offset: list, modifier_value: list):
+def return_by_mode(mode, original_value: list, original_offset: list, modifier_value: list) -> list:
+    
+    # Override object's original value with modifier value and reset offset
     if mode == ModifierMode.OVERRIDE_VALUE:
         return [
             modifier_value,
             [0] * len(modifier_value),
         ]
-    if mode == ModifierMode.OVERRIDE_VALUE_KEEP_OFFSET_VALUE:
+    
+    # Override object's original value but keep original offset
+    elif mode == ModifierMode.OVERRIDE_VALUE_KEEP_OFFSET_VALUE:
         return [
             modifier_value,
             original_offset,
         ]
+
+    # Add to object's original value, keep offset
     elif mode == ModifierMode.ADD_TO_VALUE:
         return [
             [a + b for a, b in zip(original_value, modifier_value)],
             original_offset
         ]
+    
+    # Keeps object original value, add to offset
     elif mode == ModifierMode.OFFSET_VALUE:
         return [
             original_value,
