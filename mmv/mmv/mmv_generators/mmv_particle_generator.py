@@ -89,7 +89,7 @@ class MMVParticleGenerator():
         x3 = x2 + random.randint(-horizontal_randomness, horizontal_randomness)
         y3 = y2 + random.randint(-vertical_randomness_min, -vertical_randomness_max)
 
-        particle_shake = Shake(
+        particle_shake = MMVModifierShake(
             interpolation_x = MMVInterpolation({
                 "function": "remaining_approach",
                 "aggressive": 0.01,
@@ -209,7 +209,7 @@ class MMVParticleGenerator():
         x2 = x1 + random.randint(-half_screen_x, half_screen_x)
         y2 = y1 + random.randint(-half_screen_y, half_screen_y)
 
-        particle_shake = Shake({
+        particle_shake = MMVModifierShake({
             "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
             "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
             "x_steps": "end_interpolation",

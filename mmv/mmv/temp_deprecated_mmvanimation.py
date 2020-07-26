@@ -4,7 +4,7 @@
         temp.path[0] = {
             "position": [
                 Point(-shake, -shake),
-                Shake({
+                MMVModifierShake({
                     "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
                     "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",
@@ -47,7 +47,7 @@
         temp.path[0] = {
             "position": [
                 Point(-shake, -shake),
-                Shake({
+                MMVModifierShake({
                     "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
                     "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",
@@ -85,7 +85,7 @@
         temp.path[0] = {
             "position": [
                 Point(-shake, -shake),
-                Shake({
+                MMVModifierShake({
                     "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
                     "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",
@@ -117,7 +117,7 @@
         temp.path[0] = {
             "position": [
                 Point(-shake1, -shake1),
-                Shake({
+                MMVModifierShake({
                     "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
                     "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",
@@ -156,7 +156,7 @@
         temp2.path[0] = {
             "position": [
                 Point(-shake2, -shake2),
-                Shake({
+                MMVModifierShake({
                     "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
                     "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",
@@ -202,7 +202,7 @@
                     self.context.width // 2 - (self.logo_size/2),
                     self.context.height // 2 - (self.logo_size/2)
                 ),
-                Shake({
+                MMVModifierShake({
                     "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
                     "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",
@@ -250,7 +250,7 @@
                     self.context.width // 2 - (visualizer_size/2),
                     self.context.height // 2 - (visualizer_size/2)
                 ),
-                Shake({
+                MMVModifierShake({
                     "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
                     "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",

@@ -128,7 +128,7 @@ class VelocityVector:
         self.x = x
         self.y = y
 
-class Shake:
+class MMVModifierShake:
     # @config: dict
     #    @"interpolation_$": Interpolation function on that $ axis
     #    @"arg_$": Interpolation argument letter $, see Interpolation class

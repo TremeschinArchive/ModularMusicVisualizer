@@ -159,7 +159,7 @@ class MMVImage:
                 shake = 0
 
                 for position in positions:
-                    if self.utils.is_matching_type([position], [Shake]):
+                    if self.utils.is_matching_type([position], [MMVModifierShake]):
                         shake = position.distance
 
                 width = self.context.width + (2*shake)
@@ -344,7 +344,7 @@ class MMVImage:
             # # Offset modules
 
             # Get next shake offset value
-            if self.utils.is_matching_type([modifier], [Shake]):
+            if self.utils.is_matching_type([modifier], [MMVModifierShake]):
                 [self.x, self.y], self.offset = modifier.next(*argument)
 
     # Blit this item on the canvas
@@ -664,7 +664,7 @@ class Configure:
         ) -> None:
 
         self.object.animation[self.animation_index]["position"]["path"].append(
-            Shake({
+            MMVModifierShake({
                 "interpolation_x": MMVInterpolation({
                     "function": "remaining_approach",
                     "aggressive": x_smoothness,
