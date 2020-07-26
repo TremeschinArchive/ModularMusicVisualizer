@@ -206,71 +206,84 @@ class MMVParticleGenerator():
         x1 = half_screen_x
         y1 = half_screen_y
 
-        x2 = x1 + random.randint(-half_screen_x, half_screen_x)
-        y2 = y1 + random.randint(-half_screen_y, half_screen_y)
+        x2 = x1 + random.randint(-half_screen_x*2, half_screen_x*2)
+        y2 = y1 + random.randint(-half_screen_y*2, half_screen_y*2)
 
-        particle_shake = MMVModifierShake({
-            "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
-            "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
-            "x_steps": "end_interpolation",
-            "y_steps": "end_interpolation",
-            "distance": 18,
-            "arg_a": 0.01,
-            "arg_b": 0.04,
-        })
+        particle_shake = MMVModifierShake(
+            interpolation_x = MMVInterpolation({
+                "function": "remaining_approach",
+                "aggressive": 0.01,
+                "start": 0,
+            }),
+            interpolation_y = MMVInterpolation({
+                "function": "remaining_approach",
+                "aggressive": 0.04,
+                "start": 0,
+            }),
+            distance = 18,
+            mode = ModifierMode.OFFSET_VALUE,
+        )
 
         fast = 0.05
         fade_intensity = random.uniform(0.1, 0.7)
 
+        this_steps = 2
+
+        particle.animation[0] = {
+            "position": {
+                "path": [
+                    MMVModifierPoint(
+                        x = x1, y = y1,
+                        mode = ModifierMode.OVERRIDE_VALUE
+                    )
+                ],
+            },
+            "animation": {
+                "steps": this_steps,
+            },
+            "modules": {
+                "fade": {
+                    "interpolation": MMVModifierConstant(0)
+                }
+            }
+        }
+
         this_steps = random.randint(50, 100)
-        particle.path[0] = {
-            "position": [
-                MMVModifierLine(
-                    (x1, y1),
-                    (x2, y2),
-                ),
-                particle_shake
-            ],
-            "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
-            "interpolation_x_arg_a": fast,
-            "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
-            "interpolation_y_arg_a": fast,
-            "steps": this_steps,
+
+        particle.animation[0] = {
+            "position": {
+                "path": [
+                    MMVModifierLine(
+                        start = (x1, y1),
+                        end = (x2, y2),
+                        interpolation_x = MMVInterpolation({
+                            "function": "remaining_approach",
+                            "aggressive": fast,
+                        }),
+                        interpolation_y = MMVInterpolation({
+                            "function": "remaining_approach",
+                            "aggressive": fast,
+                        }),
+                        mode = ModifierMode.OVERRIDE_VALUE,
+                    ),
+                    particle_shake
+                ],
+            },
+            "animation": {
+                "steps": this_steps,
+            },
             "modules": {
                 "fade": {
-                    "interpolation": copy.deepcopy(self.interpolation.linear),
-                    "arg_a": None,
-                    "object": MMVModifierFade(
-                        start_percentage=0,
-                        end_percentage=fade_intensity,
-                        finish_steps=50,
-                    )
-                }
-            }
-            
-        }
-        this_steps = random.randint(150, 200)
-        particle.path[1] = {
-            "position": [
-                MMVModifierPoint(x2, y2)
-            ],
-            "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
-            "interpolation_x_arg_a": fast,
-            "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
-            "interpolation_y_arg_a": fast,
-            "steps": this_steps,
-            "modules": {
-                "fade": {
-                    "interpolation": copy.deepcopy(self.interpolation.linear),
-                    "arg_a": None,
-                    "object": MMVModifierFade(
-                        start_percentage=fade_intensity,
-                        end_percentage=0,
-                        finish_steps=this_steps,
-                    )
+                    "interpolation": MMVInterpolation({
+                        "function": "linear",
+                        "total_steps": 30,
+                        "start": 0,
+                        "end": fade_intensity
+                    })
                 }
             }
         }
+        
 
         particle.image.resize_by_ratio(
             random.uniform(0.1, 0.3),

@@ -264,7 +264,6 @@ class MMVImage:
                 amount = this_module["interpolation"].next()
             
                 amount = round(amount, self.ROUND)
-                print("trans", amount)
 
                 if self.context.multiprocessed:
                     self.image.pending["transparency"] = [amount]
@@ -664,17 +663,17 @@ class Configure:
         ) -> None:
 
         self.object.animation[self.animation_index]["position"]["path"].append(
-            MMVModifierShake({
-                "interpolation_x": MMVInterpolation({
+            MMVModifierShake(
+                interpolation_x = MMVInterpolation({
                     "function": "remaining_approach",
                     "aggressive": x_smoothness,
                 }),
-                "interpolation_y": MMVInterpolation({
+                interpolation_y = MMVInterpolation({
                     "function": "remaining_approach",
                     "aggressive": y_smoothness,
                 }),
-                "distance": shake_max_distance,
-            })
+                distance = shake_max_distance,
+            )
         )
     
     # Blur the object based on an activation function
