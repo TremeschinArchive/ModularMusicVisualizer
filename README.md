@@ -16,6 +16,8 @@ _The DAW is Ardour 6.0_
 
 [Unlisted video of old version of MMV](https://youtu.be/BhpLwaR1Oj8)
 
+# Will be reorganizing and moving a lot of code, development happening on master-next branch!!
+
 # Idea
 
 So I am a Free and Open Source music producer hobbyist that also happens to be a code hobbyist and at some point it's inevitable I'd be releasing my tracks to the internet and create some project to make the world a better place.
