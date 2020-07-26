@@ -342,8 +342,8 @@ class MMVImage:
                 interpolation_x = this_animation["interpolation_x"]
                 interpolation_y = this_animation["interpolation_y"]
 
-                interpolation_x.init(start_coordinate[0], end_coordinate[1])
-                interpolation_y.init(start_coordinate[0], end_coordinate[1])
+                interpolation_x.init(start_coordinate[1], end_coordinate[1])
+                interpolation_y.init(start_coordinate[0], end_coordinate[0])
 
                 # Interpolate X coordinate on line
                 self.x = interpolation_x.next()

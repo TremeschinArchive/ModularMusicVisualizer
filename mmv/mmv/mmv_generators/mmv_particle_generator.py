@@ -117,11 +117,11 @@ class MMVParticleGenerator():
             ],
             "interpolation_x": MMVInterpolation({
                 "function": "remaining_approach",
-                "aggressive": 0.04,
+                "aggressive": fast,
             }),
             "interpolation_y": MMVInterpolation({
                 "function": "remaining_approach",
-                "aggressive": 0.03,
+                "aggressive": fast,
             }),
             "steps": this_steps,
             "modules": {
@@ -145,10 +145,14 @@ class MMVParticleGenerator():
                 ),
                 particle_shake
             ],
-            "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
-            "interpolation_x_arg_a": fast,
-            "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
-            "interpolation_y_arg_a": fast,
+            "interpolation_x": MMVInterpolation({
+                "function": "remaining_approach",
+                "aggressive": fast,
+            }),
+            "interpolation_y": MMVInterpolation({
+                "function": "remaining_approach",
+                "aggressive": fast,
+            }),
             "steps": this_steps,
             "modules": {
                 "fade": {
