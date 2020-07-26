@@ -149,6 +149,8 @@ class MMVModifierShake:
         self.mode = mode
 
         # Start at the center point
+        self.interpolation_x.start_value = 0
+        self.interpolation_y.start_value = 0
         self.x = 0
         self.y = 0
 

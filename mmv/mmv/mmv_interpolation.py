@@ -79,6 +79,9 @@ class MMVInterpolation:
         self.start_value = start_value
         self.target_value = target_value
 
+    def set_target(self, value: Number) -> None:
+        self.target_value = value
+
     def next(self) -> Number:
 
         self.current_value = self.next_interpolation()

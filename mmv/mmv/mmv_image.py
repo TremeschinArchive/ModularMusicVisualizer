@@ -180,7 +180,6 @@ class MMVImage:
                     )
 
             if "rotate" in modules:
-
                 this_module = modules["rotate"]
                 rotate = this_module["object"]
 
@@ -193,26 +192,20 @@ class MMVImage:
                     self.image.rotate(amount)
 
             if "resize" in modules:
-
-                # "resize": {
-                #     "keep_center": True,
-                #     "interpolation": interpolation,
-                #     "activation": activation,
-                # }
-
                 this_module = modules["resize"]
-        
+                
                 interpolation = this_module["interpolation"]
 
-                activation = eval(
-                    this_module["activation"].replace(
-                        "X", str( fftinfo["average_value"] )
-                ))
+                interpolation.set_target(
+                    eval( this_module["activation"].replace(
+                            "X", str(fftinfo["average_value"])
+                        )
+                    )
+                )
 
-                interpolation.current_value = self.size
-                interpolation.target_value = activation
+                interpolation.next()
 
-                self.size = interpolation.next()
+                self.size = interpolation.current_value
 
                 if self.context.multiprocessed:
                     self.image.pending["resize"] = [self.size]
