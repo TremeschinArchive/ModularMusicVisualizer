@@ -252,7 +252,7 @@ class Fade:
         self.current_step = 0
 
 
-class Vignetting:
+class MMVModifierVignetting:
     def __init__(self,
             minimum: Number,
             activation: str,

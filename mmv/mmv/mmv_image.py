@@ -581,7 +581,7 @@ class Configure:
 
         self.add_module({
             "vignetting": {
-                "object": Vignetting(
+                "object": MMVModifierVignetting(
                     minimum = minimum,
                     activation = activation,
                     center_function_x = center_function_x,
