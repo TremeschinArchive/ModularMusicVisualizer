@@ -271,7 +271,7 @@
                     "arg_a": 0.14,
                 },
                 # "rotate": {
-                #     "object": MMVModifierLinearSwing(10)
+                #     "object": MMVModifierMMVModifierLinearSwing(10)
                 # },
                 # "blur": {
                 #     "activation": "20*X",

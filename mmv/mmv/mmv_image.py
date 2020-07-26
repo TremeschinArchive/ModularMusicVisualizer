@@ -505,7 +505,7 @@ class Configure:
         })
     
     # Add a rotate module with an modifier object with next function
-    def add_module_rotate(self, modifier: Union[MMVModifierSineSwing, LinearSwing]) -> None:
+    def add_module_rotate(self, modifier: Union[MMVModifierSineSwing, MMVModifierLinearSwing]) -> None:
         self.add_module({
             "rotate": {
                 "object": modifier
@@ -752,4 +752,4 @@ class Configure:
     
     # Rotate to one direction continuously
     def simple_add_linear_rotation(self, smooth: int=10) -> None:
-        self.add_module_rotate( LinearSwing(smooth) )
+        self.add_module_rotate( MMVModifierLinearSwing(smooth) )

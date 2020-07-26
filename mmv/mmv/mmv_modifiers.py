@@ -215,7 +215,7 @@ class MMVModifierSineSwing:
 
 
 # Swing to one direction
-class LinearSwing:
+class MMVModifierLinearSwing:
     # @smooth: Add this part of 1 (1/smooth) on each next step to current X
     def __init__(self, smooth: Number) -> None:
         self.smooth = smooth
