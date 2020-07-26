@@ -122,7 +122,7 @@ class MMVParticleGenerator():
                             "function": "remaining_approach",
                             "aggressive": fast,
                         }),
-                        mode = ModifierMode.OVERRIDE_VALUE,
+                        mode = ModifierMode.OVERRIDE_VALUE_RESET_OFFSET,
                     ),
                     particle_shake
                 ],
@@ -157,7 +157,7 @@ class MMVParticleGenerator():
                             "function": "remaining_approach",
                             "aggressive": fast,
                         }),
-                        mode = ModifierMode.OVERRIDE_VALUE,
+                        mode = ModifierMode.OVERRIDE_VALUE_RESET_OFFSET,
                     ),
                     particle_shake
                 ],
@@ -234,7 +234,7 @@ class MMVParticleGenerator():
                 "path": [
                     MMVModifierPoint(
                         x = x1, y = y1,
-                        mode = ModifierMode.OVERRIDE_VALUE
+                        mode = ModifierMode.OVERRIDE_VALUE_RESET_OFFSET
                     )
                 ],
             },
@@ -264,7 +264,7 @@ class MMVParticleGenerator():
                             "function": "remaining_approach",
                             "aggressive": fast,
                         }),
-                        mode = ModifierMode.OVERRIDE_VALUE,
+                        mode = ModifierMode.OVERRIDE_VALUE_RESET_OFFSET,
                     ),
                     particle_shake
                 ],

@@ -32,7 +32,7 @@ import os
 
 # Modes the path modifiers can use
 class ModifierMode(Enum):
-    OVERRIDE_VALUE = 1
+    OVERRIDE_VALUE_RESET_OFFSET = 1
     OVERRIDE_VALUE_KEEP_OFFSET_VALUE = 2
     ADD_TO_VALUE = 3
     OFFSET_VALUE = 4
@@ -43,7 +43,7 @@ class ModifierMode(Enum):
 def return_by_mode(mode, original_value: list, original_offset: list, modifier_value: list) -> list:
     
     # Override object's original value with modifier value and reset offset
-    if mode == ModifierMode.OVERRIDE_VALUE:
+    if mode == ModifierMode.OVERRIDE_VALUE_RESET_OFFSET:
         return [
             modifier_value,
             [0] * len(modifier_value),
@@ -81,7 +81,7 @@ class MMVModifierLine:
             end: list,
             interpolation_x: MMVInterpolation,
             interpolation_y: MMVInterpolation,
-            mode = ModifierMode.OVERRIDE_VALUE,
+            mode = ModifierMode.OVERRIDE_VALUE_KEEP_OFFSET_VALUE,
 
         ) -> None:
 
@@ -111,7 +111,7 @@ class MMVModifierPoint:
     def __init__(self,
             x: Number,
             y: Number,
-            mode = ModifierMode.OVERRIDE_VALUE,
+            mode = ModifierMode.OVERRIDE_VALUE_KEEP_OFFSET_VALUE,
         ) -> None:
 
         self.x = x

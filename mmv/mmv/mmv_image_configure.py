@@ -123,7 +123,7 @@ class MMVImageConfigure:
 
     # Add a Point modifier in the path
     def add_path_point(self, x: Number, y: Number) -> None:
-        self.object.animation[self.animation_index]["position"]["path"].append(MMVModifierPoint(x, y))
+        self.object.animation[self.animation_index]["position"]["path"].append(MMVModifierPoint(y, x))  # Invert y and x because numpy
 
     # TODO: Add path MMVModifierLine
 
