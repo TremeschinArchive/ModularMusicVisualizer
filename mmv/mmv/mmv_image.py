@@ -617,8 +617,8 @@ class Configure:
             sys.exit(-1)
 
         if center == "centered":
-            center_function_x = Constant(self.object.image.width // 2)
-            center_function_y = Constant(self.object.image.height // 2)
+            center_function_x = MMVModifierConstant(self.object.image.width // 2)
+            center_function_y = MMVModifierConstant(self.object.image.height // 2)
 
         self.add_module_vignetting(
             minimum = 450,

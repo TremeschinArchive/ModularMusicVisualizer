@@ -228,7 +228,7 @@ class MMVModifierLinearSwing:
 
 # # Values
 
-class Constant:
+class MMVModifierConstant:
     def __init__(self, value: Number) -> None:
         self.value = value
     
