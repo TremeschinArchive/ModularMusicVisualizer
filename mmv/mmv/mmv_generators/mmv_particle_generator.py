@@ -132,12 +132,14 @@ class MMVParticleGenerator():
             },
             "modules": {
                 "fade": {
-                    "interpolation": MMVInterpolation({
-                        "function": "linear",
-                        "total_steps": 30,
-                        "start": 0,
-                        "end": fade_intensity
-                    })
+                    "object": MMVModifierFade(
+                        interpolation = MMVInterpolation({
+                            "function": "linear",
+                            "total_steps": 30,
+                            "start": fade_intensity,
+                            "end": 0,
+                        })
+                    )
                 }
             }
         }
@@ -167,12 +169,14 @@ class MMVParticleGenerator():
             },
             "modules": {
                 "fade": {
-                    "interpolation": MMVInterpolation({
-                        "function": "linear",
-                        "total_steps": this_steps,
-                        "start": fade_intensity,
-                        "end": 0
-                    })
+                    "object": MMVModifierFade(
+                        interpolation = MMVInterpolation({
+                            "function": "linear",
+                            "total_steps": 30,
+                            "start": fade_intensity,
+                            "end": 0,
+                        })
+                    )
                 }
             }
         }
@@ -243,7 +247,14 @@ class MMVParticleGenerator():
             },
             "modules": {
                 "fade": {
-                    "interpolation": MMVModifierConstant(0)
+                    "object": MMVModifierFade(
+                        interpolation = MMVInterpolation({
+                            "function": "linear",
+                            "total_steps": 30,
+                            "start": 0,
+                            "end": fade_intensity,
+                        })
+                    )
                 }
             }
         }
@@ -274,12 +285,14 @@ class MMVParticleGenerator():
             },
             "modules": {
                 "fade": {
-                    "interpolation": MMVInterpolation({
-                        "function": "linear",
-                        "total_steps": 30,
-                        "start": 0,
-                        "end": fade_intensity
-                    })
+                    "object": MMVModifierFade(
+                        interpolation = MMVInterpolation({
+                            "function": "linear",
+                            "total_steps": 30,
+                            "start": fade_intensity,
+                            "end": 0,
+                        })
+                    )
                 }
             }
         }

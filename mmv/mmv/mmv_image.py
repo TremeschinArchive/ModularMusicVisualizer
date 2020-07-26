@@ -244,15 +244,14 @@ class MMVImage:
             if "fade" in modules:
 
                 this_module = modules["fade"]
+                fade = this_module["object"]
 
-                amount = this_module["interpolation"].next()
-            
-                amount = round(amount, self.ROUND)
-
+                fade.next(fftinfo["average_value"])
+           
                 if self.context.multiprocessed:
-                    self.image.pending["transparency"] = [amount]
+                    self.image.pending["transparency"] = [ fade.get_value() ]
                 else:
-                    self.image.transparency(amount)
+                    self.image.transparency( fade.get_value() )
                     
             # Apply vignetting
             if "vignetting" in modules:

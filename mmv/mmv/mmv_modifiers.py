@@ -239,21 +239,6 @@ class MMVModifierConstant:
 
 # # Effects
 
-class MMVModifierFade:
-    # @start_percentage, end_percentage: Ranges from 0 to 1, 0 being transparent and 1 opaque
-    # @finish_steps: In how many steps to finish the fade
-    def __init__(self,
-            start_percentage: Number,
-            end_percentage: Number,
-            finish_steps: Number
-        ) -> None:
-
-        self.start_percentage = start_percentage
-        self.end_percentage = end_percentage
-        self.finish_steps = finish_steps
-        self.current_step = 0
-
-
 class MMVModifierVignetting:
     def __init__(self,
             minimum: Number,
@@ -311,6 +296,21 @@ class MMVModifierScalarResize:
         towards = eval( self.activation.replace("X", str(value)) )
 
         self.interpolation.target_value = towards
+        self.interpolation.next()
+        self.value = self.interpolation.current_value
+
+    def get_value(self) -> Number:
+        return self.value
+
+
+class MMVModifierFade:
+    def __init__(self,
+            interpolation,
+        ) -> None:
+
+        self.interpolation = interpolation
+
+    def next(self, value: Number) -> None:
         self.interpolation.next()
         self.value = self.interpolation.current_value
 
