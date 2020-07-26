@@ -74,7 +74,7 @@ def return_by_mode(mode, original_value: list, original_offset: list, modifier_v
 
 # Basic
 
-class Line:
+class MMVModifierLine:
     # @start, end: 2d coordinate list [0, 2]
     def __init__(self, 
             start: list,

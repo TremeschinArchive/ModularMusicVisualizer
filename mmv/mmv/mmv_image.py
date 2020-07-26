@@ -337,7 +337,7 @@ class MMVImage:
                 [self.x, self.y], self.offset = modifier.next(*argument)
 
             # Move according to a Line (interpolate current steps)
-            if self.utils.is_matching_type([modifier], [Line]):
+            if self.utils.is_matching_type([modifier], [MMVModifierLine]):
                 # Interpolate and unpack next coordinate
                 [self.x, self.y], self.offset = modifier.next(*argument)
 
@@ -472,7 +472,7 @@ class Configure:
     def add_path_point(self, x: Union[int, float], y: Union[int, float]) -> None:
         self.object.animation[self.animation_index]["position"]["path"].append(Point(x, y))
 
-    # TODO: Add path Line
+    # TODO: Add path MMVModifierLine
 
     # Add a Gaussian Blur module, only need activation
     # Read comment at the beginning of this class

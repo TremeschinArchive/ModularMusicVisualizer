@@ -111,7 +111,7 @@ class MMVParticleGenerator():
         particle.animation[0] = {
             "position": {
                 "path": [
-                    Line(
+                    MMVModifierLine(
                         start = (x1, y1),
                         end = (x2, y2),
                         interpolation_x = MMVInterpolation({
@@ -146,7 +146,7 @@ class MMVParticleGenerator():
         particle.animation[1] = {
             "position": {
                 "path": [
-                    Line(
+                    MMVModifierLine(
                         start = (x2, y2),
                         end = (x3, y3),
                         interpolation_x = MMVInterpolation({
@@ -225,7 +225,7 @@ class MMVParticleGenerator():
         this_steps = random.randint(50, 100)
         particle.path[0] = {
             "position": [
-                Line(
+                MMVModifierLine(
                     (x1, y1),
                     (x2, y2),
                 ),
