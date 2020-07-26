@@ -23,18 +23,26 @@ from mmv.common.cmn_interpolation import Interpolation
 from mmv.common.cmn_functions import Functions
 
 
-class MMVInterpolation():
+class MMVInterpolation:
     def __init__(self, config: dict) -> None:
-        self.interpolation = Interpolation()
+        # Config dictionary
         self.config = config
+
+        # Generic interpolation
+        self.interpolation = Interpolation()
 
         # Internal vars
         self.current_value = None
         self.target_value = None
         self.current_step = None
 
+        self.configure()
+
     def configure(self) -> None:
         if self.config["function"] == "remaining_approach":
             self.interpolation_function = self.interpolation.remaining_approach
         
-    def next(self) -> None:
+    def next(self, **kwargs) -> None:
+        self.interpolation_function(
+            
+        )

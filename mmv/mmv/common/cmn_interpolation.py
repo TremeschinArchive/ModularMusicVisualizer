@@ -20,6 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmv.common.cmn_functions import Functions
+from mmv.common.cmn_types import *
 import random
 
 
@@ -29,26 +30,49 @@ class Interpolation():
         self.functions = Functions()
 
     # Linear, between point A and B based on a current "step" and total steps
-    def linear(self, a, b, current, total, this_coord, arg_a):
-        if current > total:
-            return b
-        part = (b - a) / total
-        walked = part * current
-        return a + walked
+    def linear(self,
+            curret_value: Number,
+            target_value: Number,
+            current_step: Number,
+            total_steps: Number,
+        ) -> Number:
+
+        if current_step > total_steps:
+            return target_value
+            
+        part = (target_value - curret_value) / total_steps
+        walked = part * current_step
+        return curret_value + walked
 
     # "Biased" remaining linear
-    # arg_a is how aggressive it is, 0.05 is smooth, 0.1 is medium, 1 is instant
-    # arg_b is a random decimal that adds to arg_a
-    def remaining_approach(self, a, b, current, total, this_coord, arg_a, arg_b=0):
-        ratio = arg_a
-        if current == 0:
-            return a
-        return this_coord + ( (b - this_coord) * (ratio + random.uniform(0, arg_b)) )
+    # aggressive, 0.05 is smooth, 0.1 is medium, 1 is instant
+    # random is a decimal that adds to aggressive randomly
+    def remaining_approach(self,
+            curret_value: Number,
+            target_value: Number,
+            current_step: Number,
+            this_coord: Number,
+            aggressive: Number,
+            aggressive_randomness: Number=0,
+        ) -> Number:
+
+        # We're at the first step, so start on current value
+        if current_step == 0:
+            return curret_value
+
+        return this_coord + ( (target_value - this_coord) * (aggressive + random.uniform(0, aggressive_randomness)) )
 
     # Sigmoid activation between two points, smoothed out "linear" curver
-    def sigmoid(self, a, b, current, total, this_coord, arg_a):
-        smooth = arg_a
-        distance = (b - a)
+    def sigmoid(self,
+            curret_value: Number,
+            target_value: Number,
+            current_step: Number,
+            total_steps: Number,
+            this_coord: Number,
+            smooth: Number,
+        ) -> Number:
+
+        distance = (target_value - curret_value)
         where = self.functions.proportion(total, 1, current)
         walk = distance*self.functions.sigmoid(where, smooth)
         return a + walk
