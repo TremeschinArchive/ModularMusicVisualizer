@@ -200,7 +200,7 @@ class MMVModifierShake:
         return return_by_mode(self.mode, [x, y], [ox, oy], [self.x, self.y])
 
 # Swing back and forth in the lines of a sine wave
-class SineSwing:
+class MMVModifierSineSwing:
     # @max_value: Maximum amplitute of the sine wave
     # @smooth: Add this part of 1 (1/smooth) on each next step to current X
     def __init__(self, max_value: Number, smooth: Number) -> None:

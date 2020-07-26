@@ -223,7 +223,7 @@
                     "arg_a": 0.07,
                 },
                 "rotate": {
-                    "object": SineSwing(6, 100)
+                    "object": MMVModifierSineSwing(6, 100)
                 }
             }
         }
