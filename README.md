@@ -16,7 +16,7 @@ _The DAW is Ardour 6.0_
 
 [Unlisted video of old version of MMV](https://youtu.be/BhpLwaR1Oj8)
 
-# Will be reorganizing and moving a lot of code, development happening on master-next branch!!
+# Huge reorganization of core code is being worked on, expect instability
 
 # Idea
 
