@@ -21,6 +21,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 # modifier activators
 from mmv.modifier_activators.ma_scalar_resize import *
+from mmv.modifier_activators.ma_gaussian_blur import *
 
 from mmv.mmv_interpolation import MMVInterpolation
 from mmv.mmv_visualizer import MMVVisualizer
@@ -170,8 +171,7 @@ class MMVImageConfigure:
             vis_mode: str,
             width: int, height: int,
             minimum_bar_size: Number,
-            activation_function,
-            fourier_interpolation_function,
+            interpolation,
             pre_fft_smoothing: int,
             pos_fft_smoothing: int,
             subdivide: int
@@ -187,13 +187,8 @@ class MMVImageConfigure:
                         "width": width,
                         "height": height,
                         "minimum_bar_size": minimum_bar_size,
-                        "activation": {
-                            "function": activation_function,
-                        },
                         "fourier": {
-                            "interpolation": {
-                                "function": fourier_interpolation_function,
-                            },
+                            "interpolation": interpolation,
                             "fitfourier": {
                                 "pre_fft_smoothing": pre_fft_smoothing,
                                 "pos_fft_smoothing": pos_fft_smoothing,
@@ -221,10 +216,9 @@ class MMVImageConfigure:
             vis_type = "circle", vis_mode = mode,
             width = width, height = height,
             minimum_bar_size = minimum_bar_size,
-            activation_function = self.object.functions.sigmoid,
-            fourier_interpolation_function = MMVInterpolation({
-                "function": "sigmoid",
-                "smooth": responsiveness,
+            interpolation = MMVInterpolation({
+                "function": "remaining_approach",
+                "aggressive": responsiveness,
             }),
             pre_fft_smoothing = pre_fft_smoothing,
             pos_fft_smoothing = pos_fft_smoothing,
@@ -295,28 +289,48 @@ class MMVImageConfigure:
     
     # Add a Gaussian Blur module, only need activation
     # Read comment at the beginning of this class
-    def add_module_blur(self, activation: str) -> None:
+    def add_module_blur(self,
+            interpolation,
+            interpolation_changer = ma_gaussian_blur_ic_medium,
+            value_changer = ma_gaussian_blur_vc_only_interpolation,
+        ) -> None:
+
         self.add_module({
-            "blur": { "activation": activation }
+            "blur": {
+                "object": MMVModifierGaussianBlur(
+                    interpolation = interpolation,
+                    interpolation_changer = interpolation_changer,
+                    value_changer = value_changer,
+                ) 
+            }
         })
 
     # Blur the object based on an activation function
     def simple_add_linear_blur(self,
             intensity: str="medium",
+            smooth: Number=0.1,
             custom: str=""
         ) -> None:
 
         intensities = {
-            "low": "10*X",
-            "medium": "15*X",
-            "high": "20*X",
+            "low": ma_gaussian_blur_ic_low,
+            "medium": ma_gaussian_blur_ic_medium,
+            "high": ma_gaussian_blur_ic_high,
             "custom": custom
         }
         if not intensity in list(intensities.keys()):
-            print("Unhandled blur intensity [%s]" % intensity)
-            sys.exit(-1)
+            raise RuntimeError("Unhandled blur intensity [%s]" % intensity)
             
-        self.add_module_blur(intensities[intensity])
+        interpolation_changer = intensities[intensity]
+
+        self.add_module_blur(
+            interpolation = MMVInterpolation({
+                "function": "remaining_approach",
+                "aggressive": smooth,
+                "start": 0,
+            }),
+            interpolation_changer = interpolation_changer,
+        )
     
 
     # # # # # [ GLITCH ] # # # # #
@@ -374,7 +388,6 @@ class MMVImageConfigure:
             "resize": {
                 "object": MMVModifierScalarResize(
                     interpolation = interpolation,
-                    start_value = start_value,
                     interpolation_changer = interpolation_changer,
                     value_changer = value_changer,
                 ),
@@ -385,9 +398,10 @@ class MMVImageConfigure:
     # Add simple linear resize based on an activation function
     def simple_add_scalar_resize(self,
             keep_center = True,
-            intensity: str="medium",
-            smooth: Number=0.08,
-            custom = None
+            intensity: str = "medium",
+            smooth: Number = 0.08,
+            start_value: Number = 1,
+            custom: str=""
         ) -> None:
 
         intensities = {
@@ -406,7 +420,7 @@ class MMVImageConfigure:
             interpolation = MMVInterpolation({
                 "function": "remaining_approach",
                 "aggressive": smooth,
-                "start": 1,
+                "start": start_value,
             }),
             interpolation_changer = interpolation_changer,
         )

@@ -280,18 +280,17 @@ class MMVModifierVignetting:
         self.center_y = self.center_function_y.next()
 
 
+
 from mmv.modifier_activators.ma_scalar_resize import *
 
 class MMVModifierScalarResize:
     def __init__(self,
             interpolation: MMVInterpolation,
-            start_value: Number,
             interpolation_changer,
             value_changer,
         ) -> None:
 
         self.interpolation = interpolation
-        self.interpolation.start_value = start_value
         self.interpolation_changer = interpolation_changer
         self.value_changer = value_changer
 
@@ -310,6 +309,7 @@ class MMVModifierScalarResize:
 
     def get_value(self) -> Number:
         return self.value
+
 
 
 from mmv.modifier_activators.ma_fade import *
@@ -331,7 +331,37 @@ class MMVModifierFade:
             interpolation = self.interpolation,
             average_audio_value = average_audio_value,
         )
+        self.interpolation.next()
+        
+        self.value = self.value_changer(
+            interpolation = self.interpolation,
+            average_audio_value = average_audio_value,
+        )
 
+    def get_value(self) -> Number:
+        return self.value
+
+
+
+from mmv.modifier_activators.ma_gaussian_blur import *
+
+class MMVModifierGaussianBlur:
+    def __init__(self,
+            interpolation,
+            interpolation_changer,
+            value_changer,
+        ) -> None:
+
+        self.interpolation = interpolation
+
+        self.interpolation_changer = interpolation_changer
+        self.value_changer = value_changer
+
+    def next(self, average_audio_value: Number) -> None:
+        self.interpolation_changer(
+            interpolation = self.interpolation,
+            average_audio_value = average_audio_value,
+        )
         self.interpolation.next()
         
         self.value = self.value_changer(

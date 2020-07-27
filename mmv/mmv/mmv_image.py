@@ -192,6 +192,7 @@ class MMVImage:
                     self.image.rotate(amount)
 
             if "resize" in modules:
+
                 this_module = modules["resize"]
                 resize = this_module["object"]
 
@@ -200,32 +201,30 @@ class MMVImage:
                 self.size = resize.get_value()
 
                 if self.context.multiprocessed:
-                    self.image.pending["resize"] = [self.size]
-                    offset = self.image.resize_by_ratio(
-                        self.size, get_only_offset=True
-                    )
+                    self.image.pending["resize"] = [ self.size ]
+                    offset = self.image.resize_by_ratio( self.size, get_only_offset=True )
                 else:
-                    offset = self.image.resize_by_ratio(
-                        # If we're going to rotate, resize the rotated frame which is not the original image
-                        self.size, from_current_frame="rotate" in modules
-                    )
+                    # If we're going to rotate, resize the rotated frame which is not the original image 
+                    offset = self.image.resize_by_ratio( self.size, from_current_frame="rotate" in modules )
 
                 if this_module["keep_center"]:
                     self.offset[0] += offset[0]
                     self.offset[1] += offset[1]
 
+            # DONE
             if "blur" in modules:
 
                 this_module = modules["blur"]
+                blur = this_module["object"]
 
-                amount = eval(this_module["activation"].replace("X", str(fftinfo["average_value"])))
-                amount = round(amount, self.ROUND)
+                blur.next(fftinfo["average_value"])
 
                 if self.context.multiprocessed:
-                    self.image.pending["blur"] = [amount]
+                    self.image.pending["blur"] = [ blur.get_value() ]
                 else:
-                    self.image.gaussian_blur(amount)
+                    self.image.gaussian_blur( blur.get_value() )
             
+            # TODO
             if "glitch" in modules:
 
                 this_module = modules["glitch"]

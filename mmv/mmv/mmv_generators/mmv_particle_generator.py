@@ -18,6 +18,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
+# modifier activators
+from mmv.modifier_activators.ma_fade import *
 
 from mmv.common.cmn_interpolation import Interpolation
 from mmv.mmv_interpolation import MMVInterpolation

@@ -1,7 +1,7 @@
 """
 ===============================================================================
 
-Purpose: Activation functions for Resize modifier
+Purpose: Activation functions for Gaussian Blur modifier
 
 ===============================================================================
 
@@ -26,19 +26,19 @@ from mmv.common.cmn_types import *
 
 # "ic" - Interpolation Changer, change the interpolation of the modifier
 
-def ma_scalar_resize_ic_low(interpolation: MMVInterpolation, average_audio_value: Number) -> None:
-    interpolation.target_value = 1 + average_audio_value * 0.5
+def ma_gaussian_blur_ic_low(interpolation: MMVInterpolation, average_audio_value: Number) -> None:
+    interpolation.target_value =average_audio_value * 10
 
 # default
-def ma_scalar_resize_ic_medium(interpolation: MMVInterpolation, average_audio_value: Number) -> None:
-    interpolation.target_value = 1 + average_audio_value * 2.5
+def ma_gaussian_blur_ic_medium(interpolation: MMVInterpolation, average_audio_value: Number) -> None:
+    interpolation.target_value = average_audio_value * 15
 
-def ma_scalar_resize_ic_high(interpolation: MMVInterpolation, average_audio_value: Number) -> None:
-    interpolation.target_value = 1 + average_audio_value * 4
+def ma_gaussian_blur_ic_high(interpolation: MMVInterpolation, average_audio_value: Number) -> None:
+    interpolation.target_value = average_audio_value * 20
 
 
 # "vc" - Value Changer functions, applied after interpolation
 
 # default
-def ma_scalar_resize_vc_only_interpolation(interpolation: MMVInterpolation, average_audio_value: Number) -> Number:
+def ma_gaussian_blur_vc_only_interpolation(interpolation: MMVInterpolation, average_audio_value: Number) -> Number:
     return interpolation.current_value
