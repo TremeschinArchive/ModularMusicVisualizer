@@ -36,6 +36,9 @@ def ma_scalar_resize_ic_medium(interpolation: MMVInterpolation, average_audio_va
 def ma_scalar_resize_ic_high(interpolation: MMVInterpolation, average_audio_value: Number) -> None:
     interpolation.target_value = 1 + average_audio_value * 4
 
+def ma_scalar_resize_ic_high_plus(interpolation: MMVInterpolation, average_audio_value: Number) -> None:
+    interpolation.target_value = 1 + average_audio_value * 4.4
+
 
 # "vc" - Value Changer functions, applied after interpolation
 

@@ -159,8 +159,7 @@ visualizer.configure.add_path_point(
 
 # visualizer.configure.simple_add_linear_blur(intensity="high")
 visualizer.configure.simple_add_scalar_resize(
-    intensity="custom",
-    activation="1+5*X"  # A bit more than the high setting
+    intensity="high-plus", # A bit more than the high setting
 )
 
 # # We can define how much shake we want

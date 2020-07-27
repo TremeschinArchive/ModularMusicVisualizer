@@ -408,6 +408,7 @@ class MMVImageConfigure:
             "low": ma_scalar_resize_ic_low,
             "medium": ma_scalar_resize_ic_medium,
             "high": ma_scalar_resize_ic_high,
+            "high-plus": ma_scalar_resize_ic_high_plus,
             "custom": custom
         }
         if not intensity in list(intensities.keys()):
