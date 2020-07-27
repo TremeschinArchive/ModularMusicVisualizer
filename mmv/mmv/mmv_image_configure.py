@@ -19,6 +19,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+# modifier activators
+from mmv.modifier_activators.ma_scalar_resize import *
+
 from mmv.mmv_interpolation import MMVInterpolation
 from mmv.mmv_visualizer import MMVVisualizer
 from mmv.common.cmn_types import *
@@ -121,33 +124,7 @@ class MMVImageConfigure:
         self.object.animation[self.animation_index]["modules"][module_name] = module[module_name]
     ## Generic add module ##
 
-    # Add a Point modifier in the path
-    def add_path_point(self, x: Number, y: Number) -> None:
-        self.object.animation[self.animation_index]["position"]["path"].append(MMVModifierPoint(y, x))  # Invert y and x because numpy
-
     # TODO: Add path MMVModifierLine
-
-    # Add a Gaussian Blur module, only need activation
-    # Read comment at the beginning of this class
-    def add_module_blur(self, activation: str) -> None:
-        self.add_module({
-            "blur": { "activation": activation }
-        })
-    
-    # Add a glitch module
-    def add_module_glitch(self,
-            activation: str,
-            color_offset: bool=False,
-            scan_lines: bool=False
-        ) -> None:
-
-        self.add_module({
-            "glitch": {
-                "activation": activation,
-                "color_offset": color_offset,
-                "scan_lines": scan_lines,
-            }
-        })
     
     # Add a video module, be sure to match the FPS of both the outpu
     def add_module_video(self, path: str) -> None:
@@ -156,15 +133,37 @@ class MMVImageConfigure:
                 "path": path
             }
         })
+
+    # # # # # [ PATHING ] # # # # # 
+
+    # Add a Point modifier in the path
+    def add_path_point(self, x: Number, y: Number) -> None:
+        self.object.animation[self.animation_index]["position"]["path"].append(MMVModifierPoint(y, x))  # Invert y and x because numpy
+
+    # Add a shake modifier on the pathing
+    def simple_add_path_modifier_shake(self,
+            shake_max_distance: Number,
+            x_smoothness: Number=0.01,
+            y_smoothness: Number=0.02
+        ) -> None:
+
+        self.object.animation[self.animation_index]["position"]["path"].append(
+            MMVModifierShake(
+                interpolation_x = MMVInterpolation({
+                    "function": "remaining_approach",
+                    "aggressive": x_smoothness,
+                }),
+                interpolation_y = MMVInterpolation({
+                    "function": "remaining_approach",
+                    "aggressive": y_smoothness,
+                }),
+                distance = shake_max_distance,
+            )
+        )
     
-    # Add a rotate module with an modifier object with next function
-    def add_module_rotate(self, modifier: Union[MMVModifierSineSwing, MMVModifierLinearSwing]) -> None:
-        self.add_module({
-            "rotate": {
-                "object": modifier
-            }
-        })
-    
+
+    # # # # # [ VISUALIZER ] # # # # # 
+
     # Is this even python?
     def add_module_visualizer(self, 
             vis_type: str,
@@ -206,25 +205,35 @@ class MMVImageConfigure:
             }
         })
     
-    # Add resize by ratio module
-    def add_module_resize(self,
-            keep_center: bool,
-            interpolation,
-            activation: str,
-            start_value: Number=1,
+    # Add a visualizer module
+    def simple_add_visualizer_circle(self,
+            minimum_bar_size: Number,
+            width: Number,
+            height: Number,
+            mode: str="symetric",
+            responsiveness: Number=0.25,
+            pre_fft_smoothing: int=2,
+            pos_fft_smoothing: int=0,
+            subdivide:int=2
         ) -> None:
 
-        self.add_module({
-            "resize": {
-                "object": MMVModifierScalarResize(
-                    activation = activation,
-                    interpolation = interpolation,
-                    start_value = start_value
-                ),
-                "keep_center": True,
-            }
-        })
-    
+        self.add_module_visualizer(
+            vis_type = "circle", vis_mode = mode,
+            width = width, height = height,
+            minimum_bar_size = minimum_bar_size,
+            activation_function = self.object.functions.sigmoid,
+            fourier_interpolation_function = MMVInterpolation({
+                "function": "sigmoid",
+                "smooth": responsiveness,
+            }),
+            pre_fft_smoothing = pre_fft_smoothing,
+            pos_fft_smoothing = pos_fft_smoothing,
+            subdivide = subdivide
+        )
+
+
+    # # # # # [ VIGNETTING ] # # # # #
+
     # Add vignetting module with minimum values
     def add_module_vignetting(self,
             minimum: Number,
@@ -249,9 +258,6 @@ class MMVImageConfigure:
                 ),
             },
         })
-
-
-    # # # # [ Pre defined simple modules ] # # # #
 
     # Just add a vignetting module without much trouble with an intensity
     def simple_add_vignetting(self,
@@ -284,54 +290,16 @@ class MMVImageConfigure:
             center_function_y = center_function_y,
             start_value=start_value,
         )
-
-    # Add a visualizer module
-    def simple_add_visualizer_circle(self,
-            minimum_bar_size: Number,
-            width: Number,
-            height: Number,
-            mode: str="symetric",
-            responsiveness: Number=0.25,
-            pre_fft_smoothing: int=2,
-            pos_fft_smoothing: int=0,
-            subdivide:int=2
-        ) -> None:
-
-        self.add_module_visualizer(
-            vis_type = "circle", vis_mode = mode,
-            width = width, height = height,
-            minimum_bar_size = minimum_bar_size,
-            activation_function = self.object.functions.sigmoid,
-            fourier_interpolation_function = MMVInterpolation({
-                "function": "sigmoid",
-                "smooth": responsiveness,
-            }),
-            pre_fft_smoothing = pre_fft_smoothing,
-            pos_fft_smoothing = pos_fft_smoothing,
-            subdivide = subdivide
-        )
     
-    # Add a shake modifier on the pathing
-    def simple_add_path_modifier_shake(self,
-            shake_max_distance: Number,
-            x_smoothness: Number=0.01,
-            y_smoothness: Number=0.02
-        ) -> None:
-
-        self.object.animation[self.animation_index]["position"]["path"].append(
-            MMVModifierShake(
-                interpolation_x = MMVInterpolation({
-                    "function": "remaining_approach",
-                    "aggressive": x_smoothness,
-                }),
-                interpolation_y = MMVInterpolation({
-                    "function": "remaining_approach",
-                    "aggressive": y_smoothness,
-                }),
-                distance = shake_max_distance,
-            )
-        )
+    # # # # # [ BLUR ] # # # # #
     
+    # Add a Gaussian Blur module, only need activation
+    # Read comment at the beginning of this class
+    def add_module_blur(self, activation: str) -> None:
+        self.add_module({
+            "blur": { "activation": activation }
+        })
+
     # Blur the object based on an activation function
     def simple_add_linear_blur(self,
             intensity: str="medium",
@@ -350,6 +318,24 @@ class MMVImageConfigure:
             
         self.add_module_blur(intensities[intensity])
     
+
+    # # # # # [ GLITCH ] # # # # #
+
+    # Add a glitch module
+    def add_module_glitch(self,
+            activation: str,
+            color_offset: bool=False,
+            scan_lines: bool=False
+        ) -> None:
+
+        self.add_module({
+            "glitch": {
+                "activation": activation,
+                "color_offset": color_offset,
+                "scan_lines": scan_lines,
+            }
+        })
+
     # Add simple glitch effect based on an activation function
     def simple_add_glitch(self,
             intensity: str="medium",
@@ -372,31 +358,69 @@ class MMVImageConfigure:
             scan_lines = scan_lines
         )
     
+
+    # # # # # [ RESIZE ] # # # # #
+    
+    # Add resize by ratio module
+    def add_module_resize(self,
+            keep_center: bool,
+            interpolation,
+            start_value: Number=1,
+            interpolation_changer = ma_scalar_resize_ic_medium,
+            value_changer = ma_scalar_resize_vc_only_interpolation,
+        ) -> None:
+
+        self.add_module({
+            "resize": {
+                "object": MMVModifierScalarResize(
+                    interpolation = interpolation,
+                    start_value = start_value,
+                    interpolation_changer = interpolation_changer,
+                    value_changer = value_changer,
+                ),
+                "keep_center": True,
+            }
+        })
+
     # Add simple linear resize based on an activation function
     def simple_add_scalar_resize(self,
+            keep_center = True,
             intensity: str="medium",
             smooth: Number=0.08,
-            activation: bool=None
+            custom = None
         ) -> None:
 
         intensities = {
-            "low": "1 + 0.5*X",
-            "medium": "1 + 2.5*X",
-            "high": "1 + 4*X",
-            "custom": activation
+            "low": ma_scalar_resize_ic_low,
+            "medium": ma_scalar_resize_ic_medium,
+            "high": ma_scalar_resize_ic_high,
+            "custom": custom
         }
         if not intensity in list(intensities.keys()):
             raise RuntimeError("Unhandled resize intensity [%s]" % intensity)
 
+        interpolation_changer = intensities[intensity]
+
         self.add_module_resize(
-            keep_center = True,
+            keep_center = keep_center,
             interpolation = MMVInterpolation({
                 "function": "remaining_approach",
                 "aggressive": smooth,
                 "start": 1,
             }),
-            activation = intensities[intensity],
+            interpolation_changer = interpolation_changer,
         )
+    
+    
+    # # # # # [ ROTATION ] # # # # #
+
+    # Add a rotate module with an modifier object with next function
+    def add_module_rotate(self, modifier: Union[MMVModifierSineSwing, MMVModifierLinearSwing]) -> None:
+        self.add_module({
+            "rotate": {
+                "object": modifier
+            }
+        })
     
     # Add simple swing rotation, go back and forth
     def simple_add_swing_rotation(self,

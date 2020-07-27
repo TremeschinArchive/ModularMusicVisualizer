@@ -280,44 +280,64 @@ class MMVModifierVignetting:
         self.center_y = self.center_function_y.next()
 
 
+from mmv.modifier_activators.ma_scalar_resize import *
+
 class MMVModifierScalarResize:
     def __init__(self,
-            activation: str,
-            interpolation,
-            start_value: Number=1,
+            interpolation: MMVInterpolation,
+            start_value: Number,
+            interpolation_changer,
+            value_changer,
         ) -> None:
 
-        self.activation = activation
         self.interpolation = interpolation
         self.interpolation.start_value = start_value
+        self.interpolation_changer = interpolation_changer
+        self.value_changer = value_changer
 
-    def next(self, value: Number) -> None:
+    def next(self, average_audio_value: Number) -> None:
+        self.interpolation_changer(
+            interpolation = self.interpolation,
+            average_audio_value = average_audio_value,
+        )
 
-        towards = eval( self.activation.replace("X", str(value)) )
-
-        self.interpolation.target_value = towards
         self.interpolation.next()
-        self.value = self.interpolation.current_value
+
+        self.value = self.value_changer(
+            interpolation = self.interpolation,
+            average_audio_value = average_audio_value,
+        )
 
     def get_value(self) -> Number:
         return self.value
 
 
+from mmv.modifier_activators.ma_fade import *
+
 class MMVModifierFade:
     def __init__(self,
             interpolation,
-            activation = "X"
+            interpolation_changer = ma_fade_ic_keep,
+            value_changer = ma_fade_vc_only_interpolation,
         ) -> None:
 
         self.interpolation = interpolation
-        self.activation = activation
 
-    def next(self, value: Number) -> None:
+        self.interpolation_changer = interpolation_changer
+        self.value_changer = value_changer
 
-        add = eval( self.activation.replace("X", str(value)) )
+    def next(self, average_audio_value: Number) -> None:
+        self.interpolation_changer(
+            interpolation = self.interpolation,
+            average_audio_value = average_audio_value,
+        )
 
         self.interpolation.next()
-        self.value = self.interpolation.current_value + add
+        
+        self.value = self.value_changer(
+            interpolation = self.interpolation,
+            average_audio_value = average_audio_value,
+        )
 
     def get_value(self) -> Number:
         return self.value
