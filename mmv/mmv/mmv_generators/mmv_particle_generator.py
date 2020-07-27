@@ -136,8 +136,8 @@ class MMVParticleGenerator():
                         interpolation = MMVInterpolation({
                             "function": "linear",
                             "total_steps": 30,
-                            "start": fade_intensity,
-                            "end": 0,
+                            "start": 0,
+                            "end": fade_intensity,
                         })
                     )
                 }

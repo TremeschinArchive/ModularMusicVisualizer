@@ -306,13 +306,18 @@ class MMVModifierScalarResize:
 class MMVModifierFade:
     def __init__(self,
             interpolation,
+            activation = "X"
         ) -> None:
 
         self.interpolation = interpolation
+        self.activation = activation
 
     def next(self, value: Number) -> None:
+
+        add = eval( self.activation.replace("X", str(value)) )
+
         self.interpolation.next()
-        self.value = self.interpolation.current_value
+        self.value = self.interpolation.current_value + add
 
     def get_value(self) -> Number:
         return self.value
