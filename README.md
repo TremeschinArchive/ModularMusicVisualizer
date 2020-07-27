@@ -127,7 +127,9 @@ There's also the example of calling pygradienter from a MMV script
 
 #### High priority / now
 
-- [ ] (90%) Transforming PyGradienter into a Python package, merging the two repositories into one, making PyGradienter run on Windows and only returning the image array rather than saving on the disk
+- [ ] (60%) Huge refactor of the code and moving a lot of stuff, simplifying interpolation and making Modifier classes individually
+
+- [x] (100%) (Need testing on Windows `mmv/example_pygradienter.py`) Transforming PyGradienter into a Python package, merging the two repositories into one, making PyGradienter run on Windows and only returning the image array rather than saving on the disk
 
 - [ ] (stuck) R&D alternative methods for converting SVG --> PNG under Python because Windows (or could someone write a small guide for installing cairo under Windows that works? I didn't put much effort until now on this)
 

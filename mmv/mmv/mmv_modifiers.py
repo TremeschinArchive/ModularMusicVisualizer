@@ -70,9 +70,9 @@ def return_by_mode(mode, original_value: list, original_offset: list, modifier_v
             [a + b for a, b in zip(original_offset, modifier_value)],
         ]
 
-# # Paths
 
-# Basic
+
+# # # # # [ PATHS ] # # # # #
 
 class MMVModifierLine:
     # @start, end: 2d coordinate list [0, 2]
@@ -121,12 +121,6 @@ class MMVModifierPoint:
     def next(self, x: Number, y: Number, ox: Number, oy: Number) -> list:
         return return_by_mode(self.mode, [x, y], [ox, oy], [self.x, self.y])
 
-# Linear Algebra / "Physics" / motion?
-
-class VelocityVector:
-    def __init__(self, x: Number, y: Number) -> None:
-        self.x = x
-        self.y = y
 
 class MMVModifierShake:
     # @config: dict
@@ -201,6 +195,9 @@ class MMVModifierShake:
 
         return return_by_mode(self.mode, [x, y], [ox, oy], [self.x, self.y])
 
+
+# # # # # [ ROTATION ] # # # # #
+
 # Swing back and forth in the lines of a sine wave
 class MMVModifierSineSwing:
     # @max_value: Maximum amplitute of the sine wave
@@ -228,7 +225,8 @@ class MMVModifierLinearSwing:
         self.x += 1 / self.smooth
         return self.x
 
-# # Values
+
+# # # # # [ VALUES ] # # # # #
 
 class MMVModifierConstant:
     def __init__(self, value: Number) -> None:
@@ -237,7 +235,99 @@ class MMVModifierConstant:
     def next(self) -> Number:
         return self.value
 
-# # Effects
+
+# # # # # [ 1D MODIFIERS ] # # # # #
+
+# One dimentional modifier for not repeating code as effects with 1+ arguments tend to
+# be specific enough to have its own proper class
+class MMVModifier1D:
+    def __init__(self,
+            interpolation: MMVInterpolation,
+            interpolation_changer,
+            value_changer,
+        ) -> None:
+
+        self.interpolation = interpolation
+        self.interpolation_changer = interpolation_changer
+        self.value_changer = value_changer
+
+    def next(self, average_audio_value: Number) -> None:
+        # Modify interpolation
+        self.interpolation_changer(
+            interpolation = self.interpolation,
+            average_audio_value = average_audio_value,
+        )
+
+        # Calculate next interpolation
+        self.interpolation.next()
+
+        # Change value with activation function
+        self.value = self.value_changer(
+            interpolation = self.interpolation,
+            average_audio_value = average_audio_value,
+        )
+
+    # Easier syntax when calling Modifier methods
+    def get_value(self) -> Number:
+        return self.value
+
+
+# # # # IMPORTANT # # # #
+
+# We inherit the classes with super() as they are 90%+ similar and don't need
+# special features, if they end up needing move to special section
+# You can search for  a basic tutorial on what the super() method does online
+
+
+# Scalar resize modifier, 1D
+from mmv.modifier_activators.ma_scalar_resize import *
+class MMVModifierScalarResize(MMVModifier1D):
+    def __init__(self,
+            interpolation: MMVInterpolation,
+            interpolation_changer = ma_scalar_resize_ic_medium,
+            value_changer = ma_scalar_resize_vc_only_interpolation,
+        ) -> None:
+
+        super().__init__(
+            interpolation = interpolation,
+            interpolation_changer = interpolation_changer,
+            value_changer = value_changer,
+        )
+
+
+# Fade modifier, 1D
+from mmv.modifier_activators.ma_fade import *
+class MMVModifierFade(MMVModifier1D):
+    def __init__(self,
+            interpolation,
+            interpolation_changer = ma_fade_ic_keep,
+            value_changer = ma_fade_vc_only_interpolation,
+        ) -> None:
+
+        super().__init__(
+            interpolation = interpolation,
+            interpolation_changer = interpolation_changer,
+            value_changer = value_changer,
+        )
+
+
+# Gaussian blur modifier, 1D
+from mmv.modifier_activators.ma_gaussian_blur import *
+class MMVModifierGaussianBlur(MMVModifier1D):
+    def __init__(self,
+            interpolation,
+            interpolation_changer = ma_gaussian_blur_ic_medium,
+            value_changer = ma_gaussian_blur_vc_only_interpolation,
+        ) -> None:
+
+        super().__init__(
+            interpolation = interpolation,
+            interpolation_changer = interpolation_changer,
+            value_changer = value_changer,
+        )
+    
+
+# # # # # [ SPECIAL MODIFIERS ] # # # # #
 
 class MMVModifierVignetting:
     def __init__(self,
@@ -278,96 +368,3 @@ class MMVModifierVignetting:
     def get_center(self) -> None:
         self.center_x = self.center_function_x.next()
         self.center_y = self.center_function_y.next()
-
-
-
-from mmv.modifier_activators.ma_scalar_resize import *
-
-class MMVModifierScalarResize:
-    def __init__(self,
-            interpolation: MMVInterpolation,
-            interpolation_changer,
-            value_changer,
-        ) -> None:
-
-        self.interpolation = interpolation
-        self.interpolation_changer = interpolation_changer
-        self.value_changer = value_changer
-
-    def next(self, average_audio_value: Number) -> None:
-        self.interpolation_changer(
-            interpolation = self.interpolation,
-            average_audio_value = average_audio_value,
-        )
-
-        self.interpolation.next()
-
-        self.value = self.value_changer(
-            interpolation = self.interpolation,
-            average_audio_value = average_audio_value,
-        )
-
-    def get_value(self) -> Number:
-        return self.value
-
-
-
-from mmv.modifier_activators.ma_fade import *
-
-class MMVModifierFade:
-    def __init__(self,
-            interpolation,
-            interpolation_changer = ma_fade_ic_keep,
-            value_changer = ma_fade_vc_only_interpolation,
-        ) -> None:
-
-        self.interpolation = interpolation
-
-        self.interpolation_changer = interpolation_changer
-        self.value_changer = value_changer
-
-    def next(self, average_audio_value: Number) -> None:
-        self.interpolation_changer(
-            interpolation = self.interpolation,
-            average_audio_value = average_audio_value,
-        )
-        self.interpolation.next()
-        
-        self.value = self.value_changer(
-            interpolation = self.interpolation,
-            average_audio_value = average_audio_value,
-        )
-
-    def get_value(self) -> Number:
-        return self.value
-
-
-
-from mmv.modifier_activators.ma_gaussian_blur import *
-
-class MMVModifierGaussianBlur:
-    def __init__(self,
-            interpolation,
-            interpolation_changer,
-            value_changer,
-        ) -> None:
-
-        self.interpolation = interpolation
-
-        self.interpolation_changer = interpolation_changer
-        self.value_changer = value_changer
-
-    def next(self, average_audio_value: Number) -> None:
-        self.interpolation_changer(
-            interpolation = self.interpolation,
-            average_audio_value = average_audio_value,
-        )
-        self.interpolation.next()
-        
-        self.value = self.value_changer(
-            interpolation = self.interpolation,
-            average_audio_value = average_audio_value,
-        )
-
-    def get_value(self) -> Number:
-        return self.value
