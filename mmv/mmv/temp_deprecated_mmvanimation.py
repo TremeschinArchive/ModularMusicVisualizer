@@ -3,8 +3,8 @@
         temp = MMVImage(self.context)
         temp.path[0] = {
             "position": [
-                Point(-shake, -shake),
-                Shake({
+                MMVModifierPoint(-shake, -shake),
+                MMVModifierShake({
                     "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
                     "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",
@@ -46,8 +46,8 @@
         temp = MMVImage(self.context)
         temp.path[0] = {
             "position": [
-                Point(-shake, -shake),
-                Shake({
+                MMVModifierPoint(-shake, -shake),
+                MMVModifierShake({
                     "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
                     "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",
@@ -84,8 +84,8 @@
         temp = MMVImage(self.context)
         temp.path[0] = {
             "position": [
-                Point(-shake, -shake),
-                Shake({
+                MMVModifierPoint(-shake, -shake),
+                MMVModifierShake({
                     "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
                     "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",
@@ -116,8 +116,8 @@
         temp = MMVImage(self.context)
         temp.path[0] = {
             "position": [
-                Point(-shake1, -shake1),
-                Shake({
+                MMVModifierPoint(-shake1, -shake1),
+                MMVModifierShake({
                     "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
                     "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",
@@ -155,8 +155,8 @@
         temp2 = MMVImage(self.context)
         temp2.path[0] = {
             "position": [
-                Point(-shake2, -shake2),
-                Shake({
+                MMVModifierPoint(-shake2, -shake2),
+                MMVModifierShake({
                     "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
                     "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",
@@ -198,11 +198,11 @@
         temp = MMVImage(self.context)
         temp.path[0] = {
             "position": [
-                Point(
+                MMVModifierPoint(
                     self.context.width // 2 - (self.logo_size/2),
                     self.context.height // 2 - (self.logo_size/2)
                 ),
-                Shake({
+                MMVModifierShake({
                     "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
                     "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",
@@ -223,7 +223,7 @@
                     "arg_a": 0.07,
                 },
                 "rotate": {
-                    "object": SineSwing(6, 100)
+                    "object": MMVModifierSineSwing(6, 100)
                 }
             }
         }
@@ -246,11 +246,11 @@
         temp = MMVImage(self.context)
         temp.path[0] = {
             "position": [
-                Point(
+                MMVModifierPoint(
                     self.context.width // 2 - (visualizer_size/2),
                     self.context.height // 2 - (visualizer_size/2)
                 ),
-                Shake({
+                MMVModifierShake({
                     "interpolation_x": copy.deepcopy(self.interpolation.remaining_approach),
                     "interpolation_y": copy.deepcopy(self.interpolation.remaining_approach),
                     "x_steps": "end_interpolation",
@@ -271,7 +271,7 @@
                     "arg_a": 0.14,
                 },
                 # "rotate": {
-                #     "object": LinearSwing(10)
+                #     "object": MMVModifierMMVModifierLinearSwing(10)
                 # },
                 # "blur": {
                 #     "activation": "20*X",

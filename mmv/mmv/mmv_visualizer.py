@@ -124,14 +124,13 @@ class MMVVisualizer():
 
             # Interpolate the next fft with the current one
             for index in range(len(self.current_fft[channel])):
-                self.current_fft[channel][index] = interpolation["function"](
-                    self.current_fft[channel][index],  
-                    fft[index],
-                    self.current_step,
-                    interpolation["steps"],
-                    self.current_fft[channel][index],
-                    interpolation["arg_a"]
-                )
+                
+                interpolation.start_value = self.current_fft[channel][index]
+                interpolation.target_value = fft[index]
+                interpolation.current_value = self.current_fft[channel][index]
+
+                self.current_fft[channel][index] = interpolation.next()
+
 
             # We calculate the points on a Worker process, main core loop stops at the ffts interpolation
             if not is_multiprocessing:

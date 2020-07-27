@@ -53,8 +53,8 @@ class MMVAnimation:
     # Make layers until a given N value
     def mklayers_until(self, n: int) -> None:
         for layer_index in range(n + 1):  # n + 1 because range() is exclusive at the end ( range(2) = [0, 1] )
-            if not layer_index in self.content.keys():
-                self.content[n] = []
+            if not layer_index in list(self.content.keys()):
+                self.content[layer_index] = []
     
     # Call every next step of the content animations
     def next(self, fftinfo: dict, this_step: int) -> None:
@@ -70,7 +70,9 @@ class MMVAnimation:
 
             # Object is not null, add it to the said layer
             if not new_object == None:
-                self.content[new["layer"]].append(new_object)
+                layer = new["layer"]
+                self.mklayers_until(layer)
+                self.content[layer].append(new_object)
 
         # Dictionary of layers and item indexes on that layer to delete
         items_to_delete = {}
