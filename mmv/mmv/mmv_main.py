@@ -41,7 +41,7 @@ import os
 class Miscellaneous():
 
     def __init__(self) -> None:
-        self.version = "1.4.8-working-dev"
+        self.version = "1.5-dev"
         self.greeter_message()
 
     def greeter_message(self) -> None:
