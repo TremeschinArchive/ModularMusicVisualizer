@@ -19,21 +19,22 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.common.cmn_types import *
 import math
 
 
-class Functions():
+class Functions:
 
     # Sigmoid function, put that last part in a graphic visualization software to understand
     # @smooth: how much steps are needed for X to get from -4 to 4 on the function (as they are some nice angle spots on the graph)
     # @x: the "biased" "this_position" step
-    def sigmoid(self, x, smooth):
+    def sigmoid(self, x: Number, smooth: Number) -> Number:
         # Fit x from -4 to 4, 0 to 1
         fit = smooth*x - (smooth/2)
         return 1 / (1 + math.exp(-fit))
 
     # Calculate a linear proportion
-    def proportion(self, a, b, c):
+    def proportion(self, a: Number, b: Number, c: Number) -> Number:
         # a - b
         # c - x
         # x = b*c/a
@@ -77,29 +78,28 @@ so if 1 is (as weird as this may seem) exactly one, then 1^infinity is 1, otherw
 slightly more than 1 into that e number proportion it'll evaluate to e. This is why 1^infinity
 is undefined, calculus 1 people :)
 """
-class FitIndex():
+class FitIndex:
     def __init__(self):
         self.functions = Functions()
 
-    def out_of_bounds(self, value, above, below):
+    # Is out value between 
+    def out_of_bounds(self, value: Number, above: Number, below: Number) -> bool:
         if value < below:
-            return below
+            return [True, below]
         if value > above:
-            return above
-        return True
+            return [True, above]
+        return [False]
 
-    def polynomial(self, index, total, exponent):
-        if not self.out_of_bounds(index, total, 0):
-            return index 
+    def polynomial(self, index: Number, total: Number, exponent: Number) -> Number:
+        oob = self.out_of_bounds(index, total, 0)
+        if oob[0]: return oob[1]
+
         index = (total) * (self.functions.proportion(total, 1, index) ** exponent)
-        if not self.out_of_bounds(index, total, 0):
-            return index 
         return index
     
-    def log10(self, index, total):
-        if not self.out_of_bounds(index, total, 0):
-            return index 
+    def log10(self, index: Number, total: Number) -> Number:
+        oob = self.out_of_bounds(index, total, 0)
+        if oob[0]: return oob[1]
+
         index = (total) * ( math.log(1 + self.functions.proportion(total - 1, 9, index), 10) )
-        if not self.out_of_bounds(index, total, 0):
-            return index 
         return index
