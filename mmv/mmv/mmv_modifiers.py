@@ -329,39 +329,54 @@ class MMVModifierGaussianBlur(MMVModifier1D):
 
 # # # # # [ SPECIAL MODIFIERS ] # # # # #
 
+from mmv.modifier_activators.ma_vignetting import *
 class MMVModifierVignetting:
     def __init__(self,
             minimum: Number,
-            activation: str,
+            interpolation: MMVInterpolation,
             center_function_x,
             center_function_y,
-            interpolation,
+            interpolation_changer = ma_vignetting_ic_medium,
+            value_changer = ma_vignetting_vc_only_interpolation,
             start_value: Number=0
         ) -> None:
 
         self.minimum = minimum
-        self.activation = activation
         self.center_function_x = center_function_x
         self.center_function_y = center_function_y
         self.center_x = 0
         self.center_y = 0
         self.interpolation = interpolation
         self.interpolation.start_value = start_value
+        self.interpolation_changer = interpolation_changer
+        self.value_changer = value_changer
+        self.start_value = start_value
         self.value = 0
         
-    def next(self, value: Number) -> None:
+    def next(self, average_audio_value: Number) -> None:
 
-        value = eval( self.activation.replace("X", str(value)) )
-
-        if value < self.minimum:
+        if average_audio_value < self.minimum:
             self.towards = self.minimum
         else:
-            self.towards = value
-        
-        self.interpolation.target_value = self.towards
-        self.interpolation.next()
-        self.value = self.interpolation.current_value
+            self.towards = average_audio_value
 
+        self.interpolation.target_value = self.towards
+
+        self.interpolation_changer(
+            start_value = self.start_value,
+            interpolation = self.interpolation,
+            average_audio_value = average_audio_value,
+        )
+
+        # Calculate next interpolation
+        self.interpolation.next()
+
+        # Change value with activation function
+        self.value = self.value_changer(
+            interpolation = self.interpolation,
+            average_audio_value = average_audio_value,
+        )
+        
     def get_value(self) -> Number:
         return self.value
 

@@ -22,6 +22,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 # modifier activators
 from mmv.modifier_activators.ma_scalar_resize import *
 from mmv.modifier_activators.ma_gaussian_blur import *
+from mmv.modifier_activators.ma_vignetting import *
 
 from mmv.mmv_interpolation import MMVInterpolation
 from mmv.mmv_visualizer import MMVVisualizer
@@ -231,43 +232,45 @@ class MMVImageConfigure:
     # Add vignetting module with minimum values
     def add_module_vignetting(self,
             minimum: Number,
-            activation: str,
+            interpolation_changer,
             center_function_x,
             center_function_y,
-            start_value=0
+            smooth: Number,
+            start_value: Number,
         ) -> None:
 
         self.add_module({
             "vignetting": {
                 "object": MMVModifierVignetting(
                     minimum = minimum,
-                    activation = activation,
                     center_function_x = center_function_x,
                     center_function_y = center_function_y,
-                    start_value=start_value,
+                    interpolation_changer = interpolation_changer,
                     interpolation = MMVInterpolation({
                         "function": "remaining_approach",
-                        "aggressive": 0.09,
+                        "aggressive": smooth,
                     }),
+                    start_value = start_value,
                 ),
             },
         })
 
     # Just add a vignetting module without much trouble with an intensity
     def simple_add_vignetting(self,
-            intensity: str="medium",
-            center: str="centered",
-            activation: bool=None,
-            center_function_x=None,
-            center_function_y=None,
-            start_value: Number=900
+            intensity: str = "medium",
+            center: str = "centered",
+            center_function_x = None,
+            center_function_y = None,
+            start_value: Number = 900,
+            smooth = 0.09,
+            custom = None,
         ) -> None:
 
         intensities = {
-            "low": "0",
-            "medium": "%s - 4000*X" % start_value,
-            "high": "0",
-            "custom": activation
+            "low": ma_vignetting_ic_low,
+            "medium": ma_vignetting_ic_medium,
+            "high": ma_vignetting_ic_high,
+            "custom": custom
         }
         if not intensity in list(intensities.keys()):
             print("Unhandled resize intensity [%s]" % intensity)
@@ -279,10 +282,11 @@ class MMVImageConfigure:
 
         self.add_module_vignetting(
             minimum = 450,
-            activation = intensities[intensity],
+            interpolation_changer = intensities[intensity],
             center_function_x = center_function_x,
             center_function_y = center_function_y,
-            start_value=start_value,
+            smooth = smooth,
+            start_value = start_value,
         )
     
     # # # # # [ BLUR ] # # # # #
