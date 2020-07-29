@@ -76,6 +76,7 @@ class mmv:
         self.width = width
         self.height = height
         self.resolution = [width, height]
+        self.main.canvas.create_canvas()
     
     # Set the input audio file, raise exception if it does not exist
     def input_audio(self, path: str) -> None:
