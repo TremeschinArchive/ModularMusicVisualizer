@@ -145,7 +145,7 @@ class MMVImage:
 
                 # We haven't set a video capture or it has ended
                 if self.video == None:
-                    self.video = cv2.VideoCapture(path)
+                    self.video = cv2.VideoCapture(this_module["path"])
 
                 # Can we read next frame? if not, go back to frame 0 for a loop
                 ok, frame = self.video.read()
@@ -158,9 +158,9 @@ class MMVImage:
 
                 shake = 0
 
-                for position in positions:
-                    if self.utils.is_matching_type([position], [MMVModifierShake]):
-                        shake = position.distance
+                for modifier in position:
+                    if self.utils.is_matching_type([modifier], [MMVModifierShake]):
+                        shake = modifier.distance
 
                 width = self.context.width + (2*shake)
                 height = self.context.height + (2*shake)
