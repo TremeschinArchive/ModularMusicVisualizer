@@ -22,7 +22,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from glitch_this import ImageGlitcher
 from mmv.common.cmn_types import *
-from PIL import ImageFilter
 from PIL import Image
 import numpy as np
 import numpy
@@ -55,10 +54,6 @@ class Frame:
         if override:
             self.original_image = copy.deepcopy(self.image)
     
-    # self.frame --> self.image
-    def _update_image_from_array(self) -> None:
-        self.image = Image.fromarray(self.array)
-
     # self.image --> self.array
     def _update_array_from_image(self) -> None:
         self.array = np.array(self.image)
@@ -74,12 +69,9 @@ class Frame:
             self.image = copy.deepcopy(self.original_image)
     
     # Get the image we're process the effects on
-    def _get_processing_image(self, from_current_frame: bool=False) -> Image:
+    def _get_processing_image(self, from_current_frame: bool=False) -> np.ndarray:
         if from_current_frame:
-            if hasattr(self, 'image'):
-                return self.image
-            else:
-                return Image.fromarray(self.array)
+            return self.image
         else:
             return self.original_image
 
@@ -88,17 +80,9 @@ class Frame:
     # Create new numpy array as a "frame", attribute width, height and resolution
     def new(self, width: Number, height: Number, transparent: bool=False) -> None:
 
-        # Transparent is RGBA, not transparent is RGB
-        if transparent:
-            channels = 4
-        else:
-            channels = 3
-        
-        # Blank zeros frame based on transparency option
-        self.array = np.zeros([height, width, channels], dtype=np.uint8)
-
         # This is our "loaded" image, as we're creating a new, it's the original one
-        self.original_image = Image.fromarray(self.array)
+        self.original_image = np.zeros([height, width, 4], dtype=np.uint8)
+        self.image = self.original_image
 
         # Update width, height info
         self.width = width
@@ -106,8 +90,9 @@ class Frame:
 
     # Load this image by array
     def load_from_array(self, array: np.ndarray, convert_to_png: bool=False) -> None:
+        raise NotImplementedError("R&D")
         # Load the array as image and set it as the frame
-        self.original_image = Image.fromarray(array)
+        # self.original_image = cv2.
 
         # Alpha composite only works on RGBA if we're going to do it
         if convert_to_png:
@@ -135,48 +120,36 @@ class Frame:
                 print(debug_prefix, "Can't load [%s], looped [%s] times" % (path, tries))
             try:
                 # Our untouched original image
-                self.original_image = Image.open(path)
+                self.original_image = cv2.imread(path, cv2.IMREAD_UNCHANGED)
                 break # the while loop
             except Exception:
                 pass
             time.sleep(0.1)
+        
+        if ".jpg" in path:
+            self.original_image = cv2.cvtColor(self.original_image, cv2.COLOR_BGR2RGBA)
+        elif ".png" in path:
+            self.original_image = cv2.cvtColor(self.original_image, cv2.COLOR_BGRA2RGBA)
 
         # Warn the use rwe're not stuck anymore        
         if tries > 10:
             print(debug_prefix, "Could read image from path [%s]" % path)
 
-        # Sometimes we load a background in jpeg and have to process alpha composite
-        if convert_to_png:
-            self.original_image = self.original_image.convert("RGBA")
-        
         # Copy the original image PIL's Image class and sets the frame
         self.image = copy.deepcopy(self.original_image)
-        self.array = np.array(self.image)
 
         # Update width, height info
-        self.height = self.image.size[0]
-        self.width = self.image.size[1]
-
-    # Get PIL image array from this object frame
-    def get_pil_image(self) -> Image:
-        return Image.fromarray(self.array.astype(np.uint8))
-    
-    def get_rgb_frame_array(self) -> np.ndarray:
-        return np.array( self.get_pil_image().convert("RGB") )
+        self.height = self.image.shape[0]
+        self.width = self.image.shape[1]
 
     # Save an image with specific instructions depending on it's extension type.
-    def save(self, directory: str) -> None:
+    def save(self, path: str) -> None:
 
         debug_prefix = "[Frame.save]"
 
         print(debug_prefix, "Saving to file: [%s]" % directory)
 
-        # JPG and PNG uses different arguments
-        if '.jpg' in directory:
-            self.get_pil_image().save(directory, format='JPEG', subsampling=0, quality=100)
-
-        elif ".png" in directory:
-            self.get_pil_image().save(directory, format='PNG')
+        cv2.imwrite(path, self.image)
     
     # Resize this frame multiplied by a scalar
     #
@@ -205,9 +178,12 @@ class Frame:
         if not get_only_offset:
             
             processing = self._get_processing_image(from_current_frame)
-            processing = processing.resize((new_width, new_height), Image.BICUBIC)
+            
+            width = int(processing.shape[1] * ratio)
+            height = int(processing.shape[0] * ratio)
+            dim = (width, height) 
 
-            self.image = processing
+            self.image = cv2.resize(processing, dim, interpolation = cv2.INTER_AREA)
 
             self._override(override)
             self._update_array_from_image()
@@ -229,9 +205,7 @@ class Frame:
         ) -> None:
 
         processing = self._get_processing_image(from_current_frame)
-        processing = processing.resize((width, height), Image.BICUBIC)
-
-        self.image = processing
+        self.image = cv2.resize(processing, (width, height), interpolation = cv2.INTER_AREA)
 
         self._override(override)
         self._update_array_from_image()
@@ -247,9 +221,10 @@ class Frame:
         ) -> None:
 
         processing = self._get_processing_image(from_current_frame)
-        processing = processing.rotate(angle, resample=Image.BICUBIC)
-
-        self.image = processing
+        
+        image_center = tuple(np.array(processing.shape[1::-1]) / 2)
+        rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
+        self.image = cv2.warpAffine(processing, rot_mat, processing.shape[1::-1], flags=cv2.INTER_LINEAR)
 
         self._override(override)
         self._update_array_from_image()
@@ -260,11 +235,11 @@ class Frame:
             override: bool=False,
             from_current_frame: bool=False
         ) -> None:
+
+        return
         
         processing = self._get_processing_image(from_current_frame)
-        processing = processing.filter(ImageFilter.GaussianBlur(radius=radius))
-
-        self.image = processing
+        self.image = cv2.GaussianBlur(de, (3, 3), sigmaX=radius, sigmaY=radius, borderType=cv2.BORDER_DEFAULT) 
 
         self._override(override)
         self._update_array_from_image()
@@ -310,13 +285,13 @@ class Frame:
         processing = self._get_processing_image(from_current_frame)
 
         # Split the original image's channels
-        r, g, b, alpha = processing.split()
+        r, g, b, alpha = cv2.split(processing)
 
         # Multiply the alpha by that ratio
         alpha = np.array(alpha) * ratio
 
         # Stack the arrays into a new numpy array "as image"
-        self.image = Image.fromarray( (np.dstack((r, g, b, alpha))).astype(np.uint8) )
+        self.image = ( (np.dstack((r, g, b, alpha))).astype(np.uint8) )
 
         self._override(override)
         self._update_array_from_image()
@@ -337,7 +312,7 @@ class Frame:
         processing = self._get_processing_image(from_current_frame)
         
         # Split the image into the channels
-        red, green, blue, alpha = processing.split()
+        red, green, blue, alpha = cv2.split(processing)
 
         # Get the rows and columns of the image
         img = np.array(self.original_image)
@@ -489,9 +464,9 @@ class Frame:
         """
         
         # [ Out of Bounds ]
-        if y >= self.array.shape[0]:
+        if y >= self.image.shape[0]:
             return
-        if x >= self.array.shape[1]:
+        if x >= self.image.shape[1]:
             return
 
         # Offset of the cut if X or Y coordinate is negative
@@ -521,13 +496,13 @@ class Frame:
 
         # The actual cut is made but we have to limit it to the background size if this cut pos is bigger
         cut = [
-            min(cut_pos[0], self.array.shape[0] - 1),
-            min(cut_pos[1], self.array.shape[1] - 1)
+            min(cut_pos[0], self.image.shape[0] - 1),
+            min(cut_pos[1], self.image.shape[1] - 1)
         ]
 
         # Crop the frame
         # NOTE: This is simply the coordinate until the cut
-        crop = self.array[
+        crop = self.image[
             y:cut[0],
             x:cut[1],
         ]
@@ -549,7 +524,7 @@ class Frame:
         # Insert out alpha composite-d image to the original place on this object's frame
         self.copy_from(
             alpha_composite,
-            self.array,
+            self.image,
             [0, 0],
             [y, x],
             [y + crop.shape[0] - 1, x + crop.shape[1] - 1]

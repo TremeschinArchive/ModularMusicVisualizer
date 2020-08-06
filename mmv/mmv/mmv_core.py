@@ -225,7 +225,7 @@ class Core:
                 
             else:
                 # Save current canvas's Frame to the final video
-                self.ffmpeg.write_to_pipe(global_frame_index, self.canvas.canvas.get_rgb_frame_array())
+                self.ffmpeg.write_to_pipe(global_frame_index, self.canvas.image.image)
 
                 # Hard debug, save the canvas into a folder
                 # self.canvas.canvas.save("data/canvas%s.png" % this_step)

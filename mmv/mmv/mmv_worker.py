@@ -52,14 +52,11 @@ def get_canvas_multiprocess_return(get_queue: Queue, put_queue: Queue, worker_id
         for layer in sorted(content):
             [item.blit(canvas.image) for item in content[layer]]
 
-        # We blit into the array but pending operations are done with the PIL Image
-        canvas.image._update_image_from_array()
-
         # Resolve pending operations (post process mostly)
         canvas.resolve_pending()
 
         # Send the numpy array in RGB format back to the Core class for sending to FFmpeg
-        put_queue.put( [this_frame_index, canvas.image.get_rgb_frame_array()] )
+        put_queue.put( [this_frame_index, canvas.image.image] )
 
         # Memory management
         del instructions

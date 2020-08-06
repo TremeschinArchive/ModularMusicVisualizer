@@ -44,7 +44,7 @@ class FFmpegWrapper():
 
         self.pipe_subprocess = (
             ffmpeg
-            .input('pipe:', format='rawvideo', pix_fmt='rgb24', r=self.context.fps, s='{}x{}'.format(self.context.width, self.context.height))
+            .input('pipe:', format='rawvideo', pix_fmt='rgba', r=self.context.fps, s='{}x{}'.format(self.context.width, self.context.height))
             .output(output, pix_fmt='yuv420p', vcodec='libx264', r=self.context.fps, crf=18, loglevel="quiet")
             .global_args('-i', self.context.input_file)
             .overwrite_output()

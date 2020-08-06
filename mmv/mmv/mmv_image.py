@@ -309,21 +309,10 @@ class MMVImage:
         x = int(self.x + self.offset[1])
         y = int(self.y + self.offset[0])
 
-        canvas.overlay_transparent(
-            self.image.array,
+        canvas.image.overlay_transparent(
+            self.image.image,
             y, x
         )
-
-        # This is for trivia / future, how it used to work until overlay_transparent wasn't slow anymore
-        # img = self.image
-        # width, height, _ = img.frame.shape
-        # canvas.canvas.copy_from(
-        #     self.image.array,
-        #     canvas.canvas.frame,
-        #     [0, 0],
-        #     [x, y],
-        #     [x + width - 1, y + height - 1]
-        # )
 
     def resolve_pending(self) -> None:
         self.image.resolve_pending()
