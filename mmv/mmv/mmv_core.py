@@ -193,7 +193,9 @@ class Core:
             # # # [ Next steps ] # # #
 
             # Process next animation with audio info and the step count to process on
+            start = time.time()
             self.mmvanimation.next(fftinfo, this_step)
+            print(time.time() - start)
          
             # Multiprocessing we have to send the info to the queues for the workers to get
             if self.context.multiprocessed:

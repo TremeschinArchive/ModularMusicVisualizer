@@ -133,10 +133,7 @@ class MMVImage:
                     self.image.height = visualizer.config["height"]
 
                 else:
-                    self.image.load_from_array(
-                        visualizer.next(fftinfo),
-                        convert_to_png=True
-                    )
+                    self.image.load_from_array(visualizer.next(fftinfo))
 
             # The video module must be before everything as it gets the new frame                
             if "video" in modules:
@@ -205,7 +202,7 @@ class MMVImage:
                     offset = self.image.resize_by_ratio( self.size, get_only_offset=True )
                 else:
                     # If we're going to rotate, resize the rotated frame which is not the original image 
-                    offset = self.image.resize_by_ratio( self.size, from_current_frame="rotate" in modules )
+                    offset = self.image.resize_by_ratio( self.size, from_current_frame = True )
 
                 if this_module["keep_center"]:
                     self.offset[0] += offset[0]

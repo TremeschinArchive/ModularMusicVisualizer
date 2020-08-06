@@ -90,17 +90,9 @@ class Frame:
 
     # Load this image by array
     def load_from_array(self, array: np.ndarray, convert_to_png: bool=False) -> None:
-        raise NotImplementedError("R&D")
-        # Load the array as image and set it as the frame
-        # self.original_image = cv2.
-
-        # Alpha composite only works on RGBA if we're going to do it
-        if convert_to_png:
-            self.original_image = self.original_image.convert("RGBA")
-
         # Set the image
+        self.original_image = array
         self.image = self.original_image
-        self.array = array
 
         # Update width, height info
         self.height = array.shape[0]
@@ -291,7 +283,7 @@ class Frame:
         alpha = np.array(alpha) * ratio
 
         # Stack the arrays into a new numpy array "as image"
-        self.image = ( (np.dstack((r, g, b, alpha))).astype(np.uint8) )
+        self.image = (np.dstack((r, g, b, alpha))).astype(np.uint8)
 
         self._override(override)
         self._update_array_from_image()

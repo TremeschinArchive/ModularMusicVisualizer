@@ -230,9 +230,9 @@ class MMVVisualizer():
                 )
             )
 
-            array = self.svg.get_array()
+            png = self.svg.get_png()
 
-            return array
+            return png
 
     # Blit this item on the canvas
     def blit(self, canvas):

@@ -50,7 +50,7 @@ def get_canvas_multiprocess_return(get_queue: Queue, put_queue: Queue, worker_id
             [item.resolve_pending() for item in content[layer]]
         
         for layer in sorted(content):
-            [item.blit(canvas.image) for item in content[layer]]
+            [item.blit(canvas) for item in content[layer]]
 
         # Resolve pending operations (post process mostly)
         canvas.resolve_pending()

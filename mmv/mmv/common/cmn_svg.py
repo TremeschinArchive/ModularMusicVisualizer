@@ -27,7 +27,9 @@ import wand.image
 import wand.color
 import cairosvg
 import svgwrite
+import pyvips
 import sys
+import cv2
 import os
 
 
@@ -38,14 +40,6 @@ class SVG():
         self.rasterizer = rasterizer
         self.mode = mode
         self.SVG_ROUND = 4
-
-        if not self.rasterizer in ["cairo", "wand"]:
-            print("Rasterizer invalid: [%s]" % self.rasterizer)
-            sys.exit(-1)
-
-        if not self.mode in ["png", "jpg"]:
-            print("Mode invalid SVG --> [%s]" % self.mode)
-            sys.exit(-1)
             
     def new_drawing(self, centered=True):
         if centered:
@@ -62,33 +56,7 @@ class SVG():
         
         svg_string = self.dwg.tostring()
 
-        if self.rasterizer == "wand":
-            with wand.image.Image(blob=svg_string.encode(), format="svg") as image:
-                # if convert_to_png:
-                #     with wand.color.Color('transparent') as background_color:
-                #         library.MagickSetBackgroundColor(image.wand, background_color.resource) 
-                return Image.open(BytesIO(image.make_blob(self.mode)))
+        svg = pyvips.Image.svgload_buffer(svg_string.encode())
+        image = np.frombuffer(svg.write_to_memory(), dtype=np.uint8).reshape(self.width, self.height, 4) 
 
-        elif self.rasterizer == "cairo":
-
-            # Save the file to this temporary buffer
-            r, w = os.pipe()
-
-            # Save the svg to the temporary buffer
-            cairosvg.svg2png(bytestring=svg_string, write_to=open(w, "wb"))
-            # cairosvg.surface.PNGSurface.convert(svg_string, write_to=buffer)
-
-            # Open the image from the buffer, convert to png
-            image = Image.open(open(r, "rb"))
-
-            del r, w
-
-            if convert_to_png:
-                image = image.convert("RGBA")
-            else:
-                image = image.convert("RGB")
-
-            return image
-
-    def get_array(self):
-        return np.array(self.get_png())
+        return image
