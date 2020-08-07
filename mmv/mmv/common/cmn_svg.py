@@ -20,6 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from wand.api import library
+from scour import scour
 from io import BytesIO
 from PIL import Image
 import numpy as np
@@ -55,6 +56,10 @@ class SVG():
     def get_png(self, convert_to_png=True):
         
         svg_string = self.dwg.tostring()
+
+        # scour_options = scour.sanitizeOptions(options=None) # get a clean scour options object
+        # scour_options.remove_metadata = True # change any option you like
+        # clean_svg = scour.scourString(svg_string)#, options = scour_options) # use scour
 
         svg = pyvips.Image.svgload_buffer(svg_string.encode())
         image = np.frombuffer(svg.write_to_memory(), dtype=np.uint8).reshape(self.width, self.height, 4) 

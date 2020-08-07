@@ -21,6 +21,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from mmv.common.cmn_audio import AudioProcessing
 from mmv.common.cmn_video import FFmpegWrapper
+from mmv.common.cmn_skia import SkiaWrapper
 from mmv.mmv_animation import MMVAnimation
 from mmv.common.cmn_audio import AudioFile
 from mmv.common.cmn_fourier import Fourier
@@ -85,6 +86,10 @@ class MMVMain:
         print(debug_prefix, "Creating Canvas()")
         self.canvas = MMVImage(self.context)
 
+        print(debug_prefix, "Creating SkiaWrapper()")
+        self.skia = SkiaWrapper(self.context)
+        self.skia.init()
+
         print(debug_prefix, "Creating Fourier()")
         self.fourier = Fourier()
 
@@ -98,13 +103,14 @@ class MMVMain:
         self.audio_processing = AudioProcessing()
 
         print(debug_prefix, "Creating MMVAnimation()")
-        self.mmvanimation = MMVAnimation(self.context, self.controller, self.audio, self.canvas)
+        self.mmvanimation = MMVAnimation(self.context, self.controller, self.audio, self.canvas, self.skia)
     
         print(debug_prefix, "Creating Core()")
         self.core = Core(
             self.context,
             self.controller,
             self.canvas,
+            self.skia,
             self.fourier,
             self.ffmpeg,
             self.audio,

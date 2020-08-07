@@ -111,6 +111,14 @@ class MMVImageConfigure:
     def set_this_animation_steps(self, steps: float=math.inf) -> None:
         self.object.animation[self.animation_index]["animation"]["steps"] = steps
 
+    # Overlay
+
+    def set_overlay_mode_composite(self) -> None:
+        self.object.overlay_mode = "composite"
+    
+    def set_overlay_mode_copy(self) -> None:
+        self.object.overlay_mode = "copy"
+
     # # # [ Next Methods ] # # #
 
     # Next animation index from the current one

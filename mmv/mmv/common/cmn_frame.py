@@ -25,11 +25,14 @@ from mmv.common.cmn_types import *
 from PIL import Image
 import numpy as np
 import numpy
+import skia
 import time
 import copy
 import sys
 import cv2
 import os
+
+cv2.setNumThreads(12)
 
 """
 This is (yet another) wrapper for images, but more focused on modularity
@@ -45,14 +48,15 @@ class Frame:
         # Multiprocessing pending things to do, ordered
         self.pending = {}
         self.size = 1
-        self.glitcher = ImageGlitcher()
+        self.rotate_angle = 0
     
     # # Internal functions
     
     # if override: self.original_image <-- self.image
     def _override(self, override: bool) -> None:
         if override:
-            self.original_image = copy.deepcopy(self.image)
+            # self.original_image = skia.Image.fromarray(self.image.toarray())
+            self.original_image = self.image
     
     # self.image --> self.array
     def _update_array_from_image(self) -> None:
@@ -60,16 +64,16 @@ class Frame:
     
     # Update resolution from the array shape
     def _update_resolution(self) -> None:
-        self.height = self.array.shape[0]
-        self.width = self.array.shape[1]
+        self.height = self.image.height()
+        self.width = self.image.width()
 
     # self.image = self.original_image
     def _reset_to_original_image(self) -> None:
-        if hasattr(self, 'original_image'):
-            self.image = copy.deepcopy(self.original_image)
+        # self.image = skia.Image.fromarray(self.original_image.toarray())
+        self.image = self.original_image
     
     # Get the image we're process the effects on
-    def _get_processing_image(self, from_current_frame: bool=False) -> np.ndarray:
+    def _get_processing_image(self, from_current_frame: bool=False):
         if from_current_frame:
             return self.image
         else:
@@ -78,25 +82,20 @@ class Frame:
     # # User functions
 
     # Create new numpy array as a "frame", attribute width, height and resolution
-    def new(self, width: Number, height: Number, transparent: bool=False) -> None:
-
-        # This is our "loaded" image, as we're creating a new, it's the original one
-        self.original_image = np.zeros([height, width, 4], dtype=np.uint8)
-        self.image = self.original_image
-
-        # Update width, height info
-        self.width = width
-        self.height = height
+    def new(self, width: Number, height: Number) -> None:
+        self.load_from_array(
+            np.zeros([height, width, 4], dtype=np.uint8)
+        )
 
     # Load this image by array
     def load_from_array(self, array: np.ndarray, convert_to_png: bool=False) -> None:
         # Set the image
-        self.original_image = array
+        self.original_image = skia.Image.fromarray(array)
         self.image = self.original_image
 
         # Update width, height info
-        self.height = array.shape[0]
-        self.width = array.shape[1]
+        self.height = self.image.height()
+        self.width = self.image.width()
 
     # Load image from a given path
     def load_from_path(self, path: str, convert_to_png: bool=False) -> None:
@@ -105,6 +104,8 @@ class Frame:
 
         tries = 0
 
+        print("\n>>", debug_prefix, "Loading image from path %s " % path)
+
         # Keep trying to read it
         while True:
             tries += 1
@@ -112,36 +113,25 @@ class Frame:
                 print(debug_prefix, "Can't load [%s], looped [%s] times" % (path, tries))
             try:
                 # Our untouched original image
-                self.original_image = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+                # self.original_image = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+                self.original_image = skia.Image.open(path)
                 break # the while loop
-            except Exception:
-                pass
+            except Exception as e:
+                print(e)
             time.sleep(0.1)
         
-        if ".jpg" in path:
-            self.original_image = cv2.cvtColor(self.original_image, cv2.COLOR_BGR2RGBA)
-        elif ".png" in path:
-            self.original_image = cv2.cvtColor(self.original_image, cv2.COLOR_BGRA2RGBA)
-
         # Warn the use rwe're not stuck anymore        
         if tries > 10:
             print(debug_prefix, "Could read image from path [%s]" % path)
+        
+        # Copy the original image
+        self.image = self.original_image
 
-        # Copy the original image PIL's Image class and sets the frame
-        self.image = copy.deepcopy(self.original_image)
-
-        # Update width, height info
-        self.height = self.image.shape[0]
-        self.width = self.image.shape[1]
+        self._update_resolution()
 
     # Save an image with specific instructions depending on it's extension type.
     def save(self, path: str) -> None:
-
-        debug_prefix = "[Frame.save]"
-
-        print(debug_prefix, "Saving to file: [%s]" % directory)
-
-        cv2.imwrite(path, self.image)
+        self.image.save(path, skia.kJPEG)
     
     # Resize this frame multiplied by a scalar
     #
@@ -152,12 +142,12 @@ class Frame:
     # Returns: offset array because of the resized new width and height according to the top left corner
     def resize_by_ratio(self,
             ratio: Number,
-            get_only_offset: bool=False,
             override: bool=False,
-            from_current_frame: bool=False
         ) -> list:  # Returns the offset because the resize
 
-        debug_prefix = "[Frame.resize_by_ratio]"
+        ratio = 1
+
+        print(id(self.image), id(self.original_image), self.width, self.height, ratio)
 
         # Calculate the new width and height
         new_width = int(self.width * ratio)
@@ -167,25 +157,15 @@ class Frame:
         if (new_width == self.width) and (new_height == self.height):
             return [0, 0]
 
-        if not get_only_offset:
-            
-            processing = self._get_processing_image(from_current_frame)
-            
-            width = int(processing.shape[1] * ratio)
-            height = int(processing.shape[0] * ratio)
-            dim = (width, height) 
+        diff = np.array([self.width - new_width, self.height, new_height])
 
-            self.image = cv2.resize(processing, dim, interpolation = cv2.INTER_AREA)
+        self.image = self.image.resize(new_width, new_height)
 
-            self._override(override)
-            self._update_array_from_image()
-            self._update_resolution()
+        self._override(override)
+        self._update_resolution()
 
         # Return the offset to preserve the center
-        return [
-            (self.width - new_width)/2,
-            (self.height - new_height)/2
-        ]
+        return diff / 2
 
     # Resize this frame to a fixed resolution
     # @override: set the original image to the new resized one
@@ -197,10 +177,9 @@ class Frame:
         ) -> None:
 
         processing = self._get_processing_image(from_current_frame)
-        self.image = cv2.resize(processing, (width, height), interpolation = cv2.INTER_AREA)
+        self.image = processing.resize(width, height)
 
         self._override(override)
-        self._update_array_from_image()
         self._update_resolution()
     
     # Rotate this frame by a certain angle
@@ -208,63 +187,9 @@ class Frame:
     # @override: set the original image to the new rotated
     def rotate(self,
             angle: Number,
-            override: bool=False,
-            from_current_frame: bool=False
         ) -> None:
 
-        processing = self._get_processing_image(from_current_frame)
-        
-        image_center = tuple(np.array(processing.shape[1::-1]) / 2)
-        rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
-        self.image = cv2.warpAffine(processing, rot_mat, processing.shape[1::-1], flags=cv2.INTER_LINEAR)
-
-        self._override(override)
-        self._update_array_from_image()
-    
-    # Apply gaussian blur to the image by a certain radius
-    def gaussian_blur(self,
-            radius: Number,
-            override: bool=False,
-            from_current_frame: bool=False
-        ) -> None:
-
-        return
-        
-        processing = self._get_processing_image(from_current_frame)
-        self.image = cv2.GaussianBlur(de, (3, 3), sigmaX=radius, sigmaY=radius, borderType=cv2.BORDER_DEFAULT) 
-
-        self._override(override)
-        self._update_array_from_image()
-
-    # Uses glitch-this
-    def glitch(self,
-            glitch_amount: Number,
-            color_offset: bool=False,
-            scan_lines: bool=False
-        ) -> None:
-
-        processing = self._get_processing_image(from_current_frame)
-        
-        # Split the original image's channels
-        r, g, b, alpha = processing.split()
-
-        glitched = np.array(
-            self.glitcher.glitch_image(
-                Image.fromarray(processing),
-                round(glitch_amount, 2),
-                color_offset=color_offset,
-                scan_lines=scan_lines
-            )
-        )
-
-        # Split the original image's channels
-        r, g, b = processing.split()
-
-        # Stack the arrays into a new numpy array "as image"
-        self.image = Image.fromarray( (np.dstack((r, g, b, alpha))).astype(np.uint8)) 
-
-        self._override(override)
-        self._update_array_from_image()
+        self.rotate_angle = angle
 
     # Multiply this image's frame alpha channel by that scalar
     # @ratio: 0 - 1 values
@@ -273,6 +198,8 @@ class Frame:
             override: bool=False,
             from_current_frame: bool=False
         ) -> None:
+
+        return
 
         processing = self._get_processing_image(from_current_frame)
 
@@ -301,6 +228,8 @@ class Frame:
             from_current_frame: bool=False
         ) -> None:
 
+        return
+
         processing = self._get_processing_image(from_current_frame)
         
         # Split the image into the channels
@@ -311,9 +240,9 @@ class Frame:
         rows, cols = img.shape[:2]
 
         # Calculate our mask
-        a = cv2.getGaussianKernel(2*cols, deviation_x)[cols - x:2 * cols - x]
-        b = cv2.getGaussianKernel(2*rows, deviation_y)[rows - y:2 * rows - y]
-        c = b*a.T
+        a = cv2.getGaussianKernel(2*cols, deviation_x)[cols - x: 2 * cols - x]
+        b = cv2.getGaussianKernel(2*rows, deviation_y)[rows - y: 2 * rows - y]
+        c = b * a.T
         d = c/c.max()
 
         # Multiply the channels by the mask
@@ -322,301 +251,9 @@ class Frame:
         blue = blue * d
 
         # Stack the arrays into a new numpy array "as image"
-        self.image = Image.fromarray( (np.dstack((red, green, blue, alpha))).astype(np.uint8) )
+        self.image = (np.dstack((red, green, blue, alpha))).astype(np.uint8)
 
         self._override(override)
         self._update_array_from_image()
 
-    #
-    # https://stackoverflow.com/questions/52702809/copy-array-into-part-of-another-array-in-numpy
-    #
-    # Heavily modified, implemented out of bounds safety (a huge headache and pain that took 5+ hours)
-    # Remember, numpy's images arrays and coordinates are the following:
-    #   - Center point (0, 0) at the top left corner
-    #     - X increases to the right
-    #     - Y increases downwards
-    #   - On reffering, Y is first then X
-    #     eg. the rectangular coordinate point (3, -4) is (4, 3) here (Y signal flipped)
-    #                                                                                       ~ Have fun
-    def copy_from(self,
-            A: numpy.ndarray,
-            B: numpy.ndarray,
-            A_start: list,
-            B_start: list,
-            B_end: list,
-            out_of_bounds_failsafe: bool=True
-        ) -> None:
-
-        """
-        A_start is the index with respect to A of the upper left corner of the overlap
-        B_start is the index with respect to B of the upper left corner of the overlap
-        B_end is the index of with respect to B of the lower right corner of the overlap
-        """
-
-        debug_prefix = "[Frame.copy_from]"
-
-        # Map the lists as numpy arrays
-        A_start, B_start, B_end = map(np.asarray, [A_start, B_start, B_end])
-
-        # The shape of the copying-to coordinates
-        shape = B_end - B_start
-        resolution = B.shape
-
-        # [ CAUTION ] If we are sure we won't be missing on arguments, this out of bounds
-        # failsafe isn't required, make sure you don't need it when not failsafing, that is
-        # you agree to only copy_from the inbounds area of this object's self.array
-        if out_of_bounds_failsafe:
-
-            # If B_start is before zero, A_start is that offset and B_start is zero,
-            # the image is in negative coordinates for example at the top left's (-1, -1)
-            for i in range(2):
-                if B_start[i] < 0:
-                    A_start[i] = - B_start[i]
-                    B_start[i] = 0
-
-            # [ NOTE ] Ignore negative shapes, error (?)
-            if any([shape[i] < 0 for i in range(2)]):
-                return
-
-            # [ Out of Bounds ] We offsetted A_start if B_start is before zero
-            # so if the size of the shape is entirely out of bounds
-            if A_start[0] >= shape[0] or A_start[1] >= shape[1]:
-                return
-
-            # [ Out of Bounds ] B_start is bigger than the B's resolution on that axis
-            if B_start[0] >= resolution[0] or B_start[1] >= resolution[1]:
-                return
-
-            # # Bottom and right edge out of bounds
-
-            # End is bigger than resolution TODO: does this matter?
-            # for i in range(2):
-            #     if B_end[i] >= resolution[i]:
-            #         B_end[i] = resolution[i] - 1
-                    
-            # [ Potential error ] Start + shape is bigger than resolution
-            for i in range(2):
-                if B_start[i] + shape[i] > resolution[i]:
-                    B_end[i] = resolution[i] - 1
-
-            # [ FIX ] Shape is bigger than resolution, cut it
-            if any([shape[i] >= resolution[i] for i in range(2)]):
-                
-                # Set the end to the resolution's end
-                for i in range(2):
-                    B_end[i] = resolution[i]
-
-                # Cut the shape to the minimum of the resolution or its starting point plus the shape
-                cut = [
-                    min(resolution[0], B_start[0] + shape[0] + 1),
-                    min(resolution[1], B_start[1] + shape[1] + 1)
-                ]
-
-                # The point we're cutting needs to be offsetted by the starting point
-                cut[0] += A_start[0]
-                cut[1] += A_start[1]
-
-                # Actually cut A, our insertion image
-                A = A[
-                    0:cut[0],
-                    0:cut[1]
-                ]
-
-            # Recalculate the shape if it has changed        
-            shape = B_end - B_start
-
-        # Catch any potential error with the transformations on the coordinates      
-        try:
-            # Get a substitution tuple of the slices
-            B_slices = tuple(map(slice, B_start, B_end + 1))
-            A_slices = tuple(map(slice, A_start, A_start + shape + 1))
-
-            # Actually make the substitution
-            B[B_slices] = A[A_slices]
-
-            # print(debug_prefix, "Copied from, args = {%s, %s, %s}" % (A_start, B_start, B_end))
-
-        except ValueError as e:
-            print(debug_prefix, "Fatal error copying block: ", e)
-            sys.exit(-1)
-
-    # Same as .copy_from but make an alpha composite on that point
-    def overlay_transparent(self,
-            overlay: numpy.ndarray,
-            x: Number,
-            y: Number
-        ) -> None:
-
-        """
-        We crop this object's frame to the same size as the overlay then make an alpha composite
-        with both as PIL only makes this function with two full Image classes, this is a huge
-        optimization when looking in the context of particles, in the past we used to make a frame
-        the size of this frame's and make an alpha composite the resolution of the entire video every time
-        we wanted to process a single particle, it yielded less than 2 frames per second processing time
-        """
-        
-        # [ Out of Bounds ]
-        if y >= self.image.shape[0]:
-            return
-        if x >= self.image.shape[1]:
-            return
-
-        # Offset of the cut if X or Y coordinate is negative
-        x_offset = 0
-        y_offset = 0
-
-        # If any are negative, set it to zero as we can't (we can but it'll get the last item)
-        # crop a list this way
-        if x < 0:
-            x_offset = -x
-            x = 0
-        if y < 0:
-            y_offset = -y
-            y = 0
-        
-        # [ Out of Bounds ] Negative x or y bigger than shape
-        if x_offset >= overlay.shape[1]:
-            return
-        if y_offset >= overlay.shape[0]:
-            return
-
-        # The cut position is this coordinate minus the negative offset plus the shape size on that coordinate
-        cut_pos = [
-            y + overlay.shape[0] - y_offset - 1,
-            x + overlay.shape[1] - x_offset - 1
-        ]
-
-        # The actual cut is made but we have to limit it to the background size if this cut pos is bigger
-        cut = [
-            min(cut_pos[0], self.image.shape[0] - 1),
-            min(cut_pos[1], self.image.shape[1] - 1)
-        ]
-
-        # Crop the frame
-        # NOTE: This is simply the coordinate until the cut
-        crop = self.image[
-            y:cut[0],
-            x:cut[1],
-        ]
-
-        # Crop the overlay
-        # NOTE: This is not as simple as the frame crop as we have a offset we have to add on BOTH 
-        # cut indexes according to the actual cut and that is also subtracting the Y and X coordinates
-        # offset.
-        # Please mediate and have a good imagination on this step as it's hard to explain on words
-        overlay = overlay[
-            y_offset:cut[0] - y + y_offset,
-            x_offset:cut[1] - x + x_offset,
-        ]
-        
-        # Calculate the alpha composite and get its array frame
-        alpha_composite = Image.alpha_composite(Image.fromarray(crop), Image.fromarray(overlay))
-        alpha_composite = np.array(alpha_composite)
-
-        # Insert out alpha composite-d image to the original place on this object's frame
-        self.copy_from(
-            alpha_composite,
-            self.image,
-            [0, 0],
-            [y, x],
-            [y + crop.shape[0] - 1, x + crop.shape[1] - 1]
-        )
-
-        # oof that was a lot
-
     
-
-    def resolve_pending(self) -> None:
-
-        keys = list(self.pending.keys())
-
-        if "visualizer" in keys:
-
-            module = self.pending["visualizer"]
-
-            visualizer = module[0]
-            fftinfo = module[1]
-
-            self.load_from_array(
-                visualizer.next(fftinfo),
-                convert_to_png=True,
-            )
-
-        if "video" in keys:
-
-            module = self.pending["video"]
-
-            frame = module[0]
-            width = module[1]
-            height = module[2]
-
-            self.load_from_array(frame, convert_to_png=True)
-            self.resize_to_resolution(
-                width, height,
-                override=True,
-                from_current_frame=True
-            )
-        
-        if "rotate" in keys:
-            module = self.pending["rotate"]
-            angle = module[0]
-            self.rotate(
-                angle,
-                from_current_frame=True
-            )
-        
-        if "resize" in keys:
-            module = self.pending["resize"]
-            ratio = module[0]
-            if not self.size == ratio:
-                self.resize_by_ratio(
-                    ratio,
-                    from_current_frame=True
-                )
-                self.size = ratio
-            
-        if "blur" in keys:
-            module = self.pending["blur"]
-            amount = module[0]
-            self.gaussian_blur(
-                amount,
-                from_current_frame=True
-            )
-        
-        if "glitch" in keys:
-            module = self.pending["glitch"]
-            amount = module[0]
-            color_offset = module[1]
-            scan_lines = module[2]
-            print("glitch", module)
-            self.glitch(
-                glitch_amount=amount,
-                color_offset=color_offset,
-                scan_lines=scan_lines,
-                from_current_frame=True
-            )
-        
-        if "transparency" in keys:
-            module = self.pending["transparency"]
-            amount = module[0]
-            self.transparency(
-                amount,
-                from_current_frame=True
-            )
-        
-        # ~ 0.23 seconds on 720p image
-        if "vignetting" in keys:
-
-            module = self.pending["vignetting"]
-
-            x = module[0]
-            y = module[1]
-            value_x = module[2]
-            value_y = module[3]
-
-            self.vignetting(
-                x, y,
-                value_x,
-                value_y,
-                from_current_frame=True
-            )

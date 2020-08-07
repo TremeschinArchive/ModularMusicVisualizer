@@ -20,8 +20,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmv.mmv_visualizer import MMVVisualizer
-from mmv.mmv_controller import Controller
+from mmv.common.cmn_skia import SkiaWrapper
 from mmv.common.cmn_audio import AudioFile
+from mmv.mmv_controller import Controller
 from mmv.mmv_context import Context
 from mmv.mmv_image import MMVImage
 from mmv.common.cmn_types import *
@@ -37,13 +38,20 @@ import os
 class MMVAnimation:
     
     # Initialize a MMVAnimation class with required arguments
-    def __init__(self, context: Context, controller: Controller, audio: AudioFile, canvas: MMVImage) -> None:
+    def __init__(self, 
+            context: Context,
+            controller: Controller,
+            audio: AudioFile,
+            canvas: MMVImage,
+            skia: SkiaWrapper,
+        ) -> None:
         
         # Get the classes
         self.context = context
         self.controller = controller
         self.audio = audio
         self.canvas = canvas
+        self.skia = skia
 
         # Content are the MMV objects stored that gets rendered on the screen
         # generators are MMVGenerators that we get new objects from
@@ -96,7 +104,7 @@ class MMVAnimation:
 
                 # Blit itself on the canvas
                 if not self.context.multiprocessed:
-                    item.blit(self.canvas)
+                    item.blit(self.skia)
 
         # For each layer index we have items to delete
         for layer_index in items_to_delete.keys():
@@ -106,4 +114,5 @@ class MMVAnimation:
                 del self.content[ layer_index ][ items ]
 
         # Post process this final frame as we added all the items
-        self.canvas.next(fftinfo, this_step)
+        self.canvas.next(fftinfo, this_step, self.skia)
+        # self.canvas.blit(self.skia)

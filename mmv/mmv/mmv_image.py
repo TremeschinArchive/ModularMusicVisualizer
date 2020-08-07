@@ -28,7 +28,9 @@ from mmv.common.cmn_utils import Utils
 from mmv.mmv_context import Context
 from mmv.common.cmn_types import *
 from mmv.mmv_modifiers import *
+import math
 import copy
+import skia
 import cv2
 import os
 
@@ -58,6 +60,7 @@ class MMVImage:
         self.current_step = -1
         self.is_deletable = False
         self.type = "mmvimage"
+        self.overlay_mode = "composite"  # composite and copy
 
         # If we want to get the images from a video, be sure to match the fps!!
         self.video = None
@@ -66,6 +69,17 @@ class MMVImage:
         self.offset = [0, 0]
 
         self.ROUND = 3
+        
+        self._reset_effects_variables()
+
+    def _reset_effects_variables(self):
+        self.image_filters = []
+        self.mask_filters = []
+        # self.color_filters = []
+        self.shaders = []
+        self.paint_dict = {
+            "AntiAlias": True
+        }
     
     # Our Canvas is an MMVImage object
     def create_canvas(self) -> None:
@@ -74,7 +88,7 @@ class MMVImage:
         self.configure.add_path_point(0, 0)
     
     def reset_canvas(self) -> None:
-        self.image.new(self.context.width, self.context.height, transparent=True)
+        self.image.new(self.context.width, self.context.height)
 
     # Don't pickle cv2 video  
     def __getstate__(self):
@@ -84,7 +98,7 @@ class MMVImage:
         return state
     
     # Next step of animation
-    def next(self, fftinfo: dict, this_step: int) -> None:
+    def next(self, fftinfo: dict, this_step: int, skia_canvas=None) -> None:
 
         self.current_step += 1
 
@@ -110,6 +124,7 @@ class MMVImage:
         self.image.pending = {}
 
         self.image._reset_to_original_image()
+        self._reset_effects_variables()
 
         position = this_animation["position"]
         path = position["path"]
@@ -124,16 +139,7 @@ class MMVImage:
 
                 visualizer = this_module["object"]
 
-                if self.context.multiprocessed:
-                    visualizer.next(fftinfo, is_multiprocessing=True)
-                    self.image.pending["visualizer"] = [
-                        copy.deepcopy(visualizer), fftinfo
-                    ]
-                    self.image.width = visualizer.config["width"]
-                    self.image.height = visualizer.config["height"]
-
-                else:
-                    self.image.load_from_array(visualizer.next(fftinfo))
+                self.image.load_from_array(visualizer.next(fftinfo))
 
             # The video module must be before everything as it gets the new frame                
             if "video" in modules:
@@ -161,20 +167,12 @@ class MMVImage:
 
                 width = self.context.width + (2*shake)
                 height = self.context.height + (2*shake)
-                
-                if self.context.multiprocessed:
-                    self.image.pending["video"] = [
-                        copy.deepcopy(frame),
-                        width, height
-                    ]
-                    self.image.width = width
-                    self.image.height = height
-                else:
-                    self.image.load_from_array(frame, convert_to_png=True)
-                    self.image.resize_to_resolution(
-                        width, height,
-                        override=True
-                    )
+            
+                self.image.load_from_array(frame, convert_to_png=True)
+                self.image.resize_to_resolution(
+                    width, height,
+                    override=True
+                )
 
             if "rotate" in modules:
                 this_module = modules["rotate"]
@@ -183,10 +181,7 @@ class MMVImage:
                 amount = rotate.next()
                 amount = round(amount, self.ROUND)
                 
-                if self.context.multiprocessed:
-                    self.image.pending["rotate"] = [amount]
-                else:
-                    self.image.rotate(amount)
+                self.image.rotate(amount)
 
             if "resize" in modules:
 
@@ -197,12 +192,8 @@ class MMVImage:
                 resize.next(fftinfo["average_value"])
                 self.size = resize.get_value()
 
-                if self.context.multiprocessed:
-                    self.image.pending["resize"] = [ self.size ]
-                    offset = self.image.resize_by_ratio( self.size, get_only_offset=True )
-                else:
-                    # If we're going to rotate, resize the rotated frame which is not the original image 
-                    offset = self.image.resize_by_ratio( self.size, from_current_frame = True )
+                # If we're going to rotate, resize the rotated frame which is not the original image 
+                offset = self.image.resize_by_ratio( self.size )
 
                 if this_module["keep_center"]:
                     self.offset[0] += offset[0]
@@ -216,27 +207,12 @@ class MMVImage:
 
                 blur.next(fftinfo["average_value"])
 
-                if self.context.multiprocessed:
-                    self.image.pending["blur"] = [ blur.get_value() ]
-                else:
-                    self.image.gaussian_blur( blur.get_value() )
+                amount = blur.get_value()
+
+                self.image_filters.append(
+                    skia.ImageFilters.Blur(amount, amount)
+                )
             
-            # TODO
-            if "glitch" in modules:
-
-                this_module = modules["glitch"]
-
-                amount = eval(this_module["activation"].replace("X", str(fftinfo["average_value"])))
-                amount = round(amount, self.ROUND)
-
-                color_offset = this_module["color_offset"]
-                scan_lines = this_module["scan_lines"]
-
-                if self.context.multiprocessed:
-                    self.image.pending["glitch"] = [amount, color_offset, scan_lines]
-                else:
-                    self.image.glitch(amount, color_offset, scan_lines)
-
             if "fade" in modules:
 
                 this_module = modules["fade"]
@@ -244,10 +220,7 @@ class MMVImage:
 
                 fade.next(fftinfo["average_value"])
            
-                if self.context.multiprocessed:
-                    self.image.pending["transparency"] = [ fade.get_value() ]
-                else:
-                    self.image.transparency( fade.get_value() )
+                self.image.transparency( fade.get_value() )
                     
             # Apply vignetting
             if "vignetting" in modules:
@@ -260,21 +233,14 @@ class MMVImage:
                 vignetting.get_center()
                 next_vignetting = vignetting.get_value()
 
-                # Apply the new vignetting effect on the center of the image
-                if self.context.multiprocessed:
-                    self.image.pending["vignetting"] = [
-                        vignetting.center_x,
-                        vignetting.center_y,
-                        next_vignetting,
-                        next_vignetting,
-                    ]
-                else:
-                    self.image.vignetting(
-                        vignetting.center_x,
-                        vignetting.center_y,
-                        next_vignetting,
-                        next_vignetting
+                
+                skia_canvas.canvas.drawPaint({
+                    'Shader': skia.GradientShader.MakeRadial(
+                        center=(vignetting.center_x, vignetting.center_y),
+                        radius=next_vignetting,
+                        colors=[skia.Color4f(0, 0, 0, 0), skia.Color4f(0, 0, 0, 1)]
                     )
+                })
 
 
         # Iterate through every position module
@@ -301,15 +267,53 @@ class MMVImage:
                 [self.x, self.y], self.offset = modifier.next(*argument)
 
     # Blit this item on the canvas
-    def blit(self, canvas: Frame) -> None:
+    def blit(self, blit_to_skia) -> None:
 
-        x = int(self.x + self.offset[1])
-        y = int(self.y + self.offset[0])
+        y = int(self.x)# + self.offset[1])
+        x = int(self.y)# + self.offset[0])
 
-        canvas.image.overlay_transparent(
-            self.image.image,
-            y, x
+        if self.mask_filters:
+            self.paint_dict["MaskFilter"] =  self.mask_filters
+    
+        if self.image_filters:
+            self.paint_dict["ImageFilter"] = skia.ImageFilters.Merge(self.image_filters)
+
+        image = self.image.image
+        angle =  self.image.rotate_angle
+        
+        paint = skia.Paint(self.paint_dict)
+
+        blit_to_skia.canvas.drawImage(
+            image, x, y,
+            paint = paint,
         )
+
+        return
+
+        """  
+        if angle == 0:
+
+            paint = skia.Paint(self.paint_dict)
+
+            blit_to_skia.canvas.drawImage(
+                image, x, y,
+                paint = paint,
+            )
+        else:
+            paint = skia.Paint(self.paint_dict)
+
+            blit_to_skia.canvas.translate(x/2, y/2)
+            blit_to_skia.canvas.rotate(angle)
+
+            blit_to_skia.canvas.drawImage(
+                image, x, y,
+                paint = paint,
+            )
+
+            blit_to_skia.canvas.rotate(-angle)
+            blit_to_skia.canvas.translate(- x/2, - y /2)
+        
+        """
 
     def resolve_pending(self) -> None:
         self.image.resolve_pending()

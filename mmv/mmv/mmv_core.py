@@ -22,6 +22,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from mmv.mmv_worker import get_canvas_multiprocess_return
 from mmv.common.cmn_audio import AudioProcessing
 from mmv.common.cmn_video import FFmpegWrapper
+from mmv.common.cmn_skia import SkiaWrapper
 from mmv.common.cmn_fourier import Fourier
 from mmv.common.cmn_audio import AudioFile
 from mmv.mmv_animation import MMVAnimation
@@ -47,6 +48,7 @@ class Core:
             context: Context,
             controller: Controller,
             canvas: MMVImage,
+            skia: SkiaWrapper,
             fourier: Fourier,
             ffmpeg: FFmpegWrapper,
             audio: AudioFile,
@@ -58,6 +60,7 @@ class Core:
         self.context = context
         self.controller = controller
         self.canvas = canvas
+        self.skia = skia
         self.fourier = fourier
         self.ffmpeg = ffmpeg
         self.audio = audio
@@ -227,7 +230,7 @@ class Core:
                 
             else:
                 # Save current canvas's Frame to the final video
-                self.ffmpeg.write_to_pipe(global_frame_index, self.canvas.image.image)
+                self.ffmpeg.write_to_pipe(global_frame_index, self.skia.canvas_array())
 
                 # Hard debug, save the canvas into a folder
                 # self.canvas.canvas.save("data/canvas%s.png" % this_step)

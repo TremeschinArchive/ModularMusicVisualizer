@@ -19,13 +19,13 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.mmv_visualizers.mmv_visualizer_circle import MMVVisualizerCircle
 from mmv.common.cmn_coordinates import PolarCoordinates
 from mmv.common.cmn_interpolation import Interpolation
 from mmv.common.cmn_functions import Functions
 from mmv.common.cmn_functions import FitIndex
 from mmv.common.cmn_frame import Frame
 from mmv.common.cmn_utils import Utils
-from mmv.common.cmn_svg import SVG
 from mmv.mmv_modifiers import *
 from resampy import resample
 import svgwrite
@@ -35,19 +35,13 @@ import os
 
 import numpy as np
 
-class MMVVisualizer():
-    def __init__(self, context, config):
+class MMVVisualizer:
+    def __init__(self, context, config: dict) -> None:
         
         debug_prefix = "[MMVVisualizer.__init__]"
         
         self.context = context
         self.config = config
-        self.svg = SVG(
-            self.config["width"],
-            self.config["height"],
-            "cairo", #self.context.svg_rasterizer, # cairo is just faster here
-            "png"
-        )
 
         self.fit_transform_index = FitIndex()
         self.functions = Functions()
@@ -59,7 +53,6 @@ class MMVVisualizer():
         self.y = 0
         self.size = 1
         self.current_animation = 0
-        self.current_step = 0
         self.is_deletable = False
         self.offset = [0, 0]
         self.polar = PolarCoordinates()
@@ -68,6 +61,9 @@ class MMVVisualizer():
 
         # Create Frame and load random particle
         self.image = Frame()
+
+        if self.config["type"] == "circle":
+            self.builder = MMVVisualizerCircle(self)
 
     def smooth(self, array, smooth):
         if smooth > 0:
@@ -78,9 +74,6 @@ class MMVVisualizer():
 
     # Next step of animation
     def next(self, fftinfo, is_multiprocessing=False):
-
-        if not is_multiprocessing:
-            self.svg.new_drawing()
 
         fitfourier = self.config["fourier"]["fitfourier"]
 
@@ -107,6 +100,9 @@ class MMVVisualizer():
         # Start each channel point's empty
         for channel in channels:
             points[channel] = []
+
+        # Dictionary with all the data to make a visualization bar
+        fitted_ffts = {}
 
         # Loop on each channel
         for channel_index, channel in enumerate(channels):
@@ -156,9 +152,11 @@ class MMVVisualizer():
                     int(fitted_fft.shape[0]*cut[1])
                 ]
 
-                # The mode (linear, symetric)
-                mode = self.config["mode"]
+                fitted_ffts[channel] = np.copy(fitted_fft)
 
+        return self.builder.build(fitted_ffts)
+
+        """ 
                 # If we'll be making a circle 
                 if self.config["type"] == "circle":
 
@@ -203,9 +201,8 @@ class MMVVisualizer():
                                 )
                                 coord = self.polar.get_rectangular_coordinates()
                                 points[channel].append(coord)
-
-        self.current_step += 1
-
+                """
+        """ 
         if not is_multiprocessing:
 
             drawpoints = []
@@ -232,7 +229,7 @@ class MMVVisualizer():
 
             png = self.svg.get_png()
 
-            return png
+            return png """
 
     # Blit this item on the canvas
     def blit(self, canvas):
