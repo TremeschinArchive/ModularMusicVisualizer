@@ -31,11 +31,9 @@ class MMVVisualizerCircle:
 
     def build(self, fitted_ffts: dict, config, effects) -> np.ndarray:
 
-        
-
         paint = skia.Paint(
             AntiAlias=True,
-            Color=skia.ColorBLUE,
+            Color=skia.ColorWHITE,
             Style=skia.Paint.kFill_Style,
             StrokeWidth=4,
         )

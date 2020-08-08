@@ -185,7 +185,6 @@ class MMVImage:
                     self.rotate_value = amount
 
             if "resize" in modules:
-
                 this_module = modules["resize"]
                 resize = this_module["object"]
 
@@ -194,6 +193,7 @@ class MMVImage:
                 self.size = resize.get_value()
 
                 if not self.is_visualizer:
+                    
                     # If we're going to rotate, resize the rotated frame which is not the original image 
                     offset = self.image.resize_by_ratio( self.size, from_current_frame = True )
 
@@ -203,7 +203,6 @@ class MMVImage:
 
             # DONE
             if "blur" in modules:
-
                 this_module = modules["blur"]
                 blur = this_module["object"]
 
@@ -216,7 +215,6 @@ class MMVImage:
                 )
             
             if "fade" in modules:
-
                 this_module = modules["fade"]
                 fade = this_module["object"]
 
@@ -226,7 +224,6 @@ class MMVImage:
                     
             # Apply vignetting
             if "vignetting" in modules:
-
                 this_module = modules["vignetting"]
                 vignetting = this_module["object"]
 
@@ -245,9 +242,7 @@ class MMVImage:
                 })
             
             if "visualizer" in modules:
-
                 this_module = modules["visualizer"]
-
                 visualizer = this_module["object"]
 
                 effects = {

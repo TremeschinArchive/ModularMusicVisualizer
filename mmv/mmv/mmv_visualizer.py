@@ -77,8 +77,6 @@ class MMVVisualizer:
     # Next step of animation
     def next(self, fftinfo, effects, is_multiprocessing=False):
 
-        self.skia.reset_canvas()
-
         fitfourier = self.config["fourier"]["fitfourier"]
 
         ffts = fftinfo["fft"]
@@ -158,90 +156,6 @@ class MMVVisualizer:
 
                 fitted_ffts[channel] = np.copy(fitted_fft)
 
-        return self.builder.build(fitted_ffts, self.config, effects)
+        self.builder.build(fitted_ffts, self.config, effects)
 
-        """ 
-                # If we'll be making a circle 
-                if self.config["type"] == "circle":
-
-                    # For each item on the fitted FFT
-                    for i in range(len(fitted_fft) - 1):
-
-                        # Calculate our size of the bar
-                        size = fitted_fft[i]*8 #*(0.7 + i/80) #- i/len(fitted_fft))
-
-                        # Simple, linear
-                        if mode == "linear":
-                            # We only use the mid channel
-                            if channel == "m":
-                                self.polar.from_r_theta(
-                                    (self.config["minimum_bar_size"] + size)*self.size,
-                                    ((math.pi*2)/len(fitted_fft))*i # fitted_fft -> fft nice effect
-                                )
-                                coord = self.polar.get_rectangular_coordinates()
-                                points[channel].append(coord)
-
-                        # Symetric
-                        if mode == "symetric":
-
-                            angle = ( i/len(fitted_fft) ) * (math.pi)
-                            angle = self.fit_transform_index.polynomial(angle, math.pi, 0.4)
-
-                            bar_size = (self.config["minimum_bar_size"] + size)*self.size
-
-                            # The left channel starts at the top and goes clockwise
-                            if channel == "l":
-                                self.polar.from_r_theta(
-                                    bar_size,
-                                    (math.pi/2) - angle, # fitted_fft -> fft nice effect
-                                )
-                                coord = self.polar.get_rectangular_coordinates()
-                                points[channel].append(coord)
-
-                            elif channel == "r":
-                                self.polar.from_r_theta(
-                                    bar_size,
-                                    (math.pi/2) + angle # fitted_fft -> fft nice effect
-                                )
-                                coord = self.polar.get_rectangular_coordinates()
-                                points[channel].append(coord)
-                """
-        """ 
-        if not is_multiprocessing:
-
-            drawpoints = []
-
-            if mode == "symetric":
-                for point in points["l"]:
-                    drawpoints.append(point)
-                for point in reversed(points["r"]):
-                    drawpoints.append(point)
-            
-            if mode == "linear":
-                for point in points["m"]:
-                    drawpoints.append(point)
-
-            drawpoints.append(drawpoints[0])
-            
-            self.svg.dwg.add(
-                self.svg.dwg.polyline(
-                    drawpoints,
-                    stroke=svgwrite.rgb(60, 60, 60, '%'),
-                    fill='white',
-                )
-            )
-
-            png = self.svg.get_png()
-
-            return png """
-
-    # Blit this item on the canvas
-    def blit(self, canvas):
-
-        x = int(self.x + self.offset[1] + self.base_offset[1])
-        y = int(self.y + self.offset[0] + self.base_offset[0])
-
-        canvas.canvas.overlay_transparent(
-            self.image.array, y, x
-        )
-
+  

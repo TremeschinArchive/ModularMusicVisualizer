@@ -139,11 +139,13 @@ class Core:
 
             # # # [ Next steps ] # # #
 
-            # Process next animation with audio info and the step count to process on
-            start = time.time()
-            self.mmvanimation.next(fftinfo, this_step)
-            # print(time.time() - start)
+            # Reset skia canvas
+            self.skia.reset_canvas()
 
+            # Process next animation with audio info and the step count to process on
+            self.mmvanimation.next(fftinfo, this_step)
+
+            # Next image to pipe
             next_image = self.skia.canvas_array()
 
             # Save current canvas's Frame to the final video
