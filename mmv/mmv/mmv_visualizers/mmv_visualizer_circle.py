@@ -35,7 +35,7 @@ class MMVVisualizerCircle:
         self.center_x = self.visualizer.context.width / 2
         self.center_y = self.visualizer.context.height / 2
 
-    def build(self, fitted_ffts: dict, config, effects) -> np.ndarray:
+    def build(self, fitted_ffts: dict, this_step, config, effects) -> np.ndarray:
 
         if self.config["mode"] == "symetric":
             
@@ -45,13 +45,6 @@ class MMVVisualizerCircle:
                 npts = len(this_channel_fft)
 
                 for index, magnitude in enumerate(this_channel_fft):
-
-                    paint = skia.Paint(
-                        AntiAlias = True,
-                        Color = skia.Color4f(1, 1, 1, 1),
-                        Style = skia.Paint.kStroke_Style,
-                        StrokeWidth = 1,
-                    )
 
                     path = skia.Path()
                     path.moveTo(self.center_x, self.center_y)
@@ -71,6 +64,23 @@ class MMVVisualizerCircle:
                     path.lineTo(
                         self.center_x + polar_offset[0],
                         self.center_y + polar_offset[1],
+                    )
+
+                    theta += this_step/100
+
+                    colors = [
+                        abs( math.sin((theta/2)) ),
+                        abs( math.sin((theta + ((1/3)*2*math.pi)) / 2) ),
+                        abs( math.sin((theta + ((2/3)*2*math.pi)) / 2) ),
+                    ] + [1]
+
+                    color = skia.Color4f(*colors)
+
+                    paint = skia.Paint(
+                        AntiAlias = True,
+                        Color = color,
+                        Style = skia.Paint.kStroke_Style,
+                        StrokeWidth = 2,
                     )
 
                     self.skia.canvas.drawPath(path, paint)

@@ -75,7 +75,7 @@ class MMVVisualizer:
         return array
 
     # Next step of animation
-    def next(self, fftinfo, effects, is_multiprocessing=False):
+    def next(self, fftinfo, this_step, effects, is_multiprocessing=False):
 
         fitfourier = self.config["fourier"]["fitfourier"]
 
@@ -156,6 +156,6 @@ class MMVVisualizer:
 
                 fitted_ffts[channel] = np.copy(fitted_fft)
 
-        self.builder.build(fitted_ffts, self.config, effects)
+        self.builder.build(fitted_ffts, this_step, self.config, effects)
 
   

@@ -251,7 +251,7 @@ class MMVImage:
                     "image_filters": self.image_filters
                 }
 
-                visualizer.next(fftinfo, effects)
+                visualizer.next(fftinfo, this_step, effects)
 
 
         # Iterate through every position module
