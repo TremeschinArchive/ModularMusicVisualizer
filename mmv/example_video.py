@@ -169,7 +169,7 @@ visualizer.configure.simple_add_scalar_resize(
 #     y_smoothness=0.02
 # )
 
-processing.add(visualizer, layer=3)
+# processing.add(visualizer, layer=3)
 
 # # Post processing / effects
 

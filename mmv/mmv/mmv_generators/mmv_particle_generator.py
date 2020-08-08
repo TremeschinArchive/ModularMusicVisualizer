@@ -46,8 +46,9 @@ class MMVParticleGeneratorConfigure:
 
 
 class MMVParticleGenerator():
-    def __init__(self, context):
+    def __init__(self, context, skia_object):
         self.context = context
+        self.skia = skia_object
         self.utils = Utils()
         self.interpolation = Interpolation()
         self.configure = MMVParticleGeneratorConfigure(self)
@@ -72,7 +73,7 @@ class MMVParticleGenerator():
     
     def preset_bottom_mid_top(self):
 
-        particle = MMVImage(self.context)
+        particle = MMVImage(self.context, self.skia)
 
         particle.image.load_from_path(
             self.utils.random_file_from_dir (
@@ -194,7 +195,7 @@ class MMVParticleGenerator():
 
     def preset_middle_out(self):
 
-        particle = MMVImage(self.context)
+        particle = MMVImage(self.context, self.skia)
 
         particle.image.load_from_path(
             self.utils.random_file_from_dir (

@@ -117,7 +117,7 @@ class mmv:
 
     # Get a blank MMVImage object
     def image_object(self) -> None:
-        return MMVImage(self.main.context)
+        return MMVImage(self.main.context, self.main.skia)
     
     # Get a pygradienter object with many workers for rendering
     def pygradienter(self, workers=4):
@@ -125,7 +125,7 @@ class mmv:
     
     # Get a blank MMVGenerator object
     def generator_object(self):
-        return MMVGenerator(self.main.context)
+        return MMVGenerator(self.main.context, self.main.skia)
 
     # # [ Utilities ] # #
 

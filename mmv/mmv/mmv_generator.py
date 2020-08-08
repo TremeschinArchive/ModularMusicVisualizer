@@ -34,13 +34,14 @@ import os
 
 
 class MMVGenerator:
-    def __init__(self, context: Context) -> None:
+    def __init__(self, context: Context, skia_object) -> None:
         self.context = context
+        self.skia = skia_object
         self.generator = None
 
     def next(self, fftinfo: dict, this_step: int) -> dict:
         return self.generator.next(fftinfo, this_step)
 
     def particle_generator(self) -> None:
-        self.generator = MMVParticleGenerator(self.context)
+        self.generator = MMVParticleGenerator(self.context, self.skia)
         

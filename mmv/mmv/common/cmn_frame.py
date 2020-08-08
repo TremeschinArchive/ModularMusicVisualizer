@@ -65,8 +65,9 @@ class Frame:
     # self.image = self.original_image
     def _reset_to_original_image(self) -> None:
         # self.image = skia.Image.fromarray(self.original_image.toarray())
-        self.image = self.original_image
-        self._update_resolution()
+        if hasattr(self, "original_image"):
+            self.image = self.original_image
+            self._update_resolution()
     
     # Get the image we're process the effects on
     def _get_processing_image(self, from_current_frame: bool=False):
@@ -74,7 +75,7 @@ class Frame:
             return self.image
         else:
             return self.original_image
-
+        
     # # User functions
 
     # Create new numpy array as a "frame", attribute width, height and resolution

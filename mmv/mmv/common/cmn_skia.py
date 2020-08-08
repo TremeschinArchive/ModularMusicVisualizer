@@ -20,6 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import contextlib
+import uuid
 import skia
 import glfw
 import time
@@ -35,7 +36,7 @@ class SkiaWrapper:
             raise RuntimeError('glfw.init() failed')
         glfw.window_hint(glfw.VISIBLE, glfw.FALSE)
         glfw.window_hint(glfw.STENCIL_BITS, 8)
-        self.window = glfw.create_window(self.context.width, self.context.height, '', None, None)
+        self.window = glfw.create_window(self.context.width, self.context.height, str(uuid.uuid4()), None, None)
         glfw.make_context_current(self.window)
     
     def init(self) -> None:

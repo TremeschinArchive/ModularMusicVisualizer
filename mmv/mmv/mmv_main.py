@@ -83,11 +83,11 @@ class MMVMain:
         print(debug_prefix, "Creating Controller()")
         self.controller = Controller(self.context)
 
-        print(debug_prefix, "Creating Canvas()")
-        self.canvas = MMVImage(self.context)
-
         print(debug_prefix, "Creating SkiaWrapper()")
         self.skia = SkiaWrapper(self.context)
+
+        print(debug_prefix, "Creating Canvas()")
+        self.canvas = MMVImage(self.context, self.skia)
 
         print(debug_prefix, "Creating Fourier()")
         self.fourier = Fourier()

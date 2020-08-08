@@ -38,17 +38,18 @@ import os
 # Basically everything on MMV as we have to render images
 class MMVImage:
 
-    def __init__(self, context: Context) -> None:
+    def __init__(self, context: Context, skia_object) -> None:
         
         debug_prefix = "[MMVImage.__init__]"
         
         self.context = context
+        self.skia = skia_object
 
         # The "animation" and path this object will follow
         self.animation = {}
 
         # Create classes
-        self.configure = MMVImageConfigure(self, self.context)
+        self.configure = MMVImageConfigure(self, self.context, self.skia)
         self.functions = Functions()
         self.utils = Utils()
         self.image = Frame()
@@ -56,9 +57,11 @@ class MMVImage:
         self.x = 0
         self.y = 0
         self.size = 1
+        self.rotate_value = 0
         self.current_animation = 0
         self.current_step = -1
         self.is_deletable = False
+        self.is_visualizer = False
         self.type = "mmvimage"
         self.overlay_mode = "composite"  # composite and copy
 
@@ -133,13 +136,7 @@ class MMVImage:
             
             modules = this_animation["modules"]
 
-            if "visualizer" in modules:
-
-                this_module = modules["visualizer"]
-
-                visualizer = this_module["object"]
-
-                self.image.load_from_array(visualizer.next(fftinfo))
+            self.is_visualizer = "visualizer" in modules
 
             # The video module must be before everything as it gets the new frame                
             if "video" in modules:
@@ -157,7 +154,7 @@ class MMVImage:
                     ok, frame = self.video.read()
                 
                 # CV2 utilizes BGR matrix, but we need RGB
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
 
                 shake = 0
 
@@ -167,8 +164,9 @@ class MMVImage:
 
                 width = self.context.width + (2*shake)
                 height = self.context.height + (2*shake)
-            
+                
                 self.image.load_from_array(frame)
+                self.image._override(True)
                 self.image.resize_to_resolution(
                     width, height,
                     override=True
@@ -181,7 +179,10 @@ class MMVImage:
                 amount = rotate.next()
                 amount = round(amount, self.ROUND)
                 
-                self.image.rotate(amount, from_current_frame=True)
+                if not self.is_visualizer:
+                    self.image.rotate(amount, from_current_frame=True)
+                else:
+                    self.rotate_value = amount
 
             if "resize" in modules:
 
@@ -192,12 +193,13 @@ class MMVImage:
                 resize.next(fftinfo["average_value"])
                 self.size = resize.get_value()
 
-                # If we're going to rotate, resize the rotated frame which is not the original image 
-                offset = self.image.resize_by_ratio( self.size, from_current_frame = True )
+                if not self.is_visualizer:
+                    # If we're going to rotate, resize the rotated frame which is not the original image 
+                    offset = self.image.resize_by_ratio( self.size, from_current_frame = True )
 
-                if this_module["keep_center"]:
-                    self.offset[0] += offset[0]
-                    self.offset[1] += offset[1]
+                    if this_module["keep_center"]:
+                        self.offset[0] += offset[0]
+                        self.offset[1] += offset[1]
 
             # DONE
             if "blur" in modules:
@@ -241,6 +243,20 @@ class MMVImage:
                         colors=[skia.Color4f(0, 0, 0, 0), skia.Color4f(0, 0, 0, 1)]
                     )
                 })
+            
+            if "visualizer" in modules:
+
+                this_module = modules["visualizer"]
+
+                visualizer = this_module["object"]
+
+                effects = {
+                    "size": self.size,
+                    "rotate": self.rotate_value,
+                    "image_filters": self.image_filters
+                }
+
+                visualizer.next(fftinfo, effects)
 
 
         # Iterate through every position module
@@ -268,6 +284,9 @@ class MMVImage:
 
     # Blit this item on the canvas
     def blit(self, blit_to_skia) -> None:
+
+        if self.is_visualizer:
+            return
 
         y = int(self.x + self.offset[1])
         x = int(self.y + self.offset[0])

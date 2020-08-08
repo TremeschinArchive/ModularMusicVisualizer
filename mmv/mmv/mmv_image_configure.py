@@ -43,9 +43,10 @@ This will be documented properly in the future (I hope so)
 class MMVImageConfigure:
 
     # Get MMVImage object and set image index to zero
-    def __init__(self, mmvimage_object, context) -> None:
+    def __init__(self, mmvimage_object, context, skia_object) -> None:
         self.object = mmvimage_object
         self.context = context
+        self.skia = skia_object
         self.animation_index = 0
     
     # Macros for initialializing this animation layer
@@ -205,7 +206,8 @@ class MMVImageConfigure:
                                 "subdivide": subdivide,
                             }
                         }
-                    }
+                    },
+                    self.skia
                 )
             }
         })

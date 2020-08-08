@@ -19,11 +19,13 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+
 from mmv.mmv_visualizers.mmv_visualizer_circle import MMVVisualizerCircle
 from mmv.common.cmn_coordinates import PolarCoordinates
 from mmv.common.cmn_interpolation import Interpolation
 from mmv.common.cmn_functions import Functions
 from mmv.common.cmn_functions import FitIndex
+from mmv.common.cmn_skia import SkiaWrapper
 from mmv.common.cmn_frame import Frame
 from mmv.common.cmn_utils import Utils
 from mmv.mmv_modifiers import *
@@ -36,12 +38,13 @@ import os
 import numpy as np
 
 class MMVVisualizer:
-    def __init__(self, context, config: dict) -> None:
+    def __init__(self, context, config: dict, skia_object) -> None:
         
         debug_prefix = "[MMVVisualizer.__init__]"
         
         self.context = context
         self.config = config
+        self.skia = skia_object
 
         self.fit_transform_index = FitIndex()
         self.functions = Functions()
@@ -52,7 +55,6 @@ class MMVVisualizer:
         self.x = 0
         self.y = 0
         self.size = 1
-        self.current_animation = 0
         self.is_deletable = False
         self.offset = [0, 0]
         self.polar = PolarCoordinates()
@@ -63,7 +65,7 @@ class MMVVisualizer:
         self.image = Frame()
 
         if self.config["type"] == "circle":
-            self.builder = MMVVisualizerCircle(self)
+            self.builder = MMVVisualizerCircle(self, self.skia)
 
     def smooth(self, array, smooth):
         if smooth > 0:
@@ -73,7 +75,9 @@ class MMVVisualizer:
         return array
 
     # Next step of animation
-    def next(self, fftinfo, is_multiprocessing=False):
+    def next(self, fftinfo, effects, is_multiprocessing=False):
+
+        self.skia.reset_canvas()
 
         fitfourier = self.config["fourier"]["fitfourier"]
 
@@ -154,7 +158,7 @@ class MMVVisualizer:
 
                 fitted_ffts[channel] = np.copy(fitted_fft)
 
-        return self.builder.build(fitted_ffts)
+        return self.builder.build(fitted_ffts, self.config, effects)
 
         """ 
                 # If we'll be making a circle 
