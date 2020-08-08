@@ -19,7 +19,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.common.cmn_coordinates import PolarCoordinates
 import numpy as np
+import math
 import skia
 
 
@@ -28,43 +30,48 @@ class MMVVisualizerCircle:
         self.visualizer = MMVVisualizer
         self.skia = skia_object
         self.config = self.visualizer.config
+        self.polar = PolarCoordinates()
+
+        self.center_x = self.visualizer.context.width / 2
+        self.center_y = self.visualizer.context.height / 2
 
     def build(self, fitted_ffts: dict, config, effects) -> np.ndarray:
 
-        paint = skia.Paint(
-            AntiAlias=True,
-            Color=skia.ColorWHITE,
-            Style=skia.Paint.kFill_Style,
-            StrokeWidth=4,
-        )
-
         if self.config["mode"] == "symetric":
             
-            self.skia.canvas.translate(self.skia.context.width / 2, self.skia.context.height / 2)
-            self.skia.canvas.rotate(90)
-
             for channel in ["l", "r"]:
 
                 this_channel_fft = fitted_ffts[channel]
                 npts = len(this_channel_fft)
 
                 for index, magnitude in enumerate(this_channel_fft):
-                    rect = skia.Rect(
-                        0,
-                        -1, #* effects["size"] , 
-                        ( self.config["minimum_bar_size"] + magnitude*5 ) * effects["size"],
-                        1) #* effects["size"])
-                    self.skia.canvas.drawRect(rect, paint)
 
+                    paint = skia.Paint(
+                        AntiAlias = True,
+                        Color = skia.Color4f(1, 1, 1, 1),
+                        Style = skia.Paint.kStroke_Style,
+                        StrokeWidth = 1,
+                    )
+
+                    path = skia.Path()
+                    path.moveTo(self.center_x, self.center_y)
+                    
                     if channel == "l":
-                        self.skia.canvas.rotate(180/npts)
+                        theta = (math.pi/2) - ((index/npts)*math.pi)
                     elif channel == "r":
-                        self.skia.canvas.rotate( - 180/npts)
-                
-                if channel == "l":
-                    self.skia.canvas.rotate(180)
-            
-            self.skia.canvas.rotate(90)
+                        theta = (math.pi/2) + ((index/npts)*math.pi)
 
-            self.skia.canvas.translate( - self.skia.context.width / 2, - self.skia.context.height / 2)
-            
+                    self.polar.from_r_theta(
+                        r = ( self.config["minimum_bar_size"] + magnitude * 5 ) * effects["size"],
+                        theta = theta,
+                    )
+
+                    polar_offset = self.polar.get_rectangular_coordinates()
+
+                    path.lineTo(
+                        self.center_x + polar_offset[0],
+                        self.center_y + polar_offset[1],
+                    )
+
+                    self.skia.canvas.drawPath(path, paint)
+
