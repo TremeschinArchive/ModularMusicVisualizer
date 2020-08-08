@@ -48,7 +48,7 @@ class MMVImage:
         self.animation = {}
 
         # Create classes
-        self.configure = MMVImageConfigure(self)
+        self.configure = MMVImageConfigure(self, self.context)
         self.functions = Functions()
         self.utils = Utils()
         self.image = Frame()

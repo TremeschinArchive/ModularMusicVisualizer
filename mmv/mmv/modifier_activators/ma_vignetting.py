@@ -23,23 +23,49 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from mmv.mmv_interpolation import MMVInterpolation
 from mmv.common.cmn_types import *
 
-# Those functions are really supposed to be used on post processing 720p or 1080p
+# width and height are final video resolution
 
 # "ic" - Interpolation Changer, change the interpolation of the modifier
 
-def ma_vignetting_ic_low(start_value: Number, iinterpolation: MMVInterpolation, average_audio_value: Number) -> None:
-    interpolation.target_value = start_value - 1200 * average_audio_value
+def ma_vignetting_ic_low(
+        start_value: Number,
+        interpolation: MMVInterpolation,
+        average_audio_value: Number,
+        width: Number,
+        height: Number,
+    ) -> None:
+
+    interpolation.target_value = ( (start_value - 1200 * average_audio_value) / 720) * height
 
 # default
-def ma_vignetting_ic_medium(start_value: Number, interpolation: MMVInterpolation, average_audio_value: Number) -> None:
-    interpolation.target_value = start_value - 1600 * average_audio_value
+def ma_vignetting_ic_medium(
+        start_value: Number,
+        interpolation: MMVInterpolation,
+        average_audio_value: Number,
+        width: Number,
+        height: Number,
+    ) -> None:
 
-def ma_vignetting_ic_high(start_value: Number, iinterpolation: MMVInterpolation, average_audio_value: Number) -> None:
-    interpolation.target_value = start_value - 2500 * average_audio_value
+    interpolation.target_value = ( (start_value - 1600 * average_audio_value) / 720) * height
+
+def ma_vignetting_ic_high(
+        start_value: Number,
+        interpolation: MMVInterpolation,
+        average_audio_value: Number,
+        width: Number,
+        height: Number,
+    ) -> None:
+
+    interpolation.target_value = ( (start_value - 2500 * average_audio_value) / 720) * height
 
 
 # "vc" - Value Changer functions, applied after interpolation
 
 # default
-def ma_vignetting_vc_only_interpolation(interpolation: MMVInterpolation, average_audio_value: Number) -> Number:
+def ma_vignetting_vc_only_interpolation(
+        interpolation: MMVInterpolation,
+        average_audio_value: Number,
+        width: Number,
+        height: Number,
+    ) -> Number:
     return interpolation.current_value

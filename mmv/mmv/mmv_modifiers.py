@@ -332,15 +332,17 @@ class MMVModifierGaussianBlur(MMVModifier1D):
 from mmv.modifier_activators.ma_vignetting import *
 class MMVModifierVignetting:
     def __init__(self,
+            context,
             minimum: Number,
             interpolation: MMVInterpolation,
             center_function_x,
             center_function_y,
             interpolation_changer = ma_vignetting_ic_medium,
             value_changer = ma_vignetting_vc_only_interpolation,
-            start_value: Number=0
+            start_value: Number=0,
         ) -> None:
 
+        self.context = context
         self.minimum = minimum
         self.center_function_x = center_function_x
         self.center_function_y = center_function_y
@@ -366,6 +368,8 @@ class MMVModifierVignetting:
             start_value = self.start_value,
             interpolation = self.interpolation,
             average_audio_value = average_audio_value,
+            width = self.context.width,
+            height = self.context.height,
         )
 
         # Calculate next interpolation
@@ -375,6 +379,8 @@ class MMVModifierVignetting:
         self.value = self.value_changer(
             interpolation = self.interpolation,
             average_audio_value = average_audio_value,
+            width = self.context.width,
+            height = self.context.height,
         )
         
     def get_value(self) -> Number:

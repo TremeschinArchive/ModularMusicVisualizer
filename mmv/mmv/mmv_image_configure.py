@@ -43,8 +43,9 @@ This will be documented properly in the future (I hope so)
 class MMVImageConfigure:
 
     # Get MMVImage object and set image index to zero
-    def __init__(self, mmvimage_object) -> None:
+    def __init__(self, mmvimage_object, context) -> None:
         self.object = mmvimage_object
+        self.context = context
         self.animation_index = 0
     
     # Macros for initialializing this animation layer
@@ -250,6 +251,7 @@ class MMVImageConfigure:
         self.add_module({
             "vignetting": {
                 "object": MMVModifierVignetting(
+                    context = self.context,
                     minimum = minimum,
                     center_function_x = center_function_x,
                     center_function_y = center_function_y,
