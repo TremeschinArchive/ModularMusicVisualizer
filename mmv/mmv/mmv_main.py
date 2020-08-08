@@ -88,7 +88,6 @@ class MMVMain:
 
         print(debug_prefix, "Creating SkiaWrapper()")
         self.skia = SkiaWrapper(self.context)
-        self.skia.init()
 
         print(debug_prefix, "Creating Fourier()")
         self.fourier = Fourier()

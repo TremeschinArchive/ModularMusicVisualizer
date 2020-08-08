@@ -168,7 +168,7 @@ class MMVImage:
                 width = self.context.width + (2*shake)
                 height = self.context.height + (2*shake)
             
-                self.image.load_from_array(frame, convert_to_png=True)
+                self.image.load_from_array(frame)
                 self.image.resize_to_resolution(
                     width, height,
                     override=True
@@ -181,7 +181,7 @@ class MMVImage:
                 amount = rotate.next()
                 amount = round(amount, self.ROUND)
                 
-                self.image.rotate(amount)
+                self.image.rotate(amount, from_current_frame=True)
 
             if "resize" in modules:
 
@@ -193,7 +193,7 @@ class MMVImage:
                 self.size = resize.get_value()
 
                 # If we're going to rotate, resize the rotated frame which is not the original image 
-                offset = self.image.resize_by_ratio( self.size )
+                offset = self.image.resize_by_ratio( self.size, from_current_frame = True )
 
                 if this_module["keep_center"]:
                     self.offset[0] += offset[0]
@@ -269,8 +269,8 @@ class MMVImage:
     # Blit this item on the canvas
     def blit(self, blit_to_skia) -> None:
 
-        y = int(self.x)# + self.offset[1])
-        x = int(self.y)# + self.offset[0])
+        y = int(self.x + self.offset[1])
+        x = int(self.y + self.offset[0])
 
         if self.mask_filters:
             self.paint_dict["MaskFilter"] =  self.mask_filters
@@ -279,7 +279,6 @@ class MMVImage:
             self.paint_dict["ImageFilter"] = skia.ImageFilters.Merge(self.image_filters)
 
         image = self.image.image
-        angle =  self.image.rotate_angle
         
         paint = skia.Paint(self.paint_dict)
 

@@ -48,7 +48,6 @@ class Frame:
         # Multiprocessing pending things to do, ordered
         self.pending = {}
         self.size = 1
-        self.rotate_angle = 0
     
     # # Internal functions
     
@@ -57,10 +56,6 @@ class Frame:
         if override:
             # self.original_image = skia.Image.fromarray(self.image.toarray())
             self.original_image = self.image
-    
-    # self.image --> self.array
-    def _update_array_from_image(self) -> None:
-        self.array = np.array(self.image)
     
     # Update resolution from the array shape
     def _update_resolution(self) -> None:
@@ -71,6 +66,7 @@ class Frame:
     def _reset_to_original_image(self) -> None:
         # self.image = skia.Image.fromarray(self.original_image.toarray())
         self.image = self.original_image
+        self._update_resolution()
     
     # Get the image we're process the effects on
     def _get_processing_image(self, from_current_frame: bool=False):
@@ -104,8 +100,6 @@ class Frame:
 
         tries = 0
 
-        print("\n>>", debug_prefix, "Loading image from path %s " % path)
-
         # Keep trying to read it
         while True:
             tries += 1
@@ -137,17 +131,15 @@ class Frame:
     #
     # @ratio: scalar to multiply
     # @override: set the original image to the new resized one
-    # @from_current_frame: resize not the original image but the current self.array, overrided by override
     #
     # Returns: offset array because of the resized new width and height according to the top left corner
     def resize_by_ratio(self,
             ratio: Number,
             override: bool=False,
+            from_current_frame: bool=True
         ) -> list:  # Returns the offset because the resize
 
-        ratio = 1
-
-        print(id(self.image), id(self.original_image), self.width, self.height, ratio)
+        processing = self._get_processing_image(from_current_frame)
 
         # Calculate the new width and height
         new_width = int(self.width * ratio)
@@ -157,9 +149,9 @@ class Frame:
         if (new_width == self.width) and (new_height == self.height):
             return [0, 0]
 
-        diff = np.array([self.width - new_width, self.height, new_height])
+        diff = np.array([self.width - new_width, self.height - new_height])
 
-        self.image = self.image.resize(new_width, new_height)
+        self.image = processing.resize(new_width, new_height)
 
         self._override(override)
         self._update_resolution()
@@ -168,12 +160,11 @@ class Frame:
         return diff / 2
 
     # Resize this frame to a fixed resolution
-    # @override: set the original image to the new resized one
     def resize_to_resolution(self,
             width: Number,
             height: Number,
             override: bool=False,
-            from_current_frame: bool=False
+            from_current_frame: bool=True
         ) -> None:
 
         processing = self._get_processing_image(from_current_frame)
@@ -184,12 +175,18 @@ class Frame:
     
     # Rotate this frame by a certain angle
     # [ WARNING ] Better only to rotate square images
-    # @override: set the original image to the new rotated
     def rotate(self,
             angle: Number,
+            override: bool=False,
+            from_current_frame: bool=False
         ) -> None:
 
-        self.rotate_angle = angle
+        processing = Image.fromarray(self._get_processing_image(from_current_frame).toarray())
+        processing = np.asarray(processing.rotate(angle, resample=Image.BICUBIC))
+
+        self.image = skia.Image.fromarray(processing)
+
+        self._override(override)
 
     # Multiply this image's frame alpha channel by that scalar
     # @ratio: 0 - 1 values
@@ -199,21 +196,18 @@ class Frame:
             from_current_frame: bool=False
         ) -> None:
 
-        return
-
         processing = self._get_processing_image(from_current_frame)
 
         # Split the original image's channels
-        r, g, b, alpha = cv2.split(processing)
+        r, g, b, alpha = cv2.split(processing.toarray())
 
         # Multiply the alpha by that ratio
         alpha = np.array(alpha) * ratio
 
         # Stack the arrays into a new numpy array "as image"
-        self.image = (np.dstack((r, g, b, alpha))).astype(np.uint8)
+        self.image = skia.Image.fromarray( (np.dstack((r, g, b, alpha))).astype(np.uint8) )
 
         self._override(override)
-        self._update_array_from_image()
 
     # Apply vignetting on this image object
     # @x: X coordinate center of the effect
@@ -227,6 +221,8 @@ class Frame:
             override: bool=False,
             from_current_frame: bool=False
         ) -> None:
+
+        raise DeprecationWarning("Deprecated function")
 
         return
 
@@ -254,6 +250,5 @@ class Frame:
         self.image = (np.dstack((red, green, blue, alpha))).astype(np.uint8)
 
         self._override(override)
-        self._update_array_from_image()
 
     

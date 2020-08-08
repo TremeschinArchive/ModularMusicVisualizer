@@ -43,7 +43,6 @@ import gc
 
 
 class Core:
-
     def __init__(self, 
             context: Context,
             controller: Controller,
@@ -71,55 +70,6 @@ class Core:
         self.utils = Utils()
         self.ROOT = self.context.ROOT
 
-    # Create MMV Workers with Queues from here
-    def setup_multiprocessing(self) -> None:
-
-        debug_prefix = "[Core.setup_multiprocessing]"
-
-        # The worker objects
-        self.workers = []
-
-        # Create many workers
-        for worker_id in range(self.context.multiprocessing_workers):
-            
-            print(debug_prefix, "Creating worker with id [%s]" % worker_id)
-            
-            # Create Process with inverted queues as there we..
-            # "put what we get here and get what we put after"
-            worker = multiprocessing.Process(
-                target=get_canvas_multiprocess_return,
-                args=(
-                    self.core_put_queue,
-                    self.core_get_queue,
-                    worker_id
-                ),
-                # When main Python process finishes, terminate all workers
-                daemon=True
-            )
-            worker.name = f"MMV Worker {worker_id + 1}"
-
-            # Add the worker to the list
-            self.workers.append(worker)
-
-            print(debug_prefix, "Created new worker")
-
-        # Wake up every worker
-        for worker in self.workers:
-            worker.start()
-
-    # Keep getting items from the queue
-    def core_get_queue_loop(self) -> None:
-        while True:
-            # Get queue returns [index, image]
-            get = self.core_get_queue.get()
-            index = get[0]
-            image = get[1]
-            self.ffmpeg.write_to_pipe(index, image)
-
-    # Function for using threading to put dictionaries on the Queue
-    def put_on_core_queue(self, update: dict) -> None:
-        self.core_put_queue.put(update)
-    
     # Execute MMV, core loop
     def run(self) -> None:
         
@@ -137,14 +87,8 @@ class Core:
 
         print(debug_prefix, "Total steps:", self.total_steps)
 
-        # Setup multiprocessing queues
-        if self.context.multiprocessed:
-            self.returned_images = {}
-            queuesize = self.context.multiprocessing_workers*2
-            self.core_put_queue = multiprocessing.Queue(maxsize=queuesize)
-            self.core_get_queue = multiprocessing.Queue(maxsize=queuesize)
-            self.setup_multiprocessing()
-            self.controller.threads["core_get_queue_loop"] = threading.Thread(target=self.core_get_queue_loop, daemon=True).start()
+        # Init skia
+        self.skia.init()
 
         # Next animation
         for this_step in range(0, self.total_steps):
@@ -198,43 +142,13 @@ class Core:
             # Process next animation with audio info and the step count to process on
             start = time.time()
             self.mmvanimation.next(fftinfo, this_step)
-            print(time.time() - start)
-         
-            # Multiprocessing we have to send the info to the queues for the workers to get
-            if self.context.multiprocessed:
+            # print(time.time() - start)
 
-                # Update our Core loop status, are we "awaiting" for the workers to send more images?
-                while global_frame_index - self.ffmpeg.count >= self.context.multiprocessing_workers * 2:
-                    self.controller.core_waiting = True
-                    time.sleep(0.05)
-                self.controller.core_waiting = False
+            next_image = self.skia.canvas_array()
 
-                # The update dictionary
-                update_dict = {
-                    "content": self.mmvanimation.content,
-                    "canvas": self.canvas,
-                    "context": self.context,
-                    "fftinfo": fftinfo,
-                    "index": global_frame_index
-                }
+            # Save current canvas's Frame to the final video
+            self.ffmpeg.write_to_pipe(global_frame_index, next_image)
 
-                # # Yes threading is expensive, might leave this code here to test in the future 
-                # threading.Thread(
-                #     target=self.put_on_core_queue,
-                #     args=( pickle.dumps(update_dict, protocol=pickle.HIGHEST_PROTOCOL), )
-                # ).start()
-
-                self.core_put_queue.put(pickle.dumps(update_dict, protocol=pickle.HIGHEST_PROTOCOL))
-
-                del update_dict
-                
-            else:
-                # Save current canvas's Frame to the final video
-                self.ffmpeg.write_to_pipe(global_frame_index, self.skia.canvas_array())
-
-                # Hard debug, save the canvas into a folder
-                # self.canvas.canvas.save("data/canvas%s.png" % this_step)
-            
             # [ FAILSAFE ] Reset the canvas (not needed if full background is present (recommended))
             if not self.context.multiprocessed:
                 self.canvas.reset_canvas()
