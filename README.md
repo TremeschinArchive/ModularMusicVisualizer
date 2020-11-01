@@ -213,9 +213,7 @@ You can run a example file under `ROOT/mmv/example*.py` with `python ROOT/mmv/ex
 
 Currently most of MMV functionality is exposed under the `example_basic.py` file, definitely read the whole file for a usage guide, there's a lot of variables right at the top for quick changing stuff, modes (Piano Roll, Music), enabling and disabling effects, etc.
 
-I include a few free assets under the `mmv/assets/free_assets` folder, you can use them at your disposal, they were generated with my other project called [PyGradienter](https://github.com/Tremeschin/pygradienter) that I'm merging the two here in MMV :)
-
-(Not stable, advanced users) There's also the example of calling pygradienter from a MMV script.
+I include a few free assets under the `mmv/assets/free_assets` folder, you can use them at your disposal, others are generated on the go, see running script of MMV for more details.
 
 <hr>
 
@@ -291,4 +289,4 @@ Feel free to create issues on any of both platforms, PRs / Merge Requests I ask 
 
 Any information, images, file names you configure manually is considered (by me) user generated content (UGC) and I take no responsibility for any violations you make on copyrighted images, musics or logos.
 
-I give you a few "free assets" files, those, apart from the MMV logo I created myself on Inkscape, were generated with Python with some old code written by me, you can use them freely.
+I give you a few "free assets" files, those, apart from the MMV logo I created myself on Inkscape, were generated with Python with some old code written by me, you can use them freely. Some are generated on the go if configured (they are on by default) on the running script of MMV.
