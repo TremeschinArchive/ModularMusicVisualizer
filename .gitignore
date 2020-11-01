@@ -19,6 +19,8 @@ mmv/mmv/unused
 mmv/mmv/pyskt/components
 mmv/mmv/pyskt/cro*
 mmv/assets/generated
+*ffmpeg.exe
+mmv-venv
 
 # Yeah this is my identity, you should use yours here :)
 mmv/assets/tremx_assets

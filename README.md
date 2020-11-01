@@ -131,7 +131,11 @@ Another point is that directories on Windows uses `\` instead of (what everythin
 
 Head over to [Python Releases for Windows](https://www.python.org/downloads/windows/), download a _"Windows x86-64 executable installer"_ (I currently use Python 3.8), install it (be sure to check _"ADD PYTHON TO PATH"_ option on the installer)
 
-Download a compiled FFmpeg [build](https://ffmpeg.zeranoe.com/builds/), the binary must be available within PATH environment for `ffmpeg-python` package to use.
+##### Now we'll need FFmpeg
+
+When you run `example_basic.py`, it should take care of FFmpeg by downloading from https://www.gyan.dev/ffmpeg/builds/ and extracting, adding to the environmental PATH. If it doesn't work, report any issue, you can also continue reading this for manual instructions.
+
+Download a compiled FFmpeg [build](https://ffmpeg.org/download.html#build-windows), the binary must be available within PATH environment for `ffmpeg-python` package to use.
 
 Either add to PATH environment var a folder with `ffmpeg.exe` binary if you know or drop FFmpeg's binary into the same directory as the `example_*.py`.
 
@@ -223,51 +227,19 @@ Also see [CHANGELOG.md](CHANGELOG.md) file :)
 
 I have also some experiments on `mmv/experiments` folder, some not totally related to MMV and might become a separate project but they are here because I'm reusing some functionality of MMV and might also merge them in the future.
 
-#### High priority / now
-
-I might attempt to rewrite this project in the future as things currently are becoming a bit convoluted, though not spaghetti code yet.
-
-- [x] Quality of life
-
-- [x] Partially rewrite generators so they scale according to the fps, overhaul modularity
-
-- [ ] Implement text support (lyrics.. ?)
-
-- [x] (85%+) Convert code to new main class architecture of communicating everyone
-
-- [ ] (on the way slowly) Heavily use kwargs on functions for simplifying configurations, readability
-
-- [ ] ~~For lyrics I want a lyric editor, for a lyric editor I need a GUI Toolkit, so I'm writing PySKT - Python Skia Toolkit, don't want to use GTK, Qt etc, and making my own will be fun for the future of MMV~~ Python too slow for a "native" GUI toolkit sadly.
- 
-- [x] Implement MIDI visualization (that'd be fun)
+#### Next stuff
 
 - [ ] *CAN BE EXPANDED* (30%) Progression bar (square, circle, pie graph?)
 
-- [x] ~~Comment new code after this huge R&D, simplifications~~ Minor stuff left
-
-- [x] (basically 95% done) Huge refactor of the code and moving a lot of stuff, simplifying interpolation and making Modifier classes individually
-
-- [x] ~~(stuck) R&D alternative methods for converting SVG --> PNG under Python because Windows (or could someone write a small guide for installing cairo under Windows that works? I didn't put much effort until now on this)~~ `skia-python` solved all this
-
-- [x] ~~(half worked) R&D alternative methods for rendering the final frame (each branch is one way I tried _- and failed or wasn't really efficient_)~~ later: ~~`skia-python` seems VERY promising, `pyvips` almost worked but skia was faster~~ Skia worked and is default and only supported image backend.
-
-#### Medium priority
+- [ ] Implement text support (lyrics.. ?)
 
 - [ ] Load and configure MMV based on a YAML file, so distributing binaries will be theoretically possible
 
-- [x] ~~Profile the code, find bottlenecks, general optimization on most expensive functions~~ Video background is a bottleneck now because moving textures back and forth from the GPU, other than that the code is running fast
-
-- [x] ~~(boring) Update requirements.txt~~
-
-- [x] ~~Make a proper presentation / demo / gif about MMV and link on README~~ didn't work well
+- [ ] Rain images on pygradienter and rain particle generator?
 
 #### Ideas for the future or waiting to be executed
 
 - [ ] Rectangle bars visualizer (only circle + linear or symmetric currently)
-
-- [ ] Rain images on pygradienter and rain particle generator?
-
-- [ ] Make pygradienter faster for non file dependency?
 
 #### Impossible / hard / dream
 

@@ -26,6 +26,7 @@ from mmv.mmv_generator import MMVGenerator
 from mmv.common.cmn_utils import Utils
 from mmv.mmv_image import MMVImage
 from mmv.mmv_main import MMVMain
+import tempfile
 import uuid
 import time
 import sys
@@ -37,6 +38,7 @@ class mmv:
 
     # Start default configs, creates wrapper classes
     def __init__(self, **kwargs) -> None:
+        debug_prefix = "[mmv.__init__]"
 
         # Main class of MMV
         self.mmv_main = MMVMain()
@@ -59,9 +61,15 @@ class mmv:
         
         # Main module files directory (where __init__.py is)
         self.THIS_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+        self.EXTERNALS_DIR = self.THIS_FILE_DIR + "/externals"
 
         self.data_dir = self.THIS_FILE_DIR + "/data"
         self.make_directory_if_doesnt_exist(self.data_dir)
+        self.mmv_main.utils.mkdir_dne(self.EXTERNALS_DIR)
+
+        # Temporary directory if needed
+        self.temp_dir = tempfile.gettempdir()
+        print(debug_prefix, f"Temp dir is: [{self.temp_dir}]")
 
     # Execute MMV with the configurations we've done
     def run(self) -> None:
@@ -172,6 +180,45 @@ class mmv:
     # Get a pygradienter object with many workers for rendering
     def pygradienter(self, **kwargs):
         return PyGradienter(self.mmv_main, **kwargs)
+
+    # # [ Windows QOL ] # #
+    def download_check_ffmpeg(self):
+        debug_prefix = "[mmv.download_check_ffmpeg]"
+
+        if self.mmv_main.utils.os == "windows":
+
+            # Where we should find the ffmpeg binary
+            FFMPEG_FINAL_BINARY = self.EXTERNALS_DIR + "/ffmpeg.exe"
+
+            if not os.path.isfile(FFMPEG_FINAL_BINARY):
+                ffmpeg_release = self.mmv_main.download.get_html_content("https://www.gyan.dev/ffmpeg/builds/release-version")
+                print(debug_prefix, f"FFmpeg release number is [{ffmpeg_release}]")
+
+                # Where we'll save the compressed zip of FFmpeg
+                ffmpeg_7z = self.temp_dir + f"/ffmpeg-{ffmpeg_release}-essentials_build.7z"
+
+                # Download FFmpeg build
+                self.mmv_main.download.wget(
+                    "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.7z",
+                    ffmpeg_7z, f"FFmpeg v={ffmpeg_release}"
+                )
+
+                # Extract the files
+                self.mmv_main.download.extract_file(
+                    ffmpeg_7z,
+                    self.temp_dir,
+                )
+
+                # Where the FFmpeg binary is located
+                ffmpeg_bin = ffmpeg_7z.replace(".7z", "") + "/bin/ffmpeg.exe"
+
+                # Move to this directory
+                self.mmv_main.utils.move(ffmpeg_bin, FFMPEG_FINAL_BINARY)
+
+            print(debug_prefix, f"Appending path where ffmpeg.exe is on environmental PATH: [{self.EXTERNALS_DIR}]")
+            sys.path.append(self.EXTERNALS_DIR)
+        else:
+            print(debug_prefix, "You are using Linux, please make sure you have FFmpeg package installed on your distro")
 
 # Presets on width and height
 class QualityPreset:
