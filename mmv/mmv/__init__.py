@@ -230,6 +230,7 @@ class mmv:
         else:
             print(debug_prefix, "You are using Linux, please make sure you have FFmpeg package installed on your distro")
 
+
 # Presets on width and height
 class QualityPreset:
 
