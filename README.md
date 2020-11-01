@@ -12,7 +12,7 @@
 
 ## Small showcase
 
-![Demo image of MMV](repo/music-2.jpg)
+![Demo image of MMV](repo/music-mode.jpg)
 
 This screenshot is from a track of mine I released using MMV!!
 
@@ -22,7 +22,7 @@ _The DAW is Ardour 6.0_
 
 <hr>
 
-![Demo image of MMV Piano Roll](repo/piano-roll-3.jpg)
+![Demo image of MMV Piano Roll](repo/piano-roll.jpg)
 
 [Link on YouTube](https://youtu.be/CoFoRsoerjk) (Piano Roll)
 
