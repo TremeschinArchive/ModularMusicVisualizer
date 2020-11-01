@@ -1,6 +1,5 @@
 
 
-import matplotlib.pyplot as plt
 from playsound import playsound
 from enum import Enum
 import numpy as np
@@ -41,6 +40,7 @@ class SampleSorter:
         self.mmv = mmv
 
         import aubio
+        import matplotlib.pyplot as plt
         self.samples = []
 
         # Get list of pathes for searching

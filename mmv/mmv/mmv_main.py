@@ -25,6 +25,7 @@ from mmv.common.cmn_interpolation import Interpolation
 from mmv.common.cmn_audio import AudioProcessing
 from mmv.common.cmn_functions import Functions
 from mmv.common.cmn_video import FFmpegWrapper
+from mmv.common.cmn_download import Download
 from mmv.mmv_animation import MMVAnimation
 from mmv.common.cmn_audio import AudioFile
 from mmv.common.cmn_fourier import Fourier
@@ -139,6 +140,9 @@ class MMVMain:
     
         print(debug_prefix, "Creating Core()")
         self.core = Core(self)
+
+        print(debug_prefix, "Creating Download()")
+        self.download = Download()
 
     # Execute the program
     def run(self) -> None:

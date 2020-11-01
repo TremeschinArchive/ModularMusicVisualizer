@@ -47,6 +47,10 @@ processing = mmv.mmv(
     audio_amplitude_multiplier = 1,
 )
 
+# Ensure we have FFmpeg on Windows, downloads, extracts etc
+# Does nothing for Linux, make sure you have ffmpeg package installed on your distro
+processing.download_check_ffmpeg()
+
 """
 Set the video quality
     batch_size:
