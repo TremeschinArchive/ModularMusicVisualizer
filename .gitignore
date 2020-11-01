@@ -18,6 +18,7 @@ mmv/mmv/data
 mmv/mmv/unused
 mmv/mmv/pyskt/components
 mmv/mmv/pyskt/cro*
+mmv/assets/generated
 
 # Yeah this is my identity, you should use yours here :)
 mmv/assets/tremx_assets
