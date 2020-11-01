@@ -148,8 +148,8 @@ class MMVParticleGenerator:
         self.do_apply_fade = kwargs.get("do_apply_fade", True)
 
         # Size
-        self.particle_minimum_size = kwargs.get("self.particle_minimum_size", 0.05)
-        self.particle_maximum_size = kwargs.get("self.particle_maximum_size", 0.15)
+        self.particle_minimum_size = kwargs.get("particle_minimum_size", 0.05)
+        self.particle_maximum_size = kwargs.get("particle_maximum_size", 0.15)
 
         # # Presets specifics
 

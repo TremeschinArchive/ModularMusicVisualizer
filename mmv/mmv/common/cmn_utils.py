@@ -38,7 +38,7 @@ class Utils:
 
     # Make directory / directories if it does not exist
     def mkdir_dne(self, path):
-        path = self.get_abspath(path)
+        path = self.get_abspath(path, silent = True)
         if isinstance(path, list):
             for p in path:
                 os.makedirs(p, exist_ok=True)
@@ -47,7 +47,7 @@ class Utils:
     
     # Make file it does not exist, return True if it existed before
     def mkfile_dne(self, path):
-        path = self.get_abspath(path)
+        path = self.get_abspath(path, silent = True)
         if not os.path.isfile(path):
             with open(path, "w") as f:
                 f.write("")
@@ -117,16 +117,19 @@ class Utils:
         return os.path.basename(path)
     
     # Return an absolute path always
-    def get_abspath(self, path):
+    def get_abspath(self, path, silent = False):
         
         debug_prefix = "[Utils.get_abspath]"
 
         if self.os == "linux":
-            print(debug_prefix, "Linux: Expanding path with user home folder ~ if any")
+            if not silent:
+                print(debug_prefix, "Linux: Expanding path with user home folder ~ if any")
             path = os.path.expanduser(path)
        
         abspath = os.path.abspath(path)
-        print(debug_prefix, f"abspath of [{path}] > [{abspath}]")
+
+        if not silent:
+            print(debug_prefix, f"abspath of [{path}] > [{abspath}]")
 
         return self.get_realpath(abspath)
     
@@ -192,13 +195,13 @@ class Utils:
 
     # Load a yaml and return its content
     def load_yaml(self, path):
-        path = self.get_abspath(path)
+        path = self.get_abspath(path, silent = True)
         with open(path, "r") as f:
             return yaml.load(f, Loader=yaml.FullLoader)
     
     # Save a dictionary to a YAML file
     def save_data_to_yaml(self, data, path):
-        path = self.get_abspath(path)
+        path = self.get_abspath(path, silent = True)
         with open(path, "w") as f:
             yaml.dump(data, f, default_flow_style=False)
 
