@@ -1,0 +1,541 @@
+"""
+===============================================================================
+
+Purpose: Basic usage example of MMV
+
+===============================================================================
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <http://www.gnu.org/licenses/>.
+
+===============================================================================
+"""
+
+# Import MMV module
+import mmv
+
+# Import a "canvas" class for generating background image video textures
+from mmv.pyskt.skia_no_window_backend import SkiaNoWindowBackend
+
+# For us to refer relative paths to this example_basic.py
+# THIS_FILE_DIR = path directory of where this file is located without the last "/"
+# It is assumed this file is under /repository_folder/mmv/example_basic.py so 
+# THIS_FILE_DIR is "/repository_folder/mmv"
+import os
+THIS_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Create the wrapper class
+processing = mmv.mmv(
+    # AFAIK skia-python on Linux and MacOS uses RGBA and on Windows BGRA pixel format.
+    # "auto" does that, or manually put "rgba" or "bgra". If set wrongly the video
+    # colors RED and BLUE will be swapped.
+    pixel_format = "auto",
+    audio_amplitude_multiplier = 1,
+)
+
+"""
+Set the video quality
+    batch_size:
+        N of the FFT sliced audio, 4096 should be ok, less means less accurate but more responsive
+        fft, I'd recommend going 4096*2 for glitch hop or kawaii bass / similar and perhaps
+        a lower value for everything else
+    width, height:
+        Video resolution
+    fps:
+        Frame rate of the video, animations should scale accordingly
+"""
+processing.quality(
+    width = 1920,
+    height = 1080,
+    fps = 60,
+    batch_size = 4096,
+)
+
+# We can also set by a preset like so
+# processing.quality_preset.fullhd60()
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+# We have two main modes "music" and "piano_roll", you can uncomment them
+
+MODE = "music"
+# MODE = "piano_roll"
+
+
+# Configure your modes files
+if MODE == "music":
+    INPUT_AUDIO = THIS_FILE_DIR + "/assets/free_assets/sound/banjo.ogg"
+else:
+    INPUT_AUDIO = THIS_FILE_DIR + "/assets/piano_roll/contingency-times.ogg"
+    INPUT_MIDI  = THIS_FILE_DIR + "/assets/piano_roll/contingency-times.mid"
+
+
+# By default we store the videos in this RENDER_DIR, create it if it doesn't exist
+RENDER_DIR = THIS_FILE_DIR + "/renders"
+processing.make_directory_if_doesnt_exist(RENDER_DIR)
+
+# Where we'll output the video
+# You can set like OUTPUT_VIDEO = "mmv_output.mkv"
+# I recommend MKV because if something fails you don't lose the footage,
+# the MP4 containers we must finish the pipe process for it to be readable
+# Set this to "auto" for automatic file name, as seen on following conditional.
+OUTPUT_VIDEO = "auto"
+
+if OUTPUT_VIDEO == "auto":
+    OUTPUT_VIDEO = (
+        RENDER_DIR + "/"
+        f"mmv_"
+        f"mode-{MODE}_"
+        f"fps-{processing.mmv_main.context.fps}_"
+        f"{os.path.splitext(os.path.basename(INPUT_AUDIO))[0]}"  # Filename of the audio without extension
+        ".mkv"
+    )
+
+
+# Music mode config
+if MODE == "music":
+        
+    # "image" or "video"
+    BACKGROUND_TYPE = "image"  
+    # BACKGROUND_TYPE = "video"
+
+    # User defined background or MMV-generated one? "user", "generated"
+    # Only applied for BACKGROUND_TYPE = "image"
+    BACKGROUND_MODE = "generated"
+
+    # Image background
+    if BACKGROUND_TYPE == "image":
+
+        # User set background
+        if BACKGROUND_MODE == "user": 
+            BACKGROUND_IMAGE = THIS_FILE_DIR + "/assets/some/background.jpg"
+            # BACKGROUND_IMAGE = "/home/tremeschin/some/background.jpg"
+            # BACKGROUND_IMAGE = "~/some/background.jpg"
+
+        # Generate a neat "procedural" background
+        elif BACKGROUND_MODE == "generated":
+
+            # Background we save by default
+            GENERATED_BACKGROUND_DIRECTORY = THIS_FILE_DIR + "/assets/generated/background/generated"
+
+            # Delete the directory, reset its file contents
+            # Change "if True:" to "if False:" for keeping files, also
+            # change the number of generated images to something higher :)
+            if True:
+                processing.delete_directory(GENERATED_BACKGROUND_DIRECTORY)
+                processing.make_directory_if_doesnt_exist(GENERATED_BACKGROUND_DIRECTORY)
+
+            # Initialize a canvas we'll generte the backgrounds
+            skia = SkiaNoWindowBackend()
+            skia.init(
+                width = processing.width,
+                height = processing.height,
+            )
+
+            # Get a pygradienter object for generating the images
+            pygradienter = processing.pygradienter(
+                skia = skia,
+                width = processing.width,
+                height = processing.height,
+                n_images = 1,
+                output_dir = GENERATED_BACKGROUND_DIRECTORY
+            )
+
+            # Generate random backgrounds
+            pygradienter.run()
+            
+            BACKGROUND_IMAGE = processing.random_file_from_dir(GENERATED_BACKGROUND_DIRECTORY)
+
+    # Video background
+    elif BACKGROUND_TYPE == "video":
+        BACKGROUND_VIDEO = THIS_FILE_DIR + "/assets/video.mp4"  # TODO: NO DEMO VIDEO
+
+    # Logo
+    LOGO_IMAGE = THIS_FILE_DIR + "/assets/free_assets/mmv-logo.png"
+
+    # Enable / disable features
+    VISUALIZER = True
+    LOGO = True
+
+
+# Piano roll config
+elif MODE == "piano_roll":
+
+    # If your audio is delayed according to the midi, delay the notes by how much seconds?
+    PIANO_ROLL_SECONDS_OFFSET = 0
+
+    # Amount of piano keys content dropping down on screen
+    PIANO_ROLL_SECONDS_OF_MIDI_CONTENT_ON_SCREEN = 3
+
+    # BPM of your MIDI file, not stable for me to get for you :(
+    PIANO_ROLL_MIDI_BPM = 130
+
+
+
+# # These features applies to both music and piano roll mode
+
+PROGRESSION_BAR = True
+
+# # Progression bar settings
+if MODE == "piano_roll":
+    PROGRESSION_BAR_POSITION = "top"
+    PARTICLES = False  # Particles don't go along pretty well with the piano roll (yet?)
+    VIGNETTING = False  # I like vignetting on the piano roll but it hurts a bit the visibility
+else:
+    PROGRESSION_BAR_POSITION = "bottom"
+    PARTICLES = True
+    VIGNETTING = True
+
+
+# # Configurations on some modules, presets
+
+"""
+PARTICLES_PRESET:
+    "middle_out": Particles start from the middle of the screen and diverges from its origin
+    "bottom_mid_top": Particles grow from below, stop at middle screen for a moment, runs and fades out upwards
+"""
+PARTICLES_PRESET = "middle_out"
+# PARTICLES_PRESET = "bottom_mid_top"
+
+
+# You can configure the other stuff as follow, better to look at their
+# functions on what they do first
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+# I don't share my logo files because that's my identity but the preset I use is kinda here
+TREMX_LOGO = False
+
+"""
+# # # [ IMPORTANT ] # # #
+
+When setting coordinates like path points, the reference is the following:
+
+Center (0, 0) is at the top left corner of the video,
+and the "object" position is at the top left corner of its image as well
+
+X increases rightwards
+Y increases downwards
+"""
+
+
+# The way we process and get the frequencies from the audio, highly
+# influences the frequencies bars on the visualizer itself
+processing.audio_processing.preset_balanced()
+
+# I/O options, input a audio, output a video
+processing.input_audio(INPUT_AUDIO)
+processing.output_video(OUTPUT_VIDEO)
+
+if (MODE == "piano_roll"):
+    processing.input_midi(INPUT_MIDI)
+
+# # # Background
+
+# Image background
+if (MODE == "music") and (BACKGROUND_TYPE == "image"):
+
+    # Get an MMV image object
+    background = processing.image_object()
+
+    # We can load an random image from the dir :)
+    background.configure.load_image(BACKGROUND_IMAGE)
+
+    # As the background fills the video, we resize it to the video resolution
+    # But we'll add a shake modifier to it by that amount of pixels on each direction
+    # So we have to over resize a bit the background so the shake doesn't make black borders
+    # And start it shake amounts off the screen
+    shake = 20
+    background.configure.resize_image_to_video_resolution(
+        over_resize_width = 2*shake,
+        over_resize_height = 2*shake,
+    )
+
+    # Set the object fixed point position off screen
+    background.configure.add_path_point(x = -shake, y = -shake)
+
+    # Shake by "shake" amount of pixels at max on any direction
+    background.configure.simple_add_path_modifier_shake(
+        shake_max_distance = shake,
+        x_smoothness = 0.01,
+        y_smoothness = 0.01,
+    )
+
+    # Blur the background when the average audio amplitude increases
+    background.configure.add_module_blur(
+        smooth = 0.1,
+        scalar = 15
+    )
+
+    # Resize the background when the average audio amplitude increases
+    background.configure.add_module_resize(
+        smooth = 0.05,
+        scalar = 2,
+    )
+
+    # Add the backround object to be generated
+    # The layers are a ascending order of blitted items, 0 is first, 1 is after zero
+    # So our background is before everything, layer 0
+    processing.add(background, layer=0)
+
+# Video background
+elif (MODE == "music") and (BACKGROUND_TYPE == "video"):
+    # Get an MMV image object
+    background = processing.image_object()
+
+    # On videos they are automatically resized to the output
+    # resolution and find this shake value automatically
+    shake = 15
+
+    # We can load an video :)
+    background.configure.add_module_video(
+        path = BACKGROUND_VIDEO,
+        width = processing.width,
+        height = processing.height,
+        over_resize_width = 2*shake,
+        over_resize_height = 2*shake,
+    )
+
+    # Set the object fixed point position off screen
+    background.configure.add_path_point(x = 0, y = 0)
+
+    # Shake by "shake" amount of pixels at max on any direction
+    background.configure.simple_add_path_modifier_shake(
+        shake_max_distance = shake,
+        x_smoothness = 0.01,
+        y_smoothness = 0.01,
+    )
+
+    # Blur the background when the average audio amplitude increases
+    background.configure.add_module_blur(
+        smooth = 0.2,
+        scalar = 16,
+    )
+
+    # Resize the background when the average audio amplitude increases
+    background.configure.add_module_resize(
+        smooth = 0.1,
+        scalar = 0.5,
+    )
+
+    # Add the backround object to be generated
+    # The layers are a ascending order of blitted items, 0 is first, 1 is after zero
+    # So our background is before everything, layer 0
+    processing.add(background, layer=0)
+
+elif (MODE == "music"):
+    exit("No valid background set for MODE=music")
+
+# Piano roll
+
+if (MODE == "piano_roll"):
+    piano_roll = processing.image_object()
+    piano_roll.configure.add_module_piano_roll(
+        seconds_offset = PIANO_ROLL_SECONDS_OFFSET,
+        seconds_of_midi_content = PIANO_ROLL_SECONDS_OF_MIDI_CONTENT_ON_SCREEN,
+        bpm = PIANO_ROLL_MIDI_BPM,
+    )
+    processing.add(piano_roll, layer=1)
+
+# # # Logo
+
+logo_size = (190/720)*processing.height
+
+# Default MMV Logo
+if ((MODE == "music") and LOGO) and (not TREMX_LOGO):
+    # Our logo size, it's a good thing to keep it proportional according to the resolution
+    # so I set it to a 200/720 proportion on a HD 720p resolution, but I have to multiply by
+    # the new resolution afterwards
+
+    logo = processing.image_object()
+    logo.configure.load_image(LOGO_IMAGE)
+    logo.configure.resize_image_to_resolution(
+        width = logo_size,
+        height = logo_size,
+        override = True
+    )
+
+    # The starting point is a bit hard to understand, we want to center it but have to
+    # account the logo size, so the first part gets the center point of the resolution
+    # and the second part subtracts half the logo size on each Y and X direction
+    logo.configure.add_path_point(
+        x = (processing.width // 2) - (logo_size/2),
+        y = (processing.height // 2) - (logo_size/2),
+    )
+
+    logo.configure.add_module_resize(
+        smooth = 0.3,
+        scalar = 2,
+    )
+
+    # We can add rotation to the object
+    logo.configure.add_module_swing_rotation(
+        max_angle = 6,
+        smooth = 100,
+    )
+
+    processing.add(logo, layer=4)
+
+# Tremx logo
+# You can't run this as I don't include the files, it's here more for you to learn and get
+# some ideas on what is possible with MMV
+if ((MODE == "music") and LOGO) and (TREMX_LOGO):
+
+    # # # Black disk logo
+
+    black_disk_logo = processing.image_object()
+    black_disk_logo.configure.load_image(THIS_FILE_DIR + "/assets/tremx_assets/logo/black-disk.png")
+    black_disk_logo.configure.resize_image_to_resolution(
+        width = logo_size,
+        height = logo_size,
+        override = True
+    )
+
+    black_disk_logo.configure.add_path_point(
+        x = (processing.width // 2) - (logo_size/2),
+        y = (processing.height // 2) - (logo_size/2),
+    )
+
+    black_disk_logo.configure.add_module_resize(
+        smooth = 0.3,
+        scalar = 2,
+    )
+
+    processing.add(black_disk_logo, layer = 4)
+
+    # # # Sawtooth logo
+
+    sawtooth_logo = processing.image_object()
+    sawtooth_logo.configure.load_image(THIS_FILE_DIR + "/assets/tremx_assets/logo/sawtooth.png")
+    sawtooth_logo.configure.resize_image_to_resolution(
+        width = logo_size,
+        height = logo_size,
+        override = True
+    )
+
+    sawtooth_logo.configure.add_path_point(
+        x = (processing.width // 2) - (logo_size/2),
+        y = (processing.height // 2) - (logo_size/2),
+    )
+
+    sawtooth_logo.configure.add_module_resize(
+        smooth = 0.3,
+        scalar = 2,
+    )
+
+    # We can add rotation to the object
+    sawtooth_logo.configure.add_module_swing_rotation(
+        max_angle = 4.5,
+        smooth = 60,
+    )
+
+    processing.add(sawtooth_logo, layer = 5)
+
+    # # # Sine Wave logo
+
+    sawtooth_logo = processing.image_object()
+    sawtooth_logo.configure.load_image(THIS_FILE_DIR + "/assets/tremx_assets/logo/sine.png")
+    sawtooth_logo.configure.resize_image_to_resolution(
+        width = logo_size,
+        height = logo_size,
+        override = True
+    )
+
+    sawtooth_logo.configure.add_path_point(
+        x = (processing.width // 2) - (logo_size/2),
+        y = (processing.height // 2) - (logo_size/2),
+    )
+
+    sawtooth_logo.configure.add_module_resize(
+        smooth = 0.3,
+        scalar = 2,
+    )
+
+    # We can add rotation to the object
+    sawtooth_logo.configure.add_module_swing_rotation(
+        max_angle = 5,
+        smooth = 140,
+    )
+
+    processing.add(sawtooth_logo, layer = 5)
+
+
+# Circle visualizer
+if (MODE == "music") and VISUALIZER:
+    # Create a visualizer object, see [TODO] wiki for more information
+    visualizer = processing.image_object()
+    visualizer.configure.add_module_visualizer(
+        type = "circle",
+        minimum_bar_size = logo_size//2,
+        maximum_bar_size = 260,
+        bar_responsiveness = 0.6,
+        bigger_bars_on_magnitude_add_magnitude_divided_by = 64,
+        bar_magnitude_multiplier = 4,
+    )
+
+    # visualizer.configure.simple_add_linear_blur(intensity="high")
+    visualizer.configure.add_module_resize(
+        smooth = 0.12,
+        scalar = 2,
+    )
+
+    processing.add(visualizer, layer=3)
+
+
+# # Post processing / effects
+
+# Particle generator
+if PARTICLES:
+    generator = processing.generator_object()
+
+    # See "./mmv/mmv/generators/mmv_particle_generator.py" for configuration, we use the default one here
+    generator.particle_generator(
+        preset = PARTICLES_PRESET,
+        particles_images_directory = THIS_FILE_DIR + "/assets/free_assets/particles"
+    )
+
+    processing.add(generator)
+
+# Bottom progression bar
+if PROGRESSION_BAR:
+    # Add basic progression bar
+    prog_bar = processing.image_object()
+
+    if MODE == "music":
+        shake_scalar = 14
+    elif MODE == "piano_roll":
+        shake_scalar = 0
+        
+    prog_bar.configure.add_module_progression_bar(
+        bar_type = "rectangle",
+        bar_mode = "simple",
+        position = PROGRESSION_BAR_POSITION,
+        shake_scalar = shake_scalar,
+    )
+
+    processing.add(prog_bar, layer=4)
+
+
+if VIGNETTING:
+    # Add simple vignetting on default configs on the post processing
+    # Those darken the edges of the screen when the average amplitude of the audio
+    # goes up, mostly with the bass. Search for vignetting, you'll see what I mean
+    processing.post_processing.add_module_vignetting(
+        start = processing.width*1.3,
+        minimum = 800,
+        scalar = - 1000,
+        smooth = 0.1,
+    )
+
+
+# Run and generate the final video
+processing.run()
