@@ -23,7 +23,6 @@ from mmv.experiments.sample_sorter import SampleSorter
 from mmv.mmv_generator import MMVParticleGenerator
 from mmv.pygradienter.pyg_main import PyGradienter
 from mmv.mmv_generator import MMVGenerator
-from mmv.pyskt.pyskt_main import PysktMain
 from mmv.common.cmn_utils import Utils
 from mmv.mmv_image import MMVImage
 from mmv.mmv_main import MMVMain
@@ -165,10 +164,6 @@ class mmv:
         return self.utils.get_string_md5(str(uuid.uuid4()))
 
     # # [ EXPERIMENTS ] # #
-    
-    def pyskt_test(self, *args, **kwargs):
-        print(f"[EXPERIMENTS] Return PysktMain, {kwargs=}")
-        return PysktMain(self.mmv_main, *args, **kwargs)
     
     def sample_sorter(self, **kwargs):
         print(f"[EXPERIMENTS] Return SampleSorter, {kwargs=}")
