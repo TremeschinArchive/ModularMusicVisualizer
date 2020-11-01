@@ -71,6 +71,10 @@ class mmv:
         self.temp_dir = tempfile.gettempdir()
         print(debug_prefix, f"Temp dir is: [{self.temp_dir}]")
 
+        # Append to PATH the 
+        print(debug_prefix, f"Appending EXTERNALS_DIR to PATH: [{self.EXTERNALS_DIR}]")
+        sys.path.append(self.EXTERNALS_DIR)
+
     # Execute MMV with the configurations we've done
     def run(self) -> None:
         print("[mmv.run]", f"Configuration phase done, executing MMVMain.run()..")
@@ -182,15 +186,21 @@ class mmv:
         return PyGradienter(self.mmv_main, **kwargs)
 
     # # [ Windows QOL ] # #
+
+    # Make sure we have FFmpeg
     def download_check_ffmpeg(self):
         debug_prefix = "[mmv.download_check_ffmpeg]"
 
+        # If the code is being run on a Windows OS
         if self.mmv_main.utils.os == "windows":
 
             # Where we should find the ffmpeg binary
             FFMPEG_FINAL_BINARY = self.EXTERNALS_DIR + "/ffmpeg.exe"
 
+            # If we don't have FFmpeg binary on externals dir
             if not os.path.isfile(FFMPEG_FINAL_BINARY):
+
+                # Get the latest release number of ffmpeg
                 ffmpeg_release = self.mmv_main.download.get_html_content("https://www.gyan.dev/ffmpeg/builds/release-version")
                 print(debug_prefix, f"FFmpeg release number is [{ffmpeg_release}]")
 
@@ -215,8 +225,8 @@ class mmv:
                 # Move to this directory
                 self.mmv_main.utils.move(ffmpeg_bin, FFMPEG_FINAL_BINARY)
 
-            print(debug_prefix, f"Appending path where ffmpeg.exe is on environmental PATH: [{self.EXTERNALS_DIR}]")
-            sys.path.append(self.EXTERNALS_DIR)
+            else:
+                print(debug_prefix, "Already have [ffmpeg.exe] downloaded and extracted")
         else:
             print(debug_prefix, "You are using Linux, please make sure you have FFmpeg package installed on your distro")
 
