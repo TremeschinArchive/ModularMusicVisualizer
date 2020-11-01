@@ -149,8 +149,9 @@ if MODE == "music":
                 output_dir = GENERATED_BACKGROUND_DIRECTORY
             )
 
-            # Generate random backgrounds
+            # Generate random backgrounds and quit canvas
             pygradienter.run()
+            skia.terminate_glfw()
             
             BACKGROUND_IMAGE = processing.random_file_from_dir(GENERATED_BACKGROUND_DIRECTORY)
 
