@@ -50,8 +50,8 @@ elif experiment == "gui":
 
 elif experiment == "pygradienter":
 
-    width = 1920*2
-    height = 1080*2
+    width = 500
+    height = 500
 
     skia = SkiaNoWindowBackend()
     skia.init(
@@ -64,8 +64,9 @@ elif experiment == "pygradienter":
         skia = skia,
         width = width,
         height = height,
-        n_images = 1000,
-        output_dir = THIS_FILE_DIR + "/pyg"
+        n_images = 50,
+        output_dir = THIS_FILE_DIR + "/pyg",
+        mode = "particle"
     )
 
     pygradienter.run()

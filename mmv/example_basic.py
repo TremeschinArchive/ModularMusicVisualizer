@@ -124,7 +124,7 @@ if MODE == "music":
         elif BACKGROUND_MODE == "generated":
 
             # Background we save by default
-            GENERATED_BACKGROUND_DIRECTORY = THIS_FILE_DIR + "/assets/generated/background/generated"
+            GENERATED_BACKGROUND_DIRECTORY = THIS_FILE_DIR + "/assets/generated/background"
 
             # Delete the directory, reset its file contents
             # Change "if True:" to "if False:" for keeping files, also
@@ -146,7 +146,8 @@ if MODE == "music":
                 width = processing.width,
                 height = processing.height,
                 n_images = 1,
-                output_dir = GENERATED_BACKGROUND_DIRECTORY
+                output_dir = GENERATED_BACKGROUND_DIRECTORY,
+                mode = "polygons"
             )
 
             # Generate random backgrounds and quit canvas
@@ -227,6 +228,35 @@ and the "object" position is at the top left corner of its image as well
 X increases rightwards
 Y increases downwards
 """
+
+
+# Generate random particles
+if PARTICLES:
+    PARTICLES_DIRECTORY = THIS_FILE_DIR + "/assets/generated/particles"
+    processing.delete_directory(PARTICLES_DIRECTORY)
+    processing.make_directory_if_doesnt_exist(PARTICLES_DIRECTORY)
+
+    # Size of the particle image
+    particle_width = 200
+    particle_height = 200
+    generate_n = 50 # particles
+
+    # Create canvas to draw on
+    skia = SkiaNoWindowBackend()
+    skia.init(width = particle_width, height = particle_height)
+
+    # Get a pygradienter object with particle mode
+    pygradienter = processing.pygradienter(
+        skia = skia,
+        width = particle_width,
+        height = particle_height,
+        n_images = generate_n,
+        output_dir = PARTICLES_DIRECTORY,
+        mode = "particles",
+    )
+
+    # Run it
+    pygradienter.run()
 
 
 # The way we process and get the frequencies from the audio, highly
@@ -501,7 +531,9 @@ if PARTICLES:
     # See "./mmv/mmv/generators/mmv_particle_generator.py" for configuration, we use the default one here
     generator.particle_generator(
         preset = PARTICLES_PRESET,
-        particles_images_directory = THIS_FILE_DIR + "/assets/free_assets/particles"
+        particles_images_directory = PARTICLES_DIRECTORY,
+        particle_minimum_size = 0.04,
+        particle_maximum_size = 0.10,
     )
 
     processing.add(generator)

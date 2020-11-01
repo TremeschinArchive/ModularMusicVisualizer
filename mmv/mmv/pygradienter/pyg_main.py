@@ -34,7 +34,7 @@ class PyGradienter:
         self.n_images = kwargs.get("n_images", 1)
         print(debug_prefix, f"Generate N=[{self.n_images}] images")
 
-        # Resolution
+        # Resolution    
         self.width = kwargs["width"]
         self.height = kwargs["height"]
 
@@ -46,9 +46,63 @@ class PyGradienter:
         self.skia = kwargs["skia"]
         self.canvas = self.skia.canvas
 
+        self.mode = kwargs.get("mode", "particles")
+
     def run(self):
-        self.polygons()
-    
+        if self.mode == "polygons":
+            self.polygons()
+        elif self.mode == "particles":
+            self.particles()
+
+    # Generates particles for MMV
+    def particles(self):
+        
+        print(f"Saving generated particle N=[", end="", flush=True)
+        
+        # Repeat for N images
+        for i in range(self.n_images):
+
+            # Reset canvas to transparent
+            self.skia.reset_canvas()
+
+            # How much nodes of gradients in this particle
+            npoints = random.randint(1, 6)
+
+            # Random scalars for each node, plus ending at zero
+            scalars = [random.uniform(0.2, 1) for _ in range(npoints)] + [0]
+
+            # Colors list
+            colors = []
+
+            # Iterate in decreasing order
+            for scalar in reversed(sorted(scalars)):
+                colors.append(skia.Color4f(1, 1, 1, scalar))
+            
+            # Create the skia paint with a circle at the center that ends on the edge
+            paint = skia.Paint(
+                Shader = skia.GradientShader.MakeRadial(
+                    center = (self.width/2, self.height/2),
+                    radius = self.width/2,
+                    colors = colors,
+                )
+            )
+
+            # Draw the particles
+            self.canvas.drawPaint(paint)
+
+            # # Save the image
+
+            # Get the PIL image from the array of the canvas
+            img = Image.fromarray(self.skia.canvas_array())
+
+            # Pretty print
+            if not i == self.n_images - 1:
+                print(f"{i}, ", end = "", flush = True)   
+            else:
+                print(f"{i}]", end = "", flush = True)
+
+            # Save the particle to the output dir
+            img.save(self.output_dir + f"/particle-{i}.png", quality = 100)
 
     def polygons(self):
 
@@ -72,7 +126,6 @@ class PyGradienter:
                 )
                 self.canvas.drawPaint(paint)
                 colors = self.skia.canvas_array()
-            
             
 
             if LOW_POLY:
