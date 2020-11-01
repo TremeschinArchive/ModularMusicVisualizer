@@ -141,3 +141,17 @@ class MMVMain:
         except KeyboardInterrupt:
             self.skia.terminate_glfw()
             sys.exit(-1)
+        
+        # # Print thanks message :)
+
+        message = \
+"""
+         :: Thanks for using the Modular Music Visualizer project !! ::
+
+  Here's a few official links regarding MMV:
+
+  - Telegram group:                      [ https://t.me/modular_music_visualizer ]
+  - GitHub Repository:  [ https://github.com/Tremeschin/modular-music-visualizer ]
+  - GitLab Repository:  [ https://gitlab.com/Tremeschin/modular-music-visualizer ]
+"""
+        print(message)
