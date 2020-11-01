@@ -533,7 +533,7 @@ if PARTICLES:
         preset = PARTICLES_PRESET,
         particles_images_directory = PARTICLES_DIRECTORY,
         particle_minimum_size = 0.04,
-        particle_maximum_size = 0.10,
+        particle_maximum_size = 0.085,
     )
 
     processing.add(generator)

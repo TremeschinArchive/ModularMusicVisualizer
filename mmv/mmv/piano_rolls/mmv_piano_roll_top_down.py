@@ -90,12 +90,21 @@ class MMVPianoRollTopDown:
         self.piano_height = (3.5/19) * self.mmv.context.height
         self.viewport_height = self.mmv.context.height - self.piano_height
 
+        # Pretty print
+        print("Add key by index: {", end = "", flush = True)
+
         # For each key index, with a bleed (extra keys) counting up and down from the minimum / maximum key index
-        for key_index in range(min_note - self.config["bleed"] , max_note + self.config["bleed"]):
+        for key_index in range(min_note - self.config["bleed"], max_note + self.config["bleed"]):
 
             # Create a PianoKey object and set its index
             next_key = PianoKey(self.mmv, self.vectorial, self)
             next_key.by_key_index(key_index)
+
+            # Pretty print
+            if not key_index == max_note + self.config["bleed"] - 1:
+                print(", ", end = "", flush = True)
+            else:
+                print("}")
 
             # Add to the piano keys list
             self.piano_keys[key_index] = next_key
@@ -395,7 +404,7 @@ class PianoKey:
         self.note = key_index
         self.name = self.vectorial.midi.note_to_name(self.note)
         self.configure_color()
-        print(f"Add key by index {key_index} = {self.name}")
+        print(f"{key_index}: {self.name}", end = "", flush = True)
     
     # Configure pressed, idle colors based on key name
     def configure_color(self):
