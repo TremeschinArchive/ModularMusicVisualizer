@@ -23,7 +23,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 import mmv
 
 # Import a "canvas" class for generating background image video textures
-from mmv.pyskt.skia_no_window_backend import SkiaNoWindowBackend
+from mmv.pyskt.pyskt_backend import SkiaNoWindowBackend
 
 # For auto naming files according to when you run MMV
 import datetime

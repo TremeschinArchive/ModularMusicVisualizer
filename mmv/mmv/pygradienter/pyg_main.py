@@ -99,13 +99,15 @@ class PyGradienter:
             if not i == self.n_images - 1:
                 print(f"{i}, ", end = "", flush = True)   
             else:
-                print(f"{i}]", end = "", flush = True)
+                print(f"{i}]")
 
             # Save the particle to the output dir
             img.save(self.output_dir + f"/particle-{i}.png", quality = 100)
 
     def polygons(self):
 
+        print(f"Saving generated polygons background N=[", end="", flush=True)
+        
         BASE_GRADIENT_LINEAR = True
         MUTATION = True
         LOW_POLY = True
@@ -214,6 +216,12 @@ class PyGradienter:
 
             # Save
             img = self.skia.canvas_array()
-            print(f"save image n={i}")
+            
+            # Pretty print
+            if not i == self.n_images - 1:
+                print(f"{i}, ", end = "", flush = True)   
+            else:
+                print(f"{i}]")
+
             img = Image.fromarray(img).convert('RGB')
             img.save(self.output_dir + f"/img{i}.jpg", quality = 100)

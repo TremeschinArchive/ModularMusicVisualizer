@@ -19,7 +19,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.pyskt.skia_no_window_backend import SkiaNoWindowBackend
+from mmv.pyskt.pyskt_backend import SkiaNoWindowBackend
 from mmv.common.cmn_coordinates import PolarCoordinates
 from mmv.common.cmn_interpolation import Interpolation
 from mmv.common.cmn_audio import AudioProcessing
@@ -45,16 +45,15 @@ import os
 class Miscellaneous:
     def __init__(self) -> None:
         self.version = "2.3.4-dev"
-        self.greeter_message()
 
     def greeter_message(self) -> None:
 
-        terminal_width = shutil.get_terminal_size()[0]
+        self.terminal_width = shutil.get_terminal_size()[0]
 
-        bias = " "*(math.floor(terminal_width/2) - 14)
+        bias = " "*(math.floor(self.terminal_width/2) - 14)
 
         message = \
-f"""{"-"*terminal_width}
+f"""{"-"*self.terminal_width}
 {bias} __  __   __  __  __     __
 {bias}|  \\/  | |  \\/  | \\ \\   / /
 {bias}| |\\/| | | |\\/| |  \\ \\ / / 
@@ -63,15 +62,41 @@ f"""{"-"*terminal_width}
 {bias}
 {bias}  Modular Music Visualizer                        
 {bias}{(21-len("Version")-len(self.version))*" "}Version {self.version}
-{"-"*terminal_width}
+{"-"*self.terminal_width}
+"""
+        print(message)
+
+    def thanks_message(self):
+        # # Print thanks message :)
+
+        message = \
+f"""\n{"-"*self.terminal_width}\n
+          :: Thanks for using the Modular Music Visualizer project !! ::
+
+  Here's a few official links for MMV:
+
+    - Telegram group:                           [ https://t.me/modular_music_visualizer ]
+    - GitHub Repository:       [ https://github.com/Tremeschin/modular-music-visualizer ]
+    - GitLab Repository:       [ https://gitlab.com/Tremeschin/modular-music-visualizer ]
+
+  > Always check for the copyright info on the material you are using (audios, images)
+  before distributing the content generated with MMV, I take absolutely no responsibility
+  for any UGC (user generated content) violations. See LICENSE file as well.
+
+             Don't forget sharing your releases made with MMV on the discussion groups :)
+                 Feel free asking for help or giving new ideas for the project as well !!
+
+{"-"*self.terminal_width}
 """
         print(message)
 
 
+
 class MMVMain:
     def __init__(self) -> None:
-        Miscellaneous()
-    
+        self.misc = Miscellaneous()
+        self.misc.greeter_message()
+
     # Creates classes and send to Core
     def setup(self) -> None:
         
@@ -142,16 +167,5 @@ class MMVMain:
             self.skia.terminate_glfw()
             sys.exit(-1)
         
-        # # Print thanks message :)
-
-        message = \
-"""
-         :: Thanks for using the Modular Music Visualizer project !! ::
-
-  Here's a few official links regarding MMV:
-
-  - Telegram group:                      [ https://t.me/modular_music_visualizer ]
-  - GitHub Repository:  [ https://github.com/Tremeschin/modular-music-visualizer ]
-  - GitLab Repository:  [ https://gitlab.com/Tremeschin/modular-music-visualizer ]
-"""
-        print(message)
+        self.misc.thanks_message()
+        
