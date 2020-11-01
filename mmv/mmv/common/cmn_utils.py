@@ -219,15 +219,13 @@ class Utils:
         
     # $ mv A B
     def move(self, src, dst, shell=False):
-        command = ["mv", src, dst]
-        print(' '.join(command))
-        subprocess.run(command, stdout=subprocess.PIPE, shell=shell)
+        print("[Utils.move] Moving path [%s] --> [%s]" % (src, dst))
+        shutil.move(src, dst)
     
     # $ cp A B
     def copy(self, src, dst, shell=False):
-        command = ["cp", src, dst]
-        print(' '.join(command))
-        subprocess.run(command, stdout=subprocess.PIPE, shell=shell)
+        print("[Utils.move] Moving path [%s] --> [%s]" % (src, dst))
+        shutil.copy(src, dst)
 
     # Check if either type A = wanted[0] and B = wanted[1] or the opposite
     def is_matching_type(self, items, wanted):
