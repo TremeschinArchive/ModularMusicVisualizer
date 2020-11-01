@@ -25,6 +25,9 @@ import mmv
 # Import a "canvas" class for generating background image video textures
 from mmv.pyskt.skia_no_window_backend import SkiaNoWindowBackend
 
+# For auto naming files according to when you run MMV
+import datetime
+
 # For us to refer relative paths to this example_basic.py
 # THIS_FILE_DIR = path directory of where this file is located without the last "/"
 # It is assumed this file is under /repository_folder/mmv/example_basic.py so 
@@ -38,6 +41,9 @@ processing = mmv.mmv(
     # "auto" does that, or manually put "rgba" or "bgra". If set wrongly the video
     # colors RED and BLUE will be swapped.
     pixel_format = "auto",
+
+    # If your audio isn't properly normalized or you want a more aggressive video,
+    # set this to 1.5 - 2 or so
     audio_amplitude_multiplier = 1,
 )
 
@@ -90,9 +96,11 @@ processing.make_directory_if_doesnt_exist(RENDER_DIR)
 OUTPUT_VIDEO = "auto"
 
 if OUTPUT_VIDEO == "auto":
+    now = datetime.datetime.now()
+    date_and_time = now.strftime("%Y-%m-%d_%H:%M:%S")
     OUTPUT_VIDEO = (
         RENDER_DIR + "/"
-        f"mmv_"
+        f"mmv_{date_and_time}_"
         f"mode-{MODE}_"
         f"fps-{processing.mmv_main.context.fps}_"
         f"{os.path.splitext(os.path.basename(INPUT_AUDIO))[0]}"  # Filename of the audio without extension
