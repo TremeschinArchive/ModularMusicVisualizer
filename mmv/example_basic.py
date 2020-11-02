@@ -19,6 +19,18 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+# # # Dependencies
+
+# We'll automatically install dependencies if we need
+from requirements import Requirements
+requirements = Requirements()
+
+# If we're running from source we have to run it
+if requirements.need_to_run:
+    requirements.install()
+
+# # # MMV
+
 # Import MMV module
 import mmv
 
