@@ -51,6 +51,7 @@ I also invite you to read about the [Free Software Definition / Philosophy](http
    * [Running](#running)
       * [Linux](#linux)
       * [Windows](#windows)
+   * [Editing configs](#editing-configs)
    * [Goals, what is being developed](#goals-what-is-being-developed)
    * [Contributing](#contributing)
    * [User Generated Content, legal](#user-generated-content-copyrighted-material-legal)
@@ -79,11 +80,7 @@ Please read [HACKING.md](docs/HACKING.md) file :)
 
 # Running
 
-This project isn't extensively tested on Windows, feedback appreciated.
-
-Instructions I refer to the Linux os should be the same under MacOS as both comes from a common ancestor (UNIX) and utilizes the `bash` shell.
-
-MacOS users might use `homebrew` for installing stuff such as Python and FFmpeg, help and feedback required for steps and if it even works there.
+This project isn't extensively tested on Windows, feedback appreciated. MacOS instructions should be similar or equal to Linux ones, though feedback required for steps and if it even works there.
 
 I'll also be referring to where the source code folder of MMV is located at using the keyword `ROOT`, like the `LICENSE` file under `ROOT/LICENSE`.
 
@@ -93,11 +90,7 @@ Another point is that directories on Windows uses `\` instead of (what everythin
 
 You'll mainly need to use basic command line interface and navigation such as `cd` (change directory), `mkdir` (make directory), `pwd` (print working directory). Don't be afraid of searching how those work on Windows because I am very rusty on its CLI.
 
-### General recommendations
-
-If you're going to venture out on creating your own MMV scripts or hacking the code, making new presets, I highly recommend reading the basics of Python [here](https://learnxinyminutes.com/docs/python/), it doesn't take much to read and will avoid some beginner pitfalls.
-
-Though you probably should be fine by just creating a copy of the example scripting I provide on the repo and reading through my comments and seeing the Python code working, it's pretty straightforward the top most abstracted methods as I tried to simplify the syntax and naming functions with a more _"concrete"_ meaning. 
+Also see [EXTRAS.md](docs/EXTRAS.md) file for squeezing some extra performance.
 
 ## IMPORTANT!!
 
@@ -143,7 +136,7 @@ MMV should then run and generate the default video with default preset under the
 
 Head over to [Python Releases for Windows](https://www.python.org/downloads/windows/), download a _"Windows x86-64 executable installer"_ (I currently use Python 3.8), install it (be sure to check _"ADD PYTHON TO PATH"_ option on the installer).
 
-##### Step for an automatic installation
+##### Extra step for an automatic installation of dependencies
 
 Go to [7-zip downloads](https://www.7-zip.org/download.html) website, download the `7-Zip for 64-bit Windows x64 (Intel 64 or AMD64)` executable if you don't have it already, run it and extract the files on the default path. This step is required to extract the video encoder (FFmpeg) compressed files if you don't want to do this by hand.
 
@@ -175,7 +168,7 @@ Change the working directory of the shell to the folder `ROOT/mmv` (or just exec
 
 #### Automatic installation and running
 
-When you run `python.exe .\example_basic.py` it should take care of downloading and installing Python dependencies as well as FFmpeg by downloading from https://www.gyan.dev/ffmpeg/builds/ and extracting to a separate folder on the MMV directory tree, also it will add to the environmental PATH that folder.
+When you run `python.exe .\example_basic.py` it should take care of downloading and installing Python dependencies as well as FFmpeg by downloading from https://www.gyan.dev/ffmpeg/builds/ and extracting to a temp folder, moving the binary to the right place.
  
 If this process doesn't work (dead links for example), report any issue you had. You can also continue reading this for manual instructions.
 
@@ -189,31 +182,21 @@ Run MMV with `python .\example_basic.py`
 
 <hr>
 
-Automatic or manual installation you'll have your final default video on the `renders` folder created.
+Automatic or manual installation you'll have your final default video on the `renders` folder after running `example_basic.py` script.
 
 <hr>
 
-### Extra: Installing Pillow-SIMD for faster performance
+### Editing configs
 
-While this package is not required and you can keep the default Pillow package, using [pillow-simd](https://github.com/uploadcare/pillow-simd) instead of the vanilla package, as you can see [here](https://python-pillow.org/pillow-perf/), is indeed faster, however Pillow isn't the biggest bottleneck in the code, so you'd get performances (guessing) at most 10% faster.
+Everything I considered useful for the end user is under `example_basic.py` controlled by upper case vars such as `INPUT_AUDIO`, `MODE`, `OUTPUT_VIDEO`, etc.
 
-Currently only rotating the images uses the PIL project.
+Change those or keep reading the file for extra configurations.
 
-Install the listed [prerequisites](https://pillow.readthedocs.io/en/stable/installation.html#building-from-source) according to your platform on their documentation, and as mentioned on the main repo README, install `pillow-simd` with:
+If you're going to venture out on creating your own MMV scripts or hacking the code, making new presets, I highly recommend reading the basics of Python [here](https://learnxinyminutes.com/docs/python/), it doesn't take much to read and will avoid some beginner pitfalls.
 
-```bash
-$ pip uninstall pillow
-$ pip install pillow-simd
-```
+Though you probably should be fine by just creating a copy of the example scripting I provide on the repo and reading through my comments and seeing the Python code working, it's pretty straightforward the top most abstracted methods as I tried to simplify the syntax and naming functions with a more _"concrete"_ meaning. 
 
-If you want you can use AVX2 enabled build installation with:
-
-```bash
-$ pip uninstall pillow
-$ CC="cc -mavx2" pip install -U --force-reinstall pillow-simd
-```
-
-You can safely skip this section and use regular Pillow, but with longer render times this few performance gains can stack a lot.
+At one point I'll have a proper wiki on every argument we can send to MMV objects.
 
 <hr>
 
