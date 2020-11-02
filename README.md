@@ -124,7 +124,7 @@ Preferably use a virtual environment:
 
 - `source ./mmv-venv/bin/activate`
 
-Then run `python example_basic.py`
+Then run `python example_basic.py --auto-deps`
 
 It should install Python dependencies automatically, if not run `pip install ./mmv/requirements.txt`
 
@@ -134,7 +134,25 @@ MMV should then run and generate the default video with default preset under the
 
 ## Windows:
 
+<p align="center">
+  <i>Prepare your disks and patience!!</i>
+</p>
+
+Using Conda would probably be easier than all these steps but I don't know how to use it. Any easier steps for Windows are welcome specially for external installs other than Python that are needed.
+
+##### With Anaconda (less trouble)
+
+Download and install `Anaconda` (not `miniconda`), make it your default Python optimally on the installer.
+
+##### With vanilla Python (discouraged somehow)
+
 Head over to [Python Releases for Windows](https://www.python.org/downloads/windows/), download a _"Windows x86-64 executable installer"_ (I currently use Python 3.8), install it (be sure to check _"ADD PYTHON TO PATH"_ option on the installer).
+
+You'll also need to download `Build Tools for Visual Studio` which got merged into Visual Studio Community Edition, so search that (Build Tools for VS) and download the installer of the VS Community.
+
+You'll need to install the whole C++ development package group so Python can use a compiler and the Windows SDK for building dependencies such as numpy. This will use quite a bit of disk space and definitely will take a while to complete. After that you can proceed to the next steps.
+
+Search for `scipy` Python wheels and install the version listed on `requirements.txt` or install somehow lapack or blas / openblas on your system. This is finicky and I offer no official support for this.
 
 ##### Extra step for an automatic installation of dependencies
 
@@ -160,19 +178,45 @@ Open a shell on desired dir to clone the repo (GIT shell on Windows)
 
 <hr>
 
+#### If running with Anaconda
+
+Open the Anaconda shell from start menu, then we'll create an conda environment and activate it:
+
+- `conda create --name mmv python=3.8`
+
+- `conda activate mmv`
+
+Now with basic CLI navigation commands, change to the directory you extracted or downloaded MMV, if it's on your Downloads folder, when executing the anaconda shell you should be at `C:\\users\your_user` so run:
+
+- `cd .\Downloads\modular-music-visualizer-master\mmv`
+
+Or just take the path on Windows Explorer and do:
+
+- `cd C:\\path\to\mmv\with\ugly\back\slashes`
+
+#### If running with vanilla Python
+
 Open a shell on the downloaded and extracted folder
 
 On Windows you can right click an empty spot on the Windows File Manager app while holding the shift key for a option to "Open PowerShell" here to appear.
 
 Change the working directory of the shell to the folder `ROOT/mmv` (or just execute the previous step on that folder which contains the file `example_basic.py`)
 
+This step is not required but good to do so, create an virtual environment (venv) and activate it:
+
+- `python.exe -m venv mmv-venv`
+
+- `.\venv-path\Scripts\activate.bat`
+
 #### Automatic installation and running
 
-When you run `python.exe .\example_basic.py` it should take care of downloading and installing Python dependencies as well as FFmpeg by downloading from https://www.gyan.dev/ffmpeg/builds/ and extracting to a temp folder, moving the binary to the right place.
+When you run `python .\example_basic.py --auto-deps` it should take care of downloading and installing Python dependencies as well as FFmpeg by downloading from https://www.gyan.dev/ffmpeg/builds/ and extracting to a temp folder, moving the binary to the right place.
+
+If you're on anaconda, perhaps running with `--user` as so: `python .\example_basic.py --auto-deps --user` should fix permission errors.
  
 If this process doesn't work (dead links for example), report any issue you had. You can also continue reading this for manual instructions.
 
-#### Manual installation
+#### Manual FFmpeg and Python deps installation
 
 Download a compiled FFmpeg [build](https://ffmpeg.org/download.html#build-windows), the binary named `ffmpeg.exe` must be on the directory `ROOT/mmv/mmv/externals/ffmpeg.exe`.
 
