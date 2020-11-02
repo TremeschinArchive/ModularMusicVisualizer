@@ -185,9 +185,9 @@ class mmv:
     def pygradienter(self, **kwargs):
         return PyGradienter(self.mmv_main, **kwargs)
 
-    # # [ Windows QOL ] # #
+    # # [ QOL ] # #
 
-    # Make sure we have FFmpeg
+    # Make sure we have FFmpeg on Windows
     def download_check_ffmpeg(self):
         debug_prefix = "[mmv.download_check_ffmpeg]"
 

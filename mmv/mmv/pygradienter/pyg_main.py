@@ -111,19 +111,28 @@ class PyGradienter:
         BASE_GRADIENT_LINEAR = True
         MUTATION = True
         LOW_POLY = True
+        RANDOM = True
+        GREYSCALE = False
 
         for i in range(self.n_images):
 
             if BASE_GRADIENT_LINEAR:
+
+                if RANDOM:
+                    color1 = skia.Color4f(random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1), 1)
+                    color2 = skia.Color4f(random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1), 1)
+                
+                if GREYSCALE:
+                    gradient1, gradient2 = random.uniform(0, 1), random.uniform(0, 1)
+                    color1 = skia.Color4f(gradient1, gradient1, gradient1, 1)
+                    color2 = skia.Color4f(gradient2, gradient2, gradient2, 1)
+
                 paint = skia.Paint(
                     Shader = skia.GradientShader.MakeLinear(
                         points = [
                             (random.randint(-self.width/2, 0), random.randint(-self.height/2, 0)),
                             (self.width + random.randint(0, self.width/2), self.height + random.randint(0, self.height/2)) ],
-                        colors = [
-                            skia.Color4f(random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1), 1),
-                            skia.Color4f(random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1), 1),
-                        ]
+                        colors = [color1, color2]
                     )
                 )
                 self.canvas.drawPaint(paint)
@@ -198,7 +207,7 @@ class PyGradienter:
                         AntiAlias = True,
                         Color = color,
                         Style = skia.Paint.kStroke_Style,
-                        StrokeWidth = 2,
+                        StrokeWidth = 1,
                         # ImageFilter=skia.ImageFilters.DropShadow(3, 3, 5, 5, color)
                     )
 
@@ -211,7 +220,7 @@ class PyGradienter:
                         path.lineTo(*point)
 
                     self.canvas.drawPath(path, paint)
-                    # self.canvas.drawPath(path, border)
+                    self.canvas.drawPath(path, border)
                                 
 
             # Save
