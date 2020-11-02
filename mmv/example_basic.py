@@ -19,15 +19,22 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-# # # Dependencies
+# # # End user utilities, you can ignore this code
 
-# We'll automatically install dependencies if we need
-from requirements import Requirements
-requirements = Requirements()
+from end_user_utilities import Requirements, ArgParser
+import sys
 
-# If we're running from source we have to run it
-if requirements.need_to_run:
-    requirements.install()
+# Parse shell arguments
+args = ArgParser(sys.argv)
+
+# We'll automatically install dependencies if we need and user flags so
+# Send --auto-deps flag while running this file
+if args.auto_deps:
+    requirements = Requirements()
+
+    # If we're running from source we have to run it
+    if requirements.need_to_run:
+        requirements.install()
 
 # # # MMV
 
