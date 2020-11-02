@@ -60,21 +60,13 @@ class Requirements:
                 if not line == "\n":
                     self.requirements.append(line.replace("\n", ""))
         
-        # # Upgrade pip and install wheel, can cause less troubles on installing other deps
-        
-        print(debug_prefix, "Upgrading PIP if needed")
-        self.upgrade_pip()
-
-        print(debug_prefix, "Installing [wheel] package, less trouble installing other ones")
-        self._install("wheel")
-
     # Is this python installation 64 bits?
     def is_64_bit(self) -> bool:
         return sys.maxsize > 2**32
         
     # Get a list of installed packages
     def get_installed_packages(self) -> None:
-        self.installed = subprocess.check_output([sys.executable, '-m', 'pip', 'freeze']).decode("utf-8").split("\n")
+        self.installed = subprocess.check_output([sys.executable, '-m', 'pip', 'freeze']).decode("utf-8").replace("\r", "").split("\n")
 
     # Upgrade pip installation
     def upgrade_pip(self):
@@ -89,6 +81,14 @@ class Requirements:
         for requirement in self.requirements:
             if not requirement in self.installed:
                 print("[Requirements.anything_to_do] Have requirements to install")
+                
+                # # Upgrade pip and install wheel, can cause less troubles on installing other deps
+                print(debug_prefix, "Upgrading PIP if needed")
+                self.upgrade_pip()
+
+                print(debug_prefix, "Installing [wheel] package, less trouble installing other ones")
+                self._install("wheel")
+                
                 return True
         return False
 
@@ -118,3 +118,33 @@ class Requirements:
         else:
             print(debug_prefix, "Nothing to do, all requirements matched")
             
+class ArgParser:
+    def __init__(self, argv):
+        self.argv = argv
+        self.parse_argv()
+        
+    # Check for flags on argv
+    def parse_argv(self):
+        debug_prefix = "[ArgParser]"
+
+        # Empty list of flags and kflags
+        self.flags = []
+        self.kflags = {}
+
+        if self.argv is not None:
+
+            # Iterate in all args
+            for arg in self.argv[1:]:
+                
+                # Is a kwarg
+                if "=" in arg:
+                    arg = arg.split("=")
+                    self.kflags[arg[0]] = arg[1]
+
+                # Is a flag
+                else:
+                    self.flags.append(arg)
+        
+        self.auto_deps = "--auto-deps" in self.flags
+        print(debug_prefix, "--auto-deps ON") if self.auto_deps else print(debug_prefix, "--auto-deps OFF")
+        
