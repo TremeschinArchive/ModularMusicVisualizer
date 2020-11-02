@@ -69,12 +69,6 @@ Expect MMV to be forever Free (price and freedom).
 
 <hr>
 
-# Wiki is TODO
-
-Lot's of stuff are moving on the code and being rewritten, when things are more stable I'll write a proper guide.
-
-The `example_basic.py` script covers most of MMV's "balanced" functionality, 
-
 ## Hacking the code
 
 Want to understand how the code is structured so you can learn, modify, understand from it?
@@ -91,11 +85,13 @@ Instructions I refer to the Linux os should be the same under MacOS as both come
 
 MacOS users might use `homebrew` for installing stuff such as Python and FFmpeg, help and feedback required for steps and if it even works there.
 
-## IMPORTANT!!
+I'll also be referring to where the source code folder of MMV is located at using the keyword `ROOT`, like the `LICENSE` file under `ROOT/LICENSE`.
 
-### YOU MUST USE A 64 BIT PYTHON INSTALLATION
+**Note**: on **Windows** you might need to replace `python` with `python.exe` if using PowerShell (recommended) or CMD (I'm not completely sure btw).
 
-`skia-python` package only includes 64 bit wheels on PyPI as Skia 32 bits is not available for the public.
+Another point is that directories on Windows uses `\` instead of (what everything else uses) `/`, Python should convert those automatically, however the shell (where you call commands) might not convert those like `.\path\to\executable.exe` instead of `./path/to/executable.exe`, the second one might not run on Windows. This does not apply on the Python scripts as it'll auto convert `/` to `\\`.
+
+You'll mainly need to use basic command line interface and navigation such as `cd` (change directory), `mkdir` (make directory), `pwd` (print working directory). Don't be afraid of searching how those work on Windows because I am very rusty on its CLI.
 
 ### General recommendations
 
@@ -103,55 +99,57 @@ If you're going to venture out on creating your own MMV scripts or hacking the c
 
 Though you probably should be fine by just creating a copy of the example scripting I provide on the repo and reading through my comments and seeing the Python code working, it's pretty straightforward the top most abstracted methods as I tried to simplify the syntax and naming functions with a more _"concrete"_ meaning. 
 
-<hr>
+## IMPORTANT!!
 
-## Linux / Windows
+### YOU MUST USE A 64 BIT PYTHON INSTALLATION
 
-I will be referring to where the source code folder of MMV is located at using the keyword `ROOT`, like the `LICENSE` file under `ROOT/LICENSE`.
+`skia-python` package only includes 64 bit wheels on PyPI as Skia 32 bits is not available for the public.
 
-Note: on Windows you might need to replace `python` with `python.exe` if using PowerShell (recommended) or CMD (I'm not completely sure btw).
-
-Another point is that directories on Windows uses `\` instead of (what everything else uses) `/`, Python should convert those automatically, however the shell (where you call commands) might not convert those like `.\path\to\executable.exe` instead of `./path/to/executable.exe`, the second one might not run on Windows. This does not apply on the Python scripts as it'll auto convert `/` to `\\`.
+The code will check itself for a 64 bit installation and quit if not.
 
 <hr>
 
-### Install Python 64 bits (REQUIRED) and FFmpeg
+### Installing Python, FFmpeg, dependencies
 
-#### Linux:
+## Linux:
 
 - Arch Linux / pacman based (Manjaro): `sudo pacman -Syu python python-setuptools ffmpeg git`
 
-- Ubuntu / apt based: `sudo apt update && sudo apt install python3 python3-venv python3-dev python3-setuptools ffmpeg git`
+- Ubuntu / apt based: `sudo apt update && sudo apt upgrade && sudo apt install python3 python3-venv python3-dev python3-setuptools ffmpeg git`
+
+Open a shell on a directory and clone the repo:
+
+- `mkdir ~/mmv && cd ~/mmv` (creates `mmv` folder on your home dir)
+
+- `git clone https://github.com/Tremeschin/modular-music-visualizer`
+
+- `cd ./modular-music-visualizer/mmv`
+
+Preferably use a virtual environment:
+
+- `python -m venv mmv-venv`
+
+- `source ./mmv-venv/bin/activate`
+
+Then run `python example_basic.py`
+
+It should install Python dependencies automatically, if not run `pip install ./mmv/requirements.txt`
+
+MMV should then run and generate the default video with default preset under the `renders` directory.
 
 <hr>
 
-#### Windows:
+## Windows:
 
-Head over to [Python Releases for Windows](https://www.python.org/downloads/windows/), download a _"Windows x86-64 executable installer"_ (I currently use Python 3.8), install it (be sure to check _"ADD PYTHON TO PATH"_ option on the installer)
+Head over to [Python Releases for Windows](https://www.python.org/downloads/windows/), download a _"Windows x86-64 executable installer"_ (I currently use Python 3.8), install it (be sure to check _"ADD PYTHON TO PATH"_ option on the installer).
 
-##### Now we'll need FFmpeg
+##### Step for an automatic installation
 
-When you run `example_basic.py`, it should take care of FFmpeg by downloading from https://www.gyan.dev/ffmpeg/builds/ and extracting, adding to the environmental PATH given you have 7zip binaries installed for extracting the FFmpeg compressed files.
-
-Go to [7-zip downloads](https://www.7-zip.org/download.html) website, download the `7-Zip for 64-bit Windows x64 (Intel 64 or AMD64)` executable, run it and extract the files on the default path.
-
-If this process doesn't work (dead links for example), report any issue you had. You can also continue reading this for manual instructions.
-
-Download a compiled FFmpeg [build](https://ffmpeg.org/download.html#build-windows), the binary must be available within PATH environment for `ffmpeg-python` package to use.
-
-For that, either add to PATH environment var a folder with `ffmpeg.exe` binary if you know it or drop FFmpeg's binary into the same directory as the `example_basic.py`.
+Go to [7-zip downloads](https://www.7-zip.org/download.html) website, download the `7-Zip for 64-bit Windows x64 (Intel 64 or AMD64)` executable if you don't have it already, run it and extract the files on the default path. This step is required to extract the video encoder (FFmpeg) compressed files if you don't want to do this by hand.
 
 <hr>
 
 ### Getting the source code
-
-#### Using git CLI
-
-Install git from your Linux distro or for Windows the installer from [git downloads page](https://git-scm.com/downloads)
-
-Open a shell on desired dir to clone the repo (GIT shell on Windows)
-
-`git clone https://github.com/Tremeschin/modular-music-visualizer`
 
 #### GitHub / GitLab repository main page
 
@@ -159,53 +157,43 @@ You might be already here, head to the top page and there is a (green for GitHub
 
 Use a archive manager (something like 7-zip or rar) to extract the contents into a folder you'll be running MMV.
 
+#### Using git CLI
+
+Install git  Windows the installer from [git downloads page](https://git-scm.com/downloads)
+
+Open a shell on desired dir to clone the repo (GIT shell on Windows)
+
+`git clone https://github.com/Tremeschin/modular-music-visualizer`
+
 <hr>
 
-## Open a shell on MMV source code folder
-
-Change your directory to the `mmv` folder, both Linux and Windows should be `cd mmv`, or just open the terminal there at first place.
-
-You also can use the command `ls` (Original one on Windows is `dir` but `ls` should work) on both OSs to list the files on the current directory and type `pwd` to "Print Working Directory" (Windows should be `echo %cd%` or PowerShell auto converts it?)
-
-I recommend PowerShell on Windows or your preferred terminal emulator on Linux using bash for this.
+Open a shell on the downloaded and extracted folder
 
 On Windows you can right click an empty spot on the Windows File Manager app while holding the shift key for a option to "Open PowerShell" here to appear.
 
-<hr>
+Change the working directory of the shell to the folder `ROOT/mmv` (or just execute the previous step on that folder which contains the file `example_basic.py`)
 
-## Installing Python dependencies
+#### Automatic installation and running
 
-It is not a bad idea to install MMV dependencies on a separate virtual environment of Python packages to keep things isolated.
+When you run `python.exe .\example_basic.py` it should take care of downloading and installing Python dependencies as well as FFmpeg by downloading from https://www.gyan.dev/ffmpeg/builds/ and extracting to a separate folder on the MMV directory tree, also it will add to the environmental PATH that folder.
+ 
+If this process doesn't work (dead links for example), report any issue you had. You can also continue reading this for manual instructions.
 
-[Quick guide on using / creating Python venvs](https://github.com/Tremeschin/dandere2x-tremx/wiki/Python-venvs):
+#### Manual installation
 
-If you're not sure what you're doing here, while you can skip this section I'd recommend not to. Basically you'll want to do:
+Download a compiled FFmpeg [build](https://ffmpeg.org/download.html#build-windows), the binary named `ffmpeg.exe` must be on the directory `ROOT/mmv/mmv/externals/ffmpeg.exe`.
 
-- `python -m venv mmv-venv`
+Install Python dependencies with `pip install -r .\mmv\requirements.txt`
 
-- Linux: `source ./mmv-venv/bin/activate`
-
-- Windows (not sure): `.\venv-path\Scripts\activate.bat`
-
-It's always good to upgrade pip so run `python -m pip install --upgrade pip` after you are on the virtual env.
-
-After that you can point Python's package installer (pip) the file located at `ROOT/mmv/mmv/requirements.txt`
-
-`pip install -r ./mmv/mmv/requirements.txt`, assuming your shell is under `ROOT` directory.
+Run MMV with `python .\example_basic.py`
 
 <hr>
 
-## Actually running MMV
+Automatic or manual installation you'll have your final default video on the `renders` folder created.
 
-You can run a example file under `ROOT/mmv/example_basic.py`, you should already be on this directory so running `python example_basic.py` should do it.
+<hr>
 
-The output video will be in a folder named `renders` that will be created on the same directory as the `example_basic.py` script.
-
-Currently most of MMV functionality is exposed under this same file `example_basic.py`, definitely read the whole file for a usage guide, there's a lot of variables right at the top for quick changing stuff, modes (Piano Roll, Music), enabling and disabling effects, etc.
-
-I include a few free assets under the `mmv/assets/free_assets` folder, you can use them at your disposal, others are generated on the go and randomly, see running script of MMV for more details.
-
-### Installing Pillow-SIMD for faster performance
+### Extra: Installing Pillow-SIMD for faster performance
 
 While this package is not required and you can keep the default Pillow package, using [pillow-simd](https://github.com/uploadcare/pillow-simd) instead of the vanilla package, as you can see [here](https://python-pillow.org/pillow-perf/), is indeed faster, however Pillow isn't the biggest bottleneck in the code, so you'd get performances (guessing) at most 10% faster.
 
