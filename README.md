@@ -3,7 +3,7 @@
 </p>
 <h3 align="center">Modular Music Visualizer</h3>
 <p align="center">
-  An attempt to make a free (as in free   dom) and open source music visualization (After Effects and Synthesia)-like tool for the music production community.
+  An attempt to make a free (as in freedom) and open source music visualization (After Effects and Synthesia)-like tool for the music production community.
   <br><hr>
   <i>Support for Music Bars mode, Piano Roll tutorials, Video as background, enable / disable whatever you want.</i>
 </p>
@@ -113,9 +113,9 @@ Note: on Windows you might need to replace `python` with `python.exe` if using P
 
 Another point is that directories on Windows uses `\` instead of (what everything else uses) `/`, Python should convert those automatically, however the shell (where you call commands) might not convert those like `.\path\to\executable.exe` instead of `./path/to/executable.exe`, the second one might not run on Windows. This does not apply on the Python scripts as it'll auto convert `/` to `\\`.
 
-### Install Python 64 bits (REQUIRED) and FFmpeg
-
 <hr>
+
+### Install Python 64 bits (REQUIRED) and FFmpeg
 
 #### Linux:
 
