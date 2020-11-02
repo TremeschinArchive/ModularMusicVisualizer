@@ -149,6 +149,8 @@ class FFmpegWrapper:
                 print(f"\rFrame count=[{self.count} - {current_time:.2f}s / {duration_seconds:.2f}s = {propfinished:0.2f}%] Took=[{took}] ETA=[{eta}] EST Total=[{took_plus_eta}]", end="")
             else:
                 time.sleep(0.1)
+        
+        self.pipe_subprocess.stdin.close()
 
     # Close stdin and stderr of pipe_subprocess and wait for it to finish properly
     def close_pipe(self):

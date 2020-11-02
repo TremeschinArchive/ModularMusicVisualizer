@@ -1,10 +1,12 @@
-## [2.3.4] :: Cleanup, textures :: Ongoing development
+## [2.3.4] :: Cleanup, textures, Windows QOL :: Ongoing development
 - Add basic GUI file on experiments.py
 - Unify stuff on experiments.py
 - Delete old pygradienter code, rewriting
 - Add `bar_magnitude_multiplier` on MMVMusicBarCircle option
 - Add `audio_amplitude_multiplier` option
 - Generate backgrounds on the go before an run, no need to keep them on repo
+- Auto download, extract, add to PATH FFmpeg binaries on Windows
+- Windows fixes throughout the code
 
 ## [2.3.3.3] :: Minor :: (2020-10-20)
 - Add `maximum_bar_size` to MMVMusicBarsCircle, hard limits the bar sizes relative to the minimum size (starting point)

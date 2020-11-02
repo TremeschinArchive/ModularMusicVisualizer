@@ -3,7 +3,7 @@
 </p>
 <h3 align="center">Modular Music Visualizer</h3>
 <p align="center">
-  An attempt to make a free (as in freedom) and open source music visualization (After Effects and Synthesia)-like tool for the music production community.
+  An attempt to make a free (as in free   dom) and open source music visualization (After Effects and Synthesia)-like tool for the music production community.
   <br><hr>
   <i>Support for Music Bars mode, Piano Roll tutorials, Video as background, enable / disable whatever you want.</i>
 </p>
@@ -32,15 +32,15 @@ This screenshot is the piano tutorial of the previous music track!
 
 # Idea
 
-I am a Free and Open Source music producer hobbyist that also happens to be a code hobbyist and at some point it's inevitable I'd be releasing my tracks to the internet and create some project to make the world a better place.
+I am a Free and Open Source music producer and code hobbyist and at some point it's inevitable I'd be releasing my tracks to the internet and create some project to make the music industry less harsh and more accessible.
 
-The problem is, I don't want to release a video of the track on a platform with a static image or just recording the screen nor pay for some software to generate an "music visualization" for me without much control of it.
+The problem is, I don't want to release a music video on a platform with a static image or just recording the screen, nor pay for some software to generate an "music visualization" for me without much control of it.
 
-So I searched up for a free (as in freedom and price) tool that does exactly that, they do exist but aren't as good as they could be, most of the time a bit basic..
+So I searched up for a free (as in freedom and price) tool that does exactly that, they do exist but aren't as good as they could be, most of the time a bit basic.
 
-Then I just got into this opportunity on making a suckless (as in quality not minimalism I see you lol) music visualization tool with the programming languages and tools I love and care.
+Then I just got into this opportunity on making a suckless (not suckless.org lol) music visualization tool with the programming languages and tools I love and care.
 
-I also gently ask you to read about the [Free Software Definition / Philosophy](https://www.gnu.org/philosophy/free-sw.html) and join us!! :)
+I also invite you to read about the [Free Software Definition / Philosophy](https://www.gnu.org/philosophy/free-sw.html) and join us on this amazing community!! :)
 
 <hr>
 
@@ -63,11 +63,9 @@ I currently have a (very lonely) [Telegram group](https://t.me/modular_music_vis
 
 Feel free to enter and ask, share anything regarding the MMV project!!
 
-I haven't yet made a decision on financial support, probably I'll have a donation option in the future, even though I dislike donationware as a developer, I think it'll be the healthiest one for this project.
+I haven't yet made a decision on financial support, probably I'll have a donation option in the future, even though I dislike donationware as a developer working "full time" or "serious" on a project, I think it'll be the healthiest one for this project.
 
 Expect MMV to be forever Free (price and freedom).
-
-In the future I'll write my thoughts on my blog (you can find the link on my profile for the main website) about these topics: licensing, money, developers, freedom, etc.
 
 <hr>
 
@@ -87,7 +85,7 @@ Please read [HACKING.md](docs/HACKING.md) file :)
 
 # Running
 
-This project wasn't extensively tested on Windows, feedback appreciated.
+This project isn't extensively tested on Windows, feedback appreciated.
 
 Instructions I refer to the Linux os should be the same under MacOS as both comes from a common ancestor (UNIX) and utilizes the `bash` shell.
 
@@ -99,9 +97,9 @@ MacOS users might use `homebrew` for installing stuff such as Python and FFmpeg,
 
 `skia-python` package only includes 64 bit wheels on PyPI as Skia 32 bits is not available for the public.
 
-### General recomendations
+### General recommendations
 
-If you're going to venture out on creating your own MMV scripts or hacking the code, making new presets, I highly recommend reading the basics of Python [here](https://learnxinyminutes.com/docs/python/), it doesn't take much to read and will avoid some beginner pitfals.
+If you're going to venture out on creating your own MMV scripts or hacking the code, making new presets, I highly recommend reading the basics of Python [here](https://learnxinyminutes.com/docs/python/), it doesn't take much to read and will avoid some beginner pitfalls.
 
 Though you probably should be fine by just creating a copy of the example scripting I provide on the repo and reading through my comments and seeing the Python code working, it's pretty straightforward the top most abstracted methods as I tried to simplify the syntax and naming functions with a more _"concrete"_ meaning. 
 
@@ -109,11 +107,11 @@ Though you probably should be fine by just creating a copy of the example script
 
 ## Linux / Windows
 
-I will be referring to where the source code folder of MMV is located at using the keyord `ROOT`, like the `LICENSE.md` file under `ROOT/LICENSE.md`.
+I will be referring to where the source code folder of MMV is located at using the keyword `ROOT`, like the `LICENSE` file under `ROOT/LICENSE`.
 
-Note: on Windows you might need to replace `python` with `python.exe` if using PowerShell (recommended) or CMD (I'm not completely sure btw) 
+Note: on Windows you might need to replace `python` with `python.exe` if using PowerShell (recommended) or CMD (I'm not completely sure btw).
 
-Another point is that directories on Windows uses `\` instead of (what everything else uses) `/`, Python should convert those automatically but maybe not within the shell, like: `.\path\to\executable.exe` instead of `./path/to/executable.exe`, the second one might not run. This does not apply on the Python scripts as it'll auto convert `/` to `\\`.
+Another point is that directories on Windows uses `\` instead of (what everything else uses) `/`, Python should convert those automatically, however the shell (where you call commands) might not convert those like `.\path\to\executable.exe` instead of `./path/to/executable.exe`, the second one might not run on Windows. This does not apply on the Python scripts as it'll auto convert `/` to `\\`.
 
 ### Install Python 64 bits (REQUIRED) and FFmpeg
 
@@ -121,9 +119,9 @@ Another point is that directories on Windows uses `\` instead of (what everythin
 
 #### Linux:
 
-- Arch Linux / pacman based (Manjaro): `sudo pacman -Syu python python-setuptools ffmpeg`
+- Arch Linux / pacman based (Manjaro): `sudo pacman -Syu python python-setuptools ffmpeg git`
 
-- Ubuntu / apt based: `sudo apt update && sudo apt install python3 python3-venv python3-dev python3-setuptools ffmpeg`
+- Ubuntu / apt based: `sudo apt update && sudo apt install python3 python3-venv python3-dev python3-setuptools ffmpeg git`
 
 <hr>
 
@@ -133,35 +131,15 @@ Head over to [Python Releases for Windows](https://www.python.org/downloads/wind
 
 ##### Now we'll need FFmpeg
 
-When you run `example_basic.py`, it should take care of FFmpeg by downloading from https://www.gyan.dev/ffmpeg/builds/ and extracting, adding to the environmental PATH. If it doesn't work, report any issue, you can also continue reading this for manual instructions.
+When you run `example_basic.py`, it should take care of FFmpeg by downloading from https://www.gyan.dev/ffmpeg/builds/ and extracting, adding to the environmental PATH given you have 7zip binaries installed for extracting the FFmpeg compressed files.
+
+Go to [7-zip downloads](https://www.7-zip.org/download.html) website, download the `7-Zip for 64-bit Windows x64 (Intel 64 or AMD64)` executable, run it and extract the files on the default path.
+
+If this process doesn't work (dead links for example), report any issue you had. You can also continue reading this for manual instructions.
 
 Download a compiled FFmpeg [build](https://ffmpeg.org/download.html#build-windows), the binary must be available within PATH environment for `ffmpeg-python` package to use.
 
-Either add to PATH environment var a folder with `ffmpeg.exe` binary if you know or drop FFmpeg's binary into the same directory as the `example_*.py`.
-
-<hr>
-
-### Installing Pillow-SIMD for faster performance
-
-While this package is not required and you can keep the default Pillow package, using [pillow-simd](https://github.com/uploadcare/pillow-simd) instead of the vanilla package, as you can see [here](https://python-pillow.org/pillow-perf/), is indeed faster, however Pillow isn't the biggest bottleneck in the code, so you'd get performances (guessing) at most 10% faster.
-
-Currently only rotating the images uses the PIL project.
-
-Install the listed [prerequisites](https://pillow.readthedocs.io/en/stable/installation.html#building-from-source) according to your platform on their documentation, and as mentioned on the main repo README, install `pillow-simd` with:
-
-```bash
-$ pip uninstall pillow
-$ pip install pillow-simd
-```
-
-If you want you can use AVX2 enabled build installation with:
-
-```bash
-$ pip uninstall pillow
-$ CC="cc -mavx2" pip install -U --force-reinstall pillow-simd
-```
-
-You can safely skip this section and use regular Pillow, but with longer render times this few performance gains can stack a lot.
+For that, either add to PATH environment var a folder with `ffmpeg.exe` binary if you know it or drop FFmpeg's binary into the same directory as the `example_basic.py`.
 
 <hr>
 
@@ -187,11 +165,11 @@ Use a archive manager (something like 7-zip or rar) to extract the contents into
 
 Change your directory to the `mmv` folder, both Linux and Windows should be `cd mmv`, or just open the terminal there at first place.
 
-You also can use the command `ls` (Original one on Windows is `dir`) on both OSs to list the files on the current directory and type `pwd` to "Print Working Directory" (Windows should be `echo %cd%` or PowerShell auto converts it?)
+You also can use the command `ls` (Original one on Windows is `dir` but `ls` should work) on both OSs to list the files on the current directory and type `pwd` to "Print Working Directory" (Windows should be `echo %cd%` or PowerShell auto converts it?)
 
-I recommend PowerShell on Windows or your preferred terminal emulator on Linux using bash for this
+I recommend PowerShell on Windows or your preferred terminal emulator on Linux using bash for this.
 
-On Windows you can right click an empty spot on the Windows File Manager app while holding the right mouse button for a option to "Open PowerShell" here to appear.
+On Windows you can right click an empty spot on the Windows File Manager app while holding the shift key for a option to "Open PowerShell" here to appear.
 
 <hr>
 
@@ -201,7 +179,7 @@ It is not a bad idea to install MMV dependencies on a separate virtual environme
 
 [Quick guide on using / creating Python venvs](https://github.com/Tremeschin/dandere2x-tremx/wiki/Python-venvs):
 
-If you're not sure what you're doing here, while you can skip this section I'd recommend not to.
+If you're not sure what you're doing here, while you can skip this section I'd recommend not to. Basically you'll want to do:
 
 - `python -m venv mmv-venv`
 
@@ -209,15 +187,45 @@ If you're not sure what you're doing here, while you can skip this section I'd r
 
 - Windows (not sure): `.\venv-path\Scripts\activate.bat`
 
+It's always good to upgrade pip so run `python -m pip install --upgrade pip` after you are on the virtual env.
+
 After that you can point Python's package installer (pip) the file located at `ROOT/mmv/mmv/requirements.txt`
 
 `pip install -r ./mmv/mmv/requirements.txt`, assuming your shell is under `ROOT` directory.
 
-You can run a example file under `ROOT/mmv/example*.py` with `python ROOT/mmv/example*.py` where `*` is the substring on the file.
+<hr>
 
-Currently most of MMV functionality is exposed under the `example_basic.py` file, definitely read the whole file for a usage guide, there's a lot of variables right at the top for quick changing stuff, modes (Piano Roll, Music), enabling and disabling effects, etc.
+## Actually running MMV
 
-I include a few free assets under the `mmv/assets/free_assets` folder, you can use them at your disposal, others are generated on the go, see running script of MMV for more details.
+You can run a example file under `ROOT/mmv/example_basic.py`, you should already be on this directory so running `python example_basic.py` should do it.
+
+The output video will be in a folder named `renders` that will be created on the same directory as the `example_basic.py` script.
+
+Currently most of MMV functionality is exposed under this same file `example_basic.py`, definitely read the whole file for a usage guide, there's a lot of variables right at the top for quick changing stuff, modes (Piano Roll, Music), enabling and disabling effects, etc.
+
+I include a few free assets under the `mmv/assets/free_assets` folder, you can use them at your disposal, others are generated on the go and randomly, see running script of MMV for more details.
+
+### Installing Pillow-SIMD for faster performance
+
+While this package is not required and you can keep the default Pillow package, using [pillow-simd](https://github.com/uploadcare/pillow-simd) instead of the vanilla package, as you can see [here](https://python-pillow.org/pillow-perf/), is indeed faster, however Pillow isn't the biggest bottleneck in the code, so you'd get performances (guessing) at most 10% faster.
+
+Currently only rotating the images uses the PIL project.
+
+Install the listed [prerequisites](https://pillow.readthedocs.io/en/stable/installation.html#building-from-source) according to your platform on their documentation, and as mentioned on the main repo README, install `pillow-simd` with:
+
+```bash
+$ pip uninstall pillow
+$ pip install pillow-simd
+```
+
+If you want you can use AVX2 enabled build installation with:
+
+```bash
+$ pip uninstall pillow
+$ CC="cc -mavx2" pip install -U --force-reinstall pillow-simd
+```
+
+You can safely skip this section and use regular Pillow, but with longer render times this few performance gains can stack a lot.
 
 <hr>
 

@@ -172,4 +172,10 @@ class MMVMain:
             sys.exit(-1)
         
         self.misc.thanks_message()
+
+        while not self.ffmpeg.stop_piping:
+            time.sleep(0.1)
+
+        print(debug_prefix, "Quitting Python")
+        sys.exit(0)
         
