@@ -101,7 +101,7 @@ OUTPUT_VIDEO = "auto"
 
 if OUTPUT_VIDEO == "auto":
     now = datetime.datetime.now()
-    date_and_time = now.strftime("%Y-%m-%d_%H:%M:%S")
+    date_and_time = now.strftime("%Y-%m-%d_%H-%M-%S")  # Don't put ":"" here, Windows doesn't like it, took a while to figure lol
     OUTPUT_VIDEO = (
         RENDER_DIR + "/"
         f"mmv_{date_and_time}_"
@@ -110,7 +110,6 @@ if OUTPUT_VIDEO == "auto":
         f"{os.path.splitext(os.path.basename(INPUT_AUDIO))[0]}"  # Filename of the audio without extension
         ".mkv"
     )
-
 
 # Music mode config
 if MODE == "music":
