@@ -95,8 +95,18 @@ processing.quality(
 
 # We have two main modes "music" and "piano_roll", you can uncomment them
 
-MODE = "music"
-# MODE = "piano_roll"
+# Pass a flag mode=music or mode=piano when calling this script
+if "mode" in args.kflags:
+    mode = args.kflags["mode"]
+
+    if mode == "piano":
+        MODE = "piano_roll"
+
+    elif mode == "music":
+        MODE = "music"
+else:
+    # Default mode
+    MODE = "music"
 
 
 # Configure your modes files
