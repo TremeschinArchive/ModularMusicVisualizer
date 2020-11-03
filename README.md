@@ -144,7 +144,7 @@ The flag `--auto-deps` is not required after the first successful run.
   <i>Prepare your disks and patience!!</i>
 </p>
 
-Using Conda would probably be easier than all these steps but I don't know how to use it. Any easier steps for Windows are welcome specially for external installs other than Python that are needed.
+Any easier steps for Windows are welcome specially for external installs other than Python that are needed.
 
 ##### With Anaconda (less trouble)
 
