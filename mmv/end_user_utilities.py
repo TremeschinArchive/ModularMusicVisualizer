@@ -49,9 +49,10 @@ class Requirements:
 
         # Requirements
         self.requirements = []
+        self.requirements_file = f"{self.THIS_FILE_DIR}{self.sep}mmv{self.sep}requirements.txt"
 
         # Open requirements.txt file
-        with open(f"{self.THIS_FILE_DIR}{self.sep}mmv{self.sep}requirements.txt", "r") as requirements_file:
+        with open(self.requirements_file, "r") as requirements_file:
 
             # Each line is a dependency
             for line in requirements_file:
@@ -70,7 +71,7 @@ class Requirements:
 
     # Upgrade pip installation
     def upgrade_pip(self):
-        subprocess.check_output([sys.executable, '-m', 'pip', 'install', '--upgrade', 'pip'])
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--upgrade', 'pip'])
 
     # Install an pip package
     def _install(self, package) -> None:
@@ -78,6 +79,8 @@ class Requirements:
 
     # Is there anything to do?
     def anything_to_do(self) -> bool:
+        debug_prefix = "[Requirements.anything_to_do]"
+
         for requirement in self.requirements:
             if not requirement in self.installed:
                 print("[Requirements.anything_to_do] Have requirements to install")
@@ -95,29 +98,39 @@ class Requirements:
     # Checks, install all dependencies
     def install(self) -> None:
         debug_prefix = "[Requirements.install]"
+        MODE = "automatic"
 
         self.get_installed_packages()
 
+        # Do we have any dependency to install?
         if self.anything_to_do():
 
-            print(debug_prefix, "Requirements =", self.requirements)
-            print(debug_prefix, "Installed =", self.installed)
+            # Call pip install -r requirements.txt
+            if MODE == "automatic":
+                subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-r', self.requirements_file])
 
-            # For each requirement
-            for requirement in self.requirements:
+            # Install packages on a loop
+            elif MODE == "manual":
+                self.get_installed_packages()
 
-                # Requirement is installed
-                if requirement in self.installed:
-                    print(debug_prefix, f"Requirement [{requirement}] OK")
+                print(debug_prefix, "Requirements =", self.requirements)
+                print(debug_prefix, "Installed =", self.installed)
 
-                # Requirement is not installed
-                else:
-                    print(debug_prefix, f"Requirement [{requirement}] NO")
-                    self._install(requirement)
-                    self.get_installed_packages()
+                # For each requirement
+                for requirement in self.requirements:
+
+                    # Requirement is installed
+                    if requirement in self.installed:
+                        print(debug_prefix, f"Requirement [{requirement}] OK")
+
+                    # Requirement is not installed
+                    else:
+                        print(debug_prefix, f"Requirement [{requirement}] NO")
+                        self._install(requirement)
+                        self.get_installed_packages()
         else:
             print(debug_prefix, "Nothing to do, all requirements matched")
-            
+                
 class ArgParser:
     def __init__(self, argv):
         self.argv = argv

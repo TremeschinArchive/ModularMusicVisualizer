@@ -80,6 +80,8 @@ Please read [HACKING.md](docs/HACKING.md) file :)
 
 # Running
 
+Linux users can skip to the next section.
+
 This project isn't extensively tested on Windows, feedback appreciated. MacOS instructions should be similar or equal to Linux ones, though feedback required for steps and if it even works there.
 
 I'll also be referring to where the source code folder of MMV is located at using the keyword `ROOT`, like the `LICENSE` file under `ROOT/LICENSE`.
@@ -89,8 +91,6 @@ I'll also be referring to where the source code folder of MMV is located at usin
 Another point is that directories on Windows uses `\` instead of (what everything else uses) `/`, Python should convert those automatically, however the shell (where you call commands) might not convert those like `.\path\to\executable.exe` instead of `./path/to/executable.exe`, the second one might not run on Windows. This does not apply on the Python scripts as it'll auto convert `/` to `\\`.
 
 You'll mainly need to use basic command line interface and navigation such as `cd` (change directory), `mkdir` (make directory), `pwd` (print working directory). Don't be afraid of searching how those work on Windows because I am very rusty on its CLI.
-
-Also see [EXTRAS.md](docs/EXTRAS.md) file for squeezing some extra performance.
 
 ## IMPORTANT!!
 
@@ -104,11 +104,13 @@ The code will check itself for a 64 bit installation and quit if not.
 
 ### Installing Python, FFmpeg, dependencies
 
+Also see [EXTRAS.md](docs/EXTRAS.md) file for squeezing some extra performance.
+
 ## Linux:
 
-- Arch Linux / pacman based (Manjaro): `sudo pacman -Syu python python-setuptools ffmpeg git`
+- Arch Linux / pacman based (Manjaro): `sudo pacman -Syu python python-setuptools python-pip base-devel ffmpeg git`
 
-- Ubuntu / apt based: `sudo apt update && sudo apt upgrade && sudo apt install python3 python3-venv python3-dev python3-setuptools ffmpeg git`
+- Ubuntu / apt based: `sudo apt update && sudo apt upgrade && sudo apt install python3 python3-venv python3-dev python3-setuptools python3-pip ffmpeg git`
 
 Open a shell on a directory and clone the repo:
 
@@ -118,7 +120,7 @@ Open a shell on a directory and clone the repo:
 
 - `cd ./modular-music-visualizer/mmv`
 
-Preferably use a virtual environment:
+Preferably use a virtual environment: (for Ubuntu, replace `python` with `python3` or have `alias python=python3` on your `~/.bashrc`)
 
 - `python -m venv mmv-venv`
 
@@ -129,6 +131,10 @@ Then run `python example_basic.py --auto-deps`
 It should install Python dependencies automatically, if not run `pip install ./mmv/requirements.txt`
 
 MMV should then run and generate the default video with default preset under the `renders` directory.
+
+Pass flag `mode=music` or `mode=piano` for a quick swap between the two: `python example_basic.py --auto-deps mode=[music,piano]`.
+
+The flag `--auto-deps` is not required after the first successful run.
 
 <hr>
 
@@ -213,6 +219,8 @@ This step is not required but good to do so, create an virtual environment (venv
 When you run `python .\example_basic.py --auto-deps` it should take care of downloading and installing Python dependencies as well as FFmpeg by downloading from https://www.gyan.dev/ffmpeg/builds/ and extracting to a temp folder, moving the binary to the right place.
 
 If you're on anaconda, perhaps running with `--user` as so: `python .\example_basic.py --auto-deps --user` should fix permission errors.
+
+Pass flag `mode=music` or `mode=piano` for a quick swap between the two: `python example_basic.py --auto-deps mode=[music,piano]`.
  
 If this process doesn't work (dead links for example), report any issue you had. You can also continue reading this for manual instructions.
 
@@ -223,6 +231,8 @@ Download a compiled FFmpeg [build](https://ffmpeg.org/download.html#build-window
 Install Python dependencies with `pip install -r .\mmv\requirements.txt`
 
 Run MMV with `python .\example_basic.py`
+
+Pass flag `mode=music` or `mode=piano` for a quick swap between the two: `python example_basic.py --auto-deps mode=[music,piano]`.
 
 <hr>
 

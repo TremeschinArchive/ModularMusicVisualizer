@@ -68,14 +68,22 @@ class FFmpegWrapper:
                 raise RuntimeError(f"Pixel format not found for os: [{self.mmv.utils.os}]")
 
         # Create the FFmpeg pipe child process
-        self.pipe_subprocess = (
-            ffmpeg
-            .input('pipe:', format='rawvideo', pix_fmt=pixel_format, r=self.mmv.context.fps, s='{}x{}'.format(self.mmv.context.width, self.mmv.context.height))
-            .output(output, pix_fmt='yuv420p', vcodec='libx264', r=self.mmv.context.fps, crf=14, loglevel="quiet")
-            .global_args('-i', self.mmv.context.input_file, "-c:a", "copy")
-            .overwrite_output()
-            .run_async(pipe_stdin=True)
-        )
+        try:
+            self.pipe_subprocess = (
+                ffmpeg
+                .input('pipe:', format='rawvideo', pix_fmt=pixel_format, r=self.mmv.context.fps, s='{}x{}'.format(self.mmv.context.width, self.mmv.context.height))
+                .output(output, pix_fmt='yuv420p', vcodec='libx264', r=self.mmv.context.fps, crf=14, loglevel="quiet")
+                .global_args('-i', self.mmv.context.input_file, "-c:a", "copy")
+                .overwrite_output()
+                .run_async(pipe_stdin=True)
+            )
+        except FileNotFoundError as e:
+            print(e)
+            print(debug_prefix, (
+                "Couldn't find FFmpeg binary\n"
+                "  Linux: Did you install using your distro package manager?\n"
+                "  Windows: Is [ffmpeg.exe] under ROOT/mmv/mmv/externals/ffmpeg.exe?"))
+            sys.exit(-1)
 
         print(debug_prefix, "Open one time pipe")
 
