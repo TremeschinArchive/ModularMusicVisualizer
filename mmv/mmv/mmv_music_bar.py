@@ -27,7 +27,7 @@ from mmv.common.cmn_functions import FitIndex
 from mmv.common.cmn_frame import Frame
 from mmv.common.cmn_utils import Utils
 from mmv.mmv_modifiers import *
-from resampy import resample
+# from resampy import resample
 import numpy as np
 import random
 import math

@@ -220,7 +220,10 @@ class Utils:
     # $ mv A B
     def move(self, src, dst, shell=False):
         print("[Utils.move] Moving path [%s] --> [%s]" % (src, dst))
-        shutil.move(src, dst)
+        if not os.path.exists(dst):
+            shutil.move(src, dst)
+        else:
+            print("[Utils.move] File already exists!!")
     
     # $ cp A B
     def copy(self, src, dst, shell=False):
@@ -238,6 +241,10 @@ class Utils:
                 else:
                     return False
         return True
+
+    # If name is an file on PATH marked as executable returns True
+    def has_executable_with_name(self, name):
+        return shutil.which(name) is not None
     
     # If data is string, "abc" -> ["abc"], if data is list, return data
     def force_list(self, data):

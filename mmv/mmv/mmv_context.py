@@ -28,13 +28,17 @@ class MMVContext:
         self.mmv = mmv
 
         # Utils class and ROOT dir
-        self.ROOT = self.mmv.utils.ROOT
+        self.ROOT = os.path.dirname(os.path.abspath(__file__))
 
         # Files, info
         self.output_video = None
         self.input_file = None
         self.input_midi = None
         self.duration = None
+
+        # External dependencies directory
+        self.externals = self.ROOT + "/externals"
+        self.data_dir = self.ROOT + "/data"
 
         # Video specs
         self.width = 1280
