@@ -22,6 +22,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from pyunpack import Archive
 from tqdm import tqdm
 import requests
+import zipfile
 import time
 import wget
 import sys
@@ -59,6 +60,7 @@ class Download:
             return
 
         wget.download(url, save, bar=self.wget_progress_bar)
+        print()
     
     # Get html content
     def get_html_content(self, url):
@@ -75,3 +77,7 @@ class Download:
         print(debug_prefix, f"Extracing [{src}] -> [{dst}]")
 
         Archive(src).extractall(dst)
+    
+    def extract_zip(self, src, dst):
+        with zipfile.ZipFile(src, 'r') as zipped:
+            zipped.extractall(dst)

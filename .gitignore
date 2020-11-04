@@ -21,6 +21,9 @@ mmv/mmv/pyskt/cro*
 mmv/assets/generated
 *ffmpeg.exe
 mmv-venv
+mmv/mmv/wineprefix
+mmv/mmv/externals
+mmv/mmv/release
 
 # Yeah this is my identity, you should use yours here :)
 mmv/assets/tremx_assets
