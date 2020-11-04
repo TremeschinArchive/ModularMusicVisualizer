@@ -46,13 +46,8 @@ class MMVPianoRollTopDown:
         """
 
         # Load the yaml config file
-        color_config_yaml = self.mmv.utils.load_yaml(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "colors",
-                self.config["color_preset"]+ ".yaml"
-            )
-        )
+        color_preset = self.config["color_preset"]
+        color_config_yaml = self.mmv.utils.load_yaml(f"{self.mmv.context.data_dir}/piano_roll_color_{color_preset}.yaml")
 
         # Get the global colors into a dictionary
 

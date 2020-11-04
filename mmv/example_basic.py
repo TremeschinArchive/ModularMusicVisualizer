@@ -173,7 +173,7 @@ if MODE == "music":
                 processing.delete_directory(GENERATED_BACKGROUND_DIRECTORY)
                 processing.make_directory_if_doesnt_exist(GENERATED_BACKGROUND_DIRECTORY)
 
-            # Initialize a canvas we'll generte the backgrounds
+            # Initialize a canvas we'll generate the backgrounds
             skia = SkiaNoWindowBackend()
             skia.init(
                 width = processing.width,

@@ -110,11 +110,11 @@ Also see [EXTRAS.md](docs/EXTRAS.md) file for squeezing some extra performance.
 
 - Arch Linux / pacman based (Manjaro): `sudo pacman -Syu python python-setuptools python-pip base-devel ffmpeg git`
 
-- Ubuntu / apt based: `sudo apt update && sudo apt upgrade && sudo apt install python3 python3-venv python3-dev python3-setuptools python3-pip ffmpeg git`
+- Ubuntu / apt based: `sudo apt update && sudo apt upgrade && sudo apt install python3 python3-venv python3-dev python3-setuptools python3-pip ffmpeg git libglfw3 libglfw3-dev`
 
 Open a shell on a directory and clone the repo:
 
-- `mkdir ~/mmv && cd ~/mmv` (creates `mmv` folder on your home dir)
+- `cd ~` (In this example we'll clone mmv into `/home/USER/modular-music-visualizer`)
 
 - `git clone https://github.com/Tremeschin/modular-music-visualizer`
 
@@ -122,9 +122,9 @@ Open a shell on a directory and clone the repo:
 
 Preferably use a virtual environment: (for Ubuntu, replace `python` with `python3` or have `alias python=python3` on your `~/.bashrc`)
 
-- `python -m venv mmv-venv`
+- `python -m venv mmv-venv` (create the venv)
 
-- `source ./mmv-venv/bin/activate`
+- `source ./mmv-venv/bin/activate` (activate the venv)
 
 Then run `python example_basic.py --auto-deps`
 
@@ -135,6 +135,8 @@ MMV should then run and generate the default video with default preset under the
 Pass flag `mode=music` or `mode=piano` for a quick swap between the two: `python example_basic.py --auto-deps mode=[music,piano]`.
 
 The flag `--auto-deps` is not required after the first successful run.
+
+Skip Windows section for info on configuring your own stuff or click [HERE](#editing-configs)
 
 <hr>
 
@@ -160,9 +162,9 @@ You'll need to install the whole C++ development package group so Python can use
 
 Search for `scipy` Python wheels and install the version listed on `requirements.txt` or install somehow lapack or blas / openblas on your system. This is finicky and I offer no official support for this.
 
-##### Extra step for an automatic installation of dependencies
+### Important: extra step for an automatic installation of dependencies
 
-Go to [7-zip downloads](https://www.7-zip.org/download.html) website, download the `7-Zip for 64-bit Windows x64 (Intel 64 or AMD64)` executable if you don't have it already, run it and extract the files on the default path. This step is required to extract the video encoder (FFmpeg) compressed files if you don't want to do this by hand.
+Go to [7-zip downloads](https://www.7-zip.org/download.html) website, download the `7-Zip for 64-bit Windows x64 (Intel 64 or AMD64)` executable if you don't have it already installed, run it and extract the files on the default path. This step is required to extract the video encoder (FFmpeg) compressed files if you don't want to do this by hand.
 
 <hr>
 
@@ -178,7 +180,7 @@ Use a archive manager (something like 7-zip or rar) to extract the contents into
 
 Install git  Windows the installer from [git downloads page](https://git-scm.com/downloads)
 
-Open a shell on desired dir to clone the repo (GIT shell on Windows)
+Open a shell on desired dir to clone the repo (GIT bash shell on Windows)
 
 `git clone https://github.com/Tremeschin/modular-music-visualizer`
 
@@ -198,7 +200,7 @@ Now with basic CLI navigation commands, change to the directory you extracted or
 
 Or just take the path on Windows Explorer and do:
 
-- `cd C:\\path\to\mmv\with\ugly\back\slashes`
+- `cd "C:\\path\to\mmv\with\ugly\back\slashes"`
 
 #### If running with vanilla Python
 
@@ -214,7 +216,7 @@ This step is not required but good to do so, create an virtual environment (venv
 
 - `.\venv-path\Scripts\activate.bat`
 
-#### Automatic installation and running
+### Vanilla Python: automatic installation and running
 
 When you run `python .\example_basic.py --auto-deps` it should take care of downloading and installing Python dependencies as well as FFmpeg by downloading from https://www.gyan.dev/ffmpeg/builds/ and extracting to a temp folder, moving the binary to the right place.
 
@@ -224,7 +226,7 @@ Pass flag `mode=music` or `mode=piano` for a quick swap between the two: `python
  
 If this process doesn't work (dead links for example), report any issue you had. You can also continue reading this for manual instructions.
 
-#### Manual FFmpeg and Python deps installation
+### Vanilla Python: manual FFmpeg and Python deps installation
 
 Download a compiled FFmpeg [build](https://ffmpeg.org/download.html#build-windows), the binary named `ffmpeg.exe` must be on the directory `ROOT/mmv/mmv/externals/ffmpeg.exe`.
 

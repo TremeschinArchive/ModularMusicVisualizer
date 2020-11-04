@@ -19,10 +19,11 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.experiments.sample_sorter import SampleSorter
+# from mmv.experiments.sample_sorter import SampleSorter
 from mmv.mmv_generator import MMVParticleGenerator
 from mmv.pygradienter.pyg_main import PyGradienter
 from mmv.mmv_generator import MMVGenerator
+from mmv.make_release import MakeRelease
 from mmv.common.cmn_utils import Utils
 from mmv.mmv_image import MMVImage
 from mmv.mmv_main import MMVMain
@@ -61,15 +62,11 @@ class mmv:
         
         # Main module files directory (where __init__.py is)
         self.THIS_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
-        self.EXTERNALS_DIR = self.THIS_FILE_DIR + "/externals"
+        self.EXTERNALS_DIR = self.mmv_main.context.externals
 
-        self.data_dir = self.THIS_FILE_DIR + "/data"
-        self.make_directory_if_doesnt_exist(self.data_dir)
+        self.mmv_main.context.externals = self.EXTERNALS_DIR
+
         self.mmv_main.utils.mkdir_dne(self.EXTERNALS_DIR)
-
-        # Temporary directory if needed
-        self.temp_dir = tempfile.gettempdir()
-        print(debug_prefix, f"Temp dir is: [{self.temp_dir}]")
 
         # Append to PATH the 
         print(debug_prefix, f"Appending EXTERNALS_DIR to PATH: [{self.EXTERNALS_DIR}]")
@@ -184,15 +181,30 @@ class mmv:
     # Get a pygradienter object with many workers for rendering
     def pygradienter(self, **kwargs):
         return PyGradienter(self.mmv_main, **kwargs)
+    
+    # Attempt to generate a binary for Windows
+    def windows_release(self, **kwargs):
+        return MakeRelease(self.mmv_main, **kwargs)
 
     # # [ QOL ] # #
 
     # Make sure we have FFmpeg on Windows
-    def download_check_ffmpeg(self):
+    def download_check_ffmpeg(self, making_release = False):
         debug_prefix = "[mmv.download_check_ffmpeg]"
 
+        # Temporary directory if needed
+        self.temp_dir = tempfile.gettempdir()
+        print(debug_prefix, f"Temp dir is: [{self.temp_dir}]")
+
+        if getattr(sys, 'frozen', False):
+            print(debug_prefix, "Not checking ffmpeg.exe because is executable build")
+            return
+
         # If the code is being run on a Windows OS
-        if self.mmv_main.utils.os == "windows":
+        if self.mmv_main.utils.os == "windows" or making_release:
+
+            if making_release:
+                print(debug_prefix, "Getting FFmpeg for Windows because making_release=True")
 
             # Where we should find the ffmpeg binary
             FFMPEG_FINAL_BINARY = self.EXTERNALS_DIR + "/ffmpeg.exe"

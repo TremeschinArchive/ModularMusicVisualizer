@@ -19,7 +19,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.pyskt.skia_no_window_backend import SkiaNoWindowBackend
+from mmv.pyskt.pyskt_backend import SkiaNoWindowBackend
 import mmv
 import os
 
@@ -28,25 +28,12 @@ THIS_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 processing = mmv.mmv()
 
 
-experiment = "pygradienter"
+experiment = "release"
 
-if experiment == "pyskt":
-    sk = processing.pyskt_test(
-        context_width = 1280,
-        context_height = 720,
-        context_show_debug = True,
-        context_wait_events = True,
-    )
-    sk.run()
-
-elif experiment == "sample_sorter":
+if experiment == "sample_sorter":
     sorter = processing.sample_sorter(
         path = "/some/path",
     )
-
-elif experiment == "gui":
-    # gui = processing.gui()
-    pass
 
 elif experiment == "pygradienter":
 
@@ -71,5 +58,7 @@ elif experiment == "pygradienter":
 
     pygradienter.run()
 
-
-
+elif experiment == "release":
+    processing.download_check_ffmpeg(making_release = True)
+    mk = processing.windows_release()
+    mk.create()
