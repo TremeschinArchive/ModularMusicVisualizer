@@ -44,8 +44,19 @@ class MakeRelease:
         # Where this file is located
         self.THIS_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+        # Target release directory
+        self.release_dir = f"{self.THIS_FILE_DIR}/release"
+        self.final_release_dir = f"{self.release_dir}/{self.mmv.misc.version}"
+
+        # Reset some dirs
+        self.mmv.utils.rmdir(self.final_release_dir)
+        self.mmv.utils.rmdir(self.THIS_FILE_DIR + "/../build")
+
+        # Create release dir
+        self.mmv.utils.mkdir_dne(self.release_dir)
+
         # Where we'll use wine
-        self.wineprefix = self.THIS_FILE_DIR + "/wineprefix"
+        self.wineprefix = self.release_dir + "/wineprefix"
         print(debug_prefix, f"WINEPREFIX is [{self.wineprefix}]")
 
         # Change env WINEPREFIX
@@ -54,10 +65,7 @@ class MakeRelease:
         # No debug information, clean outputs
         self.change_env("WINEDEBUG", "-all")
 
-        # Target release directory
-        self.release_dir = f"{self.THIS_FILE_DIR}/release/{self.mmv.misc.version}"
-        self.mmv.utils.rmdir(self.release_dir)
-        self.mmv.utils.rmdir(self.THIS_FILE_DIR + "/../build")
+        self.RELEASE_MAKER = "cxfreeze"
 
     # Change a key on copied environment
     def change_env(self, key, value):
@@ -88,32 +96,32 @@ class MakeRelease:
         # # Steps to make an release
 
         self.create_wineprefix()
-        # self.install_wine_python_quiet()
+        self.install_wine_python_quiet()
         self.wine_python_upgrade_pip_install_wheel()
         self.install_wine_python_dependencies()
         self.generate_binary_with_pyinstaller()
 
         # Move build files
-        self.mmv.utils.move(self.THIS_FILE_DIR + "/../build/exe.win-amd64-3.8/", self.release_dir)
+        self.mmv.utils.move(self.THIS_FILE_DIR + "/../build/exe.win-amd64-3.8/", self.final_release_dir)
 
         # Create dirs
-        self.mmv.utils.mkdir_dne(self.release_dir + "/mmv/externals")
-        self.mmv.utils.mkdir_dne(self.release_dir + "/mmv/data")
-        self.mmv.utils.mkdir_dne(self.release_dir + "/assets")
+        self.mmv.utils.mkdir_dne(self.final_release_dir + "/mmv/externals")
+        self.mmv.utils.mkdir_dne(self.final_release_dir + "/mmv/data")
+        self.mmv.utils.mkdir_dne(self.final_release_dir + "/assets")
 
         # Move FFmpeg
-        self.mmv.utils.copy(self.mmv.context.externals + "/ffmpeg.exe", self.release_dir + "/ffmpeg.exe")
+        self.mmv.utils.copy(self.mmv.context.externals + "/ffmpeg.exe", self.final_release_dir + "/ffmpeg.exe")
 
         # Move free assets folder
-        copy_tree(self.THIS_FILE_DIR + "/../assets/free_assets", self.release_dir + "/assets/free_assets")
-        copy_tree(self.THIS_FILE_DIR + "/data", self.release_dir + "/mmv/data")
+        copy_tree(self.THIS_FILE_DIR + "/../assets/free_assets", self.final_release_dir + "/assets/free_assets")
+        copy_tree(self.THIS_FILE_DIR + "/data", self.final_release_dir + "/mmv/data")
 
         self.mmv.utils.copy(
             self.wineprefix + "/drive_c/Program Files/Python38/python38.dll",
-            self.release_dir + "/python38.dll"
+            self.final_release_dir + "/python38.dll"
         )
 
-        self.mmv.utils.mkdir_dne(self.release_dir + "/lib/_soundfile_data")
+        self.mmv.utils.mkdir_dne(self.final_release_dir + "/lib/_soundfile_data")
 
 
     # Call wineboot on wineprefix
@@ -166,18 +174,23 @@ class MakeRelease:
         self.add_to_env_path(self.THIS_FILE_DIR)
         self.add_to_env_path(self.THIS_FILE_DIR + "/../")
 
-        # I had to remove this file for pyinstaller to work...
-        weirdo_file = self.wineprefix + "/drive_c/Program Files/Python38/Lib/site-packages/_soundfile_data/COPYING"
-        print(debug_prefix, f"Removing file [{weirdo_file}]")
+        if self.RELEASE_MAKER == "cxfreeze":
+            # I had to remove this file for pyinstaller to work...
+            weirdo_file = self.wineprefix + "/drive_c/Program Files/Python38/Lib/site-packages/_soundfile_data/COPYING"
+            print(debug_prefix, f"Removing file [{weirdo_file}]")
 
-        try:
-            os.remove(weirdo_file)
-        except FileNotFoundError:
-            print(debug_prefix, f"Couldn't remove the file, already deleted?")
+            try:
+                os.remove(weirdo_file)
+            except FileNotFoundError:
+                print(debug_prefix, f"Couldn't remove the file, already deleted?")
 
-        # self.display_run_command(["wine", "pyinstaller", self.THIS_FILE_DIR + "/../example_basic.py", "--hidden-import=_cffi_backend", "--exclude-module=tkinter"])
-        # self.display_run_command(["wine", "build_exe", self.THIS_FILE_DIR + "/../example_basic.py", "-c", "--bundle-files", "0", "-p", "mmv"])
-        self.display_run_command(["wine", "python", self.THIS_FILE_DIR + "/../setup.py", "build"])
+            self.display_run_command(["wine", "python", self.THIS_FILE_DIR + "/../setup.py", "build"])
+
+        elif self.RELEASE_MAKER == "pyinstaller":
+            self.display_run_command(["wine", "pyinstaller", self.THIS_FILE_DIR + "/../example_basic.py", "--hidden-import=_cffi_backend", "--exclude-module=tkinter"])
+        
+        elif self.RELEASE_MAKER == "py2exe":
+            self.display_run_command(["wine", "build_exe", self.THIS_FILE_DIR + "/../example_basic.py", "-c", "--bundle-files", "0", "-p", "mmv"])
 
 
     # def download_move_glfw_shared_lib(self):
@@ -196,5 +209,5 @@ class MakeRelease:
 
     #     self.mmv.utils.move(
     #         self.mmv.context.externals + f"/{zipped}/lib-vc2019/glfw3.dll",
-    #         self.release_dir
+    #         self.final_release_dir
     #     )
