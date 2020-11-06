@@ -22,7 +22,8 @@ mmv/assets/generated
 mmv-venv
 mmv/mmv/wineprefix
 mmv/mmv/externals
-mmv/mmv/release
+mmv/release
+mmv/example_basic
 
 # Yeah this is my identity, you should use yours here :)
 mmv/assets/tremx_assets
