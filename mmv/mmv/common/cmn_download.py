@@ -25,11 +25,35 @@ import requests
 import zipfile
 import time
 import wget
+import git
 import sys
 import os
 
 
 class Download:
+
+    def git_clone(self, url, save):
+        # For getting the repo name, if it ends on / we can't
+        # split and get the last split of "/" o we shorten it by one
+        if url.endswith("/"):
+            url = url[0:-1]
+
+        self.repo_name = url.split("/")[-1]
+        print(f"Clone repo [{self.repo_name}] from url [{url}] saving to [{save}]")
+        try:
+            git.Repo.clone_from(url, save, progress=self.git_clone_progress_bar)
+            print()
+        except git.exc.GitCommandError:
+            print(f"Could not clone repo")
+            if os.path.exists(save):
+                print(f"Repo folder already exists, continuing (consider deleting it if something goes wrong)")
+            else:
+                print(f"Repo folder doesn't exist and can't clone")
+                sys.exit(-1)
+        
+    def git_clone_progress_bar(self, _, current, total, speed):
+        percentage = (current/total)*100
+        print(f"\r Cloning repo [{self.repo_name}] | {percentage:0.2f}% | {speed}", end='', flush=True)
 
     def wget_progress_bar(self, current, total, width=80):
         # current         \propto time.time() - startdownload 
