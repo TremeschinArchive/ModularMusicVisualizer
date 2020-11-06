@@ -21,7 +21,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 # # # End user utilities, you can ignore this code
 
-from end_user_utilities import Requirements, ArgParser
+from modules.end_user_utilities import Requirements, ArgParser
 import sys
 
 # Parse shell arguments
@@ -37,9 +37,10 @@ if args.auto_deps:
         requirements.install()
 
 # # # MMV
-
+input("foobar")
 # Import MMV module
-import mmv
+from mmv.mmv_configure import MMVEndUser
+# import mmv
 
 # Import a "canvas" class for generating background image video textures
 from mmv.pyskt.pyskt_backend import SkiaNoWindowBackend
@@ -55,7 +56,7 @@ import os
 THIS_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Create the wrapper class
-processing = mmv.mmv(
+processing = MMVEndUser(
     # AFAIK skia-python on Linux and MacOS uses RGBA and on Windows BGRA pixel format.
     # "auto" does that, or manually put "rgba" or "bgra". If set wrongly the video
     # colors RED and BLUE will be swapped.
@@ -97,12 +98,10 @@ processing.quality(
 
 # Pass a flag mode=music or mode=piano when calling this script
 if "mode" in args.kflags:
-    mode = args.kflags["mode"]
-
-    if mode == "piano":
+    if args.kflags["mode"] == "piano":
         MODE = "piano_roll"
 
-    elif mode == "music":
+    elif args.kflags["mode"] == "music":
         MODE = "music"
 else:
     # Default mode

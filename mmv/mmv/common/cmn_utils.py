@@ -81,7 +81,7 @@ class Utils:
 
             print(debug_prefix, "Removed successfully")
         else:
-            print(debug_prefix, "Directory exists, skipping... [%s]" % path)
+            print(debug_prefix, "Directory doesn't exists, skipping... [%s]" % path)
 
     # Copy every file of a directory to another
     def copy_files_recursive(self, src, dst):
@@ -107,10 +107,10 @@ class Utils:
 
     # Get the directory this file is in if run from source or from a release
     def get_root(self):
-        if getattr(sys, 'frozen', False):    
-            return os.path.dirname(os.path.abspath(sys.executable))
-        else:
+        if getattr(sys, 'frozen', True):    
             return os.path.dirname(os.path.abspath(__file__))
+        else:
+            return os.path.dirname(os.path.abspath(sys.executable))
 
     # Get the basename of a path
     def get_basename(self, path):
@@ -233,7 +233,7 @@ class Utils:
     # Check if either type A = wanted[0] and B = wanted[1] or the opposite
     def is_matching_type(self, items, wanted):
         # print("Checking items", items, "on wanted", wanted)
-        for index, item in enumerate(items):
+        for _, item in enumerate(items):
             for wanted_index, wanted_type in enumerate(wanted):
                 if isinstance(item, wanted_type):
                     del wanted[wanted_index]
