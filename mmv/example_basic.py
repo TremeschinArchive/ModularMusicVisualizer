@@ -37,7 +37,7 @@ if args.auto_deps:
         requirements.install()
 
 # # # MMV
-input("foobar")
+
 # Import MMV module
 from mmv.mmv_configure import MMVEndUser
 # import mmv

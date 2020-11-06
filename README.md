@@ -102,15 +102,39 @@ The code will check itself for a 64 bit installation and quit if not.
 
 <hr>
 
-### Installing Python, FFmpeg, dependencies
+### Installing Python, FFmpeg and dependencies
 
 Also see [EXTRAS.md](docs/EXTRAS.md) file for squeezing some extra performance.
 
 ## Linux:
 
-- Arch Linux / pacman based (Manjaro): `sudo pacman -Syu python python-setuptools python-pip base-devel ffmpeg git`
+Ubuntu was the easiest one to get it up and running, a little bit less trouble compared to Fedora but nothing too major.
 
-- Ubuntu / apt based: `sudo apt update && sudo apt upgrade && sudo apt install python3 python3-venv python3-dev python3-setuptools python3-pip ffmpeg git libglfw3 libglfw3-dev`
+<hr>
+
+- **Arch Linux** / pacman based (Manjaro):
+  - `sudo pacman -Syu python python-setuptools python-pip base-devel ffmpeg git`
+
+<p>
+
+- **Ubuntu** / apt based: *Tested on Ubuntu 20.04 minimal clean installation*
+
+  - `sudo apt update && sudo apt upgrade`
+
+  - `sudo apt install python3 python3-venv python3-dev python3-setuptools python3-pip ffmpeg git libglfw3 libglfw3-dev` 
+
+<p>
+
+- **Fedora** / rpm based: *tested on Fedora Workstation 33 clean installation*
+
+  - Enable the free rpmfusion repository for ffmpeg:
+    - `sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm`
+
+  - `sudo dnf upgrade`
+
+  - `sudo dnf install python-devel ffmpeg git blas openblas lapack atlas libgfortran atlas-devel gcc-c++ gcc-gfortran subversion redhat-rpm-config python38` 
+
+<hr>
 
 Open a shell on a directory and clone the repo:
 
@@ -120,7 +144,21 @@ Open a shell on a directory and clone the repo:
 
 - `cd ./modular-music-visualizer/mmv`
 
-Preferably use a virtual environment: (for Ubuntu, replace `python` with `python3` or have `alias python=python3` on your `~/.bashrc`)
+<hr>
+
+##### Extra steps for Ubuntu:
+
+Replace `python` with `python3` on these commands or have `alias python=python3` in your `~/.bashrc`)
+
+##### Extra steps for Fedora:
+
+Replace `python` with `python3.8` on these commands or have `alias python=python3.8` in your `~/.bashrc`
+
+Also before continuing, run `python3.8 -m ensurepip` otherwise it'll fail, Python 3.8 is required here as 3.9 won't work because `skia-python` only supports Python versions up to the 3.8.
+
+<hr>
+
+Preferably use a virtual environment:
 
 - `python -m venv mmv-venv` (create the venv)
 

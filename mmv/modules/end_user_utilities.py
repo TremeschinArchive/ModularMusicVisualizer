@@ -49,7 +49,7 @@ class Requirements:
 
         # Requirements
         self.requirements = []
-        self.requirements_file = f"{self.THIS_FILE_DIR}{self.sep}mmv{self.sep}requirements.txt"
+        self.requirements_file = f"{self.THIS_FILE_DIR}/../mmv{self.sep}requirements.txt"
 
         # Open requirements.txt file
         with open(self.requirements_file, "r") as requirements_file:
@@ -107,6 +107,7 @@ class Requirements:
 
             # Call pip install -r requirements.txt
             if MODE == "automatic":
+                subprocess.check_call([sys.executable, '-m', 'pip', 'install', "wheel"])
                 subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-r', self.requirements_file])
 
             # Install packages on a loop
