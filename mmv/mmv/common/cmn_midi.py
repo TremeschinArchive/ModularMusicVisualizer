@@ -19,8 +19,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.cmn_types import InlineDict
 from mmv.common.cmn_utils import DataUtils
+from midi2audio import FluidSynth
 import mido
 import copy
 
@@ -53,6 +53,7 @@ class MidiFile:
         self.tempo = mido.bpm2tempo(bpm)
         self.range_notes = RangeNotes()
         self.datautils = DataUtils()
+        self.path = path
     
     # Midi note index (number) to name -> "C3", "A#4", F5, etc
     def note_to_name(self, n):
@@ -145,3 +146,10 @@ class MidiFile:
         # print(self.timestamps)
         # print("Range:", self.range_notes.min, self.range_notes.max)
         # print(self.timestamps)
+    
+    # Uses midi2audio for converting the input midi file
+    def convert_to_audio(self, save_path, sample_rate = 44000):
+        print(f"[MidiFile.convert_to_audio] Converting [{self.path}] -> [{save_path}] @{sample_rate}Hz")
+        fs = FluidSynth(sample_rate = sample_rate)
+        fs.midi_to_audio(self.path, save_path)
+        return save_path
