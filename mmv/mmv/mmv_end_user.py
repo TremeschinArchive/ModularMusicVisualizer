@@ -43,7 +43,10 @@ class MMVEndUser:
         debug_prefix = "[MMVEndUser.__init__]"
 
         # FIXME: Currently can't run on Python 3.9, skia-python don't have packages for it
-        assert sys.version_info <= (3, 9)
+        maximum_python_version = (3, 9)
+        print(debug_prefix, f"Checking if Python <= {maximum_python_version}.. ", end = "", flush = True)
+        assert sys.version_info <= maximum_python_version
+        print("ok")
 
         # Main class of MMV
         self.mmv_main = MMVMain()

@@ -1,6 +1,7 @@
 ## [2.3.5] :: Headache :: (2020-11-07)
 - Add option for automatically converting `MIDI -> Audio`, downloads FreePats General MIDI sound set, check their license at http://freepats.zenvoid.org/licenses.html before using.
 - New default demo sample sound, WIP kawaii bass
+- Code doesn't run if not Python >= 3.9 (`skia-python` packages not available for 3.9)
 
 ## [2.3.4] :: Cleanup, textures, Windows QOL :: (2020-11-07)
 - Add basic GUI file on experiments.py
