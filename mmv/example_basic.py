@@ -39,8 +39,7 @@ if args.auto_deps:
 # # # MMV
 
 # Import MMV module
-from mmv.mmv_configure import MMVEndUser
-# import mmv
+from mmv.mmv_end_user import MMVEndUser
 
 # Import a "canvas" class for generating background image video textures
 from mmv.pyskt.pyskt_backend import SkiaNoWindowBackend
@@ -110,38 +109,9 @@ else:
 
 # Configure your modes files
 if MODE == "music":
-    INPUT_AUDIO = THIS_FILE_DIR + "/assets/free_assets/sound/banjo.ogg"
-else:
-    INPUT_AUDIO = THIS_FILE_DIR + "/assets/piano_roll/contingency-times.ogg"
-    INPUT_MIDI  = THIS_FILE_DIR + "/assets/piano_roll/contingency-times.mid"
 
+    INPUT_AUDIO = THIS_FILE_DIR + "/assets/free_assets/kawaii_bass.ogg"
 
-# By default we store the videos in this RENDER_DIR, create it if it doesn't exist
-RENDER_DIR = THIS_FILE_DIR + "/renders"
-processing.make_directory_if_doesnt_exist(RENDER_DIR)
-
-# Where we'll output the video
-# You can set like OUTPUT_VIDEO = "mmv_output.mkv"
-# I recommend MKV because if something fails you don't lose the footage,
-# the MP4 containers we must finish the pipe process for it to be readable
-# Set this to "auto" for automatic file name, as seen on following conditional.
-OUTPUT_VIDEO = "auto"
-
-if OUTPUT_VIDEO == "auto":
-    now = datetime.datetime.now()
-    date_and_time = now.strftime("%Y-%m-%d_%H-%M-%S")  # Don't put ":"" here, Windows doesn't like it, took a while to figure lol
-    OUTPUT_VIDEO = (
-        RENDER_DIR + "/"
-        f"mmv_{date_and_time}_"
-        f"mode-{MODE}_"
-        f"fps-{processing.mmv_main.context.fps}_"
-        f"{os.path.splitext(os.path.basename(INPUT_AUDIO))[0]}"  # Filename of the audio without extension
-        ".mkv"
-    )
-
-# Music mode config
-if MODE == "music":
-        
     # "image" or "video"
     BACKGROUND_TYPE = "image"  
     # BACKGROUND_TYPE = "video"
@@ -200,32 +170,78 @@ if MODE == "music":
         BACKGROUND_VIDEO = THIS_FILE_DIR + "/assets/video.mp4"  # TODO: NO DEMO VIDEO
 
     # Logo
-    LOGO_IMAGE = THIS_FILE_DIR + "/assets/free_assets/mmv-logo.png"
+    LOGO_IMAGE = THIS_FILE_DIR + "/assets/free_assets/mmv_logo.png"
 
     # Enable / disable features
     VISUALIZER = True
     LOGO = True
 
-
-# Piano roll config
+# Piano Roll general configuration
 elif MODE == "piano_roll":
 
+    INPUT_MIDI  = THIS_FILE_DIR + "/assets/free_assets/piano_roll/contingency_times.mid"
+
+    # "auto" or "manual"
+    #   auto: Downloads a midi soundset and converts your midi into a .flac
+    #   manutal: You configure the final audio of the video
+    AUDIO_OF_MIDI = "auto"
+
+    # Invalid setting
+    if not AUDIO_OF_MIDI in ["manual", "auto"]:
+        raise RuntimeError(f"Invalid option AUDIO_OF_MIDI=[{AUDIO_OF_MIDI}]")
+
+    # Manual config
+    if AUDIO_OF_MIDI == "manual":
+        INPUT_AUDIO = THIS_FILE_DIR + "/assets/free_assets/piano_roll/contingency_times.ogg"
+
+    # Automatic conversion, NOT IMPLEMENTED FOR WINDOWS
+    elif AUDIO_OF_MIDI == "auto":
+
+        # Check and downloads for a soundfont, this is not the most stable function
+        # Either let it configure itself or have a symlink or .sf2 under ~/.fluidsynth/default_sound_font.sf2
+        processing.download_and_link_freepats_general_midi_soundfont()
+        
+        # Get a MidiFile class and load the Midi
+        midi = processing.get_midi_class()
+        midi.load(INPUT_MIDI)
+
+        # Save the converted audio on the same directory, change .mid to .flac
+        rendered_midi_to_audio_path = INPUT_MIDI.replace(".mid", ".flac")
+
+        # Convert and assign
+        midi.convert_to_audio(rendered_midi_to_audio_path)
+        INPUT_AUDIO = rendered_midi_to_audio_path
+
+    
+
     # If your audio is delayed according to the midi, delay the notes by how much seconds?
-    PIANO_ROLL_SECONDS_OFFSET = 0
 
     # Amount of piano keys content dropping down on screen
     PIANO_ROLL_SECONDS_OF_MIDI_CONTENT_ON_SCREEN = 3
 
-    # BPM of your MIDI file, not stable for me to get for you :(
-    PIANO_ROLL_MIDI_BPM = 130
+    # # Set BPM of your MIDI file, not stable for me to get for you :(
+    
+    # Weirdly enough this changes the BPM, I'm not sure..
+    # Maybe Ardour didn't set the BPM of the MIDI file to 130?
+    # Or did fluidsynth default to 120 BPM and say that was it
+    
+    # These PIANO_ROLL_SECONDS_OFFSET happens because the program that does MIDI -> audio
+    # trims the audio at the end (looks like it)
+    if AUDIO_OF_MIDI == "auto":
+        PIANO_ROLL_MIDI_BPM = 120
+        PIANO_ROLL_SECONDS_OFFSET = 0.1
+
+    elif AUDIO_OF_MIDI == "manual":
+        PIANO_ROLL_MIDI_BPM = 130
+        PIANO_ROLL_SECONDS_OFFSET = 0
 
 
+# # Quick enable and disable features used in both music and piano roll mode
 
-# # These features applies to both music and piano roll mode
-
+# Both
 PROGRESSION_BAR = True
 
-# # Progression bar settings
+# # Depends on mode
 if MODE == "piano_roll":
     PROGRESSION_BAR_POSITION = "top"
     PARTICLES = False  # Particles don't go along pretty well with the piano roll (yet?)
@@ -234,6 +250,30 @@ else:
     PROGRESSION_BAR_POSITION = "bottom"
     PARTICLES = True
     VIGNETTING = True
+
+
+# By default we store the videos in this RENDER_DIR, create it if it doesn't exist
+RENDER_DIR = THIS_FILE_DIR + "/renders"
+processing.make_directory_if_doesnt_exist(RENDER_DIR)
+
+# Where we'll output the video
+# You can set like OUTPUT_VIDEO = "mmv_output.mkv"
+# I recommend MKV because if something fails you don't lose the footage,
+# the MP4 containers we must finish the pipe process for it to be readable
+# Set this to "auto" for automatic file name, as seen on following conditional.
+OUTPUT_VIDEO = "auto"
+
+if OUTPUT_VIDEO == "auto":
+    now = datetime.datetime.now()
+    date_and_time = now.strftime("%Y-%m-%d_%H-%M-%S")  # Don't put ":"" here, Windows doesn't like it, took a while to figure lol
+    OUTPUT_VIDEO = (
+        RENDER_DIR + "/"
+        f"mmv_{date_and_time}_"
+        f"mode-{MODE}_"
+        f"fps-{processing.mmv_main.context.fps}_"
+        f"{os.path.splitext(os.path.basename(INPUT_AUDIO))[0]}"  # Filename of the audio without extension
+        ".mkv"
+    )
 
 
 # # Configurations on some modules, presets

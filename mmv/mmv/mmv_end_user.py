@@ -22,10 +22,13 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from mmv.mmv_generator import MMVParticleGenerator
 from mmv.pygradienter.pyg_main import PyGradienter
 from mmv.mmv_generator import MMVGenerator
+from mmv.common.cmn_midi import MidiFile
 from mmv.common.cmn_utils import Utils
 from mmv.mmv_image import MMVImage
 from mmv.mmv_main import MMVMain
+import subprocess
 import tempfile
+import shutil
 import uuid
 import time
 import sys
@@ -38,6 +41,9 @@ class MMVEndUser:
     # Start default configs, creates wrapper classes
     def __init__(self, **kwargs) -> None:
         debug_prefix = "[MMVEndUser.__init__]"
+
+        # FIXME: Currently can't run on Python 3.9, skia-python don't have packages for it
+        assert sys.version_info <= (3, 9)
 
         # Main class of MMV
         self.mmv_main = MMVMain()
@@ -216,10 +222,7 @@ class MMVEndUser:
                 )
 
                 # Extract the files
-                self.mmv_main.download.extract_file(
-                    ffmpeg_7z,
-                    self.temp_dir,
-                )
+                self.mmv_main.download.extract_file(ffmpeg_7z, self.temp_dir)
 
                 # Where the FFmpeg binary is located
                 ffmpeg_bin = ffmpeg_7z.replace(".7z", "") + "/bin/ffmpeg.exe"
@@ -232,6 +235,134 @@ class MMVEndUser:
         else:
             print(debug_prefix, "You are using Linux, please make sure you have FFmpeg package installed on your distro")
 
+    # Make sure we have FFmpeg on Windows
+    """
+    kwargs: {
+        "sf": str, "feepats"
+            The soundfont to use
+        "skip_fluidsynth_dep": bool, False
+            Don't check for fluidsynth before downloading the soundfonts
+        "skip_prompt": bool, False
+            Don't ask the user if they want to run the mkdir and ln commands
+    }
+    """
+    def download_and_link_freepats_general_midi_soundfont(self, **kwargs):
+        debug_prefix = "[MMVEndUser.download_and_link_midi_soundfont]"
+
+        skip_fluidsynth_dep = kwargs.get("skip_fluidsynth_dep", False)
+        skip_prompt = kwargs.get("skip_prompt", False)
+        sf = kwargs.get("sf", "freepats")
+
+        # Dunno how to make it work on Windows
+        if self.mmv_main.utils.os == "windows":
+            print(debug_prefix, "This is not currently supported on Windows, don't know where Fluid Synth will check for the soundfont sf2 files, help needed")
+            sys.exit(-1)
+
+        elif self.mmv_main.utils.os in ["linux", "darwin"]:
+            # Check for fluidsynth
+            if not skip_fluidsynth_dep:
+                if not self.mmv_main.utils.has_executable_with_name("fluidsynth"):
+                    raise RuntimeError("Please install fluidsyth package from your distro, no point in downloading midi soundfonts and not being able to use them. Pass skip_fluidsynth_dep=True to this function to ignore this")
+            else:
+                print(debug_prefix, "skip_fluidsynth_dep=True, RUNNING REQUIRED COMMANDS AUTOMATICALLY")
+
+        # FreePats General MIDI sound set
+        if sf == "freepats":
+
+            # # # [ IMPORTANT ] # # # 
+            # # # [ IMPORTANT ] # # # 
+
+            # See their license http://freepats.zenvoid.org/licenses.html
+            print(debug_prefix, "\n\n[IMPORTANT] [IMPORTANT] SEE FREEPATS GENERAL MIDI SOUND SET LICENSE AT: http://freepats.zenvoid.org/licenses.html BEFORE USING [IMPORTANT] [IMPORTANT]\n")
+            
+            # # # [ IMPORTANT ] # # # 
+            # # # [ IMPORTANT ] # # # 
+
+            name = "FreePats General MIDI sound set"
+
+            # File names
+            version_tar_xz = "FreePatsGM-SF2-20200814.tar.xz"
+            version_tar = version_tar_xz.replace(".tar.xz", ".tar")
+
+            # Paths
+            soundfont_tar_xz = f"{self.EXTERNALS_DIR}/{version_tar_xz}"
+            soundfont_tar = f"{self.EXTERNALS_DIR}/{version_tar}"
+
+            # Already downloaded files
+            external_files = os.listdir(self.EXTERNALS_DIR)
+
+            print(debug_prefix, "Externals files are:", external_files)
+
+            # http://freepats.zenvoid.org/SoundSets/FreePats-GeneralMIDI/
+
+            if not version_tar in external_files:
+                print(debug_prefix, f"Soundfont {version_tar} not in externals")
+
+                if not version_tar_xz in external_files:
+                    print(debug_prefix, f"Soundfont {soundfont_tar_xz} not in externals")
+
+                    # Download "FreePats General MIDI sound set"
+                    self.mmv_main.download.wget(
+                        f"http://freepats.zenvoid.org/SoundSets/FreePats-GeneralMIDI/{version_tar_xz}",
+                        version_tar_xz, f"\"{name}\" File Name = {version_tar_xz}"
+                    )
+
+                # Extract the tar xz files
+                self.mmv_main.download.extract_file(soundfont_tar_xz, self.EXTERNALS_DIR)
+
+            # Where the stuff will be
+            extracted_no_extension = version_tar_xz.replace(".tar.xz", "")
+            extracted_file_name = extracted_no_extension.replace("-SF2", "")
+            extracted_folder = f"{self.EXTERNALS_DIR}/{extracted_no_extension}"
+            freepats_sf2 = f"{extracted_folder}/{extracted_file_name}.sf2"
+
+            # Extract if we need so
+            if not os.path.isdir(extracted_folder):
+                # Extract the tar extracted from tar xz
+                print(debug_prefix, f"Extracting to folder [{extracted_folder}]")
+                self.mmv_main.download.extract_file(soundfont_tar, self.EXTERNALS_DIR)
+            else:
+                print(debug_prefix, f"Extracted folder [{extracted_folder}] already exists, skipping extracting..")
+    
+            print(debug_prefix, f"Downloaded sf2 in [{freepats_sf2}]")
+
+            dot_fluidsynth = self.mmv_main.utils.get_abspath("~/.fluidsynth")
+            default_soundfont = f"{dot_fluidsynth}/default_sound_font.sf2"
+
+            if os.path.exists(default_soundfont):
+                print(debug_prefix, f"Default sound font file on [{default_soundfont}] already exists, assuming it's already configured, returning this function..")
+                return
+
+            # The two commands
+            command1 = ["mkdir", "-p", dot_fluidsynth]
+            command2 = ["ln", "-s", freepats_sf2, default_soundfont]
+
+            # Assume question="y" because skip_prompt kwargs was passed
+            if skip_prompt:
+                question = "y"
+
+            # Ask the question
+            else:
+                # Pretty print
+                print("\n" + ("-" * shutil.get_terminal_size()[0]))
+
+                question = input(f"\n  We downloaded the FreePats General MIDI sound set to the directory [{freepats_sf2}], for fluidsynth to find it we have to link it to a default place, are you sure you want to run the following two commands: \n\n {command1}\n\n {command2}\n\n > Answer (y) for yes, anything else for no: ")
+
+                print()
+                
+            # Run the two commands if answer was yes
+            if question == "y":
+                print(debug_prefix, "Running command", command1)
+                subprocess.check_call(command1)
+
+                print(debug_prefix, "Running command", command2)
+                subprocess.check_call(command2)
+            else:
+                print(debug_prefix, "Question answer was anything but (y), ignoring and not linking FreePats")
+    
+    # Returns a cmn_midi.py MidiFile class
+    def get_midi_class(self):
+        return MidiFile()
 
 # Presets on width and height
 class QualityPreset:
