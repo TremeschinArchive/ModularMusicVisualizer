@@ -22,8 +22,6 @@ As a general rule of thumb, things will go easier if you follow a guideline when
 
 - What operating system you are on?
 
-MMV wasn't extensively tested on Windows as well, so that's a starting point..
-
 - Describe the issue
 
 - Steps to reproduce (if any)
@@ -32,7 +30,9 @@ MMV wasn't extensively tested on Windows as well, so that's a starting point..
 
 - What have you tried?
 
-I don't want to sound rude but low effort issues might be annoying to understand or find a fix, so please do some research and find the specifics scenarios the issue happens
+I don't want to sound rude but low effort issues might be annoying to understand or find a fix, so please do some research and find the specifics scenarios the issue happens.
+
+You can also DM me and ask if a proper issue ticket should be created or not. I personally don't mind, feel free for anything around here.
 
 ## Coding
 
