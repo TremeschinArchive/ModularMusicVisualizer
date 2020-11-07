@@ -185,7 +185,8 @@ elif MODE == "piano_roll":
     # "auto" or "manual"
     #   auto: Downloads a midi soundset and converts your midi into a .flac
     #   manutal: You configure the final audio of the video
-    AUDIO_OF_MIDI = "auto"
+    # AUDIO_OF_MIDI = "auto"
+    AUDIO_OF_MIDI = "manual"
 
     # Invalid setting
     if not AUDIO_OF_MIDI in ["manual", "auto"]:
@@ -226,15 +227,11 @@ elif MODE == "piano_roll":
     # Maybe Ardour didn't set the BPM of the MIDI file to 130?
     # Or did fluidsynth default to 120 BPM and say that was it
     
-    # These PIANO_ROLL_SECONDS_OFFSET happens because the program that does MIDI -> audio
-    # trims the audio at the end (looks like it)
     if AUDIO_OF_MIDI == "auto":
         PIANO_ROLL_MIDI_BPM = 120
-        PIANO_ROLL_SECONDS_OFFSET = 0.1
 
     elif AUDIO_OF_MIDI == "manual":
         PIANO_ROLL_MIDI_BPM = 130
-        PIANO_ROLL_SECONDS_OFFSET = 0
 
 
 # # Quick enable and disable features used in both music and piano roll mode
@@ -451,7 +448,6 @@ elif (MODE == "music"):
 if (MODE == "piano_roll"):
     piano_roll = processing.image_object()
     piano_roll.configure.add_module_piano_roll(
-        seconds_offset = PIANO_ROLL_SECONDS_OFFSET,
         seconds_of_midi_content = PIANO_ROLL_SECONDS_OF_MIDI_CONTENT_ON_SCREEN,
         bpm = PIANO_ROLL_MIDI_BPM,
     )

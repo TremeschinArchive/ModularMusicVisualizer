@@ -67,7 +67,9 @@ class MidiFile:
     # Basically, MIDI information -> timestamps dictionary
     # Really finicky because how MIDI works on the ticks and channels and whatnot
     def get_timestamps(self):
+        debug_prefix = "[MidiFile.get_timestamps]"
 
+        self.time_first_note = None
         self.time = 0
 
         # Empty channels dictionary list
@@ -99,6 +101,11 @@ class MidiFile:
 
             # Message is a note we play or release (or weirdly play at zero velocity for releasing)
             if msg.type in ["note_on", "note_off"]:
+
+                # Time that the first note plays
+                if self.time_first_note is None:
+                    print(debug_prefix, f"Time of the first playing note on the MIDI file = [{self.time}]")
+                    self.time_first_note = self.time
                 
                 velocity = msg.velocity
                 channel = msg.channel
