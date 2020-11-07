@@ -239,6 +239,8 @@ I already had `git` so just do:
 
 Then run `python3 example_basic.py --auto-deps --user`
 
+If you want it automatically to convert `MIDI -> audio` please also run `brew install fluidsynth --with-libsndfile`
+
 I did get a few OpenGL errors when doing this as I was using a mac VM with the scripts of this repo: https://github.com/foxlet/macOS-Simple-KVM
 
 **Disclaimer:** I just installed the system for testing my code, I won't use any products I don't own there, I just want to support many platforms but I both don't have and don't know someone that owns a proper macbook. This was the cheap and dirty sollution of it I was sure I'd get a few errors there, but most stuff went fine.

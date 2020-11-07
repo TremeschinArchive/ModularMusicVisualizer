@@ -24,7 +24,7 @@ from mmv.pyskt.pyskt_backend import SkiaNoWindowBackend
 from mmv.experiments.sample_sorter import SampleSorter
 from mmv.pygradienter.pyg_main import PyGradienter
 from modules.make_release import MakeRelease
-from mmv.mmv_configure import MMVEndUser
+from mmv.mmv_end_user import MMVEndUser
 import sys
 import os
 
