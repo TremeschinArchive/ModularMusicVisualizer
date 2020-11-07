@@ -9,11 +9,11 @@
 </p>
 <hr>
 
-- **No watermark, pay walls or any crap.**
+- **Simply a full featured music visualization software.**
 
 <p>
 
-- **Simply a full featured music visualization software**
+- **No watermark, pay walls or any crap.**
 
 <p>
 
@@ -111,8 +111,6 @@ Linux users can now skip to the next section.
 
 Another point is that directories on Windows uses `\` instead of (what everything else uses) `/`, Python should convert those automatically, however the shell (where you call commands) might not convert those like `.\path\to\executable.exe` instead of `./path/to/executable.exe`, the second one might not run on Windows. This does not apply on the Python scripts as it'll auto convert `/` to `\\`.
 
-This project isn't extensively tested on Windows, feedback appreciated.
-
 ## IMPORTANT!!
 
 <hr>
@@ -134,6 +132,8 @@ The code will check itself for a 64 bit installation and quit if not.
 # Installing Python, FFmpeg and dependencies
 
 Also see [EXTRAS.md](docs/EXTRAS.md) file for squeezing some extra performance.
+
+<hr>
 
 ## Linux:
 
@@ -247,19 +247,29 @@ Feedback wanted on native macOS, this is as far as I can help you for now.
 
 See after Windows section for info on configuring your own stuff or click [HERE](#editing-configs)
 
+<hr>
+
 ## Windows:
 
+This project isn't extensively tested on Windows, feedback appreciated.
+
+<hr>
 <p align="center">
   <i>Prepare your disks and patience!!</i>
 </p>
+<hr>
 
 Any easier steps for Windows are welcome specially for external installs other than Python that are needed.
 
 **Chose:**
 
+<hr>
+
 ##### 1. With Anaconda (less trouble)
 
 Download and install `Anaconda` (not `miniconda`), make it your default Python optimally on the installer.
+
+<hr>
 
 ##### 2. With vanilla Python (discouraged somehow)
 
@@ -273,6 +283,8 @@ Search for `scipy` Python wheels and install the version listed on `requirements
 
 For this last step you can also manage to install lapack or blas / openblas on your system. I could not. This is finicky and I offer no official support for this.
 
+<hr>
+
 ### Important: extra step for an automatic installation of dependencies
 
 Go to [7-zip downloads](https://www.7-zip.org/download.html) website, download the `7-Zip for 64-bit Windows x64 (Intel 64 or AMD64)` executable if you don't have it already installed, run it and extract the files on the default path.
@@ -284,13 +296,17 @@ This step is required to extract the video encoder (FFmpeg) compressed files if 
 
 ### Getting the source code
 
-#### GitHub / GitLab repository main page
+<hr>
+
+**Chose:**
+
+#### 1. GitHub / GitLab repository main page
 
 You might be already here, head to the top page and there is a (green for GitHub, blue for GitLab) button _"⬇️ Code"_ and download as a ZIP.
 
 Use a archive manager (something like 7-zip or rar) to extract the contents into a folder you'll be running MMV.
 
-#### Using git CLI
+#### 2. Using git CLI
 
 Install git  Windows the installer from [git downloads page](https://git-scm.com/downloads)
 
@@ -316,6 +332,8 @@ Or just take the path on Windows Explorer and do:
 
 - `cd "C:\\path\to\mmv\with\ugly\back\slashes"`
 
+<hr>
+
 ### If running with vanilla Python
 
 Open a shell on the downloaded and extracted folder
@@ -330,6 +348,8 @@ This step is not required but good to do so, create an virtual environment (venv
 
 - `.\venv-path\Scripts\activate.bat`
 
+<hr>
+
 **Chose:**
 
 #### 1. Vanilla Python: automatic installation and running
@@ -340,6 +360,8 @@ If you're on anaconda, perhaps running with `--user` as so: `python .\example_ba
 
 If this process doesn't work (dead links for example), report any issue you had. You can also continue reading this for manual instructions.
 
+<hr>
+
 #### 2. Vanilla Python: manual FFmpeg and Python deps installation
 
 Download a compiled FFmpeg [build](https://ffmpeg.org/download.html#build-windows), the binary named `ffmpeg.exe` must be on the directory `ROOT/mmv/mmv/externals/ffmpeg.exe`.
@@ -349,9 +371,9 @@ Install Python dependencies with `pip install -r .\mmv\requirements.txt`
 Run MMV with `python .\example_basic.py`
 
 <hr>
-
-Either path 1 or 2 you should have your final default video on the `renders` folder after running `example_basic.py` script.
-
+<p align="center">
+  <i>Either by following path 1 or 2 you should have your final default video on the `renders` folder after running `example_basic.py` script.</i>
+</p>
 <hr>
 
 ## Editing configs
@@ -398,6 +420,8 @@ I have also some experiments on `mmv/experiments` folder, some not totally relat
 
 - [ ] (Help needed) Fully functional and configurable GUI (trying PySimpleGui, DearPyGui didn't really fit)
 
+<hr>
+
 # Contributing
 
 Please read [CONTRIBUTING.md](docs/CONTRIBUTING.md) file :)
@@ -408,12 +432,15 @@ I didn't set up bidirectional mirroring as that can cause troubles, GitLab autom
 
 Feel free to create issues on any of both platforms, PRs / Merge Requests I ask you to do under GitLab (as I'm not sure what would happen if I accept something here? perhaps some protected branches shenanigans to solve this?).
 
+<hr>
+
 # User Generated Content, copyrighted material, legal
 
 Any information, images, file names you configure manually is considered (by me) user generated content (UGC) and I take no responsibility for any violations you make on copyrighted images, musics or logos.
 
 I give you a few "free assets" files, those, apart from the MMV logo I created myself on Inkscape, were generated with Python with some old code written by me, you can use them freely. Some are generated on the go if configured (they are on by default) on the running script of MMV.
 
+<hr>
 
 # Honest word
 
@@ -429,8 +456,11 @@ The Modular Music Visualizer project definitely changed my life, I grew up so mu
 
 Can't forget to **thank a lot all the people behind all the dependencies I used in this project**. We don't need to come up with pythagoras theorem from scratch anymore as someone did that for us in the past. Just like I don't need to make an complex video encoder, there's the FFmpeg team already. Old generations making a better world and time for future ones.
 
+<hr>
+
 # Thank You
 
-My sincere Thank You if you read the README all the way until here, hopefully you learned something new.
+My sincere Thank You if you read the README all the way until here, hopefully you learned something new and that this project helped you!!
 
+<hr>
 
