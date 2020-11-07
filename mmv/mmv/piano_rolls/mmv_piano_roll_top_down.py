@@ -305,8 +305,14 @@ class MMVPianoRollTopDown:
 
         # # Get "needed" variables
 
+        # If user passed seconds offset then don't use automatic one from midi file
+        if "seconds_offset" in self.config.keys():
+            offset = self.config["seconds_offset"]
+        else:
+            offset = self.vectorial.midi.time_first_note
+
         # Offsetted current time at the piano key top most part
-        current_time = self.mmv.context.current_time + self.config["seconds_offset"]
+        current_time = self.mmv.context.current_time + offset
 
         # What keys we'll bother rendering?
         accept_minimum_time = current_time - self.config["seconds_of_midi_content"]
@@ -355,8 +361,8 @@ class MMVPianoRollTopDown:
                             velocity = 128,
 
                             # Vertical position (start / end)
-                            start = interval[0] - self.config["seconds_offset"],
-                            end = interval[1] - self.config["seconds_offset"],
+                            start = interval[0] - self.vectorial.midi.time_first_note,
+                            end = interval[1] - self.vectorial.midi.time_first_note,
 
                             # Channel for the color and note for the horizontal position
                             channel = channel,
