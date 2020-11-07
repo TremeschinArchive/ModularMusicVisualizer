@@ -24,7 +24,7 @@
 - **Everything configurable.**
 
 <hr>
-Officially works on Linux and Windows, high chance of working on macOS and BSD (more info below)
+Officially works on Linux, macOS and Windows, high chance of working *BSD
 <hr>
 
 ## Showcase
@@ -156,7 +156,7 @@ As long as you have a working Python + dependencies, FFmpeg binaries and a OpenG
 
   - `sudo apt update && sudo apt upgrade`
 
-  - `sudo apt install python3 python3-venv python3-dev python3-setuptools python3-pip ffmpeg git libglfw3 libglfw3-dev` 
+  - `sudo apt install python3 python3-venv python3-dev python3-setuptools python3-pip ffmpeg git libglfw3 libglfw3-dev build-essential` 
 
 <p>
 
@@ -243,9 +243,9 @@ If you want it automatically to convert `MIDI -> audio` please also run `brew in
 
 I did get a few OpenGL errors when doing this as I was using a mac VM with the scripts of this repo: https://github.com/foxlet/macOS-Simple-KVM
 
-**Disclaimer:** I just installed the system for testing my code, I won't use any products I don't own there, I just want to support many platforms but I both don't have and don't know someone that owns a proper macbook. This was the cheap and dirty sollution of it I was sure I'd get a few errors there, but most stuff went fine.
+**Disclaimer:** I just installed the system for testing my code, I won't use any products I don't own there, I just want to support many platforms as possible. This was the cheap and dirty sollution of it I was sure I'd get a few errors there, but most stuff went fine.
 
-Feedback wanted on native macOS, this is as far as I can help you for now.
+Feedback wanted on native macOS, this is as far as I can help you for now. I can say one friend of mine could run and it worked, however he had to downgrade to Python 3.8 under homebrew.
 
 See after Windows section for info on configuring your own stuff or click [HERE](#editing-configs)
 
