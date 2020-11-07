@@ -4,7 +4,10 @@ FROM python:3.8
 
 # Make /home/ubuntu and copy mmv folder to it
 RUN mkdir /home/ubuntu
+
+# Git clone or git pull from cache
 RUN cd /home/ubuntu && git clone https://github.com/Tremeschin/modular-music-visualizer
+RUN cd /home/ubuntu/modular-music-visualizer && git pull
 
 # Upgrade system
 RUN apt update && apt upgrade -y
