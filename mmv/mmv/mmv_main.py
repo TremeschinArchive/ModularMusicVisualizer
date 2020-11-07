@@ -72,28 +72,27 @@ f"""{"-"*self.terminal_width}
 
         message = \
 f"""
-[+-------------------------------------------------------------------------------------------+]
- |                                                                                           |
- |              :: Thanks for using the Modular Music Visualizer project !! ::               |
- |              ==============================================================               |
- |                                                                                           |
- |  Here's a few official links for MMV:                                                     |
- |                                                                                           |
- |    - Telegram group:          [          https://t.me/modular_music_visualizer         ]  |
- |    - GitHub Repository:       [ https://github.com/Tremeschin/modular-music-visualizer ]  |
- |    - GitLab Repository:       [ https://gitlab.com/Tremeschin/modular-music-visualizer ]  |
- |                                                                                           |
- |  > Always check for the copyright info on the material you are using (audios, images)     |
- |  before distributing the content generated with MMV, I take absolutely no responsibility  |
- |  for any UGC (user generated content) violations. See LICENSE file as well.               |
- |                                                                                           |
- |  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  |
- |                                                                                           |
- |             Don't forget sharing your releases made with MMV on the discussion groups :)  |
- |                 Feel free asking for help or giving new ideas for the project as well !!  |
- |                                                                                           |
-[+-------------------------------------------------------------------------------------------+]
-
+ [+-------------------------------------------------------------------------------------------+]
+  |                                                                                           |
+  |              :: Thanks for using the Modular Music Visualizer project !! ::               |
+  |              ==============================================================               |
+  |                                                                                           |
+  |  Here's a few official links for MMV:                                                     |
+  |                                                                                           |
+  |    - Telegram group:          [          https://t.me/modular_music_visualizer         ]  |
+  |    - GitHub Repository:       [ https://github.com/Tremeschin/modular-music-visualizer ]  |
+  |    - GitLab Repository:       [ https://gitlab.com/Tremeschin/modular-music-visualizer ]  |
+  |                                                                                           |
+  |  > Always check for the copyright info on the material you are using (audios, images)     |
+  |  before distributing the content generated with MMV, I take absolutely no responsibility  |
+  |  for any UGC (user generated content) violations. See LICENSE file as well.               |
+  |                                                                                           |
+  |  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  |
+  |                                                                                           |
+  |             Don't forget sharing your releases made with MMV on the discussion groups :)  |
+  |                 Feel free asking for help or giving new ideas for the project as well !!  |
+  |                                                                                           |
+ [+-------------------------------------------------------------------------------------------+]
 """
         print(message)
 
