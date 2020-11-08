@@ -192,6 +192,10 @@ elif MODE == "piano_roll":
     # "auto" or "manual"
     #   auto: Downloads a midi soundset and converts your midi into a .flac
     #   manutal: You configure the final audio of the video
+
+    # NOTE: I strongly recommend you making the sound of the midi first, "auto"
+    # mode isn't the most stable and reliable thing in the world
+
     # AUDIO_OF_MIDI = "auto"
     AUDIO_OF_MIDI = "manual"
 
@@ -212,7 +216,7 @@ elif MODE == "piano_roll":
         
         # Get a MidiFile class and load the Midi
         midi = processing.get_midi_class()
-        midi.load(INPUT_MIDI)
+        midi.set_path(INPUT_MIDI)
 
         # Save the converted audio on the same directory, change .mid to .flac
         rendered_midi_to_audio_path = INPUT_MIDI.replace(".mid", ".flac")
