@@ -160,5 +160,17 @@ class ArgParser:
                     self.flags.append(arg)
         
         self.auto_deps = "--auto-deps" in self.flags
-        print(debug_prefix, "--auto-deps ON") if self.auto_deps else print(debug_prefix, "--auto-deps OFF")
+        print(debug_prefix, "--auto-deps True") if self.auto_deps else print(debug_prefix, "--auto-deps False")
+
+        if "render" in self.kflags.keys():
+            render = self.kflags["render"]
+            
+            # Only two modes available
+            assert render in ["gpu", "cpu"]
+
+            print(debug_prefix, f"Render target is [{render}]")
+            self.render = render
+        else:
+            print(debug_prefix, "No given render target flag, assuming [gpu]")
+            self.render = "gpu"
         
