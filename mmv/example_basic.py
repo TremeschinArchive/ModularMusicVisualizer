@@ -64,6 +64,13 @@ processing = MMVEndUser(
     # If your audio isn't properly normalized or you want a more aggressive video,
     # set this to 1.5 - 2 or so
     audio_amplitude_multiplier = 1,
+
+    # Use or not a GPU accelerated context, pass render=gpu or render=cpu flags
+    # For higher resolutions 720p+, GPUs are definitely faster for raw output
+    # but for smaller res, CPUs win on image transfering, it defaults to GPU
+    # on the final video render if no flag was passed. Generating images such as
+    # particles and backgrounds is done on CPU as no textures are being moved.
+    render_backend = args.render,
 )
 
 # Ensure we have FFmpeg on Windows, downloads, extracts etc
