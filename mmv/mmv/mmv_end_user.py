@@ -42,7 +42,9 @@ class MMVEndUser:
     def __init__(self, **kwargs) -> None:
         debug_prefix = "[MMVEndUser.__init__]"
 
-        # FIXME: Currently can't run on Python 3.9, skia-python don't have packages for it
+        # # FIXME: Currently can't run on Python 3.9, skia-python don't have packages for it
+
+        # Max python version, show info, assert, pretty print
         maximum_python_version = (3, 9)
         print(debug_prefix, f"Checking if Python <= {maximum_python_version}.. ", end = "", flush = True)
         assert sys.version_info <= maximum_python_version
@@ -66,6 +68,7 @@ class MMVEndUser:
         self.mmv_main.context.watch_processing_video_realtime = kwargs.get("watch_processing_video_realtime", False)
         self.mmv_main.context.pixel_format = kwargs.get("pixel_format", "auto")
         self.mmv_main.context.audio_amplitude_multiplier = kwargs.get("audio_amplitude_multiplier", 1)
+        self.mmv_main.context.skia_render_backend = kwargs["render_backend"]
         
         # Main module files directory (where __init__.py is)
         self.THIS_FILE_DIR = os.path.dirname(os.path.abspath(__file__))

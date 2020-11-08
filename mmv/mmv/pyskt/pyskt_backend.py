@@ -31,23 +31,49 @@ class SkiaNoWindowBackend:
     def __init__(self) -> None:
         self.REALTIME = False
     
+    """
+    kwargs: {
+        "width": int
+        "height": int
+        "grender_backendpu": str
+            Use or not a GPU accelerated 
+    }
+    """
     def init(self, **kwargs) -> None:
+        
+        debug_prefix = "[SkiaNoWindowBackend.init]"
+
         self.width = kwargs["width"]
         self.height = kwargs["height"]
+
+        # Assume to render on CPU if not said GPU, GPU is less "compatible"
+        self.render_backend = kwargs.get("render_backend", "cpu")
+
+        print(debug_prefix, f"Render backend is [{self.render_backend}]")
         
-        self.glfw_context()
-        self.gl_context = skia.GrContext.MakeGL()
-        self.info = skia.ImageInfo.MakeN32Premul(self.width, self.height)
-        self.surface = skia.Surface.MakeRenderTarget(self.gl_context, skia.Budgeted.kNo, self.info)
-        assert self.surface is not None
+        # GPU for rasterization, faster rendering but slower images transfers
+        if self.render_backend == "gpu":
+            self.glfw_context()
+            self.gl_context = skia.GrDirectContext.MakeGL()
+            self.info = skia.ImageInfo.MakeN32Premul(self.width, self.height)
+            self.surface = skia.Surface.MakeRenderTarget(self.gl_context, skia.Budgeted.kNo, self.info)
 
         # Use CPU for rasterizing, faster transportation of images but slow rendering
-        # self.surface = skia.Surface.MakeRasterN32Premul(self.width, self.height)
+        elif self.render_backend == "cpu":
+            self.surface = skia.Surface.MakeRasterN32Premul(self.width, self.height)
+        
+        else:
+            raise RuntimeError(f"Wrong | Not found render backend: [{self.render_backend}]")
 
+        # Make sure the surface was created
+        assert self.surface is not None
+
+        # Get the canvas to draw on
         with self.surface as canvas:
             self.canvas = canvas
         
         if self.REALTIME:
+            print(debug_prefix, f"Is REALTIME, threading self.keep_updating")
             threading.Thread(target=self.keep_updating).start()
 
     @contextlib.contextmanager

@@ -56,6 +56,7 @@ class Core:
         self.mmv.skia.init(
             width = self.mmv.context.width,
             height = self.mmv.context.height,
+            render_backend = self.mmv.context.skia_render_backend,
         )
 
         # Update info that might have been changed by the user

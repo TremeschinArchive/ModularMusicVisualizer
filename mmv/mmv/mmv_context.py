@@ -63,6 +63,9 @@ class MMVContext:
         self.watch_processing_video_realtime = False
         self.audio_amplitude_multiplier = 1
 
+        # Use "gpu" or "cpu" render backend?
+        self.skia_render_backend = "gpu"
+
     def update_biases(self):
 
         # This is a scalar value that says what percentage of a 720p resolution
