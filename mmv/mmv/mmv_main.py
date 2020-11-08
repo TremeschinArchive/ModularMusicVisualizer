@@ -174,6 +174,7 @@ class MMVMain:
             # p.dump_stats("res.prof")
         except KeyboardInterrupt:
             self.skia.terminate_glfw()
+            self.ffmpeg.close_pipe()
             sys.exit(-1)
         
         # Say thanks message

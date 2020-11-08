@@ -23,6 +23,7 @@ from mmv.common.cmn_utils import DataUtils
 from midi2audio import FluidSynth
 import mido
 import copy
+import os
 
 
 # Store the range of notes for a (possible) piano roll visualization if user
@@ -53,6 +54,10 @@ class MidiFile:
         self.tempo = mido.bpm2tempo(bpm)
         self.range_notes = RangeNotes()
         self.datautils = DataUtils()
+        self.path = path
+    
+    # When we only want to convert to audio no need to load it
+    def set_path(self, path):
         self.path = path
     
     # Midi note index (number) to name -> "C3", "A#4", F5, etc
@@ -157,6 +162,14 @@ class MidiFile:
     # Uses midi2audio for converting the input midi file
     def convert_to_audio(self, save_path, sample_rate = 44000):
         print(f"[MidiFile.convert_to_audio] Converting [{self.path}] -> [{save_path}] @{sample_rate}Hz")
+        
+        # If there is already a file by the save_path name, don't convert
+        if os.path.exists(save_path):
+            print(f"[MidiFile.convert_to_audio] Save path [{save_path}] already exists, not converting to audio and overwriting..")
+            return
+
+        # Actually convert from midi to audio
         fs = FluidSynth(sample_rate = sample_rate)
         fs.midi_to_audio(self.path, save_path)
+        
         return save_path
