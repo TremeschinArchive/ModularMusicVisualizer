@@ -21,12 +21,18 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import subprocess
+import threading
 import ffmpeg
 import shutil
+import psutil
+import time
 import os
 
 
 class PyGLSLRender:
+    # Recommended max workers
+    RECOMMENDED_MAX_WORKERS = max(2, psutil.cpu_count(logical = False) // 2)
+
     """
     kwargs: {
         "width": int
@@ -48,8 +54,10 @@ class PyGLSLRender:
                     Time for starting to render the shader and stopping
 
             image:
+                "wait": float, 0
+                    Time to wait in seconds before capturing the image
         
-        "extra_paths": list, str
+        "extra_paths_find_glslviewer": list, str
             Extra paths for searching glslviewer binaries
 
     }
@@ -68,7 +76,7 @@ class PyGLSLRender:
 
         # The target shader for rendering
         self.fragment_shader = kwargs["fragment_shader"]
-        self.extra_paths = kwargs.get("extra_paths", [])
+        self.extra_paths_find_glslviewer = kwargs.get("extra_paths_find_glslviewer", [])
 
         # Image or video mode
         self.mode = kwargs["mode"]
@@ -92,6 +100,9 @@ class PyGLSLRender:
             # Get the default glslviewer
             glslviewer_binary = "glslViewer"
 
+            # Take screenshot after this amount of time
+            self.wait = float(kwargs.get("wait", 0))
+
         else:
             raise RuntimeError(f"Invalid mode [{self.mode}]")
         
@@ -101,20 +112,29 @@ class PyGLSLRender:
 
         # # Locate the glslviewer binary it
 
-        # Force extra_paths being a list if it exists
-        if not isinstance(self.extra_paths, list):
-            self.extra_paths = [self.extra_paths]
+        # Force extra_paths_find_glslviewer being a list if it exists
+        if not isinstance(self.extra_paths_find_glslviewer, list):
+            self.extra_paths_find_glslviewer = [self.extra_paths_find_glslviewer]
 
         # Find it
-        search_path = os.environ["PATH"] + os.pathsep + os.pathsep.join(self.extra_paths)
-        self.glslviewer = shutil.which(glslviewer_binary, path = search_path)
+        self.glslviewer = shutil.which(
+            cmd = glslviewer_binary,
+            path = os.environ["PATH"] + os.pathsep + os.pathsep.join(self.extra_paths_find_glslviewer)
+        )
 
         # Error checking
         assert os.path.exists(self.fragment_shader), f"{debug_prefix} [ERROR] Fragment shader with path [{self.fragment_shader}] doesn't exist"
         assert self.glslviewer != None, f"{debug_prefix} [ERROR] glslviewer binary [{glslviewer_binary}] not found"
     
+        # # Default vars / control
+
+        self.running = False
+        self.finished = False
+
     # Construct the command for calling with subprocess
     def __build_command(self):
+
+        # Basic command for either video and image, certain resolution on headless mode
         self.command = [
             self.glslviewer,
             self.fragment_shader,
@@ -127,17 +147,29 @@ class PyGLSLRender:
         if self.fxaa:
             self.command += ["--fxaa"]
 
+        # Run and quit after running next argument
+
+        # Instructions to run before quitting
+        instruction = ""
+
         # Mode is video, use sequence command then exit
         if self.mode == "video":
-            self.command += [
-                "-E", f"sequence,{self.video_start},{self.video_end},{self.video_fps}"
-            ]
+            
+            # Final instruction
+            instruction = f"sequence,{self.video_start},{self.video_end},{self.video_fps}"
 
         # Mode is image, use screenshot command and save to output
         elif self.mode == "image":
-            self.command += [
-                "-E", f"screenshot,{self.output}"
-            ]
+
+            # If we should wait some time before screenshotting
+            if self.wait > 0:
+                self.command += ["-e", f"wait,{self.wait}"]
+
+            # Final instruction
+            instruction += f"screenshot,{self.output}"
+
+        # Add final instruction to command
+        self.command += ["-E", instruction]
 
     # Abstract function for rendering
     # async_render True  calls subprocess.Popen, attributes self.subprocess to that
@@ -146,6 +178,7 @@ class PyGLSLRender:
         debug_prefix = "[PyGLSLRender.render]"
 
         self.async_render = async_render
+        self.running = True
 
         # Build the command for running
         self.__build_command()
@@ -159,11 +192,41 @@ class PyGLSLRender:
             self.__render_video()
         elif self.mode == "image":
             self.__render_image()
-        
+
+        # Start thread to report if we have finished on async render
+        if self.async_render:
+            threading.Thread(target = self.__report_finished_thread, daemon = True).start()
+
     # Wait until the subprocess finished (useful for syncing after multiple simultaneous renders)
-    def wait(self):
+    def join(self):
         if self.async_render:
             self.subprocess.wait()
+
+    # On async render instead of asking to .join() we can see if the subprocess have finished
+    # by getting the .finished attribute or getting the total workers running by .running
+    def __report_finished_thread(self):
+        debug_prefix = "[PyGLSLRender.__report_finished_thread]"
+
+        # Keep reporting
+        while True:
+            self.finished = self.subprocess.poll() is not None 
+            self.running = not self.finished
+            time.sleep(0.05)
+            if self.finished:
+                break
+
+        # Warn this worker has finishes
+        print(debug_prefix, f"Worker with output [{self.output}] finished")
+
+        # Kill FFmpeg subprocess a few seconds after finishing piping the images to video
+        if self.mode == "video":
+            print(debug_prefix, "Closing FFmpeg pipe stdin, then terminating the process afterwards..")
+
+            # Close the stdin so FFmpeg writes any buffered images
+            self.ffmpeg_subprocess.stdin.close()
+
+            # Terminate the subprocess, say for it to exit automatically
+            self.ffmpeg_subprocess.terminate()
 
     # Render a video out of the configured settings
     def __render_video(self):
