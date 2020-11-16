@@ -26,6 +26,7 @@ from mmv.pygradienter.pyg_main import PyGradienter
 from mmv.shaders.pyglslrender import PyGLSLRender
 from modules.make_release import MakeRelease
 from mmv.mmv_end_user import MMVEndUser
+import time
 import sys
 import os
 
@@ -50,30 +51,37 @@ class Experiments:
         elif experiment == "glsl":
             workers = []
 
-            for i in range(2):
+            for i in range(20):
                 render = PyGLSLRender(
                     mmv = self.processing.mmv_main,
                     width = 1280,
                     height = 720,
                     fragment_shader = self.THIS_FILE_DIR + "/mmv/shaders/fragment/cardioid-pulse.frag",
-                    output = self.THIS_FILE_DIR + f"/out-{i}.mp4",
+                    output = self.THIS_FILE_DIR + f"/out-{i}.mkv",
 
-                    extra_paths = [self.processing.mmv_main.context.externals, self.THIS_FILE_DIR],
+                    extra_paths_find_glslviewer = [self.processing.mmv_main.context.externals, self.THIS_FILE_DIR],
 
                     mode = "video",
                     video_fps = 60,
                     video_start = 0,
-                    video_end = 20,
+                    video_end = 2 + i/5,
+                    wait = i/100,
                 )
                 workers.append(render)
 
             for index, worker in enumerate(workers):
                 print(f"Start worker index=[{index}]")
                 worker.render(async_render = True)
+
+                while True:
+                    total_rendering = sum([int(worker.running) for worker in workers])
+                    if total_rendering < PyGLSLRender.RECOMMENDED_MAX_WORKERS:
+                        break
+                    time.sleep(0.016)
             
             for index, worker in enumerate(workers):
                 print(f"Waiting for worker index=[{index}]")
-                worker.wait()
+                worker.join()
                 print(f"Worker index=[{index}] done!!")
 
         elif experiment == "pygradienter":
