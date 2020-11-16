@@ -2,6 +2,7 @@
 ===============================================================================
 
 Purpose: Generate wallpapers, particles on the go (tm)
+This is kinda old code which will be moved at some point
 
 ===============================================================================
 
