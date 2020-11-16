@@ -58,8 +58,8 @@ class PyGLSLRender:
 
         # Generic, works for video + image
         self.output = kwargs["output"]
-        self.height = kwargs["height"]
-        self.width = kwargs["width"]
+        self.height = int(kwargs["height"])
+        self.width = int(kwargs["width"])
 
         # The target shader for rendering
         self.fragment_shader = kwargs["fragment_shader"]

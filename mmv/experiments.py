@@ -55,7 +55,7 @@ class Experiments:
                     mmv = self.processing.mmv_main,
                     width = 1280,
                     height = 720,
-                    fragment_shader = self.THIS_FILE_DIR + "/cardioid-pulse.frag",
+                    fragment_shader = self.THIS_FILE_DIR + "/mmv/shaders/fragment/cardioid-pulse.frag",
                     output = self.THIS_FILE_DIR + f"/out-{i}.mp4",
 
                     extra_paths = [self.processing.mmv_main.context.externals, self.THIS_FILE_DIR],
