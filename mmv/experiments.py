@@ -23,6 +23,7 @@ from modules.end_user_utilities import Requirements, ArgParser
 from mmv.pyskt.pyskt_backend import SkiaNoWindowBackend
 from mmv.experiments.sample_sorter import SampleSorter
 from mmv.pygradienter.pyg_main import PyGradienter
+from mmv.shaders.pyglslrender import PyGLSLRender
 from modules.make_release import MakeRelease
 from mmv.mmv_end_user import MMVEndUser
 import sys
@@ -45,6 +46,35 @@ class Experiments:
                 mmv = self.processing.mmv_main,
                 path = "/some/path",
             )
+        
+        elif experiment == "glsl":
+            workers = []
+
+            for i in range(2):
+                render = PyGLSLRender(
+                    mmv = self.processing.mmv_main,
+                    width = 1280,
+                    height = 720,
+                    fragment_shader = self.THIS_FILE_DIR + "/cardioid-pulse.frag",
+                    output = self.THIS_FILE_DIR + f"/out-{i}.mp4",
+
+                    extra_paths = [self.processing.mmv_main.context.externals, self.THIS_FILE_DIR],
+
+                    mode = "video",
+                    video_fps = 60,
+                    video_start = 0,
+                    video_end = 20,
+                )
+                workers.append(render)
+
+            for index, worker in enumerate(workers):
+                print(f"Start worker index=[{index}]")
+                worker.render(async_render = True)
+            
+            for index, worker in enumerate(workers):
+                print(f"Waiting for worker index=[{index}]")
+                worker.wait()
+                print(f"Worker index=[{index}] done!!")
 
         elif experiment == "pygradienter":
 
