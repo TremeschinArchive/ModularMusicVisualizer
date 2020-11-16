@@ -33,6 +33,8 @@ class PyGLSLRender:
         "height": int
 
         "fragment_shader": str, path
+        "fxaa": bool, True
+            Use FXAA?
 
         "output": str
             Save video/image to this file
@@ -58,8 +60,11 @@ class PyGLSLRender:
 
         # Generic, works for video + image
         self.output = kwargs["output"]
+
         self.height = int(kwargs["height"])
         self.width = int(kwargs["width"])
+
+        self.fxaa = kwargs.get("fxaa", True)
 
         # The target shader for rendering
         self.fragment_shader = kwargs["fragment_shader"]
@@ -117,6 +122,10 @@ class PyGLSLRender:
             "-h", str(self.height),
             "--headless",
         ]
+
+        # Enable fxaa?
+        if self.fxaa:
+            self.command += ["--fxaa"]
 
         # Mode is video, use sequence command then exit
         if self.mode == "video":
