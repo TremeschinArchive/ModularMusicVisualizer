@@ -246,6 +246,23 @@ class Utils:
     def has_executable_with_name(self, name):
         return shutil.which(name) is not None
     
+    # Get a executable from path, returns False if it doesn't exist
+    def get_executable_with_name(self, name, extra_paths = [None]):
+
+        # Force list variable
+        extra_paths = self.force_list(extra_paths)
+        search_path = os.environ["PATH"] + os.pathsep + os.pathsep.join(extra_paths)
+
+        # Locate it
+        locate = shutil.which(name, path = search_path)
+
+        # If it's not found then return False
+        if locate is None:
+            return False
+            
+        # Else return its path
+        return locate
+    
     # If data is string, "abc" -> ["abc"], if data is list, return data
     def force_list(self, data):
         if not isinstance(data, list):

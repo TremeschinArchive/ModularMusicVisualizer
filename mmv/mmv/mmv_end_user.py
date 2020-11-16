@@ -21,6 +21,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from mmv.mmv_generator import MMVParticleGenerator
 from mmv.pygradienter.pyg_main import PyGradienter
+from mmv.shaders.pyglslrender import PyGLSLRender
 from mmv.mmv_generator import MMVGenerator
 from mmv.common.cmn_midi import MidiFile
 from mmv.common.cmn_utils import Utils
@@ -68,7 +69,7 @@ class MMVEndUser:
         self.mmv_main.context.watch_processing_video_realtime = kwargs.get("watch_processing_video_realtime", False)
         self.mmv_main.context.pixel_format = kwargs.get("pixel_format", "auto")
         self.mmv_main.context.audio_amplitude_multiplier = kwargs.get("audio_amplitude_multiplier", 1)
-        self.mmv_main.context.skia_render_backend = kwargs["render_backend"]
+        self.mmv_main.context.skia_render_backend = kwargs.get("render_backend", "gpu")
         
         # Main module files directory (where __init__.py is)
         self.THIS_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -187,6 +188,10 @@ class MMVEndUser:
     # Get a pygradienter object with many workers for rendering
     def pygradienter(self, **kwargs):
         return PyGradienter(self.mmv_main, **kwargs)
+    
+    # Get a glsl shader render
+    def glslrender(self, **kwargs):
+        return PyGLSLRender(self.mmv_main, **kwargs)
 
     # # [ QOL ] # #
 
@@ -241,7 +246,7 @@ class MMVEndUser:
         else:
             print(debug_prefix, "You are using Linux, please make sure you have FFmpeg package installed on your distro")
 
-    # Make sure we have FFmpeg on Windows
+    # Attempt to download and configure a midi soundbank for not manually converting MIDI -> audio
     """
     kwargs: {
         "sf": str, "feepats"
