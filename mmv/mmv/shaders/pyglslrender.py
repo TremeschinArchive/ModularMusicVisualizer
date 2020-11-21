@@ -2,7 +2,9 @@
 ===============================================================================
 
 Purpose: Render fragment shaders using glslviewer to videos or images,
-python wrapper with extra stuff
+python wrapper with extra stuff.
+
+Currently needs patched glslviewer tremx binary for rendering videos
 
 ===============================================================================
 
@@ -25,13 +27,12 @@ import threading
 import ffmpeg
 import shutil
 import psutil
+import math
 import time
 import os
 
 
 class PyGLSLRender:
-    # Recommended max workers
-    RECOMMENDED_MAX_WORKERS = max(2, psutil.cpu_count(logical = False) // 2)
 
     """
     kwargs: {
@@ -130,6 +131,24 @@ class PyGLSLRender:
 
         self.running = False
         self.finished = False
+
+    # Recommended max workers for multiprocessing at a given resolution
+    def set_recommended_max_workers(self, resolution = (1280, 720)):
+
+        pixels_per_image = (resolution[0] * resolution[1])
+
+        half_cpu = (psutil.cpu_count(logical = False) // 2)
+
+        # pixels_per_image = (1280*720)*4 = recommended = half_cpu / 2
+        # pixels_per_image =  1280*720    = recommended = half_cpu
+        # pixels_per_image = (1280*720)/4 = recommended = half_cpu * 2
+
+        res_difference = 1 / (pixels_per_image / (1280*720))
+        recommended = half_cpu * res_difference
+
+        # Minimum 1 worker otherwise recommended rounded upwards
+        self.RECOMMENDED_MAX_WORKERS = max(1, math.ceil(recommended))
+        print(self.RECOMMENDED_MAX_WORKERS, res_difference, resolution)
 
     # Construct the command for calling with subprocess
     def __build_command(self):
