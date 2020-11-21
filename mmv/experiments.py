@@ -51,11 +51,14 @@ class Experiments:
         elif experiment == "glsl":
             workers = []
 
+            width = 1280//2
+            height = 720//2
+
             for i in range(20):
                 render = PyGLSLRender(
                     mmv = self.processing.mmv_main,
-                    width = 1280,
-                    height = 720,
+                    width = width,
+                    height = height,
                     fragment_shader = self.THIS_FILE_DIR + "/mmv/shaders/fragment/cardioid-pulse.frag",
                     output = self.THIS_FILE_DIR + f"/out-{i}.mkv",
 
@@ -67,6 +70,7 @@ class Experiments:
                     video_end = 2 + i/5,
                     wait = i/100,
                 )
+                render.set_recommended_max_workers(resolution = (width, height))
                 workers.append(render)
 
             for index, worker in enumerate(workers):
@@ -75,7 +79,7 @@ class Experiments:
 
                 while True:
                     total_rendering = sum([int(worker.running) for worker in workers])
-                    if total_rendering < PyGLSLRender.RECOMMENDED_MAX_WORKERS:
+                    if total_rendering < worker.RECOMMENDED_MAX_WORKERS:
                         break
                     time.sleep(0.016)
             
