@@ -294,9 +294,10 @@ class MMVPianoRollTopDown:
         self.mmv.skia.canvas.drawRect(rect, note_border_paint)
 
 
-    # Build, draw the bar
+    # Build, draw the notes
     def build(self, effects):
 
+        # Clear the background
         self.mmv.skia.canvas.clear(skia.Color4f(*self.global_colors["background"], 1))
 
         # Draw the orientation markers 
@@ -305,16 +306,20 @@ class MMVPianoRollTopDown:
 
         # # Get "needed" variables
 
+        time_first_note = self.vectorial.midi.time_first_note
+
         # If user passed seconds offset then don't use automatic one from midi file
         if "seconds_offset" in self.config.keys():
             offset = self.config["seconds_offset"]
         else:
-            offset = self.vectorial.midi.time_first_note
+            offset = 0
+            # offset = time_first_note # .. if audio is trimmed?
 
         # Offsetted current time at the piano key top most part
-        current_time = self.mmv.context.current_time + offset
+        current_time = self.mmv.context.current_time - offset
 
-        # What keys we'll bother rendering?
+        # What keys we'll bother rendering? Check against the first note time offset
+        # That's because current_time should be the real midi key not the offsetted one
         accept_minimum_time = current_time - self.config["seconds_of_midi_content"]
         accept_maximum_time = current_time + self.config["seconds_of_midi_content"]
 
@@ -361,8 +366,8 @@ class MMVPianoRollTopDown:
                             velocity = 128,
 
                             # Vertical position (start / end)
-                            start = interval[0] - self.vectorial.midi.time_first_note,
-                            end = interval[1] - self.vectorial.midi.time_first_note,
+                            start = interval[0],
+                            end = interval[1],
 
                             # Channel for the color and note for the horizontal position
                             channel = channel,
