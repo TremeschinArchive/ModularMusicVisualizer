@@ -24,6 +24,7 @@ venvs
 
 # Assets, externals, release
 mmv_skia/assets/user_assets
+mmv_skia/assets/generated
 !mmv_skia/assets/free_assets/*
 mmv_skia/mmv/externals
 mmv_skia/release
