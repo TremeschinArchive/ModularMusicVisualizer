@@ -28,9 +28,11 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 mmv.mpv.input_output(
     input_video = f"{THIS_DIR}/data/source.mkv",
-    # output_video = "out.mkv"
+    # output_video = "out.mp4"
 )
 mmv.mpv.resolution(width = 1280, height = 720)
-mmv.mpv.add_shader(f"{mmv.DIR}/glsl/test_grayscale.glsl")
+# mmv.mpv.add_shader(f"{mmv.DIR}/glsl/test_grayscale.glsl")
 mmv.mpv.add_shader(f"{mmv.DIR}/glsl/test_bitcrush.glsl")
+mmv.mpv.add_shader(f"{mmv.DIR}/glsl/test_chromatic_aberration.glsl")
+mmv.mpv.add_shader(f"{mmv.DIR}/glsl/test_vignetting.glsl")
 mmv.mpv.run()

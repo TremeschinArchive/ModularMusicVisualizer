@@ -1,6 +1,5 @@
 //!HOOK SCALED
 //!BIND HOOKED
-//!DESC fit-multiple
 
 vec4 hook() {
     vec4 o = HOOKED_tex(HOOKED_pos);
