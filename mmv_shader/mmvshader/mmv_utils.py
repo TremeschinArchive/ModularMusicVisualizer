@@ -27,6 +27,44 @@ class MMVUtils:
     def __init__(self):
         self.os = self.get_os()
 
+    # Make directory / directories if it does not exist
+    def mkdir_dne(self, path):
+        path = self.get_abspath(path, silent = True)
+        if isinstance(path, list):
+            for p in path:
+                os.makedirs(p, exist_ok=True)
+        else:
+            os.makedirs(path, exist_ok=True)
+
+    # Deletes an directory, fail safe? Quits if
+    def rmdir(self, path):
+
+        debug_prefix = "[Utils.rmdir]"
+
+        # If the asked directory is even a path
+        if os.path.isdir(path):
+
+            print(debug_prefix, "Removing dir: [%s]" % path)
+
+            # Try removing with ignoring errors first..?
+            shutil.rmtree(path, ignore_errors=True)
+
+            # Not deleted?
+            if os.path.isdir(path):
+                print(debug_prefix, "Error removing directory with ignore_errors=True, trying again")
+
+                # Remove without ignoring errors?
+                shutil.rmtree(path, ignore_errors=False)
+
+                # Still exists? oops, better quit
+                if os.path.isdir(path):
+                    print(debug_prefix, "COULD NOT REMOVE DIRECTORY: [%s]" % path)
+                    sys.exit(-1)
+
+            print(debug_prefix, "Removed successfully")
+        else:
+            print(debug_prefix, "Directory doesn't exists, skipping... [%s]" % path)
+
     # Get operating system [linux, windows, macos]
     def get_os(self):
         return {

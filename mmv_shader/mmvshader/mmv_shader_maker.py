@@ -38,8 +38,8 @@ class MMVShaderMaker:
         return array.astype(np.uint8).tobytes().hex().upper()
 
     # Loads an image from path and converts to raw hexadecimal rgba pixels
-    def __image2hex_rgba(self, path):
-        return self.__np_array_to_uint8_hex(np.array(Image.open(path).convert("RGBA")))
+    def __image2hex_rgba8(self, image):
+        return self.__np_array_to_uint8_hex(np.array(image))
 
     # # External but non end user functions
 
@@ -49,7 +49,8 @@ class MMVShaderMaker:
         "image": Source image
     }
     """
-    def _generic_image_shader(self, output_path, **kwargs):
+    def generic_image_shader(self, output_path, **kwargs):
+        debug_prefix = "[MMVShaderMaker._generic_image_shader]"
 
         # Get data on the original shader
         with open(f"{self.mmv_main.DIR}/glsl/mmv_image_shader_template.glsl", "r") as f:
@@ -57,14 +58,20 @@ class MMVShaderMaker:
         
         # # Main routine enabling / configuring stuff
 
+        # Open the source image
+        image = Image.open(kwargs["image"]).convert("RGBA")
+        width, height = image.size
+
         # What to replace
         replaces = {
-            "<+IMAGEHEX+>": self.__image2hex_rgba(kwargs["image"])
+            "<+IMAGEHEX+>": self.__image2hex_rgba8(image),
+            "<+IMAGEWIDTH+>": width,
+            "<+IMAGEHEIGHT+>": height,
         }
 
         # Replace each key on that dictionary
         for key, value in replaces.items():
-            shader = shader.replace(key, value)
+            shader = shader.replace(key, str(value))
 
         # Write to output shader
         with open(output_path, "w") as f:
