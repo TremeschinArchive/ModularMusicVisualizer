@@ -26,6 +26,7 @@ mmv/example_basic
 # MMV Shader
 mmv_shader/data
 mmv_shader/mmvshader/fragment
+mmv_shader/mmvshader/pyglslrender.py
 
 # Yeah this is my identity, you should use yours here :)
 mmv/assets/tremx_assets
