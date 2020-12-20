@@ -20,10 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from PIL import Image
-import numpy as np
 import subprocess
-import base64
 import os
 
 
@@ -77,15 +74,6 @@ class MMVShaderMPV:
 
     # # Internal functions
 
-    # Converts an numpy array into a sequence of hexadecimal raw pixel values
-    # Used when defining TEXTURES on mpv shaders
-    def __np_array_to_uint8_hex(self, array):
-        return array.astype(np.uint8).tobytes().hex().upper()
-
-    # Loads an image from path and converts to raw hexadecimal rgba pixels
-    def __image2hex_rgba(self, path):
-        return self.__np_array_to_uint8_hex(np.array(Image.open(path).convert("RGBA")))
-
     # Generate the final command to run
     def __generate_command(self):
         debug_prefix = "[MMVShaderMPV.__generate_command]"
@@ -103,7 +91,7 @@ class MMVShaderMPV:
         if self.shaders:
 
             # Assert that every shader is a valid file on the disk
-            assert (not any([os.path.isfile(path) for path in self.shaders]))
+            assert (any([os.path.isfile(path) for path in self.shaders]))
 
             # For every shader add its flag
             self.__command += [f"--glsl-shader={shader}" for shader in self.shaders]
@@ -138,7 +126,8 @@ class MMVShaderMPV:
 
         # Get absolute path always
         input_video = self.mmv_main.utils.get_abspath(input_video)
-        output_video = self.mmv_main.utils.get_abspath(output_video)
+        if output_video is not None:
+            output_video = self.mmv_main.utils.get_abspath(output_video)
 
         # Warn info
         print(debug_prefix, f"> Set input video: [{input_video}]")
@@ -170,11 +159,3 @@ class MMVShaderMPV:
         if execute:
             subprocess.run(self.__command)
 
-    def generate_shader(self):
-        with open("warp-template.glsl", "r") as f:
-            shader = f.read()
-        
-        shader = shader.replace("<+IMAGEHEX+>", imghex)
-
-        with open("warp.glsl", "w") as f:
-            f.write(shader)
