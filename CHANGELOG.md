@@ -3,6 +3,7 @@
 - New default demo sample sound, WIP kawaii bass
 - Code doesn't run if not Python >= 3.9 (`skia-python` packages not available for 3.9)
 - Experimental GLSL shader rendering to image and video
+- Rename mmv to mmv_skia, add experimental mmv_shader files
 
 ## [2.3.4] :: Cleanup, textures, Windows QOL :: (2020-11-07)
 - Add basic GUI file on experiments.py
