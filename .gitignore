@@ -30,10 +30,12 @@ mmv_skia/mmv/externals
 mmv_skia/release
 
 # # MMV GLSL Shader
+
 mmv_shader/data
 mmv_shader/mmvshader/fragment
 mmv_shader/mmvshader/pyglslrender.py
 mmv_shader/mmvshader/glsl/experiment*
+mmv_shader/mmvshader/runtime
 
 # # Tremx logos Yeah this is my identity, you should use yours here :)
 mmv_skia/assets/tremx_assets

@@ -42,7 +42,7 @@ class MMVEndUser:
     def __init__(self, **kwargs) -> None:
         debug_prefix = "[MMVEndUser.__init__]"
 
-        # # FIXME: Currently can't run on Python 3.9, skia-python don't have packages for it
+        # # FIXME: Python 3.9, go home you're drunk
 
         # Max python version, show info, assert, pretty print
         maximum_python_version = (3, 9)
