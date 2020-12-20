@@ -21,7 +21,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from mmv.mmv_generator import MMVParticleGenerator
 from mmv.pygradienter.pyg_main import PyGradienter
-from mmv.shaders.pyglslrender import PyGLSLRender
 from mmv.mmv_generator import MMVGenerator
 from mmv.common.cmn_midi import MidiFile
 from mmv.common.cmn_utils import Utils
@@ -189,10 +188,6 @@ class MMVEndUser:
     def pygradienter(self, **kwargs):
         return PyGradienter(self.mmv_main, **kwargs)
     
-    # Get a glsl shader render
-    def glslrender(self, **kwargs):
-        return PyGLSLRender(self.mmv_main, **kwargs)
-
     # # [ QOL ] # #
 
     # Make sure we have FFmpeg on Windows
