@@ -23,7 +23,6 @@ from modules.end_user_utilities import Requirements, ArgParser
 from mmv.pyskt.pyskt_backend import SkiaNoWindowBackend
 from mmv.experiments.sample_sorter import SampleSorter
 from mmv.pygradienter.pyg_main import PyGradienter
-from mmv.shaders.pyglslrender import PyGLSLRender
 from modules.make_release import MakeRelease
 from mmv.mmv_end_user import MMVEndUser
 import time
@@ -48,45 +47,45 @@ class Experiments:
                 path = "/some/path",
             )
         
-        elif experiment == "glsl":
-            workers = []
-
-            width = 1280//2
-            height = 720//2
-
-            for i in range(20):
-                render = PyGLSLRender(
-                    mmv = self.processing.mmv_main,
-                    width = width,
-                    height = height,
-                    fragment_shader = self.THIS_FILE_DIR + "/mmv/shaders/fragment/cardioid-pulse.frag",
-                    output = self.THIS_FILE_DIR + f"/out-{i}.mkv",
-
-                    extra_paths_find_glslviewer = [self.processing.mmv_main.context.externals, self.THIS_FILE_DIR],
-
-                    mode = "video",
-                    video_fps = 60,
-                    video_start = 0,
-                    video_end = 2 + i/5,
-                    wait = i/100,
-                )
-                render.set_recommended_max_workers(resolution = (width, height))
-                workers.append(render)
-
-            for index, worker in enumerate(workers):
-                print(f"Start worker index=[{index}]")
-                worker.render(async_render = True)
-
-                while True:
-                    total_rendering = sum([int(worker.running) for worker in workers])
-                    if total_rendering < worker.RECOMMENDED_MAX_WORKERS:
-                        break
-                    time.sleep(0.016)
-            
-            for index, worker in enumerate(workers):
-                print(f"Waiting for worker index=[{index}]")
-                worker.join()
-                print(f"Worker index=[{index}] done!!")
+        # elif experiment == "glsl":
+        #     workers = []
+        #
+        #     width = 1280//2
+        #     height = 720//2
+        #
+        #     for i in range(20):
+        #         render = PyGLSLRender(
+        #             mmv = self.processing.mmv_main,
+        #             width = width,
+        #             height = height,
+        #             fragment_shader = self.THIS_FILE_DIR + "/mmv/shaders/fragment/cardioid-pulse.frag",
+        #             output = self.THIS_FILE_DIR + f"/out-{i}.mkv",
+        #
+        #             extra_paths_find_glslviewer = [self.processing.mmv_main.context.externals, self.THIS_FILE_DIR],
+        #
+        #             mode = "video",
+        #             video_fps = 60,
+        #             video_start = 0,
+        #             video_end = 2 + i/5,
+        #             wait = i/100,
+        #         )
+        #         render.set_recommended_max_workers(resolution = (width, height))
+        #         workers.append(render)
+        #
+        #     for index, worker in enumerate(workers):
+        #         print(f"Start worker index=[{index}]")
+        #         worker.render(async_render = True)
+        #
+        #         while True:
+        #             total_rendering = sum([int(worker.running) for worker in workers])
+        #             if total_rendering < worker.RECOMMENDED_MAX_WORKERS:
+        #                 break
+        #             time.sleep(0.016)
+        #    
+        #     for index, worker in enumerate(workers):
+        #         print(f"Waiting for worker index=[{index}]")
+        #         worker.join()
+        #         print(f"Worker index=[{index}] done!!")
 
         elif experiment == "pygradienter":
 

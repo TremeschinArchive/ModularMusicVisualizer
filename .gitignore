@@ -1,6 +1,4 @@
 # Tremx
-mmv/wavefun
-mmv/a.py
 mmv/processing
 mmv/midis
 mmv/trivia*
@@ -24,6 +22,10 @@ mmv/mmv/wineprefix
 mmv/mmv/externals
 mmv/release
 mmv/example_basic
+
+# MMV Shader
+mmv_shader/data
+mmv_shader/mmvshader/fragment
 
 # Yeah this is my identity, you should use yours here :)
 mmv/assets/tremx_assets
