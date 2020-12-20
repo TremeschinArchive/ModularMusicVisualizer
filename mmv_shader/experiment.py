@@ -34,16 +34,16 @@ mmv.mpv.resolution(width = 1280, height = 720)
 # mmv.mpv.add_shader(f"{mmv.DIR}/glsl/test_grayscale.glsl")
 mmv.mpv.add_shader(f"{mmv.DIR}/glsl/test_bitcrush.glsl")
 mmv.mpv.add_shader(f"{mmv.DIR}/glsl/test_chromatic_aberration.glsl")
-mmv.mpv.add_shader(f"{mmv.DIR}/glsl/test_vignetting.glsl")
+# mmv.mpv.add_shader(f"{mmv.DIR}/glsl/test_vignetting.glsl")
 
 texture_shader_test_path = f"{mmv.context.directories.runtime}/test_texture.glsl"
 
-mmv.maker.generic_image_shader(
+mmv.shader_maker.generic_image_shader(
     output_path = texture_shader_test_path,
     image = f"{THIS_DIR}/../repo/mmv-project-logo.png"
 )
 
-mmv.mpv.add_shader(texture_shader_test_path)
+# mmv.mpv.add_shader(texture_shader_test_path)
 
 
 mmv.mpv.run()
