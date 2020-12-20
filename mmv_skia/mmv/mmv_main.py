@@ -61,7 +61,7 @@ f"""{"-"*self.terminal_width}
 {bias}| |  | | | |  | |   \\ V /  
 {bias}|_|  |_| |_|  |_|    \\_/   
 {bias}
-{bias}  Modular Music Visualizer                        
+{bias[:-8]}  Modular Music Visualizer Skia Edition                       
 {bias}{(21-len("Version")-len(self.version))*" "}Version {self.version}
 {"-"*self.terminal_width}
 """
