@@ -14,6 +14,15 @@ The code will check itself for a 64 bit installation and quit if not.
 
 <hr>
 
+### Python 3.9 is acting weird
+
+Please try using Python version 3.8 when running MMV, I'm having lots of troubles with 3.9 dependencies (namely `scikit-learn` plus numpy and llvmlite aka the three musketeers)
+
+So look for Python version 3.8 on your distro / MacOS homebrew, you'd probably want to use `python38` or `python3.8` binary instead of just `python` or `python3`.
+
+<hr>
+
+
 # Installing Python, FFmpeg and dependencies
 
 Also see [EXTRAS.md](../docs/EXTRAS.md) file for squeezing some extra performance.
