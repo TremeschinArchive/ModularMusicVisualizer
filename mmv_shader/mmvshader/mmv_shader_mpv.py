@@ -84,6 +84,7 @@ class MMVShaderMPV:
 
         # Add input source
         self.__command += [self.input_video]
+        print(debug_prefix, f"Added input video [{self.input_video}] to command")
 
         # # Append shaders flags for every shader we added
 
@@ -92,29 +93,43 @@ class MMVShaderMPV:
 
             # Assert that every shader is a valid file on the disk
             assert (any([os.path.isfile(path) for path in self.shaders]))
+            print(debug_prefix, "All shaders given are existing files on the disk")
 
-            # For every shader add its flag
-            self.__command += [f"--glsl-shader={shader}" for shader in self.shaders]
+            # # For every shader add its flag
+            
+            print(debug_prefix, "Adding all shaders to command:")            
+            
+            # Iterate over shaders
+            for shader in self.shaders:
+
+                # Generate the flag and append it
+                flag = f"--glsl-shader={shader}"
+                self.__command.append(flag)
+
+                # Pretty print
+                print(debug_prefix, f"> [{flag}]")            
 
         # Render on the GPU with the specified width and height
-        self.__command.append(f'--vf=gpu=w={self.width}:h={self.height}') 
+        self.__command.append(f'--vf=gpu=w={self.width}:h={self.height}')
 
         # If we have some output video, render to it, otherwise display realtime (no -o flag)
         if self.output_video is not None:
+            print(debug_prefix, f"Output video is not None, render to file [{self.output_video}]")       
+
+            # Add flag asking mpv to render to a file
             self.__command += ["-o", self.output_video]
         
+        # Print full command and we're done, just need to execute it
         print(debug_prefix, "Full command is", self.__command)
 
     # # Interface, end user functions
 
     # Adds a new shader as processing layer to the final video
     def add_shader(self, shader_path):
-        debug_prefix = "[MMVShaderMPV.__init__]"
+        debug_prefix = "[MMVShaderMPV.add_shader]"
 
         # Get absolute path always
         shader_path = self.mmv_main.utils.get_abspath(shader_path)
-
-        # Warn info
         print(debug_prefix, f"> Add shader with path: [{shader_path}]")
 
         # Assign values
@@ -156,6 +171,8 @@ class MMVShaderMPV:
         # Generate command
         self.__generate_command()
 
+        # If we just wanna see the final command, don't execute
         if execute:
+            print(debug_prefix, "Starting mpv subprocess with self.__command list, here be dragons..\n")
             subprocess.run(self.__command)
 

@@ -20,8 +20,11 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmvshader.mmv_shader_maker import MMVShaderMaker
 from mmvshader.mmv_shader_mpv import MMVShaderMPV
+from mmvshader.mmv_shader_context import Context
 from mmvshader.mmv_utils import MMVUtils
+import sys
 import os
 
 
@@ -31,13 +34,25 @@ class MMVShaderMain:
         print(debug_prefix, "Hello World!!")
         
         # Where this file is located, please refer using this on the whole package
-        self.DIR = os.path.dirname(os.path.abspath(__file__))
+        if getattr(sys, 'frozen', True):    
+            self.DIR = os.path.dirname(os.path.abspath(__file__))
+            print(debug_prefix, "Running from source code")
+        else:
+            self.DIR = os.path.dirname(os.path.abspath(sys.executable))
+            print(debug_prefix, "Running from release (sys.executable..?)")
+
         print(debug_prefix, f"MMV Located at [{self.DIR}]")
 
         # # Create classes
 
-        print(debug_prefix, f"Creating MMVUtils")
+        print(debug_prefix, "Creating MMVUtils")
         self.utils = MMVUtils()
 
-        print(debug_prefix, f"Creating MMVShaderMPV")
+        print(debug_prefix, "Creating Context")
+        self.context = Context(self)
+
+        print(debug_prefix, "Creating MMVShaderMPV")
         self.mpv = MMVShaderMPV(self)
+
+        print(debug_prefix, "Creating MMVShaderMaker")
+        self.maker = MMVShaderMaker(self)
