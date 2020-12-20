@@ -24,14 +24,75 @@ from mmvshader.mmv_shader_maker import MMVShaderMaker
 from mmvshader.mmv_shader_mpv import MMVShaderMPV
 from mmvshader.mmv_shader_context import Context
 from mmvshader.mmv_utils import MMVUtils
+import shutil
+import math
 import sys
 import os
+
+
+class Miscellaneous:
+    def __init__(self) -> None:
+        self.version = "0.0.0-R&D"
+
+    def greeter_message(self) -> None:
+
+        self.terminal_width = shutil.get_terminal_size()[0]
+
+        bias = " "*(math.floor(self.terminal_width/2) - 14)
+
+        message = \
+f"""{"-"*self.terminal_width}
+{bias} __  __   __  __  __     __
+{bias}|  \\/  | |  \\/  | \\ \\   / /
+{bias}| |\\/| | | |\\/| |  \\ \\ / / 
+{bias}| |  | | | |  | |   \\ V /  
+{bias}|_|  |_| |_|  |_|    \\_/   
+{bias}
+{bias[:-8]}Modular Music Visualizer GLSL Edition ltd.                       
+{bias}{(21-len("Version")-len(self.version))*" "}Version {self.version}
+{"-"*self.terminal_width}
+"""
+        print(message)
+
+    def thanks_message(self):
+        # # Print thanks message :)
+
+        message = \
+f"""
+ [+-------------------------------------------------------------------------------------------+]
+  |                                                                                           |
+  |              :: Thanks for using the Modular Music Visualizer project !! ::               |
+  |              ==============================================================               |
+  |                                                                                           |
+  |  Here's a few official links for MMV:                                                     |
+  |                                                                                           |
+  |    - Telegram group:          [          https://t.me/modular_music_visualizer         ]  |
+  |    - GitHub Repository:       [ https://github.com/Tremeschin/modular-music-visualizer ]  |
+  |    - GitLab Repository:       [ https://gitlab.com/Tremeschin/modular-music-visualizer ]  |
+  |                                                                                           |
+  |  > Always check for the copyright info on the material you are using (audios, images)     |
+  |  before distributing the content generated with MMV, I take absolutely no responsibility  |
+  |  for any UGC (user generated content) violations. See LICENSE file as well.               |
+  |                                                                                           |
+  |  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  |
+  |                                                                                           |
+  |             Don't forget sharing your releases made with MMV on the discussion groups :)  |
+  |                 Feel free asking for help or giving new ideas for the project as well !!  |
+  |                                                                                           |
+ [+-------------------------------------------------------------------------------------------+]
+"""
+        print(message)
+
 
 
 class MMVShaderMain:
     def __init__(self):
         debug_prefix = "[MMVShaderMain.__init__]"
         print(debug_prefix, "Hello World!!")
+
+        # Greeter message
+        misc = Miscellaneous()
+        misc.greeter_message()
         
         # Where this file is located, please refer using this on the whole package
         if getattr(sys, 'frozen', True):    
@@ -55,4 +116,4 @@ class MMVShaderMain:
         self.mpv = MMVShaderMPV(self)
 
         print(debug_prefix, "Creating MMVShaderMaker")
-        self.maker = MMVShaderMaker(self)
+        self.shader_maker = MMVShaderMaker(self)
