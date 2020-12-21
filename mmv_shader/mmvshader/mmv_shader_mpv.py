@@ -21,6 +21,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import subprocess
+import shutil
 import os
 
 
@@ -72,6 +73,10 @@ class MMVShaderMPV:
         # Start with the mpv binary
         self.__command = [mpv_binary_path]
 
+        # Blank x264 settings
+        self.x264_flags = []
+        self.x264_settings()
+
     # # Internal functions
 
     # Generate the final command to run
@@ -109,16 +114,39 @@ class MMVShaderMPV:
                 # Pretty print
                 print(debug_prefix, f"> [{flag}]")            
 
-        # Render on the GPU with the specified width and height
-        self.__command.append(f'--vf=gpu=w={self.width}:h={self.height}')
-
         # If we have some output video, render to it, otherwise display realtime (no -o flag)
         if self.output_video is not None:
             print(debug_prefix, f"Output video is not None, render to file [{self.output_video}]")       
 
+            # https://github.com/mpv-player/mpv/issues/7193#issuecomment-559898238
+            if self.mmv_main.os == "windows":
+                spacer = "-" * shutil.get_terminal_size()[0]
+                raise RuntimeError((
+                    f"\n\n{spacer}\n"
+                    "\n  # # [ ERROR ] # #\n\n"
+                    "Current implementation for rendering shaders to videos is simply not possible on Windows due mpv limitations..\n"
+                    "See comment https://github.com/mpv-player/mpv/issues/7193#issuecomment-559898238\n\n"
+                    "You can however visualize the final output and perhaps record the screen but quality will be bad.\n"
+                    "You can consider:\n"
+                    " - Installing an Linux distro on spare HDD and running MMV there.\n"
+                    " - Help fixing this (recommending other ways to render the shaders).\n"
+                    " - Wait until it's doable rendering to video on Windows OS.\n"
+                    f"\n{spacer}\n"
+                    "I really wanted it to work there properly but this --vf=gpu flag is experimental anyways, I should be expecting those\n"
+                ))
+
+            # Render on the GPU with the specified width and height
+            self.__command.append(f'--vf=gpu=w={self.width}:h={self.height}')
+
             # Add flag asking mpv to render to a file
             self.__command += ["-o", self.output_video]
         
+        # Add x264 flags
+        print(debug_prefix, "Appending libx264 encoding flags:")            
+        for flag in self.x264_flags:
+            self.__command.append(flag)
+            print(debug_prefix, f"> [{flag}]")            
+
         # Print full command and we're done, just need to execute it
         print(debug_prefix, "Full command is", self.__command)
 
@@ -134,6 +162,13 @@ class MMVShaderMPV:
 
         # Assign values
         self.shaders.append(shader_path)
+
+    # Configure x264 encoding flags like crf, preset, audio codec and bitrate
+    def x264_settings(self, audio_codec = "libopus", audio_bitrate = 300000, crf = 18, preset = "fastest"):
+        self.x264_flags = [
+            f"--oac={audio_codec}", f"--oacopts=b={audio_bitrate}",
+            "--ovc=libx264", f"--ovcopts=preset={preset}", f"--ovcopts=crf={crf}"
+        ]
 
     # Configure input and output, if output is None that means don't render, only display real time
     def input_output(self, input_video, output_video = None):

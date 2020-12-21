@@ -23,11 +23,54 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from mmvshader.mmv_shader_maker import MMVShaderMaker
 from mmvshader.mmv_shader_mpv import MMVShaderMPV
 from mmvshader.mmv_shader_context import Context
-from mmvshader.mmv_utils import MMVUtils
+from mmvshader.mmv_shader_utils import MMVUtils
 import shutil
 import math
 import sys
 import os
+
+
+class MMVShaderMain:
+    def __init__(self):
+        debug_prefix = "[MMVShaderMain.__init__]"
+        print(debug_prefix, "Hello World!!")
+
+        # Greeter message
+        misc = Miscellaneous()
+        misc.greeter_message()
+        
+        # Where this file is located, please refer using this on the whole package
+        if getattr(sys, 'frozen', True):    
+            self.DIR = os.path.dirname(os.path.abspath(__file__))
+            print(debug_prefix, "Running from source code")
+        else:
+            self.DIR = os.path.dirname(os.path.abspath(sys.executable))
+            print(debug_prefix, "Running from release (sys.executable..?)")
+
+        print(debug_prefix, f"MMV Located at [{self.DIR}]")
+
+        # # Os we're operating
+
+        self.os = {
+            "posix": "linux",
+            "nt": "windows",
+            "darwin": "macos"
+        }.get(os.name)
+
+        # # Create classes
+
+        print(debug_prefix, "Creating MMVUtils")
+        self.utils = MMVUtils()
+
+        print(debug_prefix, "Creating Context")
+        self.context = Context(self)
+
+        print(debug_prefix, "Creating MMVShaderMPV")
+        self.mpv = MMVShaderMPV(self)
+
+        print(debug_prefix, "Creating MMVShaderMaker")
+        self.shader_maker = MMVShaderMaker(self)
+
 
 
 class Miscellaneous:
@@ -82,38 +125,3 @@ f"""
  [+-------------------------------------------------------------------------------------------+]
 """
         print(message)
-
-
-
-class MMVShaderMain:
-    def __init__(self):
-        debug_prefix = "[MMVShaderMain.__init__]"
-        print(debug_prefix, "Hello World!!")
-
-        # Greeter message
-        misc = Miscellaneous()
-        misc.greeter_message()
-        
-        # Where this file is located, please refer using this on the whole package
-        if getattr(sys, 'frozen', True):    
-            self.DIR = os.path.dirname(os.path.abspath(__file__))
-            print(debug_prefix, "Running from source code")
-        else:
-            self.DIR = os.path.dirname(os.path.abspath(sys.executable))
-            print(debug_prefix, "Running from release (sys.executable..?)")
-
-        print(debug_prefix, f"MMV Located at [{self.DIR}]")
-
-        # # Create classes
-
-        print(debug_prefix, "Creating MMVUtils")
-        self.utils = MMVUtils()
-
-        print(debug_prefix, "Creating Context")
-        self.context = Context(self)
-
-        print(debug_prefix, "Creating MMVShaderMPV")
-        self.mpv = MMVShaderMPV(self)
-
-        print(debug_prefix, "Creating MMVShaderMaker")
-        self.shader_maker = MMVShaderMaker(self)

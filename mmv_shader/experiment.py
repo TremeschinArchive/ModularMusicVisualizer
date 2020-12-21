@@ -27,14 +27,17 @@ mmv = mmvshader.MMVShaderMain()
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 mmv.mpv.input_output(
-    input_video = f"{THIS_DIR}/data/source.mkv",
+    input_video = f"{THIS_DIR}/data/king.mkv",
     # output_video = "out.mp4"
 )
 mmv.mpv.resolution(width = 1280, height = 720)
 # mmv.mpv.add_shader(f"{mmv.DIR}/glsl/test_grayscale.glsl")
-mmv.mpv.add_shader(f"{mmv.DIR}/glsl/test_bitcrush.glsl")
+# mmv.mpv.add_shader(f"{mmv.DIR}/glsl/test_bitcrush.glsl")
 mmv.mpv.add_shader(f"{mmv.DIR}/glsl/test_chromatic_aberration.glsl")
 # mmv.mpv.add_shader(f"{mmv.DIR}/glsl/test_vignetting.glsl")
+mmv.mpv.add_shader(f"{mmv.DIR}/glsl/test_edge_saturation_low.glsl")
+# mmv.mpv.add_shader(f"{mmv.DIR}/glsl/test_sphere.glsl")
+
 
 texture_shader_test_path = f"{mmv.context.directories.runtime}/test_texture.glsl"
 
