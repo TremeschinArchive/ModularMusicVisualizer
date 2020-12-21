@@ -65,14 +65,6 @@ class MMVUtils:
         else:
             print(debug_prefix, "Directory doesn't exists, skipping... [%s]" % path)
 
-    # Get operating system [linux, windows, macos]
-    def get_os(self):
-        return {
-            "posix": "linux",
-            "nt": "windows",
-            "darwin": "macos"
-        }.get(os.name)
-
     # Get a executable from path, returns False if it doesn't exist
     def get_executable_with_name(self, name, extra_paths = []):
 
