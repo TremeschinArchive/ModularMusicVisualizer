@@ -235,16 +235,29 @@ class Utils:
         # shell with a different working directory executing our Python scripts
         abspath = os.path.abspath(path)
 
+        # Did the path changed at all?
+        if (abspath != path) and (not silent):
+            logging.debug(f"{depth}{debug_prefix} Original path changed!! It probably was a relative reference [{path}] -> [{abspath}]")
+
         if not silent:
             print(debug_prefix, f"abspath of [{path}] > [{abspath}]")
 
         return self.get_realpath(abspath)
     
-    # Some files can be symlinks on unix or shortcuts on Windows, get the true real path
-    def get_realpath(self, path):
+    # Some files can be symlinks on *nix or shortcuts on Windows, get the true real path
+    def get_realpath(self, path, depth = NO_DEPTH, silent = False):
+        debug_prefix = "[Utils.get_realpath]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Log action
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Get realpath of path [{path}]")
+
+        # Actually get the realpath
         realpath = os.path.realpath(path)
 
-        if not realpath == path:
+        # Did the path changed at all?
+        if (not realpath == path) and (not silent):
             print(f"[Utils.get_realpath] Realpath of [{path}] > [{realpath}")
             
         return realpath

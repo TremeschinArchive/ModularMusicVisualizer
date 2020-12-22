@@ -69,7 +69,7 @@ f"""{"-"*self.terminal_width}
 
         # Versioning, greeter message
         self.terminal_width = shutil.get_terminal_size()[0]
-        self.version = "2.4-dev"
+        self.version = "2.4-dev-not-working"
         self.greeter_message()
 
         # # Get this file's path
@@ -114,19 +114,30 @@ f"""{"-"*self.terminal_width}
         print("\n" + "-" * self.terminal_width)
         bias = " " * ((self.terminal_width//2) - 13); print(f"{bias}# # [ Start Logging ] # #")
         print("-" * self.terminal_width + "\n")
-
+     
+        # Log precise Python version
+        sysversion = sys.version.replace("\n", " ").replace("  ", " ")
+        logging.info(f"{depth}{debug_prefix} Running on Python: [{sysversion}]")
+        
         # # FIXME: Python 3.9, go home you're drunk
 
         # Max python version, show info, assert, pretty print
         maximum_working_python_version = (3, 8)
-        
+        pversion = sys.version_info
+
         # Log and check
         logging.info(f"{depth}{debug_prefix} Checking if Python <= {maximum_working_python_version} for a working version.. ")
+
+        # Huh we're on Python 2..?
+        if pversion[0] == 2:
+            logging.error(f"{depth}{debug_prefix} Please upgrade to at least Python 3")
+            sys.exit(-1)
         
-        if sys.version_info <= maximum_working_python_version:
-            logging.info(f"{depth}{debug_prefix} Ok")
+        # Python is ok
+        if (pversion[0] <= maximum_working_python_version[0]) and (pversion[1] <= maximum_working_python_version[1]):
+            logging.info(f"{depth}{debug_prefix} Ok, good python version")
         else:
-            logging.info(f"{depth}{debug_prefix} No")
+            # Warn Python 3.9 is a bit unstable, even the developer had issues making it work
             logging.warn(f"{depth}{debug_prefix} Python 3.9 is acting a bit weird regarding some dependencies on some systems, while it should be possible to run, take it with some grain of salt and report back into the discussions troubles or workarounds you found?")
 
         # # The operating system we're on, one of "linux", "windows", "macos"
@@ -138,14 +149,14 @@ f"""{"-"*self.terminal_width}
             "darwin": "macos"
         }.get(os.name)
 
-        # Log which OS we're runnig
-        logging.info(f"{depth}{debug_prefix} Running All in One Video Enhancer on OS: [{self.os}]")
+        # Log which OS we're running
+        logging.info(f"{depth}{debug_prefix} Running Modular Music Visualizer Enhancer on OS: [{self.os}]")
 
         # # # Create MMV classes and stuff
 
         # Main class of MMV and tart MMV classes that main connects them, do not run
         self.mmv_main = MMVMain(self)
-        self.mmv_main.setup()
+        self.mmv_main.setup(depth = ndepth)
 
         # Utilities
         self.utils = Utils()
@@ -293,7 +304,7 @@ f"""{"-"*self.terminal_width}
         return self.utils.random_file_from_dir(self.utils.get_abspath(path, depth = ndepth), depth = ndepth)
 
     # Make the directory if it doesn't exist
-    def make_directory_if_doesnt_exist(self, path: str, depth = NO_DEPTH) -> None:
+    def make_directory_if_doesnt_exist(self, path: str, depth = NO_DEPTH, silent = True) -> None:
         debug_prefix = "[MMVInterface.make_directory_if_doesnt_exist]"
         ndepth = depth + NEXT_DEPTH
 
@@ -301,11 +312,11 @@ f"""{"-"*self.terminal_width}
         logging.info(f"{depth}{debug_prefix} Make directory if doesn't exist [{path}], get absolute realpath and mkdir_dne")
 
         # Get absolute and realpath, make directory if doens't exist (do the action)
-        path = self.utils.get_abspath(path, depth = ndepth)
+        path = self.utils.get_abspath(path, depth = ndepth, silent = silent)
         self.utils.mkdir_dne(path, depth = ndepth)
     
     # Make the directory if it doesn't exist
-    def delete_directory(self, path: str, depth = NO_DEPTH) -> None:
+    def delete_directory(self, path: str, depth = NO_DEPTH, silent = False) -> None:
         debug_prefix = "[MMVInterface.delete_directory]"
         ndepth = depth + NEXT_DEPTH
 
@@ -313,7 +324,7 @@ f"""{"-"*self.terminal_width}
         logging.info(f"{depth}{debug_prefix} Delete directory [{path}], get absolute realpath and rmdir")
 
         # Get absolute and realpath, delete directory (do the action)
-        path = self.utils.get_abspath(path, depth = ndepth)
+        path = self.utils.get_abspath(path, depth = ndepth, silent = silent)
         self.utils.rmdir(path, depth = ndepth)
 
     # Get the absolute path to a file or directory, absolute starts with / on *nix and LETTER:// on Windows
