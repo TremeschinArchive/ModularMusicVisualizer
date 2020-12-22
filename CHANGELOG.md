@@ -1,3 +1,8 @@
+## [2.4.0] :: Boring :: (2020-12-22)
+- Start to replace every print() function with proper logging.....
+- Also commenting stuff
+- Pass argument depth for every function so we have the call stack on the logging as well
+
 ## [2.3.5] :: Headache :: (2020-11-07)
 - Add option for automatically converting `MIDI -> Audio`, downloads FreePats General MIDI sound set, check their license at http://freepats.zenvoid.org/licenses.html before using.
 - New default demo sample sound, WIP kawaii bass
