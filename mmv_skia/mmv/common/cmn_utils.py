@@ -19,6 +19,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.common.cmn_constants import NEXT_DEPTH, NO_DEPTH
 import subprocess
 import hashlib
 import random
@@ -117,8 +118,7 @@ class Utils:
         return os.path.basename(path)
     
     # Return an absolute path always
-    def get_abspath(self, path, silent = False):
-        
+    def get_abspath(self, path, depth = NO_DEPTH, silent = False):
         debug_prefix = "[Utils.get_abspath]"
 
         if self.os == "linux":

@@ -39,7 +39,7 @@ if args.auto_deps:
 # # # MMV
 
 # Import MMV module
-from mmv.mmv_end_user import MMVEndUser
+import mmv
 
 # Import a "canvas" class for generating background image video textures
 from mmv.pyskt.pyskt_backend import SkiaNoWindowBackend
@@ -55,7 +55,7 @@ import os
 THIS_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Create the wrapper class
-processing = MMVEndUser(
+processing = mmv.MMVInterface(
     # AFAIK skia-python on Linux and MacOS uses RGBA and on Windows BGRA pixel format.
     # "auto" does that, or manually put "rgba" or "bgra". If set wrongly the video
     # colors RED and BLUE will be swapped.

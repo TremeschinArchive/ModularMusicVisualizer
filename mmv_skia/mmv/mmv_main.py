@@ -36,72 +36,15 @@ from mmv.mmv_core import Core
 from PIL import Image
 import numpy as np
 import argparse
-import shutil
 import math
 import time
 import sys
 import os
 
 
-class Miscellaneous:
-    def __init__(self) -> None:
-        self.version = "2.3.5-dev"
-
-    def greeter_message(self) -> None:
-
-        self.terminal_width = shutil.get_terminal_size()[0]
-
-        bias = " "*(math.floor(self.terminal_width/2) - 14)
-
-        message = \
-f"""{"-"*self.terminal_width}
-{bias} __  __   __  __  __     __
-{bias}|  \\/  | |  \\/  | \\ \\   / /
-{bias}| |\\/| | | |\\/| |  \\ \\ / / 
-{bias}| |  | | | |  | |   \\ V /  
-{bias}|_|  |_| |_|  |_|    \\_/   
-{bias}
-{bias[:-8]}  Modular Music Visualizer Skia Edition                       
-{bias}{(21-len("Version")-len(self.version))*" "}Version {self.version}
-{"-"*self.terminal_width}
-"""
-        print(message)
-
-    def thanks_message(self):
-        # # Print thanks message :)
-
-        message = \
-f"""
- [+-------------------------------------------------------------------------------------------+]
-  |                                                                                           |
-  |              :: Thanks for using the Modular Music Visualizer project !! ::               |
-  |              ==============================================================               |
-  |                                                                                           |
-  |  Here's a few official links for MMV:                                                     |
-  |                                                                                           |
-  |    - Telegram group:          [          https://t.me/modular_music_visualizer         ]  |
-  |    - GitHub Repository:       [ https://github.com/Tremeschin/modular-music-visualizer ]  |
-  |    - GitLab Repository:       [ https://gitlab.com/Tremeschin/modular-music-visualizer ]  |
-  |                                                                                           |
-  |  > Always check for the copyright info on the material you are using (audios, images)     |
-  |  before distributing the content generated with MMV, I take absolutely no responsibility  |
-  |  for any UGC (user generated content) violations. See LICENSE file as well.               |
-  |                                                                                           |
-  |  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  |
-  |                                                                                           |
-  |             Don't forget sharing your releases made with MMV on the discussion groups :)  |
-  |                 Feel free asking for help or giving new ideas for the project as well !!  |
-  |                                                                                           |
- [+-------------------------------------------------------------------------------------------+]
-"""
-        print(message)
-
-
-
 class MMVMain:
-    def __init__(self) -> None:
-        self.misc = Miscellaneous()
-        self.misc.greeter_message()
+    def __init__(self, interface):
+        self.interface = interface
 
     # Creates classes and send to Core
     def setup(self) -> None:
@@ -178,7 +121,7 @@ class MMVMain:
             sys.exit(-1)
         
         # Say thanks message
-        self.misc.thanks_message()
+        self.thanks_message()
 
         # Wait for FFmpeg pipe to stop
         while not self.ffmpeg.stop_piping:
@@ -187,3 +130,32 @@ class MMVMain:
         print(debug_prefix, "Quitting Python")
         sys.exit(0)
         
+
+    def thanks_message(self):
+        # # Print thanks message :)
+
+        message = \
+f"""
+ [+-------------------------------------------------------------------------------------------+]
+  |                                                                                           |
+  |              :: Thanks for using the Modular Music Visualizer project !! ::               |
+  |              ==============================================================               |
+  |                                                                                           |
+  |  Here's a few official links for MMV:                                                     |
+  |                                                                                           |
+  |    - Telegram group:          [          https://t.me/modular_music_visualizer         ]  |
+  |    - GitHub Repository:       [ https://github.com/Tremeschin/modular-music-visualizer ]  |
+  |    - GitLab Repository:       [ https://gitlab.com/Tremeschin/modular-music-visualizer ]  |
+  |                                                                                           |
+  |  > Always check for the copyright info on the material you are using (audios, images)     |
+  |  before distributing the content generated with MMV, I take absolutely no responsibility  |
+  |  for any UGC (user generated content) violations. See LICENSE file as well.               |
+  |                                                                                           |
+  |  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  |
+  |                                                                                           |
+  |             Don't forget sharing your releases made with MMV on the discussion groups :)  |
+  |                 Feel free asking for help or giving new ideas for the project as well !!  |
+  |                                                                                           |
+ [+-------------------------------------------------------------------------------------------+]
+"""
+        print(message)
