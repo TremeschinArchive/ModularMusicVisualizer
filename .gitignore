@@ -37,6 +37,9 @@ mmv_shader/mmvshader/pyglslrender.py
 mmv_shader/mmvshader/glsl/experiment*
 mmv_shader/mmvshader/runtime
 
+mmv_shader/mmvshader/glsl/test_sphere.glsl
+mmv_shader/mmvshader/glsl/tideas
+
 # # Tremx logos Yeah this is my identity, you should use yours here :)
 mmv_skia/assets/tremx_assets
 tremx*
