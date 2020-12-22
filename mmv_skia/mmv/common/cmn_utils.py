@@ -1,7 +1,8 @@
 """
 ===============================================================================
 
-Purpose: Set of utilities to refactor other files
+Purpose: Set of utilities for micro managing stuff, also every function is
+coded to be as safe as possible and assert common error edge cases
 
 ===============================================================================
 
@@ -22,6 +23,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from mmv.common.cmn_constants import NEXT_DEPTH, NO_DEPTH
 import subprocess
 import hashlib
+import logging
 import random
 import shutil
 import glob
@@ -34,57 +36,129 @@ import os
 
 class Utils:
     def __init__(self):
-        self.ROOT = self.get_root()
         self.os = self.get_os()
 
     # Make directory / directories if it does not exist
-    def mkdir_dne(self, path):
-        path = self.get_abspath(path, silent = True)
-        if isinstance(path, list):
-            for p in path:
-                os.makedirs(p, exist_ok=True)
-        else:
-            os.makedirs(path, exist_ok=True)
+    # Returns:
+    # - True: existed before
+    # - False: didn't existed before
+    def mkdir_dne(self, path, depth = NO_DEPTH, silent = False) -> bool:
+        debug_prefix = "[Utils.mkdir_dne]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Log action
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Make directory if doesn't exist on path: [{path}], getting absolute and realpath first")
+
+        # Get the absolute and realpath of it
+        path = self.get_abspath(path = path, depth = ndepth, silent = silent)
+
+        # Log the absolute and realpath we got
+        if not silent:
+            logging.debug(f"{depth}{debug_prefix} Got absolute and realpath: [{path}]")
+
+        # If path already exists, checks if it is in fact a directory otherwise something is wrong
+        if os.path.exists(path):
+            if not silent:
+                logging.debug(f"{depth}{debug_prefix} Path already existed, checking if it's a file for error assertion..")
+            
+            # If path is a directory then something is wrong
+            if os.path.isfile(path):
+                logging.error(f"{depth}{debug_prefix} Path already existed and is a file, this function creates directories so for safety we'll quit as this is technically not intended behavior (mkdir on a file location, that means we probably misspelled something and created a file where we should in fact have a directory)")
+                sys.exit(-1)
+            
+            # Return True - target already existed
+            return True
+            
+        # Make the directory
+        os.makedirs(path)
+
+        # Check we created the path
+        if not os.path.isdir(path):
+            logging.error(f"{depth}{debug_prefix} Target path didn't exist and Python's os.makedirs() function couldn't create the directory (should be some sort of permission errors on Windows os? If we're here then only other option is the path naming is just wrong but os.makedirs would error out on its own")
+            sys.exit(-1)
+
+        # Return False - target didn't existed
+        return False
     
-    # Make file it does not exist, return True if it existed before
-    def mkfile_dne(self, path):
-        path = self.get_abspath(path, silent = True)
-        if not os.path.isfile(path):
+    # Make file it does not exist
+    # Returns:
+    # - True: existed before
+    # - False: didn't existed before
+    def mkfile_dne(self, path, depth = NO_DEPTH, silent = False) -> bool:
+        debug_prefix = "[Utils.mkfile_dne]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Log action
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Make empty if doesn't exist on path: [{path}], getting absolute and realpath first")
+
+        # Get the absolute and realpath of it
+        path = self.get_abspath(path = path, depth = ndepth, silent = silent)
+
+        # Log the absolute and realpath we got
+        if not silent:
+            logging.debug(f"{depth}{debug_prefix} Got absolute and realpath: [{path}]")
+
+        # If path already exists, checks if it is in fact a directory otherwise something is wrong
+        if os.path.exists(path):
+            if not silent:
+                logging.debug(f"{depth}{debug_prefix} Path already existed, checking if it's a directory for error assertion..")
+
+            # If path is a directory then something is wrong
+            if os.path.isdir(path):
+                logging.error(f"{depth}{debug_prefix} Path already existed and is a file, this function creates directories so for safety we'll quit as this is technically not intended behavior (mkdir on a file location, that means we probably misspelled something and created a file where we should in fact have a directory)")
+                sys.exit(-1)
+
+            # # Reset file content
+
+            if not silent:
+                logging.warn(f"{depth}{debug_prefix} Resetting file content [{path}]")
+
             with open(path, "w") as f:
                 f.write("")
+
             return False
         return True
 
-    # Deletes an directory, fail safe? Quits if
-    def rmdir(self, path):
-
+    # Deletes an directory, fail safe? Quits if we can't delete it..
+    def rmdir(self, path, depth = NO_DEPTH, silent = False) -> None:
         debug_prefix = "[Utils.rmdir]"
+        ndepth = depth + NEXT_DEPTH
 
         # If the asked directory is even a path
         if os.path.isdir(path):
 
-            print(debug_prefix, "Removing dir: [%s]" % path)
+            # Log action
+            if not silent:
+                logging.info(f"{depth}{debug_prefix} Removing dir: [{path}]")
 
             # Try removing with ignoring errors first..?
-            shutil.rmtree(path, ignore_errors=True)
+            shutil.rmtree(path, ignore_errors = True)
 
-            # Not deleted?
+            # Not deleted? 
             if os.path.isdir(path):
-                print(debug_prefix, "Error removing directory with ignore_errors=True, trying again")
+
+                # Ok. We can't be silent here we're about to error out probably
+                logging.warn(f"{depth}{debug_prefix} Error removing directory with ignore_errors=True, trying again.. will quit if we can't")
 
                 # Remove without ignoring errors?
-                shutil.rmtree(path, ignore_errors=False)
+                shutil.rmtree(path, ignore_errors = False)
 
                 # Still exists? oops, better quit
                 if os.path.isdir(path):
-                    print(debug_prefix, "COULD NOT REMOVE DIRECTORY: [%s]" % path)
+                    logging.error(f"{depth}{debug_prefix} COULD NOT REMOVE DIRECTORY: [{path}]")
                     sys.exit(-1)
 
-            print(debug_prefix, "Removed successfully")
+            if not silent:
+                logging.info(f"{depth}{debug_prefix} Removed successfully")
         else:
-            print(debug_prefix, "Directory doesn't exists, skipping... [%s]" % path)
+            # Directory didn't exist at first, nothing to do here
+            if not silent:
+                logging.info(f"{depth}{debug_prefix} Directory doesn't exists, nothing to do here... [{path}]")
 
     # Copy every file of a directory to another
+    # TODO: new code style
     def copy_files_recursive(self, src, dst):
         print(src, dst)
         if os.path.isdir(src) and os.path.isdir(dst) :
@@ -100,32 +174,65 @@ class Utils:
             sys.exit(-1)
 
     # Get the full path of a random file from a given directory
-    def random_file_from_dir(self, path):
-        # print("random file from path [%s]" % path)
-        r = random.choice([path + os.path.sep + f for f in os.listdir(path)])
-        # print("got [%s]" % r)
+    def random_file_from_dir(self, path, depth = NO_DEPTH, silent = False):
+        debug_prefix = "[Utils.random_file_from_dir]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Log action
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Get random file / name from path [{path}]")
+
+        # Actually get the random file from the directory
+        r = random.choice([f"{path}{os.path.sep}{name}" for name in os.listdir(path)])
+
+        # Debug and return the path
+        if not silent:
+            logging.debug(f"{depth}{debug_prefix} Got file [{r}], ")
+
         return r
 
-    # Get the directory this file is in if run from source or from a release
-    def get_root(self):
-        if getattr(sys, 'frozen', True):    
-            return os.path.dirname(os.path.abspath(__file__))
-        else:
-            return os.path.dirname(os.path.abspath(sys.executable))
-
     # Get the basename of a path
-    def get_basename(self, path):
-        return os.path.basename(path)
+    def get_basename(self, path, depth = NO_DEPTH, silent = False):
+        debug_prefix = "[Utils.get_basename]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Log action
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Get basename of path [{path}]")
+
+        # Actually get the basename
+        basename = os.path.basename(path)
+
+        # Debug and return the basename
+        if not silent:
+            logging.debug(f"{depth}{debug_prefix} Basename is [{basename}]")
+
+        return basename
     
     # Return an absolute path always
     def get_abspath(self, path, depth = NO_DEPTH, silent = False):
         debug_prefix = "[Utils.get_abspath]"
+        ndepth = depth + NEXT_DEPTH
 
-        if self.os == "linux":
+        # Log action
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Get abspath of path [{path}]")
+
+        # On Linux / MacOS we expand the ~ to the current user's home directory, ~ = /home/$USER
+        if self.os in ["linux", "macos"]:
             if not silent:
-                print(debug_prefix, "Linux: Expanding path with user home folder ~ if any")
+                logging.info(f"{depth}{debug_prefix} POSIX: Expanding path with user home folder ~ if any")
+
+            # Expand the path
             path = os.path.expanduser(path)
-       
+
+            if not silent:
+                logging.debug(f"{depth}{debug_prefix} POSIX: Expanded path is [{path}]")
+
+        # Actually get the absolute path, that is, if we're on the file /home/user/folder and type
+        # ./binary we are actually referring it as /home/user/folder/binary, that is the absolute
+        # path, not the relative to where we are at, this is optimal because the user can be on a 
+        # shell with a different working directory executing our Python scripts
         abspath = os.path.abspath(path)
 
         if not silent:
@@ -146,18 +253,23 @@ class Utils:
     def get_filename_no_extension(self, path):
         return os.path.splitext(os.path.basename(path))[0]
     
-    # Get operating system
+    # Get operating system we're running on
+    # FIXME: Need testing / get edge cases like:
+    # - Temple OS
+    # - Solus (linux?)
+    # - Haiku
+    # - ReactOS (nt?)
+    # - DOS (well you're probably not running this here)
+    # - ChromeOS (linux?)
+    # - *BSD (*nix -> posix -> linux?)
     def get_os(self):
 
-        name = os.name
-
-        # Not really specific but should work?
-        if name == "posix":
-            os_name = "linux"
-        if name == "nt":
-            os_name = "windows"
-
-        return os_name
+        # Get the desired name from a dict matching against os.name
+        return {
+            "posix": "linux",
+            "nt": "windows",
+            "darwin": "macos"
+        }.get(os.name)
     
     # Get a md5 hash of a string
     def get_string_md5(self, string):
