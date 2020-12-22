@@ -69,7 +69,7 @@ f"""{"-"*self.terminal_width}
 
         # Versioning, greeter message
         self.terminal_width = shutil.get_terminal_size()[0]
-        self.version = "2.3.5-dev"
+        self.version = "2.4-dev"
         self.greeter_message()
 
         # # Get this file's path
@@ -111,7 +111,9 @@ f"""{"-"*self.terminal_width}
         )
 
         # Start logging message
-        bias = " " * ((self.terminal_width//2) - 13); print(f"\n{bias}# # [ Start Logging ] # #\n")
+        print("\n" + "-" * self.terminal_width)
+        bias = " " * ((self.terminal_width//2) - 13); print(f"{bias}# # [ Start Logging ] # #")
+        print("-" * self.terminal_width + "\n")
 
         # # FIXME: Python 3.9, go home you're drunk
 
@@ -119,13 +121,25 @@ f"""{"-"*self.terminal_width}
         maximum_working_python_version = (3, 8)
         
         # Log and check
-        logging.info(f"{debug_prefix}{depth} Checking if Python <= {maximum_working_python_version} for a working version.. ")
+        logging.info(f"{depth}{debug_prefix} Checking if Python <= {maximum_working_python_version} for a working version.. ")
         
         if sys.version_info <= maximum_working_python_version:
-            logging.info(f"{debug_prefix}{depth} Ok")
+            logging.info(f"{depth}{debug_prefix} Ok")
         else:
-            logging.info(f"{debug_prefix}{depth} No")
-            logging.warn(f"{debug_prefix}{depth} Python 3.9 is acting a bit weird regarding some dependencies on some systems, while it should be possible to run, take it with some grain of salt and report back into the discussions troubles or workarounds you found?")
+            logging.info(f"{depth}{debug_prefix} No")
+            logging.warn(f"{depth}{debug_prefix} Python 3.9 is acting a bit weird regarding some dependencies on some systems, while it should be possible to run, take it with some grain of salt and report back into the discussions troubles or workarounds you found?")
+
+        # # The operating system we're on, one of "linux", "windows", "macos"
+
+        # Get the desired name from a dict matching against os.name
+        self.os = {
+            "posix": "linux",
+            "nt": "windows",
+            "darwin": "macos"
+        }.get(os.name)
+
+        # Log which OS we're runnig
+        logging.info(f"{depth}{debug_prefix} Running All in One Video Enhancer on OS: [{self.os}]")
 
         # # # Create MMV classes and stuff
 
@@ -152,17 +166,17 @@ f"""{"-"*self.terminal_width}
 
         self.mmv_main.context.externals = self.EXTERNALS_DIR
 
-        self.mmv_main.utils.mkdir_dne(self.EXTERNALS_DIR)
+        self.mmv_main.utils.mkdir_dne(self.EXTERNALS_DIR, depth = ndepth)
 
         # Append to PATH the 
-        logging.info(f"{debug_prefix}{depth} Appending EXTERNALS_DIR to PATH: [{self.EXTERNALS_DIR}]")
+        logging.info(f"{depth}{debug_prefix} Appending EXTERNALS_DIR to PATH: [{self.EXTERNALS_DIR}]")
         sys.path.append(self.EXTERNALS_DIR)
 
     # Execute MMV with the configurations we've done
     def run(self, depth = NO_DEPTH) -> None:
         debug_prefix = "[MMVInterface.run]"
         ndepth = depth + NEXT_DEPTH
-        logging.info(f"{debug_prefix}{depth} Configuration phase done, executing MMVMain.run()..")
+        logging.info(f"{depth}{debug_prefix} Configuration phase done, executing MMVMain.run()..")
         self.mmv_main.run()
 
     # Define output video width, height and frames per second, defaults to 720p60
@@ -170,7 +184,7 @@ f"""{"-"*self.terminal_width}
         debug_prefix = "[MMVInterface.quality]"
         ndepth = depth + NEXT_DEPTH
         
-        logging.info(f"{debug_prefix}{depth} Setting width={width} height={height} fps={fps} batch_size={batch_size}")
+        logging.info(f"{depth}{debug_prefix} Setting width={width} height={height} fps={fps} batch_size={batch_size}")
         
         # Assign values
         self.mmv_main.context.width = width
@@ -182,7 +196,7 @@ f"""{"-"*self.terminal_width}
         self.resolution = [width, height]
 
         # Create or reset a mmv canvas with that target resolution
-        logging.info(f"{debug_prefix}{depth} Creating / resetting canvas with that width and height")
+        logging.info(f"{depth}{debug_prefix} Creating / resetting canvas with that width and height")
         self.mmv_main.canvas.create_canvas()
 
     # Set the input audio file, raise exception if it does not exist
@@ -191,7 +205,7 @@ f"""{"-"*self.terminal_width}
         ndepth = depth + NEXT_DEPTH
 
         # Log action, do action
-        logging.info(f"{debug_prefix}{depth} Set audio file path: [{path}], getting absolute path..")
+        logging.info(f"{depth}{debug_prefix} Set audio file path: [{path}], getting absolute path..")
         self.mmv_main.context.input_file = self.get_absolute_path(path, depth = ndepth)
     
     # Set the input audio file, raise exception if it does not exist
@@ -200,7 +214,7 @@ f"""{"-"*self.terminal_width}
         ndepth = depth + NEXT_DEPTH
 
         # Log action, do action
-        logging.info(f"{debug_prefix}{depth} Set MIDI file path: [{path}], getting absolute path..")
+        logging.info(f"{depth}{debug_prefix} Set MIDI file path: [{path}], getting absolute path..")
         self.mmv_main.context.input_midi = self.get_absolute_path(path, depth = ndepth)
     
     # Output path where we'll be saving the final video
@@ -209,7 +223,7 @@ f"""{"-"*self.terminal_width}
         ndepth = depth + NEXT_DEPTH
 
         # Log action, do action
-        logging.info(f"{debug_prefix}{depth} Set output video path: [{path}], getting absolute path..")
+        logging.info(f"{depth}{debug_prefix} Set output video path: [{path}], getting absolute path..")
         self.mmv_main.context.output_video = self.utils.get_abspath(path, depth = ndepth)
     
     # Offset where we cut the audio for processing, mainly for interpolation latency compensation
@@ -218,7 +232,7 @@ f"""{"-"*self.terminal_width}
         ndepth = depth + NEXT_DEPTH
 
         # Log action, do action
-        logging.info(f"{debug_prefix}{depth} Offset audio in N steps: [{steps}]")
+        logging.info(f"{depth}{debug_prefix} Offset audio in N steps: [{steps}]")
         self.mmv_main.context.offset_audio_before_in_many_steps = steps
     
     # # [ MMV Objects ] # #
@@ -229,16 +243,16 @@ f"""{"-"*self.terminal_width}
         ndepth = depth + NEXT_DEPTH
 
         # Make layers until this given layer if they don't exist
-        logging.info(f"{debug_prefix}{depth} Making animations layer until N = [{layer}]")
+        logging.info(f"{depth}{debug_prefix} Making animations layer until N = [{layer}]")
         self.mmv_main.mmv_animation.mklayers_until(layer, depth = ndepth)
 
         # Check the type and add accordingly
         if self.utils.is_matching_type([item], [MMVImage]):
-            logging.info(f"{debug_prefix}{depth} Add MMVImage object [{item}]")
+            logging.info(f"{depth}{debug_prefix} Add MMVImage object [{item}]")
             self.mmv_main.mmv_animation.content[layer].append(item)
             
         if self.utils.is_matching_type([item], [MMVGenerator]):
-            logging.info(f"{debug_prefix}{depth} Add MMVGenerator object [{item}]")
+            logging.info(f"{depth}{debug_prefix} Add MMVGenerator object [{item}]")
             self.mmv_main.mmv_animation.generators.append(item)
 
     # Get a blank MMVImage object with the first animation layer build up
@@ -247,7 +261,7 @@ f"""{"-"*self.terminal_width}
         ndepth = depth + NEXT_DEPTH
 
         # Log action
-        logging.info(f"{debug_prefix}{depth} Creating blank MMVImage object and initializing first animation layer, returning it afterwards")
+        logging.info(f"{depth}{debug_prefix} Creating blank MMVImage object and initializing first animation layer, returning it afterwards")
         
         # Create blank MMVImage, init the animation layers for the user
         mmv_image_object = MMVImage(self.mmv_main, depth = ndepth)
@@ -262,7 +276,7 @@ f"""{"-"*self.terminal_width}
         ndepth = depth + NEXT_DEPTH
 
         # Log action
-        logging.info(f"{debug_prefix}{depth} Creating blank MMVGenerator object, returning it afterwards")
+        logging.info(f"{depth}{debug_prefix} Creating blank MMVGenerator object, returning it afterwards")
 
         # Create blank MMVGenerator, return a pointer to the object
         return MMVGenerator(self.mmv_main, depth = ndepth)
@@ -274,7 +288,7 @@ f"""{"-"*self.terminal_width}
         debug_prefix = "[MMVInterface.random_file_from_dir]"
         ndepth = depth + NEXT_DEPTH
 
-        logging.info(f"{debug_prefix}{depth} Get absolute path and returning random file from directory: [{path}]")
+        logging.info(f"{depth}{debug_prefix} Get absolute path and returning random file from directory: [{path}]")
 
         return self.utils.random_file_from_dir(self.utils.get_abspath(path, depth = ndepth), depth = ndepth)
 
@@ -284,7 +298,7 @@ f"""{"-"*self.terminal_width}
         ndepth = depth + NEXT_DEPTH
 
         # Log action
-        logging.info(f"{debug_prefix}{depth} Make directory if doesn't exist [{path}], get absolute realpath and mkdir_dne")
+        logging.info(f"{depth}{debug_prefix} Make directory if doesn't exist [{path}], get absolute realpath and mkdir_dne")
 
         # Get absolute and realpath, make directory if doens't exist (do the action)
         path = self.utils.get_abspath(path, depth = ndepth)
@@ -296,7 +310,7 @@ f"""{"-"*self.terminal_width}
         ndepth = depth + NEXT_DEPTH
 
         # Log action
-        logging.info(f"{debug_prefix}{depth} Delete directory [{path}], get absolute realpath and rmdir")
+        logging.info(f"{depth}{debug_prefix} Delete directory [{path}], get absolute realpath and rmdir")
 
         # Get absolute and realpath, delete directory (do the action)
         path = self.utils.get_abspath(path, depth = ndepth)
@@ -308,7 +322,7 @@ f"""{"-"*self.terminal_width}
         ndepth = depth + NEXT_DEPTH
 
         # Log action
-        logging.info(f"{debug_prefix}{depth} Getting absolute path of [{path}], also checking its existence")
+        logging.info(f"{depth}{debug_prefix} Getting absolute path of [{path}], also checking its existence")
 
         # Get the absolute path
         path = self.utils.get_abspath(path, depth = ndepth)
@@ -324,8 +338,14 @@ f"""{"-"*self.terminal_width}
     # # [ Experiments / sub projects ] # #
 
     # Get a pygradienter object with many workers for rendering
-    def pygradienter(self, **kwargs):
-        return PyGradienter(self.mmv_main, **kwargs)
+    def pygradienter(self, depth = NO_DEPTH, **kwargs):
+        debug_prefix = "[MMVInterface.pygradienter]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Log action
+        logging.info(f"{depth}{debug_prefix} Generating and returning one PyGradienter object")
+
+        return PyGradienter(self.mmv_main, depth = ndepth, **kwargs)
     
     # # [ QOL ] # #
 
@@ -335,7 +355,7 @@ f"""{"-"*self.terminal_width}
 
         # Temporary directory if needed
         self.temp_dir = tempfile.gettempdir()
-        logging.info(f"{debug_prefix}{depth} Temp dir is: [{self.temp_dir}]")
+        logging.info(f"{depth}{debug_prefix} Temp dir is: [{self.temp_dir}]")
 
         if getattr(sys, 'frozen', False):
             print(debug_prefix, "Not checking ffmpeg.exe because is executable build")
@@ -355,7 +375,7 @@ f"""{"-"*self.terminal_width}
 
                 # Get the latest release number of ffmpeg
                 ffmpeg_release = self.mmv_main.download.get_html_content("https://www.gyan.dev/ffmpeg/builds/release-version")
-                logging.info(f"{debug_prefix}{depth} FFmpeg release number is [{ffmpeg_release}]")
+                logging.info(f"{depth}{debug_prefix} FFmpeg release number is [{ffmpeg_release}]")
 
                 # Where we'll save the compressed zip of FFmpeg
                 ffmpeg_7z = self.temp_dir + f"/ffmpeg-{ffmpeg_release}-essentials_build.7z"
@@ -441,10 +461,10 @@ f"""{"-"*self.terminal_width}
             # http://freepats.zenvoid.org/SoundSets/FreePats-GeneralMIDI/
 
             if not version_tar in external_files:
-                logging.info(f"{debug_prefix}{depth} Soundfont {version_tar} not in externals")
+                logging.info(f"{depth}{debug_prefix} Soundfont {version_tar} not in externals")
 
                 if not version_tar_xz in external_files:
-                    logging.info(f"{debug_prefix}{depth} Soundfont {soundfont_tar_xz} not in externals")
+                    logging.info(f"{depth}{debug_prefix} Soundfont {soundfont_tar_xz} not in externals")
 
                     # Download "FreePats General MIDI sound set"
                     self.mmv_main.download.wget(
@@ -464,18 +484,18 @@ f"""{"-"*self.terminal_width}
             # Extract if we need so
             if not os.path.isdir(extracted_folder):
                 # Extract the tar extracted from tar xz
-                logging.info(f"{debug_prefix}{depth} Extracting to folder [{extracted_folder}]")
+                logging.info(f"{depth}{debug_prefix} Extracting to folder [{extracted_folder}]")
                 self.mmv_main.download.extract_file(soundfont_tar, self.EXTERNALS_DIR)
             else:
-                logging.info(f"{debug_prefix}{depth} Extracted folder [{extracted_folder}] already exists, skipping extracting..")
+                logging.info(f"{depth}{debug_prefix} Extracted folder [{extracted_folder}] already exists, skipping extracting..")
     
-            logging.info(f"{debug_prefix}{depth} Downloaded sf2 in [{freepats_sf2}]")
+            logging.info(f"{depth}{debug_prefix} Downloaded sf2 in [{freepats_sf2}]")
 
             dot_fluidsynth = self.mmv_main.utils.get_abspath("~/.fluidsynth")
             default_soundfont = f"{dot_fluidsynth}/default_sound_font.sf2"
 
             if os.path.exists(default_soundfont):
-                logging.info(f"{debug_prefix}{depth} Default sound font file on [{default_soundfont}] already exists, assuming it's already configured, returning this function..")
+                logging.info(f"{depth}{debug_prefix} Default sound font file on [{default_soundfont}] already exists, assuming it's already configured, returning this function..")
                 return
 
             # The two commands
