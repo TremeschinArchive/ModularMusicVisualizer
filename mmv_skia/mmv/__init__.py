@@ -42,7 +42,11 @@ import os
 class MMVInterface:
 
     # Hello world!
-    def greeter_message(self) -> None:
+    def greeter_message(self, depth = NO_DEPTH) -> None:
+        debug_prefix = "[MMVInterface.greeter_message]"
+        ndepth = depth + NEXT_DEPTH
+
+        print(f"{depth}{debug_prefix} Show greeter message")
 
         self.terminal_width = shutil.get_terminal_size()[0]
 
@@ -75,20 +79,20 @@ f"""{"-"*self.terminal_width}
         # # Get this file's path
 
         # Where this file is located, please refer using this on the whole package
-        # Refer to it as self.mmv_main.DIR at any depth in the code
+        # Refer to it as self.mmv_main.ROOT at any depth in the code
         # This deals with the case we used pyinstaller and it'll get the executable path instead
         if getattr(sys, 'frozen', True):    
-            self.DIR = os.path.dirname(os.path.abspath(__file__))
+            self.ROOT = os.path.dirname(os.path.abspath(__file__))
             print(debug_prefix, "Running directly from source code")
-            print(debug_prefix, f"Modular Music Visualizer Python package aio_enhancer [__init__.py] located at [{self.DIR}]")
+            print(debug_prefix, f"Modular Music Visualizer Python package aio_enhancer [__init__.py] located at [{self.ROOT}]")
         else:
-            self.DIR = os.path.dirname(os.path.abspath(sys.executable))
+            self.ROOT = os.path.dirname(os.path.abspath(sys.executable))
             print(debug_prefix, "Running from release (sys.executable..?)")
-            print(debug_prefix, f"Modular Music Visualizer executable located at [{self.DIR}]")
+            print(debug_prefix, f"Modular Music Visualizer executable located at [{self.ROOT}]")
 
         # Hard coded where the log file will be located
         # this is only valid for the last time we run this software
-        self.LOG_FILE = f"{self.DIR}{os.path.sep}log.log"
+        self.LOG_FILE = f"{self.ROOT}{os.path.sep}log.log"
 
         # Reset the log file
         with open(self.LOG_FILE, "w") as f:
@@ -118,7 +122,7 @@ f"""{"-"*self.terminal_width}
         # Log precise Python version
         sysversion = sys.version.replace("\n", " ").replace("  ", " ")
         logging.info(f"{depth}{debug_prefix} Running on Python: [{sysversion}]")
-        
+
         # # FIXME: Python 3.9, go home you're drunk
 
         # Max python version, show info, assert, pretty print
@@ -151,6 +155,7 @@ f"""{"-"*self.terminal_width}
 
         # Log which OS we're running
         logging.info(f"{depth}{debug_prefix} Running Modular Music Visualizer Enhancer on OS: [{self.os}]")
+        logging.info(f"{depth}{debug_prefix} os.path.sep is [{os.path.sep}]")
 
         # # # Create MMV classes and stuff
 
@@ -171,23 +176,17 @@ f"""{"-"*self.terminal_width}
         self.mmv_main.context.pixel_format = kwargs.get("pixel_format", "auto")
         self.mmv_main.context.audio_amplitude_multiplier = kwargs.get("audio_amplitude_multiplier", 1)
         self.mmv_main.context.skia_render_backend = kwargs.get("render_backend", "gpu")
-        
-        # Main module files directory (where __init__.py is)
-        self.EXTERNALS_DIR = self.mmv_main.context.externals
-
-        self.mmv_main.context.externals = self.EXTERNALS_DIR
-
-        self.mmv_main.utils.mkdir_dne(self.EXTERNALS_DIR, depth = ndepth)
-
-        # Append to PATH the 
-        logging.info(f"{depth}{debug_prefix} Appending EXTERNALS_DIR to PATH: [{self.EXTERNALS_DIR}]")
-        sys.path.append(self.EXTERNALS_DIR)
+ 
 
     # Execute MMV with the configurations we've done
     def run(self, depth = NO_DEPTH) -> None:
         debug_prefix = "[MMVInterface.run]"
         ndepth = depth + NEXT_DEPTH
+
+        # Log action
         logging.info(f"{depth}{debug_prefix} Configuration phase done, executing MMVMain.run()..")
+
+        # Run configured mmv_main class
         self.mmv_main.run()
 
     # Define output video width, height and frames per second, defaults to 720p60
@@ -379,7 +378,7 @@ f"""{"-"*self.terminal_width}
                 print(debug_prefix, "Getting FFmpeg for Windows because making_release=True")
 
             # Where we should find the ffmpeg binary
-            FFMPEG_FINAL_BINARY = self.EXTERNALS_DIR + "/ffmpeg.exe"
+            FFMPEG_FINAL_BINARY = self.EXTERNALS_ROOT + "/ffmpeg.exe"
 
             # If we don't have FFmpeg binary on externals dir
             if not os.path.isfile(FFMPEG_FINAL_BINARY):
@@ -422,8 +421,9 @@ f"""{"-"*self.terminal_width}
             Don't ask the user if they want to run the mkdir and ln commands
     }
     """
-    def download_and_link_freepats_general_midi_soundfont(self, **kwargs):
+    def download_and_link_freepats_general_midi_soundfont(self, depth = NO_DEPTH, **kwargs):
         debug_prefix = "[MMVInterface.download_and_link_midi_soundfont]"
+        ndepth = depth + NEXT_DEPTH
 
         skip_fluidsynth_dep = kwargs.get("skip_fluidsynth_dep", False)
         skip_prompt = kwargs.get("skip_prompt", False)
@@ -461,11 +461,11 @@ f"""{"-"*self.terminal_width}
             version_tar = version_tar_xz.replace(".tar.xz", ".tar")
 
             # Paths
-            soundfont_tar_xz = f"{self.EXTERNALS_DIR}/{version_tar_xz}"
-            soundfont_tar = f"{self.EXTERNALS_DIR}/{version_tar}"
+            soundfont_tar_xz = f"{self.EXTERNALS_ROOT}/{version_tar_xz}"
+            soundfont_tar = f"{self.EXTERNALS_ROOT}/{version_tar}"
 
             # Already downloaded files
-            external_files = os.listdir(self.EXTERNALS_DIR)
+            external_files = os.listdir(self.EXTERNALS_ROOT)
 
             print(debug_prefix, "Externals files are:", external_files)
 
@@ -484,19 +484,19 @@ f"""{"-"*self.terminal_width}
                     )
 
                 # Extract the tar xz files
-                self.mmv_main.download.extract_file(soundfont_tar_xz, self.EXTERNALS_DIR)
+                self.mmv_main.download.extract_file(soundfont_tar_xz, self.EXTERNALS_ROOT)
 
             # Where the stuff will be
             extracted_no_extension = version_tar_xz.replace(".tar.xz", "")
             extracted_file_name = extracted_no_extension.replace("-SF2", "")
-            extracted_folder = f"{self.EXTERNALS_DIR}/{extracted_no_extension}"
+            extracted_folder = f"{self.EXTERNALS_ROOT}/{extracted_no_extension}"
             freepats_sf2 = f"{extracted_folder}/{extracted_file_name}.sf2"
 
             # Extract if we need so
             if not os.path.isdir(extracted_folder):
                 # Extract the tar extracted from tar xz
                 logging.info(f"{depth}{debug_prefix} Extracting to folder [{extracted_folder}]")
-                self.mmv_main.download.extract_file(soundfont_tar, self.EXTERNALS_DIR)
+                self.mmv_main.download.extract_file(soundfont_tar, self.EXTERNALS_ROOT)
             else:
                 logging.info(f"{depth}{debug_prefix} Extracted folder [{extracted_folder}] already exists, skipping extracting..")
     

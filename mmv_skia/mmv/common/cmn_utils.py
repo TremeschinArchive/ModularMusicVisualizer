@@ -38,6 +38,44 @@ class Utils:
     def __init__(self):
         self.os = self.get_os()
 
+    # Make sure given path is a directory
+    def assert_dir(self, path, depth = NO_DEPTH, silent = False) -> None:
+        debug_prefix = "[Utils.assert_dir]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Log action
+        if not silent:
+            logging.debug(f"{depth}{debug_prefix} Making sure path [{path}] is a directory")
+
+        # Error assertion
+
+        correct = os.path.isdir(path)
+        exists = os.path.exists(path)
+        
+        if not (exists and correct):
+            err = f"{depth}{debug_prefix} [ERROR] Path exists: [{exists}], correct type (dir): [{correct}]"
+            logging.error(err)
+            raise RuntimeError(err)
+    
+    # Make sure given path is a file
+    def assert_file(self, path, depth = NO_DEPTH, silent = False) -> None:
+        debug_prefix = "[Utils.assert_file]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Log action
+        if not silent:
+            logging.debug(f"{depth}{debug_prefix} Making sure path [{path}] is a file")
+
+        # Error assertion
+
+        correct = os.path.isfile(path)
+        exists = os.path.exists(path)
+        
+        if not (exists and correct):
+            err = f"{depth}{debug_prefix} [ERROR] Path exists: [{exists}], correct type (file): [{correct}]"
+            logging.error(err)
+            raise RuntimeError(err)
+ 
     # Make directory / directories if it does not exist
     # Returns:
     # - True: existed before
@@ -120,6 +158,22 @@ class Utils:
 
             return False
         return True
+    
+    # Make sure a parent directory exists
+    def mkparent_dne(self, path, depth = NO_DEPTH, silent = False) -> None:
+        debug_prefix = "[Utils.mkparent_dne]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Log action
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Make sure the parent directory of the path [{path}] exists")
+
+        self.mkdir_dne(
+            self.get_path_parent_dir(
+                self.get_abspath(path, depth = ndepth + (2*NEXT_DEPTH), silent = silent
+                ), depth = ndepth + NEXT_DEPTH, silent = silent
+            ), depth = ndepth, silent = silent
+        )
 
     # Deletes an directory, fail safe? Quits if we can't delete it..
     def rmdir(self, path, depth = NO_DEPTH, silent = False) -> None:
@@ -209,7 +263,7 @@ class Utils:
 
         return basename
     
-    # Return an absolute path always
+    # Return an absolute path always, pointing to the 
     def get_abspath(self, path, depth = NO_DEPTH, silent = False):
         debug_prefix = "[Utils.get_abspath]"
         ndepth = depth + NEXT_DEPTH
@@ -240,9 +294,9 @@ class Utils:
             logging.debug(f"{depth}{debug_prefix} Original path changed!! It probably was a relative reference [{path}] -> [{abspath}]")
 
         if not silent:
-            print(debug_prefix, f"abspath of [{path}] > [{abspath}]")
+            logging.debug(f"{depth}{debug_prefix} Return get realpath of that abspath")
 
-        return self.get_realpath(abspath)
+        return self.get_realpath(path = abspath, depth = ndepth, silent = silent)
     
     # Some files can be symlinks on *nix or shortcuts on Windows, get the true real path
     def get_realpath(self, path, depth = NO_DEPTH, silent = False):
@@ -258,14 +312,46 @@ class Utils:
 
         # Did the path changed at all?
         if (not realpath == path) and (not silent):
-            print(f"[Utils.get_realpath] Realpath of [{path}] > [{realpath}")
+            logging.debug(f"{depth}{debug_prefix} Got and returning realpath of [{path}] -> [{realpath}")
             
         return realpath
 
     # Get the filename without extension /home/linux/file.ogg -> "file"
-    def get_filename_no_extension(self, path):
-        return os.path.splitext(os.path.basename(path))[0]
+    def get_filename_no_extension(self, path, depth = NO_DEPTH, silent = False):
+        debug_prefix = "[Utils.get_filename_no_extension]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Log action
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Get filename without extension of path [{path}]")
+
+        # Actually get the filename without extension
+        filename_no_ext = os.path.splitext(os.path.basename(self.get_abspath(path)))[0]
+
+        # Log what we'll return
+        if not silent:
+            logging.debug(f"{depth}{debug_prefix} Got and returning filename [{filename_no_ext}]")
+
+        return filename_no_ext
     
+    # Get the parent directory of a given path
+    def get_path_parent_dir(self, path, depth = NO_DEPTH, silent = False):
+        debug_prefix = "[Utils.get_path_parent_dir]"
+        ndepth = depth + NEXT_DEPTH
+    
+        # Log action
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Get the parent directory of the path [{path}]")
+        
+        # Get the dirname of the path
+        parent = os.path.dirname(self.get_abspath(path))
+
+        # Log action
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Parent directory is [{parent}]")
+        
+        return parent
+
     # Get operating system we're running on
     # FIXME: Need testing / get edge cases like:
     # - Temple OS
@@ -284,58 +370,59 @@ class Utils:
             "darwin": "macos"
         }.get(os.name)
     
-    # Get a md5 hash of a string
-    def get_string_md5(self, string):
-        return hashlib.md5(string.encode('utf-8')).hexdigest()
-    
-    # Calculate the md5 and sha256 of a given file path, its contents
-    def get_hash_of_file(self, path):
-
-        # Initialize blank md5 and sha256
-        md5 = hashlib.md5()
-        sha256 = hashlib.sha256()
-
-        path = self.get_realpath(path)
-
-        # Open the file in (r)ead (b)ytes mode
-        with open(path, 'rb') as f:
-            while True:
-
-                # Read 64 kB chunk data of the file
-                data = f.read(1024 * 64)
-
-                # If no more data, quit the loop
-                if not data:
-                    break
-
-                # Update the md5 and sha256
-                md5.update(data)
-                sha256.update(data)
-
-        # Return a named list of the hashes
-        return {
-            "md5": md5.hexdigest(),
-            "sha256": sha256.hexdigest(),
-        }
-
     # Load a yaml and return its content
-    def load_yaml(self, path):
-        path = self.get_abspath(path, silent = True)
+    def load_yaml(self, path, depth = NO_DEPTH, silent = False) -> None:
+        debug_prefix = "[Utils.load_yaml]"
+        ndepth = depth + NEXT_DEPTH
+        
+        # Log action
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Loading YAML file from path [{path}], getting absolute realpath first")
+
+        # Get absolute and realpath
+        path = self.get_abspath(path, depth = ndepth, silent = True)
+
+        # Error assertion
+        self.assert_file(path)
+
+        # Open file in read mode
         with open(path, "r") as f:
-            return yaml.load(f, Loader=yaml.FullLoader)
+            data = yaml.load(f, Loader = yaml.FullLoader)
+
+        # Log read data
+        if not silent:
+            logging.debug(f"{depth}{debug_prefix} Loaded data is: {data}")
+
+        # Return the data
+        return data
     
-    # Save a dictionary to a YAML file
-    def save_data_to_yaml(self, data, path):
-        path = self.get_abspath(path, silent = True)
+    # Save a dictionary to a YAML file, make sure the directory exists first..
+    def dump_yaml(self, data, path, depth = NO_DEPTH, silent = False) -> None:
+        debug_prefix = "[Utils.dump_yaml]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Log action
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Dumping some data to YAML located at: [{path}], getting absolute realpath first")
+            logging.debug(f"{depth}{debug_prefix} Data being dumped: [{data}]")
+
+        # Make sure the parent path exists
+        self.mkparent_dne(path)
+
+        # Get absolute and realpath
+        path = self.get_abspath(path, depth = ndepth, silent = True)
+
         with open(path, "w") as f:
-            yaml.dump(data, f, default_flow_style=False)
+            yaml.dump(data, f, default_flow_style = False)
 
     # Waits until file exist
-    def until_exist(self, path):
-
+    def until_exist(self, path, depth = NO_DEPTH, silent = False) -> None:
         debug_prefix = "[Utils.until_exist]"
+        ndepth = depth + NEXT_DEPTH
 
-        print(debug_prefix, "Waiting for file or diretory: [%s]" % path)
+        # Log action
+        if not silent:
+            logging.warn(f"{depth}{debug_prefix} Waiting for file or diretory: [{path}]")
 
         while True:
             time.sleep(0.1)
@@ -343,17 +430,47 @@ class Utils:
                 break
         
     # $ mv A B
-    def move(self, src, dst, shell=False):
-        print("[Utils.move] Moving path [%s] --> [%s]" % (src, dst))
+    def move(self, src, dst, depth = NO_DEPTH, silent = False) -> None:
+        debug_prefix = "[Utils.move]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Log action
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Moving path [{src}] -> [{dst}]")
+
+        # Make sure we have the absolute and real path of the targets
+        src = self.get_abspath(src, depth = ndepth, silent = silent)
+        dst = self.get_abspath(dst, depth = ndepth, silent = silent)
+
+        # Only move if the target directory doesn't exist
         if not os.path.exists(dst):
             shutil.move(src, dst)
         else:
-            print("[Utils.move] File already exists!!")
+            err = f"{depth}{debug_prefix} Target path already exist"
+            logging.error(err)
+            raise RuntimeError(err)
     
     # $ cp A B
-    def copy(self, src, dst, shell=False):
-        print("[Utils.move] Moving path [%s] --> [%s]" % (src, dst))
-        shutil.copy(src, dst)
+    def copy(self, src, dst, depth = NO_DEPTH, silent = False) -> None:
+        debug_prefix = "[Utils.copy]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Log action
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Copying path [{src}] -> [{dst}]")
+
+        # Make sure we have the absolute and real path of the targets
+        src = self.get_abspath(src, depth = ndepth, silent = silent)
+        dst = self.get_abspath(dst, depth = ndepth, silent = silent)
+
+        # Copy the directories
+        # Only move if the target directory doesn't exist
+        if not os.path.exists(dst):
+            shutil.copy(src, dst)
+        else:
+            err = f"{depth}{debug_prefix} Target path already exist"
+            logging.error(err)
+            raise RuntimeError(err)
 
     # Check if either type A = wanted[0] and B = wanted[1] or the opposite
     def is_matching_type(self, items, wanted):
@@ -368,24 +485,60 @@ class Utils:
         return True
 
     # If name is an file on PATH marked as executable returns True
-    def has_executable_with_name(self, name):
-        return shutil.which(name) is not None
+    def has_executable_with_name(self, binary, depth = NO_DEPTH, silent = False) -> None:
+        debug_prefix = "[Utils.has_executable_with_name]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Log action
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Checking we can find the executable [{binary}] in PATH")
+
+        # Tell if we can find the binary
+        exists = shutil.which(binary) is not None
+
+        # If it doesn't exist show warning, no need to quit
+        if not silent:
+            msg = f"{depth}{debug_prefix} Executable exists: [{exists}]"
+
+            # Info if exists else warn
+            if exists:
+                logging.info(msg)
+            else:
+                logging.warn(msg)
+
+        return exists
     
     # Get a executable from path, returns False if it doesn't exist
-    def get_executable_with_name(self, name, extra_paths = [None]):
+    def get_executable_with_name(self, binary, extra_paths = [None], depth = NO_DEPTH, silent = False):
+        debug_prefix = "[Utils.get_executable_with_name]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Log action
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Get executable with name [{binary}]")
 
         # Force list variable
         extra_paths = self.force_list(extra_paths)
         search_path = os.environ["PATH"] + os.pathsep + os.pathsep.join(extra_paths)
 
+        # Log search paths
+        if not silent:
+            logging.warn(f"{depth}{debug_prefix} Extra paths to search: [{extra_paths}]")
+            logging.warn(f"{depth}{debug_prefix} Full search path: [{search_path}]")
+
         # Locate it
-        locate = shutil.which(name, path = search_path)
+        locate = shutil.which(binary, path = search_path)
 
         # If it's not found then return False
         if locate is None:
+            if not silent:
+                logging.warn(f"{depth}{debug_prefix} Couldn't find binary, returning False..")
             return False
             
         # Else return its path
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Binary found and located at [{locate}]")
+
         return locate
     
     # If data is string, "abc" -> ["abc"], if data is list, return data
