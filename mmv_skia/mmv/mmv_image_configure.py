@@ -60,7 +60,7 @@ class MMVImageConfigure:
 
         # Log action
         if self.preludec["load_image"]["log_action"]:
-            logging.info(f"{depth}{debug_prefix} [{self.identifier}] Loading image from path [{path}]")
+            logging.info(f"{ndepth}{debug_prefix} [{self.identifier}] Loading image from path [{path}]")
 
         # Fail safe get the abspath and 
         self.parent_object.image.load_from_path(
@@ -90,7 +90,7 @@ class MMVImageConfigure:
         ndepth = depth + NEXT_DEPTH
 
         if self.preludec["start_or_reset_this_animation"]["log_action"]:
-            logging.info(f"{depth}{debug_prefix} [{self.identifier}] Reset the parent MMVImage object animation layers")
+            logging.info(f"{ndepth}{debug_prefix} [{self.identifier}] Reset the parent MMVImage object animation layers")
 
         # Emptry layer of stuff
         self.parent_object.animation[self.animation_index] = {}

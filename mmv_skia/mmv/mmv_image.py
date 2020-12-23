@@ -46,7 +46,7 @@ class MMVImage:
 
         # Log the creation of this class
         if self.preludec["log_creation"]:
-            logging.info(f"{depth}{debug_prefix} Created new MMVImage object, getting unique identifier for it")
+            logging.info(f"{ndepth}{debug_prefix} Created new MMVImage object, getting unique identifier for it")
 
         # Get an unique identifier for this MMVImage object
         self.identifier = self.mmv_main.utils.get_unique_id(
@@ -106,9 +106,7 @@ class MMVImage:
 
         # Log action
         if self.preludec["create_canvas"]["log_action"]:
-            logging.info(f"{depth}{debug_prefix} [{self.identifier}] Create empty canvas (this ought be the video canvas?)")
-
-        ndepth += NEXT_DEPTH
+            logging.info(f"{ndepth}{debug_prefix} [{self.identifier}] Create empty canvas (this ought be the video canvas?)")
 
         # Will we be logging the steps?
         log_steps = self.preludec["create_canvas"]["log_steps"]

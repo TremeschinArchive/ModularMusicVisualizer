@@ -40,7 +40,7 @@ from mmv.common.cmn_fourier import Fourier
 from mmv.common.cmn_utils import Utils
 from mmv.mmv_context import MMVContext
 from mmv.mmv_image import MMVImage
-from mmv.mmv_core import Core
+from mmv.mmv_core import MMVCore
 from PIL import Image
 import numpy as np
 import argparse
@@ -63,43 +63,43 @@ class MMVMain:
 
         self.utils = Utils()
 
-        logging.info(f"{depth}{debug_prefix} Creating MMVContext() class")
+        logging.info(f"{ndepth}{debug_prefix} Creating MMVContext() class")
         self.context = MMVContext(mmv_main = self, depth = ndepth)
 
-        logging.info(f"{depth}{debug_prefix} Creating SkiaNoWindowBackend() class")
+        logging.info(f"{ndepth}{debug_prefix} Creating SkiaNoWindowBackend() class")
         self.skia = SkiaNoWindowBackend()
 
-        logging.info(f"{depth}{debug_prefix} Creating Functions() class")
+        logging.info(f"{ndepth}{debug_prefix} Creating Functions() class")
         self.functions = Functions()
 
-        logging.info(f"{depth}{debug_prefix} Creating Interpolation() class")
+        logging.info(f"{ndepth}{debug_prefix} Creating Interpolation() class")
         self.interpolation = Interpolation()
 
-        logging.info(f"{depth}{debug_prefix} Creating PolarCoordinates() class")
+        logging.info(f"{ndepth}{debug_prefix} Creating PolarCoordinates() class")
         self.polar_coordinates = PolarCoordinates()
 
-        logging.info(f"{depth}{debug_prefix} Creating Canvas() class")
+        logging.info(f"{ndepth}{debug_prefix} Creating Canvas() class")
         self.canvas = MMVImage(mmv_main = self, depth = ndepth)
 
-        logging.info(f"{depth}{debug_prefix} Creating Fourier() class")
+        logging.info(f"{ndepth}{debug_prefix} Creating Fourier() class")
         self.fourier = Fourier()
 
-        logging.info(f"{depth}{debug_prefix} Creating FFmpegWrapper() class")
+        logging.info(f"{ndepth}{debug_prefix} Creating FFmpegWrapper() class")
         self.ffmpeg = FFmpegWrapper(self)
 
-        logging.info(f"{depth}{debug_prefix} Creating AudioFile() class")
+        logging.info(f"{ndepth}{debug_prefix} Creating AudioFile() class")
         self.audio = AudioFile()
 
-        logging.info(f"{depth}{debug_prefix} Creating AudioProcessing() class")
+        logging.info(f"{ndepth}{debug_prefix} Creating AudioProcessing() class")
         self.audio_processing = AudioProcessing()
 
-        logging.info(f"{depth}{debug_prefix} Creating MMVAnimation() class")
+        logging.info(f"{ndepth}{debug_prefix} Creating MMVAnimation() class")
         self.mmv_animation = MMVAnimation(mmv_main = self, depth = ndepth)
     
-        logging.info(f"{depth}{debug_prefix} Creating Core() class")
-        self.core = Core(self)
+        logging.info(f"{ndepth}{debug_prefix} Creating MMVCore() class")
+        self.core = MMVCore(self)
 
-        logging.info(f"{depth}{debug_prefix} Creating Download() class")
+        logging.info(f"{ndepth}{debug_prefix} Creating Download() class")
         self.download = Download()
 
     # Execute the program
@@ -108,21 +108,21 @@ class MMVMain:
         ndepth = depth + NEXT_DEPTH
         
         # Read the audio and start FFmpeg pipe
-        logging.info(f"{depth}{debug_prefix} Read audio file")
+        logging.info(f"{ndepth}{debug_prefix} Read audio file")
         self.audio.read(self.context.input_file)
         
         # Start video pipe
-        logging.info(f"{depth}{debug_prefix} Starting FFmpeg Pipe")
+        logging.info(f"{ndepth}{debug_prefix} Starting FFmpeg Pipe")
         self.ffmpeg.pipe_one_time(self.context.output_video)
 
         try:
             # import cProfile
             # p = cProfile.Profile()
             # p.enable()
-            logging.info(f"{depth}{debug_prefix} Executing MMVCore.run()")
-            self.core.run()
+            logging.info(f"{ndepth}{debug_prefix} Executing MMVCore.run()")
+            self.core.run(depth = ndepth)
             
-            logging.info(f"{depth}{debug_prefix} Finished, terminating GLFW")
+            logging.info(f"{ndepth}{debug_prefix} Finished, terminating GLFW")
             self.skia.terminate_glfw()
             # p.disable()
             # p.dump_stats("res.prof")
@@ -138,7 +138,7 @@ class MMVMain:
         while not self.ffmpeg.stop_piping:
             time.sleep(0.05)
 
-        logging.info(f"{depth}{debug_prefix} Quitting Python")
+        logging.info(f"{ndepth}{debug_prefix} Quitting Python")
         sys.exit(0)
         
 
