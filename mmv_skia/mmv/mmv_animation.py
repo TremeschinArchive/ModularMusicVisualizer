@@ -44,9 +44,11 @@ class MMVAnimation:
         debug_prefix = "[MMVAnimation.__init__]"
         ndepth = depth + NEXT_DEPTH
         self.mmv_main = mmv_main
+        self.preludec = self.mmv_main.prelude["mmvanimation"]
 
         # Log we started
-        logging.info(f"{depth}{debug_prefix} Creating empty content and generators dictionary and list respectively")
+        if self.preludec["log_creation"]:
+            logging.info(f"{depth}{debug_prefix} Creating empty content and generators dictionary and list respectively")
 
         # Content are the MMV objects stored that gets rendered on the screen
         # generators are MMVGenerators that we get new objects from
@@ -59,7 +61,7 @@ class MMVAnimation:
         ndepth = depth + NEXT_DEPTH
 
         # Hard debug this action
-        if self.mmv_main.context.HARD_DEBUG:
+        if self.preludec["mklayers_until"]["log_action"]:
             logging.debug(f"{depth}{debug_prefix} [HARD_DEBUG] Making animation layers until N = [{n}]")
 
         # n + 1 because range() is exclusive at the end ( range(2) = [0, 1] )
@@ -70,7 +72,8 @@ class MMVAnimation:
             if layer_index not in list(self.content.keys()):
 
                 # Log that we'll be doing so
-                logging.info(f"{depth}{debug_prefix} Animation layer index N = [{layer_index}] didn't existed, creating empty list")
+                if self.preludec["mklayers_until"]["log_new_layers"]:
+                    logging.info(f"{depth}{debug_prefix} Animation layer index N = [{layer_index}] didn't existed, creating empty list")
 
                 # Create empty list at
                 self.content[layer_index] = []

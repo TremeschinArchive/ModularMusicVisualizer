@@ -175,14 +175,20 @@ class Utils:
 
         # Log action
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Make sure the parent directory of the path [{path}] exists")
+            logging.debug(f"{depth}{debug_prefix} Make sure the parent directory of the path [{path}] exists")
 
-        self.mkdir_dne(
-            self.get_path_parent_dir(
-                self.get_abspath(path, depth = ndepth + (2*NEXT_DEPTH), silent = silent
-                ), depth = ndepth + NEXT_DEPTH, silent = silent
-            ), depth = ndepth, silent = silent
+        # Get the absolute and real path of the parent dir
+        abspath_realpath_parent_dir = self.get_path_parent_dir(
+                self.get_abspath(
+                    path, depth = ndepth + (2*NEXT_DEPTH), silent = silent
+            ), depth = ndepth + NEXT_DEPTH, silent = silent
         )
+
+        # Make it
+        self.mkdir_dne(abspath_realpath_parent_dir, depth = ndepth, silent = silent)
+
+        if not silent:
+            logging.debug(f"{depth}{debug_prefix} (Parent) Directory guaranteed to exist [{abspath_realpath_parent_dir}]")
 
     # Deletes an directory, fail safe? Quits if we can't delete it..
     def rmdir(self, path, depth = NO_DEPTH, silent = False) -> None:
@@ -213,12 +219,13 @@ class Utils:
                     logging.error(f"{depth}{debug_prefix} COULD NOT REMOVE DIRECTORY: [{path}]")
                     sys.exit(-1)
 
+            # Warn we're done
             if not silent:
-                logging.info(f"{depth}{debug_prefix} Removed successfully")
+                logging.debug(f"{depth}{debug_prefix} Removed directory successfully")
         else:
             # Directory didn't exist at first, nothing to do here
             if not silent:
-                logging.info(f"{depth}{debug_prefix} Directory doesn't exists, nothing to do here... [{path}]")
+                logging.debug(f"{depth}{debug_prefix} Directory doesn't exists, nothing to do here... [{path}]")
 
     # Copy every file of a directory to another
     # TODO: new code style
@@ -243,14 +250,14 @@ class Utils:
 
         # Log action
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Get random file / name from path [{path}]")
+            logging.debug(f"{depth}{debug_prefix} Get random file / name from path [{path}]")
 
         # Actually get the random file from the directory
         r = random.choice([f"{path}{os.path.sep}{name}" for name in os.listdir(path)])
 
         # Debug and return the path
         if not silent:
-            logging.debug(f"{depth}{debug_prefix} Got file [{r}], ")
+            logging.info(f"{depth}{debug_prefix} Got file [{r}], ")
 
         return r
 
@@ -261,14 +268,14 @@ class Utils:
 
         # Log action
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Get basename of path [{path}]")
+            logging.debug(f"{depth}{debug_prefix} Get basename of path [{path}]")
 
         # Actually get the basename
         basename = os.path.basename(path)
 
         # Debug and return the basename
         if not silent:
-            logging.debug(f"{depth}{debug_prefix} Basename is [{basename}]")
+            logging.info(f"{depth}{debug_prefix} Basename is [{basename}]")
 
         return basename
     
@@ -279,12 +286,12 @@ class Utils:
 
         # Log action
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Get abspath of path [{path}]")
+            logging.debug(f"{depth}{debug_prefix} Get abspath of path [{path}]")
 
         # On Linux / MacOS we expand the ~ to the current user's home directory, ~ = /home/$USER
         if self.os in ["linux", "macos"]:
             if not silent:
-                logging.info(f"{depth}{debug_prefix} POSIX: Expanding path with user home folder ~ if any")
+                logging.debug(f"{depth}{debug_prefix} POSIX: Expanding path with user home folder ~ if any")
 
             # Expand the path
             path = os.path.expanduser(path)
@@ -302,10 +309,13 @@ class Utils:
         if (abspath != path) and (not silent):
             logging.debug(f"{depth}{debug_prefix} Original path changed!! It probably was a relative reference [{path}] -> [{abspath}]")
 
-        if not silent:
-            logging.debug(f"{depth}{debug_prefix} Return get realpath of that abspath")
+        # Get the real path
+        abs_realpath = self.get_realpath(path = abspath, depth = ndepth, silent = False)
 
-        return self.get_realpath(path = abspath, depth = ndepth, silent = silent)
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Return absolute and real path: [{abs_realpath}]")
+
+        return abs_realpath
     
     # Some files can be symlinks on *nix or shortcuts on Windows, get the true real path
     def get_realpath(self, path, depth = NO_DEPTH, silent = False):
@@ -314,7 +324,7 @@ class Utils:
 
         # Log action
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Get realpath of path [{path}]")
+            logging.debug(f"{depth}{debug_prefix} Get realpath of path [{path}]")
 
         # Actually get the realpath
         realpath = os.path.realpath(path)
@@ -563,7 +573,7 @@ class Utils:
         ndepth = depth + NEXT_DEPTH
 
         # Get an uppercase uuid4
-        unique_id = str(uuid.uuid4()).upper()
+        unique_id = str(uuid.uuid4()).upper()[0:8]
 
         # Change the message based on if we have or have not a purpose
         if purpose:

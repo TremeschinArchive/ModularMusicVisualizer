@@ -6,3 +6,76 @@
 [logging]
 hard_debug = true
 log_to_file = true
+log_level = "debug"
+
+[debug_logging]
+log_generated_unique_ids = true
+
+# # Logging
+
+[mmvanimation]
+    log_creation = true
+    [mmvanimation.mklayers_until]
+        log_action = true
+        log_new_layers = true
+
+[mmvimage]
+    log_creation = true
+    log_get_unique_id = true
+    [mmvimage._reset_effects_variables]
+        log_action = true
+    [mmvimage.create_canvas]
+        log_action = true
+        log_steps = true
+    [mmvimage.reset_canvas]
+        log_action = true
+    [mmvimage.next]
+        log_current_step = true
+        log_became_deletable = true
+
+[mmvimage_configure]
+    [mmvimage_configure.load_image]
+        log_action = true
+        log_get_abspath = true
+        log_load_image = true
+    [mmvimage_configure.init_animation_layer]
+        log_action = true
+    [mmvimage_configure.start_or_reset_this_animation]
+        log_action = true
+    [mmvimage_configure.set_animation_index]
+        log_action = true
+    [mmvimage_configure.set_this_animation_steps]
+        log_action = true
+    [mmvimage_configure.resize_image_to_resolution]
+        log_action = true
+    [mmvimage_configure.resize_image_to_video_resolution]
+        log_action = true
+    [mmvimage_configure.add_module_video]
+        log_action = true
+    [mmvimage_configure.add_path_point]
+        log_action = true
+    [mmvimage_configure.simple_add_path_modifier_shake]
+        log_action = true
+
+    # MMVVectorial calls
+    [mmvimage_configure.add_vectorial_by_kwargs]
+        log_action = true
+    [mmvimage_configure.add_module_visualizer]
+        log_action = true
+    [mmvimage_configure.add_module_progression_bar]
+        log_action = true
+    [mmvimage_configure.add_module_piano_roll]
+        log_action = true
+
+    # Modifiers
+    [mmvimage_configure.add_module_resize]
+        log_action = true
+    [mmvimage_configure.add_module_blur]
+        log_action = true
+    [mmvimage_configure.add_module_swing_rotation]
+        log_action = true
+    [mmvimage_configure.add_module_linear_rotation]
+        log_action = true
+    [mmvimage_configure.add_module_vignetting]
+        log_action = true
+    
