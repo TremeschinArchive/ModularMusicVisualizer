@@ -9,7 +9,8 @@ stop_at_mmv_core_run = true
 [logging]
 hard_debug = true
 log_to_file = true
-log_level = "debug"
+log_level = "debug"  # critical, debug, error, info, warn, notset
+log_format = "pretty"  # pretty, economic, onlymessage
 
 [debug_logging]
 log_generated_unique_ids = true
