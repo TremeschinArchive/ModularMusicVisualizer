@@ -36,6 +36,8 @@ class MMVImage:
         ndepth = depth + NEXT_DEPTH
         self.mmv_main = mmv_main
 
+        logging.info(f"{depth}{debug_prefix} Created new MMVImage object, getting unique identifier for it")
+
         # Get an unique identifier for this MMVImage object
         self.identifier = self.mmv_main.utils.get_unique_id(
             purpose = "MMVImage object", depth = ndepth

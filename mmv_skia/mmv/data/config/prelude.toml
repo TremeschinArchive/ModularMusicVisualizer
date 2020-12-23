@@ -1,0 +1,8 @@
+# This configuration file loads up before any MMV related stuff is set
+# and it doesn't change anything on the final video, this file is mostly
+# for configurations such as logging, namely Python stuff or QOL, let
+# you name it.
+
+[logging]
+hard_debug = true
+log_to_file = true
