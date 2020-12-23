@@ -87,7 +87,7 @@ class MMVImage:
         
         # Log action
         if self.preludec["_reset_effects_variables"]["log_action"]:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Resetting effects variables (filters on image, mask, shaders, paint)")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Resetting effects variables (filters on image, mask, shaders, paint)")
         
         self.image_filters = []
         self.mask_filters = []
@@ -115,17 +115,17 @@ class MMVImage:
 
         # Initialize blank animation layer
         if log_steps:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Init animation layer")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Init animation layer")
         self.configure.init_animation_layer(depth = ndepth)
         
         # Reset the canvas, create new image of Contex's width and height
         if log_steps:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Reset canvas")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Reset canvas")
         self.reset_canvas(depth = ndepth)
         
         # Add Path Point at (0, 0)
         if log_steps:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Add required static path of type Point at (x, y) = (0, 0)")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Add required static path of type Point at (x, y) = (0, 0)")
         self.configure.add_path_point(x = 0, y = 0, depth = ndepth)
     
     # Create empty zeros canvas IMAGE, not CONTENTS.
@@ -136,7 +136,7 @@ class MMVImage:
 
         # Hard debug, this should be executed a lot and we don't wanna clutter the log file or stdout
         if self.preludec["reset_canvas"]["log_action"]:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Reset canvas, create new image of Context's width and height in size")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Reset canvas, create new image of Context's width and height in size")
             
         # Actually create the new canvas
         self.image.new(self.mmv_main.context.width, self.mmv_main.context.height)
@@ -150,7 +150,7 @@ class MMVImage:
         self.current_step += 1
 
         if self.preludec["next"]["log_current_step"]:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Next step, current step = [{self.current_step}]")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Next step, current step = [{self.current_step}]")
 
         # Animation has ended, this current_animation isn't present on path.keys
         if self.current_animation not in list(self.animation.keys()):
@@ -158,7 +158,7 @@ class MMVImage:
         
             # Log we are marked to be deleted
             if self.preludec["next"]["log_became_deletable"]:
-                logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Object is out of animation, marking to be deleted")
+                logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Object is out of animation, marking to be deleted")
 
             return
 

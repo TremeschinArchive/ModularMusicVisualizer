@@ -76,7 +76,7 @@ class MMVImageConfigure:
 
         # Log info and run routine functions
         if self.preludec["init_animation_layer"]["log_action"]:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Initializing animation layer")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Initializing animation layer")
 
         ndepth += NEXT_DEPTH
 
@@ -104,7 +104,7 @@ class MMVImageConfigure:
         ndepth = depth + NEXT_DEPTH
 
         if self.preludec["set_animation_index"]["log_action"]:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Set animation index N = [{n}]")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Set animation index N = [{n}]")
 
         self.animation_index = n
 
@@ -115,7 +115,7 @@ class MMVImageConfigure:
 
         # Hard debug
         if self.preludec["set_this_animation_steps"]["log_action"]:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] This animation N = [{self.animation_index}] will have [{steps}] steps")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] This animation N = [{self.animation_index}] will have [{steps}] steps")
 
         self.parent_object.animation[self.animation_index]["animation"]["steps"] = steps
 
@@ -133,7 +133,7 @@ class MMVImageConfigure:
 
         # Log action
         if self.preludec["resize_image_to_resolution"]["log_action"]:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Resize image to resolution, kwargs: {kwargs}")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Resize image to resolution, kwargs: {kwargs}")
 
         self.parent_object.image.resize_to_resolution(
             width = kwargs["width"],
@@ -149,7 +149,7 @@ class MMVImageConfigure:
 
         # Log action
         if self.preludec["resize_image_to_video_resolution"]["log_action"]:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Resize image to video, kwargs: {kwargs}")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Resize image to video, kwargs: {kwargs}")
 
         self.resize_image_to_resolution(
             width = self.parent_object.mmv_main.context.width + kwargs.get("over_resize_width", 0),
@@ -176,7 +176,7 @@ class MMVImageConfigure:
 
         # Log action
         if self.preludec["add_module_video"]["log_action"]:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Add video module, kwargs: {kwargs}")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Add video module, kwargs: {kwargs}")
 
         self.parent_object.animation[self.animation_index]["modules"]["video"] = {
             "path": kwargs["path"],
@@ -198,7 +198,7 @@ class MMVImageConfigure:
 
         # Log action
         if self.preludec["add_path_point"]["log_action"]:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Add path point, kwargs: {kwargs}")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Add path point, kwargs: {kwargs}")
 
         self.parent_object.animation[self.animation_index]["position"]["path"].append(
             MMVModifierPoint(
@@ -222,7 +222,7 @@ class MMVImageConfigure:
 
         # Log action
         if self.preludec["simple_add_path_modifier_shake"]["log_action"]:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Add simple shaker modifier, kwargs: {kwargs}")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Add simple shaker modifier, kwargs: {kwargs}")
 
         self.parent_object.animation[self.animation_index]["position"]["path"].append(
             MMVModifierShake(
@@ -252,7 +252,7 @@ class MMVImageConfigure:
 
         # Log action
         if self.preludec["add_vectorial_by_kwargs"]["log_action"]:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Add vectorial module by kwargs, kwargs: {kwargs}")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Add vectorial module by kwargs, kwargs: {kwargs}")
 
         self.parent_object.animation[self.animation_index]["modules"]["vectorial"] = {
             "object": MMVVectorial(
@@ -274,7 +274,7 @@ class MMVImageConfigure:
 
         # Log action
         if self.preludec["add_module_visualizer"]["log_action"]:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Changed kwargs vectorial_type_class, new kwargs and call add_vectorial_by_kwargs: {kwargs}")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Changed kwargs vectorial_type_class, new kwargs and call add_vectorial_by_kwargs: {kwargs}")
 
         self.add_vectorial_by_kwargs(depth = ndepth, **kwargs)
         
@@ -291,7 +291,7 @@ class MMVImageConfigure:
 
         # Log action
         if self.preludec["add_module_progression_bar"]["log_action"]:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Changed kwargs vectorial_type_class, new kwargs and call add_vectorial_by_kwargs: {kwargs}")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Changed kwargs vectorial_type_class, new kwargs and call add_vectorial_by_kwargs: {kwargs}")
 
         self.add_vectorial_by_kwargs(**kwargs)
 
@@ -308,7 +308,7 @@ class MMVImageConfigure:
 
         # Log action
         if self.preludec["add_module_piano_roll"]["log_action"]:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Changed kwargs vectorial_type_class, new kwargs and call add_vectorial_by_kwargs: {kwargs}")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Changed kwargs vectorial_type_class, new kwargs and call add_vectorial_by_kwargs: {kwargs}")
 
         self.add_vectorial_by_kwargs(**kwargs)
 
@@ -338,7 +338,7 @@ class MMVImageConfigure:
 
         # Log action
         if self.preludec["add_module_resize"]["log_action"]:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Add module resize, kwargs: {kwargs}")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Add module resize, kwargs: {kwargs}")
 
         self.parent_object.animation[self.animation_index]["modules"]["resize"] = {
             "object": MMVModifierScalarResize(
@@ -370,7 +370,7 @@ class MMVImageConfigure:
 
         # Log action
         if self.preludec["add_module_blur"]["log_action"]:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Add module blur, kwargs: {kwargs}")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Add module blur, kwargs: {kwargs}")
 
         self.parent_object.animation[self.animation_index]["modules"]["blur"] = {
             "object": MMVModifierGaussianBlur(
@@ -403,7 +403,7 @@ class MMVImageConfigure:
 
         # Log action
         if self.preludec["add_module_swing_rotation"]["log_action"]:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Add module swing rotation, kwargs: {kwargs}")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Add module swing rotation, kwargs: {kwargs}")
 
         self.parent_object.animation[self.animation_index]["modules"]["rotate"] = {
             "object": MMVModifierSineSwing(self.mmv_main, **kwargs)
@@ -423,7 +423,7 @@ class MMVImageConfigure:
 
         # Log action
         if self.preludec["add_module_linear_rotation"]["log_action"]:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Add module linear rotation, kwargs: {kwargs}")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Add module linear rotation, kwargs: {kwargs}")
 
         self.parent_object.animation[self.animation_index]["modules"]["rotate"] = {
             "object": MMVModifierLinearSwing(self.mmv_main, **kwargs)
@@ -445,7 +445,7 @@ class MMVImageConfigure:
 
         # Log action
         if self.preludec["add_module_vignetting"]["log_action"]:
-            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Add module linear rotation, kwargs: {kwargs}")
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Add module linear rotation, kwargs: {kwargs}")
 
         self.parent_object.animation[self.animation_index]["modules"]["vignetting"] = {
             "object": MMVModifierVignetting(
