@@ -68,8 +68,8 @@ class MMVPath:
 
         # # Directories
         
-        # Data directory
         self.mmv_main.utils.assert_dir(self.data_dir, depth = ndepth)
+        self.mmv_main.utils.assert_dir(self.externals_dir, depth = ndepth)
         
 
 class MMVContext:
@@ -78,8 +78,8 @@ class MMVContext:
         ndepth = depth + NEXT_DEPTH
         self.mmv_main = mmv_main
 
-        # TODO: Load from config file
-        self.HARD_DEBUG = True
+        # Configuration is on prelude.toml file
+        self.HARD_DEBUG = self.mmv_main.interface.prelude["logging"]["hard_debug"]
 
         # Create classes
         logging.info(f"{depth}{debug_prefix} Creating MMVPath() class")

@@ -34,6 +34,7 @@ import shutil
 import math
 import uuid
 import time
+import toml
 import sys
 import os
 
@@ -78,40 +79,65 @@ f"""{"-"*self.terminal_width}
 
         # # Get this file's path
 
+        sep = os.path.sep
+
         # Where this file is located, please refer using this on the whole package
         # Refer to it as self.mmv_main.ROOT at any depth in the code
         # This deals with the case we used pyinstaller and it'll get the executable path instead
         if getattr(sys, 'frozen', True):    
             self.ROOT = os.path.dirname(os.path.abspath(__file__))
-            print(debug_prefix, "Running directly from source code")
-            print(debug_prefix, f"Modular Music Visualizer Python package [__init__.py] located at [{self.ROOT}]")
+            print(f"{depth}{debug_prefix} Running directly from source code")
+            print(f"{depth}{debug_prefix} Modular Music Visualizer Python package [__init__.py] located at [{self.ROOT}]")
         else:
             self.ROOT = os.path.dirname(os.path.abspath(sys.executable))
-            print(debug_prefix, "Running from release (sys.executable..?)")
-            print(debug_prefix, f"Modular Music Visualizer executable located at [{self.ROOT}]")
+            print(f"{depth}{debug_prefix} Running from release (sys.executable..?)")
+            print(f"{depth}{debug_prefix} Modular Music Visualizer executable located at [{self.ROOT}]")
 
-        # Hard coded where the log file will be located
-        # this is only valid for the last time we run this software
-        self.LOG_FILE = f"{self.ROOT}{os.path.sep}log.log"
+        # # Load prelude configuration
 
-        # Reset the log file
-        with open(self.LOG_FILE, "w") as f:
-            print(f"{depth}{debug_prefix} Reset log file located at [{self.LOG_FILE}]")
-            f.write("")
+        print(f"{depth}{debug_prefix} Loading prelude configuration file")
+        
+        # Build the path the prelude file should be located at
+        prelude_file = f"{self.ROOT}{sep}data{sep}config{sep}prelude.toml"
+
+        print(f"{depth}{debug_prefix} Attempting to load prelude file located at [{prelude_file}]")
+
+        # Load the prefule file
+        with open(prelude_file, "r") as f:
+            self.prelude = toml.loads(f.read())
+        
+        print(f"{depth}{debug_prefix} Loaded prelude configuration file, data: [{self.prelude}]")
 
         # # # Logging 
 
         # # We can now set up logging as we have where this file is located at
 
-        # Handlers on logging to file and shell output
-        log_to_file_handler = logging.FileHandler(filename = self.LOG_FILE, encoding = 'utf-8')
-        log_to_stdout_handler = logging.StreamHandler(sys.stdout)
+        # Handlers on logging to file and shell output, the first one if the user says to
+        handlers = [logging.StreamHandler(sys.stdout)]
+
+        # If user chose to log to a file, add its handler..
+        if self.prelude["logging"]["log_to_file"]:
+
+            # Hard coded where the log file will be located
+            # this is only valid for the last time we run this software
+            self.LOG_FILE = f"{self.ROOT}{sep}log.log"
+
+            # Reset the log file
+            with open(self.LOG_FILE, "w") as f:
+                print(f"{depth}{debug_prefix} Reset log file located at [{self.LOG_FILE}]")
+                f.write("")
+
+            # Versobe and append the file handler
+            print(f"{depth}{debug_prefix} Reset log file located at [{self.LOG_FILE}]")
+            handlers.append(logging.FileHandler(filename = self.LOG_FILE, encoding = 'utf-8'))
+
+        # .. otherwise just keep the StreamHandler to stdout
 
         # Start the logging global class, output to file and stdout
         logging.basicConfig(
             level = logging.DEBUG,
             format = "[%(levelname)-7s] [%(filename)-32s:%(lineno)-3d] %(message)s",
-            handlers = [log_to_file_handler, log_to_stdout_handler],
+            handlers = handlers,
         )
 
         # Start logging message
@@ -123,7 +149,7 @@ f"""{"-"*self.terminal_width}
         sysversion = sys.version.replace("\n", " ").replace("  ", " ")
         logging.info(f"{depth}{debug_prefix} Running on Python: [{sysversion}]")
 
-        # # FIXME: Python 3.9, go home you're drunk
+        # # # FIXME: Python 3.9, go home you're drunk
 
         # Max python version, show info, assert, pretty print
         maximum_working_python_version = (3, 8)
