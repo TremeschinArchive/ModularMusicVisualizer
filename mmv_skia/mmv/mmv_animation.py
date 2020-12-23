@@ -62,7 +62,7 @@ class MMVAnimation:
 
         # Hard debug this action
         if self.preludec["mklayers_until"]["log_action"]:
-            logging.debug(f"{depth}{debug_prefix} [HARD_DEBUG] Making animation layers until N = [{n}]")
+            logging.debug(f"{ndepth}{debug_prefix} [HARD_DEBUG] Making animation layers until N = [{n}]")
 
         # n + 1 because range() is exclusive at the end ( range(2) = [0, 1] )
         # and we use "human numbers" starting at 1
