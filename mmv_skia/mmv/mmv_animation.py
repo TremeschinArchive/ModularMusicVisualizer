@@ -19,8 +19,10 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.common.cmn_constants import NEXT_DEPTH, NO_DEPTH
 from mmv.mmv_generator import *
 from mmv.mmv_modifiers import *
+import logging
 import random
 import copy
 import math
@@ -31,8 +33,13 @@ import os
 class MMVAnimation:
 
     # Initialize a MMVAnimation class with required arguments
-    def __init__(self, mmv) -> None:
-        self.mmv = mmv
+    def __init__(self, mmv_main, depth = NO_DEPTH) -> None:
+        debug_prefix = "[MMVAnimation.__init__]"
+        ndepth = depth + NEXT_DEPTH
+        self.mmv_main = mmv_main
+
+        # Log we started
+        logging.info(f"{depth}{debug_prefix} Creating empty content and generators dictionary and list respectively")
 
         # Content are the MMV objects stored that gets rendered on the screen
         # generators are MMVGenerators that we get new objects from
@@ -40,9 +47,25 @@ class MMVAnimation:
         self.generators = []
 
     # Make layers until a given N value
-    def mklayers_until(self, n: int) -> None:
-        for layer_index in range(n + 1):  # n + 1 because range() is exclusive at the end ( range(2) = [0, 1] )
+    def mklayers_until(self, n: int, depth = NO_DEPTH) -> None:
+        debug_prefix = "[MMVAnimation.__init__]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Hard debug this action
+        if self.mmv_main.context.HARD_DEBUG:
+            logging.debug(f"{depth}{debug_prefix} [HARD_DEBUG] Making animation layers until N = [{n}]")
+
+        # n + 1 because range() is exclusive at the end ( range(2) = [0, 1] )
+        # and we use "human numbers" starting at 1
+        for layer_index in range(n + 1):  
+
+            # If we need to create this empty animation layer (list)
             if layer_index not in list(self.content.keys()):
+
+                # Log that we'll be doing so
+                logging.info(f"{depth}{debug_prefix} Animation layer index N = [{layer_index}] didn't existed, creating empty list")
+
+                # Create empty list at
                 self.content[layer_index] = []
 
     # Call every next step of the content animations
@@ -95,4 +118,4 @@ class MMVAnimation:
                 del self.content[ layer_index ][ items ]
 
         # Post process this final frame as we added all the items
-        self.mmv.canvas.next()
+        self.mmv_main.canvas.next()

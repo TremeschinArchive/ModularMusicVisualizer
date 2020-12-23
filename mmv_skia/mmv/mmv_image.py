@@ -25,6 +25,7 @@ from mmv.common.cmn_frame import Frame
 from mmv.mmv_modifiers import *
 import logging
 import skia
+import uuid
 import cv2
 
 
@@ -34,13 +35,18 @@ class MMVImage:
         debug_prefix = "[MMVImage.__init__]"
         ndepth = depth + NEXT_DEPTH
         self.mmv_main = mmv_main
+
+        # Get an unique identifier for this MMVImage object
+        self.identifier = self.mmv_main.utils.get_unique_id(
+            purpose = "MMVImage object", depth = ndepth
+        )
         
         # The "animation" and path this object will follow
         self.animation = {}
 
         # Create classes
-        self.configure = MMVImageConfigure(self.mmv_main, self, depth = ndepth)
-        self.image = Frame(depth = ndepth)
+        self.configure = MMVImageConfigure(self.mmv_main, self)
+        self.image = Frame()
 
         self.x = 0
         self.y = 0
@@ -62,11 +68,13 @@ class MMVImage:
         
         self._reset_effects_variables(depth = ndepth)
 
+    # Clean this MMVImage's todo processing or applied
     def _reset_effects_variables(self, depth = NO_DEPTH):
         debug_prefix = "[MMVImage._reset_effects_variables]"
         ndepth = depth + NEXT_DEPTH
         
-        logging.info(f"{depth}{debug_prefix} Resetting effects variables (filters on image, mask, shaders, paint)")
+        # Log action
+        logging.info(f"{depth}{debug_prefix} [{self.identifier}] Resetting effects variables (filters on image, mask, shaders, paint)")
         
         self.image_filters = []
         self.mask_filters = []
@@ -76,15 +84,40 @@ class MMVImage:
             "AntiAlias": True
         }
     
-    # Our Canvas is an MMVImage object
-    def create_canvas(self) -> None:
-        self.configure.init_animation_layer()
-        self.reset_canvas()
-        self.configure.add_path_point(x=0, y=0)
+    # Our Canvas is an MMVImage object so we reset it, initialize the animation layers automatically, bla bla
+    # we don't need the actual configuration from the user apart from post processing accesses by this
+    # MMVImage's MMVImageConfigure class
+    def create_canvas(self, depth = NO_DEPTH) -> None:
+        debug_prefix = "[MMVImage.create_canvas]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Log action
+        logging.info(f"{depth}{debug_prefix} [{self.identifier}] Create empty canvas (this ought be the video canvas?)")
+        ndepth += NEXT_DEPTH
+
+        # Initialize blank animation layer
+        logging.info(f"{depth}{debug_prefix} Init animation layer")
+        self.configure.init_animation_layer(depth = ndepth)
+        
+        # Reset the canvas, create new image of Contex's width and height
+        logging.info(f"{depth}{debug_prefix} Reset canvas")
+        self.reset_canvas(depth = ndepth)
+        
+        # Add Path Point at (0, 0)
+        logging.info(f"{depth}{debug_prefix} Add required static path of type Point at (x, y) = (0, 0)")
+        self.configure.add_path_point(x = 0, y = 0, depth = ndepth)
     
     # Create empty zeros canvas IMAGE, not CONTENTS.
     # If we ever wanna mirror the contents and apply post processing
-    def reset_canvas(self) -> None:
+    def reset_canvas(self, depth = NO_DEPTH) -> None:
+        debug_prefix = "[MMVImage.create_canvas]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Hard debug, this should be executed a lot and we don't wanna clutter the log file or stdout
+        if self.mmv_main.context.HARD_DEBUG:
+            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Reset canvas, create new image of Context's width and height in size")
+            
+        # Actually create the new canvas
         self.image.new(self.mmv_main.context.width, self.mmv_main.context.height)
 
     # Next step of animation
@@ -278,5 +311,5 @@ class MMVImage:
         # Blit this image
         self.mmv_main.skia.canvas.drawImage(
             self.image.image, x, y,
-            paint=paint,
+            paint = paint,
         )
