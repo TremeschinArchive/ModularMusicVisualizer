@@ -55,43 +55,43 @@ class MMVMain:
 
         self.utils = Utils()
 
-        logging.info(f"{depth}{debug_prefix} Creating MMVContext()")
+        logging.info(f"{depth}{debug_prefix} Creating MMVContext() class")
         self.context = MMVContext(self)
 
-        logging.info(f"{depth}{debug_prefix} Creating SkiaNoWindowBackend()")
+        logging.info(f"{depth}{debug_prefix} Creating SkiaNoWindowBackend() class")
         self.skia = SkiaNoWindowBackend()
 
-        logging.info(f"{depth}{debug_prefix} Creating Functions()")
+        logging.info(f"{depth}{debug_prefix} Creating Functions() class")
         self.functions = Functions()
 
-        logging.info(f"{depth}{debug_prefix} Creating Interpolation()")
+        logging.info(f"{depth}{debug_prefix} Creating Interpolation() class")
         self.interpolation = Interpolation()
 
-        logging.info(f"{depth}{debug_prefix} Creating PolarCoordinates()")
+        logging.info(f"{depth}{debug_prefix} Creating PolarCoordinates() class")
         self.polar_coordinates = PolarCoordinates()
 
-        logging.info(f"{depth}{debug_prefix} Creating Canvas()")
+        logging.info(f"{depth}{debug_prefix} Creating Canvas() class")
         self.canvas = MMVImage(self)
 
-        logging.info(f"{depth}{debug_prefix} Creating Fourier()")
+        logging.info(f"{depth}{debug_prefix} Creating Fourier() class")
         self.fourier = Fourier()
 
-        logging.info(f"{depth}{debug_prefix} Creating FFmpegWrapper()")
+        logging.info(f"{depth}{debug_prefix} Creating FFmpegWrapper() class")
         self.ffmpeg = FFmpegWrapper(self)
 
-        logging.info(f"{depth}{debug_prefix} Creating AudioFile()")
+        logging.info(f"{depth}{debug_prefix} Creating AudioFile() class")
         self.audio = AudioFile()
 
-        logging.info(f"{depth}{debug_prefix} Creating AudioProcessing()")
+        logging.info(f"{depth}{debug_prefix} Creating AudioProcessing() class")
         self.audio_processing = AudioProcessing()
 
-        logging.info(f"{depth}{debug_prefix} Creating MMVAnimation()")
+        logging.info(f"{depth}{debug_prefix} Creating MMVAnimation() class")
         self.mmv_animation = MMVAnimation(self)
     
-        logging.info(f"{depth}{debug_prefix} Creating Core()")
+        logging.info(f"{depth}{debug_prefix} Creating Core() class")
         self.core = Core(self)
 
-        logging.info(f"{depth}{debug_prefix} Creating Download()")
+        logging.info(f"{depth}{debug_prefix} Creating Download() class")
         self.download = Download()
 
     # Execute the program

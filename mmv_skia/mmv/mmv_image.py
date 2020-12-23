@@ -19,24 +19,28 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.common.cmn_constants import NEXT_DEPTH, NO_DEPTH
 from mmv.mmv_image_configure import MMVImageConfigure
 from mmv.common.cmn_frame import Frame
 from mmv.mmv_modifiers import *
+import logging
 import skia
 import cv2
 
 
 # Basically everything on MMV as we have to render images
 class MMVImage:
-    def __init__(self, mmv) -> None:
-        self.mmv = mmv
+    def __init__(self, mmv_main, depth = NO_DEPTH) -> None:
+        debug_prefix = "[MMVImage.__init__]"
+        ndepth = depth + NEXT_DEPTH
+        self.mmv_main = mmv_main
         
         # The "animation" and path this object will follow
         self.animation = {}
 
         # Create classes
-        self.configure = MMVImageConfigure(self.mmv, self)
-        self.image = Frame()
+        self.configure = MMVImageConfigure(self.mmv_main, self, depth = ndepth)
+        self.image = Frame(depth = ndepth)
 
         self.x = 0
         self.y = 0
@@ -56,9 +60,14 @@ class MMVImage:
 
         self.ROUND = 3
         
-        self._reset_effects_variables()
+        self._reset_effects_variables(depth = ndepth)
 
-    def _reset_effects_variables(self):
+    def _reset_effects_variables(self, depth = NO_DEPTH):
+        debug_prefix = "[MMVImage._reset_effects_variables]"
+        ndepth = depth + NEXT_DEPTH
+        
+        logging.info(f"{depth}{debug_prefix} Resetting effects variables (filters on image, mask, shaders, paint)")
+        
         self.image_filters = []
         self.mask_filters = []
         # self.color_filters = []
@@ -76,15 +85,8 @@ class MMVImage:
     # Create empty zeros canvas IMAGE, not CONTENTS.
     # If we ever wanna mirror the contents and apply post processing
     def reset_canvas(self) -> None:
-        self.image.new(self.mmv.context.width, self.mmv.context.height)
+        self.image.new(self.mmv_main.context.width, self.mmv_main.context.height)
 
-    # Don't pickle cv2 video  
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        if "video" in state:
-            del state["video"]
-        return state
-    
     # Next step of animation
     def next(self) -> None:
 
@@ -99,7 +101,7 @@ class MMVImage:
         this_animation = self.animation[self.current_animation]
 
         animation = this_animation["animation"]
-        steps = animation["steps"] * self.mmv.context.fps_ratio_multiplier  # Scale the interpolations
+        steps = animation["steps"] * self.mmv_main.context.fps_ratio_multiplier  # Scale the interpolations
 
         # The current step is one above the steps we've been told, next animation
         if self.current_step >= steps + 1:
@@ -143,7 +145,7 @@ class MMVImage:
 
                 self.image.load_from_array(frame)
                 self.image.resize_to_resolution(
-                    width = self.mmv.context.width, height = self.mmv.context.height,
+                    width = self.mmv_main.context.width, height = self.mmv_main.context.height,
                     override = True
                 )
 
@@ -209,7 +211,7 @@ class MMVImage:
 
                 # This is a somewhat fake vignetting, we just start a black point with full transparency
                 # at the center and make a radial gradient that is black with no transparency at the radius
-                self.mmv.skia.canvas.drawPaint({
+                self.mmv_main.skia.canvas.drawPaint({
                     'Shader': skia.GradientShader.MakeRadial(
                         center=(vignetting.center_x, vignetting.center_y),
                         radius=next_vignetting,
@@ -238,19 +240,19 @@ class MMVImage:
             argument = [self.x, self.y] + self.offset
 
             # Move according to a Point (be stationary)
-            if self.mmv.utils.is_matching_type([modifier], [MMVModifierPoint]):
+            if self.mmv_main.utils.is_matching_type([modifier], [MMVModifierPoint]):
                 # Attribute (x, y) to Point's x and y
                 [self.x, self.y], self.offset = modifier.next(*argument)
 
             # Move according to a Line (interpolate current steps)
-            if self.mmv.utils.is_matching_type([modifier], [MMVModifierLine]):
+            if self.mmv_main.utils.is_matching_type([modifier], [MMVModifierLine]):
                 # Interpolate and unpack next coordinate
                 [self.x, self.y], self.offset = modifier.next(*argument)
 
             # # Offset modules
 
             # Get next shake offset value
-            if self.mmv.utils.is_matching_type([modifier], [MMVModifierShake]):
+            if self.mmv_main.utils.is_matching_type([modifier], [MMVModifierShake]):
                 [self.x, self.y], self.offset = modifier.next(*argument)
 
     # Blit this item on the canvas
@@ -274,7 +276,7 @@ class MMVImage:
         paint = skia.Paint(self.paint_dict)
 
         # Blit this image
-        self.mmv.skia.canvas.drawImage(
+        self.mmv_main.skia.canvas.drawImage(
             self.image.image, x, y,
             paint=paint,
         )
