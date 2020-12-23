@@ -112,7 +112,7 @@ class MMVImage:
     # Create empty zeros canvas IMAGE, not CONTENTS.
     # If we ever wanna mirror the contents and apply post processing
     def reset_canvas(self, depth = NO_DEPTH) -> None:
-        debug_prefix = "[MMVImage.create_canvas]"
+        debug_prefix = "[MMVImage.reset_canvas]"
         ndepth = depth + NEXT_DEPTH
 
         # Hard debug, this should be executed a lot and we don't wanna clutter the log file or stdout

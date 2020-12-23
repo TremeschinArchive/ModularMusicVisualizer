@@ -21,6 +21,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmv.common.cmn_constants import NEXT_DEPTH, NO_DEPTH
+import mmv.common.cmn_any_logger
 import subprocess
 import hashlib
 import logging
@@ -565,6 +566,8 @@ class Utils:
 
         # Log the message
         logging.info(message)
+
+        return unique_id
 
 
 # Utilities in processing dictionaries, lists
