@@ -158,10 +158,17 @@ f"""{"-"*self.terminal_width}
 
         # .. otherwise just keep the StreamHandler to stdout
 
+        log_format = {
+            "pretty": "[%(levelname)-8s] [%(filename)-32s:%(lineno)-3d] %(message)s",
+            "economic": "[%(levelname)s::%(filename)s::%(lineno)d] %(message)s",
+            "onlymessage": "%(message)s"
+        }.get(self.prelude["logging"]["log_format"])
+
+
         # Start the logging global class, output to file and stdout
         logging.basicConfig(
             level = LOG_LEVEL,
-            format = "[%(levelname)-7s] [%(filename)-32s:%(lineno)-3d] %(message)s",
+            format = log_format,
             handlers = handlers,
         )
 
