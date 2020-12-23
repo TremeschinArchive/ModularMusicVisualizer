@@ -28,8 +28,9 @@ import random
 import shutil
 import glob
 import math
-import yaml
 import time
+import uuid
+import yaml
 import sys
 import os
 
@@ -546,6 +547,24 @@ class Utils:
         if not isinstance(data, list):
             data = [data]
         return data
+
+    # Get one (astronomically guaranteed) unique id, upper(uuid4)
+    # purpose key is for logging messages so we identify which identifier is binded to what object
+    def get_unique_id(self, purpose = "", depth = NO_DEPTH, silent = False) -> str:
+        debug_prefix = "[Utils.get_unique_id]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Get an uppercase uuid4
+        unique_id = str(uuid.uuid4()).upper()
+
+        # Change the message based on if we have or have not a purpose
+        if purpose:
+            message = f"{depth}{debug_prefix} Get unique identifier for [{purpose}]: [{unique_id}]"
+        else:
+            message = f"{depth}{debug_prefix} Get unique identifier: [{unique_id}]"
+
+        # Log the message
+        logging.info(message)
 
 
 # Utilities in processing dictionaries, lists
