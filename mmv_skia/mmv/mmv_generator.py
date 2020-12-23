@@ -27,17 +27,37 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmv.generators.mmv_particle_generator import MMVParticleGenerator
+from mmv.common.cmn_constants import NEXT_DEPTH, ROOT_DEPTH, NO_DEPTH
+import logging
 
 
 class MMVGenerator:
-    def __init__(self, mmv) -> None:
-        self.mmv = mmv
+    def __init__(self, mmv_main, depth = NO_DEPTH) -> None:
+        debug_prefix = "[MMVGenerator.__init__]"
+        ndepth = depth + NEXT_DEPTH
+        self.mmv_main = mmv_main
+
+        # Log the creation of this class
+        logging.info(f"{depth}{debug_prefix} Created new MMVGenerator object, getting unique identifier for it")
+
+        # Get an unique identifier for this MMVImage object
+        self.identifier = self.mmv_main.utils.get_unique_id(
+            purpose = "MMVImage object", depth = ndepth
+        )
+
+        logging.info(f"{depth}{debug_prefix} [{self.identifier}] Starting with empty generator attribute")
         self.generator = None
 
+    # Main routine, wraps around generator files under the "generators" directory
     def next(self) -> dict:
         return self.generator.next()
 
     # Set a particle generator object
-    def particle_generator(self, **kwargs) -> None:
-        self.generator = MMVParticleGenerator(self.mmv, **kwargs)
+    def particle_generator(self, depth = NO_DEPTH, **kwargs) -> None:
+        debug_prefix = "[MMVGenerator.particle_generator]"
+        ndepth = depth + NEXT_DEPTH
+
+        logging.info(f"{depth}{debug_prefix} [{self.identifier}] Setting this generator object to MMVParticleGenerator with kwargs: {kwargs}")
+
+        self.generator = MMVParticleGenerator(self.mmv_main, **kwargs)
 
