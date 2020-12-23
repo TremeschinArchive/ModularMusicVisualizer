@@ -1,5 +1,12 @@
 """
 ===============================================================================
+                                GPL v3 License                                
+===============================================================================
+
+Copyright (c) 2020,
+  - Tremeschin < https://tremeschin.gitlab.io > 
+
+===============================================================================
 
 Purpose: Wrapper for Numpy arrays and PIL Image, we call images Frames
 Can load, copy, duplicate, save and substitute vectors of pixels
