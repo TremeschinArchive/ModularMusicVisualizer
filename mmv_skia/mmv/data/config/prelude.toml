@@ -3,6 +3,9 @@
 # for configurations such as logging, namely Python stuff or QOL, let
 # you name it.
 
+[flow]
+stop_at_mmv_core_run = true
+
 [logging]
 hard_debug = true
 log_to_file = true
@@ -16,22 +19,22 @@ log_generated_unique_ids = true
 [mmvanimation]
     log_creation = true
     [mmvanimation.mklayers_until]
-        log_action = true
-        log_new_layers = true
+        log_action = false
+        log_new_layers = false
 
 [mmvimage]
     log_creation = true
     log_get_unique_id = true
     [mmvimage._reset_effects_variables]
-        log_action = true
+        log_action = false
     [mmvimage.create_canvas]
         log_action = true
         log_steps = true
     [mmvimage.reset_canvas]
         log_action = true
     [mmvimage.next]
-        log_current_step = true
-        log_became_deletable = true
+        log_current_step = false
+        log_became_deletable = false
 
 [mmvimage_configure]
     [mmvimage_configure.load_image]
