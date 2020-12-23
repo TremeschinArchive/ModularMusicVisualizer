@@ -85,9 +85,6 @@ class MMVContext:
         ndepth = depth + NEXT_DEPTH
         self.mmv_main = mmv_main
 
-        # Configuration is on prelude.toml file
-        self.HARD_DEBUG = self.mmv_main.interface.prelude["logging"]["hard_debug"]
-
         # Create classes
         logging.info(f"{depth}{debug_prefix} Creating MMVPath() class")
         self.paths = MMVPath(self.mmv_main, ndepth)

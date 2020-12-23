@@ -42,19 +42,22 @@ class MMVImage:
         debug_prefix = "[MMVImage.__init__]"
         ndepth = depth + NEXT_DEPTH
         self.mmv_main = mmv_main
+        self.preludec = self.mmv_main.prelude["mmvimage"]
 
-        logging.info(f"{depth}{debug_prefix} Created new MMVImage object, getting unique identifier for it")
+        # Log the creation of this class
+        if self.preludec["log_creation"]:
+            logging.info(f"{depth}{debug_prefix} Created new MMVImage object, getting unique identifier for it")
 
         # Get an unique identifier for this MMVImage object
         self.identifier = self.mmv_main.utils.get_unique_id(
-            purpose = "MMVImage object", depth = ndepth
+            purpose = "MMVImage object", depth = ndepth, silent = self.preludec["log_get_unique_id"]
         )
         
         # The "animation" and path this object will follow
         self.animation = {}
 
         # Create classes
-        self.configure = MMVImageConfigure(self.mmv_main, self)
+        self.configure = MMVImageConfigure(mmv_main = self.mmv_main, mmvimage_object = self)
         self.image = Frame()
 
         self.x = 0
@@ -83,7 +86,8 @@ class MMVImage:
         ndepth = depth + NEXT_DEPTH
         
         # Log action
-        logging.info(f"{depth}{debug_prefix} [{self.identifier}] Resetting effects variables (filters on image, mask, shaders, paint)")
+        if self.preludec["_reset_effects_variables"]["log_action"]:
+            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Resetting effects variables (filters on image, mask, shaders, paint)")
         
         self.image_filters = []
         self.mask_filters = []
@@ -101,19 +105,27 @@ class MMVImage:
         ndepth = depth + NEXT_DEPTH
 
         # Log action
-        logging.info(f"{depth}{debug_prefix} [{self.identifier}] Create empty canvas (this ought be the video canvas?)")
+        if self.preludec["create_canvas"]["log_action"]:
+            logging.info(f"{depth}{debug_prefix} [{self.identifier}] Create empty canvas (this ought be the video canvas?)")
+
         ndepth += NEXT_DEPTH
 
+        # Will we be logging the steps?
+        log_steps = self.preludec["create_canvas"]["log_steps"]
+
         # Initialize blank animation layer
-        logging.info(f"{depth}{debug_prefix} Init animation layer")
+        if log_steps:
+            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Init animation layer")
         self.configure.init_animation_layer(depth = ndepth)
         
         # Reset the canvas, create new image of Contex's width and height
-        logging.info(f"{depth}{debug_prefix} Reset canvas")
+        if log_steps:
+            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Reset canvas")
         self.reset_canvas(depth = ndepth)
         
         # Add Path Point at (0, 0)
-        logging.info(f"{depth}{debug_prefix} Add required static path of type Point at (x, y) = (0, 0)")
+        if log_steps:
+            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Add required static path of type Point at (x, y) = (0, 0)")
         self.configure.add_path_point(x = 0, y = 0, depth = ndepth)
     
     # Create empty zeros canvas IMAGE, not CONTENTS.
@@ -123,20 +135,31 @@ class MMVImage:
         ndepth = depth + NEXT_DEPTH
 
         # Hard debug, this should be executed a lot and we don't wanna clutter the log file or stdout
-        if self.mmv_main.context.HARD_DEBUG:
+        if self.preludec["reset_canvas"]["log_action"]:
             logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Reset canvas, create new image of Context's width and height in size")
             
         # Actually create the new canvas
         self.image.new(self.mmv_main.context.width, self.mmv_main.context.height)
 
     # Next step of animation
-    def next(self) -> None:
+    def next(self, depth = NO_DEPTH) -> None:
+        debug_prefix = "[MMVImage.next]"
+        ndepth = depth + NEXT_DEPTH
 
+        # Next step
         self.current_step += 1
+
+        if self.preludec["next"]["log_current_step"]:
+            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Next step, current step = [{self.current_step}]")
 
         # Animation has ended, this current_animation isn't present on path.keys
         if self.current_animation not in list(self.animation.keys()):
             self.is_deletable = True
+        
+            # Log we are marked to be deleted
+            if self.preludec["next"]["log_became_deletable"]:
+                logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Object is out of animation, marking to be deleted")
+
             return
 
         # The animation we're currently playing
