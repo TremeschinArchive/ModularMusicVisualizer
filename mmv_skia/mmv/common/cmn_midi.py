@@ -21,6 +21,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from mmv.common.cmn_utils import DataUtils
 from midi2audio import FluidSynth
+import mmv.common.cmn_any_logger
 import mido
 import copy
 import os

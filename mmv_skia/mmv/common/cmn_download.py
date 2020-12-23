@@ -19,6 +19,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+import mmv.common.cmn_any_logger
 from pyunpack import Archive
 from tqdm import tqdm
 import requests

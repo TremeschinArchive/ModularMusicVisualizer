@@ -19,6 +19,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+import mmv.common.cmn_any_logger
 from mmv.common.cmn_functions import Functions
 import random
 
