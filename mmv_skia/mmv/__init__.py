@@ -130,6 +130,16 @@ f"""{"-"*self.terminal_width}
         # Handlers on logging to file and shell output, the first one if the user says to
         handlers = [logging.StreamHandler(sys.stdout)]
 
+        # Loglevel is defined in the prelude.toml configuration
+        LOG_LEVEL = {
+            "critical": logging.CRITICAL,
+            "debug": logging.DEBUG,
+            "error": logging.ERROR,
+            "info": logging.INFO,
+            "warn": logging.WARN,
+            "notset": logging.NOTSET,
+        }.get(self.prelude["logging"]["log_level"])
+
         # If user chose to log to a file, add its handler..
         if self.prelude["logging"]["log_to_file"]:
 
@@ -150,7 +160,7 @@ f"""{"-"*self.terminal_width}
 
         # Start the logging global class, output to file and stdout
         logging.basicConfig(
-            level = logging.DEBUG,
+            level = LOG_LEVEL,
             format = "[%(levelname)-7s] [%(filename)-32s:%(lineno)-3d] %(message)s",
             handlers = handlers,
         )

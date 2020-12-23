@@ -54,7 +54,8 @@ import os
 class MMVMain:
     def __init__(self, interface):
         self.interface = interface
-
+        self.prelude = self.interface.prelude
+        
     # Creates classes and send to Core
     def setup(self, depth = NO_DEPTH) -> None:
         debug_prefix = "[MMVMain.setup]"
