@@ -20,10 +20,11 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.common.cmn_constants import NEXT_DEPTH, NO_DEPTH
 from mmv.mmv_interpolation import MMVInterpolation
 from mmv.mmv_vectorial import MMVVectorial
-
 from mmv.mmv_modifiers import *
+import logging
 import math
 import sys
 
@@ -33,36 +34,64 @@ class MMVImageConfigure:
 
     # Get MMVImage object and set image index to zero
     def __init__(self, mmv, mmvimage_object) -> None:
-        self.mmv = mmv
-        self.object = mmvimage_object
+        self.mmv_main = mmv
+        self.parent_object = mmvimage_object
+
+        self.identifier = self.parent_object.identifier
         self.animation_index = 0
 
     # # # [ Load Image ] # # #
 
-    def load_image(self, path: str) -> None:
-        self.object.image.load_from_path(path, convert_to_png=True)
+    def load_image(self, path: str, depth = NO_DEPTH) -> None:
+        debug_prefix = "[MMVImageConfigure.load_image]"
+        ndepth = depth + NEXT_DEPTH
+
+        logging.info(f"{depth}{debug_prefix} [{self.identifier}] Loading from image path [{path}]")
+
+        # Fail safe get the abspath and 
+        self.parent_object.image.load_from_path(
+            self.mmv_main.utils.get_abspath(path, depth = ndepth, silent = not self.mmv_main.context.HARD_DEBUG),
+            convert_to_png = True
+        )
 
     # # # [ Dealing with animation ] # # #
 
     # Macros for initializing this animation layer
-    def init_animation_layer(self) -> None:
-        self.start_or_reset_this_animation()
-        self.set_this_animation_steps(steps = math.inf)
+    def init_animation_layer(self, depth = NO_DEPTH) -> None:
+        debug_prefix = "[MMVImageConfigure.init_animation_layer]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Log info and run routine functions
+        logging.info(f"{depth}{debug_prefix} [{self.identifier}] Initializing animation layer")
+        ndepth += NEXT_DEPTH
+
+        # Reset animation layer and set an infinite amount of steps
+        self.start_or_reset_this_animation(depth = ndepth)
+        self.set_this_animation_steps(steps = math.inf)  # We start with infinite steps in the case this is one constant thingy
 
     # Make an empty animation layer according to this animation index, dictionaries, RESETS EVERYTHING
-    def start_or_reset_this_animation(self) -> None:
-        self.object.animation[self.animation_index] = {}
-        self.object.animation[self.animation_index]["position"] = {"path": []}
-        self.object.animation[self.animation_index]["modules"] = {}
-        self.object.animation[self.animation_index]["animation"] = {}
+    def start_or_reset_this_animation(self, depth = NO_DEPTH) -> None:
+        debug_prefix = "[MMVImageConfigure.start_or_reset_this_animation]"
+        ndepth = depth + NEXT_DEPTH
+
+        logging.info(f"{depth}{debug_prefix} [{self.identifier}] Reset the parent MMVImage object animation layers")
+
+        # Emptry layer of stuff
+        self.parent_object.animation[self.animation_index] = {}
+        self.parent_object.animation[self.animation_index]["position"] = {"path": []}
+        self.parent_object.animation[self.animation_index]["modules"] = {}
+        self.parent_object.animation[self.animation_index]["animation"] = {}
 
     # Override current animation index we're working on into new index
-    def set_animation_index(self, n: int) -> None:
+    def set_animation_index(self, n: int, depth = NO_DEPTH) -> None:
+        debug_prefix = "[MMVImageConfigure.set_animation_index]"
+        ndepth = depth + NEXT_DEPTH
+
         self.animation_index = n
 
     # How much steps in this animation  
     def set_this_animation_steps(self, steps: float) -> None:
-        self.object.animation[self.animation_index]["animation"]["steps"] = steps
+        self.parent_object.animation[self.animation_index]["animation"]["steps"] = steps
 
     # Work on next animation index from the current one
     def next_animation_index(self) -> None:
@@ -73,7 +102,7 @@ class MMVImageConfigure:
     # Resize this Image (doesn't work with Video) to this resolution
     # kwargs: { "width": float, "height": float, "override": bool, False }
     def resize_image_to_resolution(self, **kwargs) -> None:
-        self.object.image.resize_to_resolution(
+        self.parent_object.image.resize_to_resolution(
             width = kwargs["width"],
             height = kwargs["height"],
             override = kwargs.get("override", False)
@@ -83,8 +112,8 @@ class MMVImageConfigure:
     # Over resizes mainly because Shake modifier
     def resize_image_to_video_resolution(self, **kwargs) -> None:
         self.resize_image_to_resolution(
-            width = self.object.mmv.context.width + kwargs.get("over_resize_width", 0),
-            height = self.object.mmv.context.height + kwargs.get("over_resize_height", 0),
+            width = self.parent_object.mmv_main.context.width + kwargs.get("over_resize_width", 0),
+            height = self.parent_object.mmv_main.context.height + kwargs.get("over_resize_height", 0),
             override = kwargs.get("override", True)
         )
 
@@ -102,7 +131,7 @@ class MMVImageConfigure:
     }
     """
     def add_module_video(self, **kwargs):
-        self.object.animation[self.animation_index]["modules"]["video"] = {
+        self.parent_object.animation[self.animation_index]["modules"]["video"] = {
             "path": kwargs["path"],
             "width": kwargs["width"] + kwargs.get("over_resize_width", 0),
             "height": kwargs["height"] + kwargs.get("over_resize_height", 0),
@@ -117,9 +146,9 @@ class MMVImageConfigure:
     }
     """
     def add_path_point(self, **kwargs) -> None:
-        self.object.animation[self.animation_index]["position"]["path"].append(
+        self.parent_object.animation[self.animation_index]["position"]["path"].append(
             MMVModifierPoint(
-                self.mmv,
+                self.mmv_main,
                 y = kwargs["y"], x = kwargs["x"],
             )
         )
@@ -134,16 +163,16 @@ class MMVImageConfigure:
     }
     """
     def simple_add_path_modifier_shake(self, **kwargs) -> None:
-        self.object.animation[self.animation_index]["position"]["path"].append(
+        self.parent_object.animation[self.animation_index]["position"]["path"].append(
             MMVModifierShake(
-                self.mmv,
+                self.mmv_main,
                 interpolation_x = MMVInterpolation(
-                    self.mmv,
+                    self.mmv_main,
                     function = "remaining_approach",
                     ratio = kwargs["x_smoothness"],
                 ),
                 interpolation_y = MMVInterpolation(
-                    self.mmv,
+                    self.mmv_main,
                     function = "remaining_approach",
                     ratio = kwargs["y_smoothness"],
                 ),
@@ -157,9 +186,9 @@ class MMVImageConfigure:
     Adds a MMVVectorial with configs on kwargs (piano roll, progression bar, music bars)
     """
     def add_vectorial_by_kwargs(self, **kwargs):
-        self.object.animation[self.animation_index]["modules"]["vectorial"] = {
+        self.parent_object.animation[self.animation_index]["modules"]["vectorial"] = {
             "object": MMVVectorial(
-                self.object.mmv,
+                self.parent_object.mmv_main,
                 **kwargs,
             )
         }
@@ -212,11 +241,11 @@ class MMVImageConfigure:
     }
     """
     def add_module_resize(self, **kwargs) -> None:
-        self.object.animation[self.animation_index]["modules"]["resize"] = {
+        self.parent_object.animation[self.animation_index]["modules"]["resize"] = {
             "object": MMVModifierScalarResize(
-                self.mmv,
+                self.mmv_main,
                 interpolation = MMVInterpolation(
-                    self.mmv,
+                    self.mmv_main,
                     function = "remaining_approach",
                     ratio = kwargs["smooth"],
                 ),
@@ -237,11 +266,11 @@ class MMVImageConfigure:
     }
     """
     def add_module_blur(self, **kwargs) -> None:
-        self.object.animation[self.animation_index]["modules"]["blur"] = {
+        self.parent_object.animation[self.animation_index]["modules"]["blur"] = {
             "object": MMVModifierGaussianBlur(
-                self.mmv,
+                self.mmv_main,
                 interpolation = MMVInterpolation(
-                    self.mmv,
+                    self.mmv_main,
                     function = "remaining_approach",
                     ratio = kwargs["smooth"],
                 ),
@@ -263,8 +292,8 @@ class MMVImageConfigure:
     }
     """
     def add_module_swing_rotation(self, **kwargs) -> None:
-        self.object.animation[self.animation_index]["modules"]["rotate"] = {
-            "object": MMVModifierSineSwing(self.mmv, **kwargs)
+        self.parent_object.animation[self.animation_index]["modules"]["rotate"] = {
+            "object": MMVModifierSineSwing(self.mmv_main, **kwargs)
         }
 
 
@@ -276,8 +305,8 @@ class MMVImageConfigure:
     }
     """
     def add_module_linear_rotation(self, **kwargs) -> None:
-        self.object.animation[self.animation_index]["modules"]["rotate"] = {
-            "object": MMVModifierLinearSwing(self.mmv, **kwargs)
+        self.parent_object.animation[self.animation_index]["modules"]["rotate"] = {
+            "object": MMVModifierLinearSwing(self.mmv_main, **kwargs)
         }
 
 
@@ -291,11 +320,11 @@ class MMVImageConfigure:
     }
     """
     def add_module_vignetting(self, **kwargs) -> None:
-        self.object.animation[self.animation_index]["modules"]["vignetting"] = {
+        self.parent_object.animation[self.animation_index]["modules"]["vignetting"] = {
             "object": MMVModifierVignetting(
-                self.mmv,
+                self.mmv_main,
                 interpolation = MMVInterpolation(
-                    self.mmv,
+                    self.mmv_main,
                     function = "remaining_approach",
                     ratio = kwargs["smooth"],
                 ),
@@ -310,7 +339,7 @@ class MMVImageConfigure:
     def add_module(self, module: dict) -> None:
         module_name = list(module.keys())[0]
         print("Adding module", module, module_name)
-        self.object.animation[self.animation_index]["modules"][module_name] = module[module_name]
+        self.parent_object.animation[self.animation_index]["modules"][module_name] = module[module_name]
 
 
 
@@ -329,13 +358,13 @@ class MMVImageConfigure:
         self.add_module({
             "vignetting": {
                 "object": MMVModifierVignetting(
-                    context=self.mmv.context,
+                    context=self.mmv_main.context,
                     minimum=minimum,
                     center_function_x=center_function_x,
                     center_function_y=center_function_y,
                     interpolation_changer=interpolation_changer,
                     interpolation = MMVInterpolation(
-                        self.mmv,
+                        self.mmv_main,
                         function = "remaining_approach",
                         ratio = smooth,
                     ),
@@ -366,8 +395,8 @@ class MMVImageConfigure:
             sys.exit(-1)
 
         if center == "centered":
-            center_function_x = MMVModifierConstant(self.mmv, value = self.object.image.width // 2)
-            center_function_y = MMVModifierConstant(self.mmv, value = self.object.image.height // 2)
+            center_function_x = MMVModifierConstant(self.mmv_main, value = self.parent_object.image.width // 2)
+            center_function_y = MMVModifierConstant(self.mmv_main, value = self.parent_object.image.height // 2)
 
         self.add_module_vignetting(
             minimum = 450,

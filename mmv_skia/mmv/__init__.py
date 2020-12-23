@@ -19,7 +19,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.cmn_constants import NEXT_DEPTH, NO_DEPTH
+from mmv.common.cmn_constants import NEXT_DEPTH, ROOT_DEPTH, NO_DEPTH
 from mmv.mmv_generator import MMVParticleGenerator
 from mmv.pygradienter.pyg_main import PyGradienter
 from mmv.mmv_generator import MMVGenerator
@@ -42,7 +42,7 @@ import os
 class MMVInterface:
 
     # Hello world!
-    def greeter_message(self, depth = NO_DEPTH) -> None:
+    def greeter_message(self, depth = ROOT_DEPTH) -> None:
         debug_prefix = "[MMVInterface.greeter_message]"
         ndepth = depth + NEXT_DEPTH
 
@@ -67,7 +67,7 @@ f"""{"-"*self.terminal_width}
         print(message)
 
     # Start default configs, creates wrapper classes
-    def __init__(self, depth = "", **kwargs) -> None:
+    def __init__(self, depth = ROOT_DEPTH, **kwargs) -> None:
         debug_prefix = "[MMVInterface.__init__]"
         ndepth = depth + NEXT_DEPTH
 
@@ -84,7 +84,7 @@ f"""{"-"*self.terminal_width}
         if getattr(sys, 'frozen', True):    
             self.ROOT = os.path.dirname(os.path.abspath(__file__))
             print(debug_prefix, "Running directly from source code")
-            print(debug_prefix, f"Modular Music Visualizer Python package aio_enhancer [__init__.py] located at [{self.ROOT}]")
+            print(debug_prefix, f"Modular Music Visualizer Python package [__init__.py] located at [{self.ROOT}]")
         else:
             self.ROOT = os.path.dirname(os.path.abspath(sys.executable))
             print(debug_prefix, "Running from release (sys.executable..?)")
@@ -110,7 +110,7 @@ f"""{"-"*self.terminal_width}
         # Start the logging global class, output to file and stdout
         logging.basicConfig(
             level = logging.DEBUG,
-            format = "[%(levelname)-7s] [%(filename)-15s:%(lineno)-3d] %(message)s",
+            format = "[%(levelname)-7s] [%(filename)-32s:%(lineno)-3d] %(message)s",
             handlers = [log_to_file_handler, log_to_stdout_handler],
         )
 
@@ -154,8 +154,8 @@ f"""{"-"*self.terminal_width}
         }.get(os.name)
 
         # Log which OS we're running
-        logging.info(f"{depth}{debug_prefix} Running Modular Music Visualizer Enhancer on OS: [{self.os}]")
-        logging.info(f"{depth}{debug_prefix} os.path.sep is [{os.path.sep}]")
+        logging.info(f"{depth}{debug_prefix} Running Modular Music Visualizer on Operating System: [{self.os}]")
+        logging.info(f"{depth}{debug_prefix} (os.path.sep) is [{os.path.sep}]")
 
         # # # Create MMV classes and stuff
 
@@ -176,10 +176,9 @@ f"""{"-"*self.terminal_width}
         self.mmv_main.context.pixel_format = kwargs.get("pixel_format", "auto")
         self.mmv_main.context.audio_amplitude_multiplier = kwargs.get("audio_amplitude_multiplier", 1)
         self.mmv_main.context.skia_render_backend = kwargs.get("render_backend", "gpu")
- 
 
     # Execute MMV with the configurations we've done
-    def run(self, depth = NO_DEPTH) -> None:
+    def run(self, depth = ROOT_DEPTH) -> None:
         debug_prefix = "[MMVInterface.run]"
         ndepth = depth + NEXT_DEPTH
 
@@ -190,7 +189,7 @@ f"""{"-"*self.terminal_width}
         self.mmv_main.run()
 
     # Define output video width, height and frames per second, defaults to 720p60
-    def quality(self, width: int = 1280, height: int = 720, fps: int = 60, batch_size = 2048, depth = NO_DEPTH) -> None:
+    def quality(self, width: int = 1280, height: int = 720, fps: int = 60, batch_size = 2048, depth = ROOT_DEPTH) -> None:
         debug_prefix = "[MMVInterface.quality]"
         ndepth = depth + NEXT_DEPTH
         
@@ -210,7 +209,7 @@ f"""{"-"*self.terminal_width}
         self.mmv_main.canvas.create_canvas()
 
     # Set the input audio file, raise exception if it does not exist
-    def input_audio(self, path: str, depth = NO_DEPTH) -> None:
+    def input_audio(self, path: str, depth = ROOT_DEPTH) -> None:
         debug_prefix = "[MMVInterface.input_audio]"
         ndepth = depth + NEXT_DEPTH
 
@@ -219,7 +218,7 @@ f"""{"-"*self.terminal_width}
         self.mmv_main.context.input_file = self.get_absolute_path(path, depth = ndepth)
     
     # Set the input audio file, raise exception if it does not exist
-    def input_midi(self, path: str, depth = NO_DEPTH) -> None:
+    def input_midi(self, path: str, depth = ROOT_DEPTH) -> None:
         debug_prefix = "[MMVInterface.input_midi]"
         ndepth = depth + NEXT_DEPTH
 
@@ -228,7 +227,7 @@ f"""{"-"*self.terminal_width}
         self.mmv_main.context.input_midi = self.get_absolute_path(path, depth = ndepth)
     
     # Output path where we'll be saving the final video
-    def output_video(self, path: str, depth = NO_DEPTH) -> None:
+    def output_video(self, path: str, depth = ROOT_DEPTH) -> None:
         debug_prefix = "[MMVInterface.output_video]"
         ndepth = depth + NEXT_DEPTH
 
@@ -237,7 +236,7 @@ f"""{"-"*self.terminal_width}
         self.mmv_main.context.output_video = self.utils.get_abspath(path, depth = ndepth)
     
     # Offset where we cut the audio for processing, mainly for interpolation latency compensation
-    def offset_audio_steps(self, steps: int = 0, depth = NO_DEPTH):
+    def offset_audio_steps(self, steps: int = 0, depth = ROOT_DEPTH):
         debug_prefix = "[MMVInterface.offset_audio_steps]"
         ndepth = depth + NEXT_DEPTH
 
@@ -248,7 +247,7 @@ f"""{"-"*self.terminal_width}
     # # [ MMV Objects ] # #
     
     # Add a given object to MMVAnimation content on a given layer
-    def add(self, item, layer: int = 0, depth = NO_DEPTH) -> None:
+    def add(self, item, layer: int = 0, depth = ROOT_DEPTH) -> None:
         debug_prefix = "[MMVInterface.add]"
         ndepth = depth + NEXT_DEPTH
 
@@ -266,7 +265,7 @@ f"""{"-"*self.terminal_width}
             self.mmv_main.mmv_animation.generators.append(item)
 
     # Get a blank MMVImage object with the first animation layer build up
-    def image_object(self, depth = NO_DEPTH) -> MMVImage:
+    def image_object(self, depth = ROOT_DEPTH) -> MMVImage:
         debug_prefix = "[MMVInterface.image_object]"
         ndepth = depth + NEXT_DEPTH
 
@@ -281,7 +280,7 @@ f"""{"-"*self.terminal_width}
         return mmv_image_object
 
     # Get a blank MMVGenerator object
-    def generator_object(self, depth = NO_DEPTH):
+    def generator_object(self, depth = ROOT_DEPTH):
         debug_prefix = "[MMVInterface.generator_object]"
         ndepth = depth + NEXT_DEPTH
 
@@ -294,7 +293,7 @@ f"""{"-"*self.terminal_width}
     # # [ Utilities ] # #
 
     # Random file from a given path directory (loading random backgrounds etc)
-    def random_file_from_dir(self, path, depth = NO_DEPTH):
+    def random_file_from_dir(self, path, depth = ROOT_DEPTH):
         debug_prefix = "[MMVInterface.random_file_from_dir]"
         ndepth = depth + NEXT_DEPTH
 
@@ -303,7 +302,7 @@ f"""{"-"*self.terminal_width}
         return self.utils.random_file_from_dir(self.utils.get_abspath(path, depth = ndepth), depth = ndepth)
 
     # Make the directory if it doesn't exist
-    def make_directory_if_doesnt_exist(self, path: str, depth = NO_DEPTH, silent = True) -> None:
+    def make_directory_if_doesnt_exist(self, path: str, depth = ROOT_DEPTH, silent = True) -> None:
         debug_prefix = "[MMVInterface.make_directory_if_doesnt_exist]"
         ndepth = depth + NEXT_DEPTH
 
@@ -315,7 +314,7 @@ f"""{"-"*self.terminal_width}
         self.utils.mkdir_dne(path, depth = ndepth)
     
     # Make the directory if it doesn't exist
-    def delete_directory(self, path: str, depth = NO_DEPTH, silent = False) -> None:
+    def delete_directory(self, path: str, depth = ROOT_DEPTH, silent = False) -> None:
         debug_prefix = "[MMVInterface.delete_directory]"
         ndepth = depth + NEXT_DEPTH
 
@@ -327,7 +326,7 @@ f"""{"-"*self.terminal_width}
         self.utils.rmdir(path, depth = ndepth)
 
     # Get the absolute path to a file or directory, absolute starts with / on *nix and LETTER:// on Windows
-    def get_absolute_path(self, path, message = "path", depth = NO_DEPTH):
+    def get_absolute_path(self, path, message = "path", depth = ROOT_DEPTH):
         debug_prefix = "[MMVInterface.get_absolute_path]"
         ndepth = depth + NEXT_DEPTH
 
@@ -348,7 +347,7 @@ f"""{"-"*self.terminal_width}
     # # [ Experiments / sub projects ] # #
 
     # Get a pygradienter object with many workers for rendering
-    def pygradienter(self, depth = NO_DEPTH, **kwargs):
+    def pygradienter(self, depth = ROOT_DEPTH, **kwargs):
         debug_prefix = "[MMVInterface.pygradienter]"
         ndepth = depth + NEXT_DEPTH
 
@@ -360,7 +359,7 @@ f"""{"-"*self.terminal_width}
     # # [ QOL ] # #
 
     # Make sure we have FFmpeg on Windows
-    def download_check_ffmpeg(self, making_release = False, depth = NO_DEPTH):
+    def download_check_ffmpeg(self, making_release = False, depth = ROOT_DEPTH):
         debug_prefix = "[MMVInterface.download_check_ffmpeg]"
 
         # Temporary directory if needed
@@ -421,7 +420,7 @@ f"""{"-"*self.terminal_width}
             Don't ask the user if they want to run the mkdir and ln commands
     }
     """
-    def download_and_link_freepats_general_midi_soundfont(self, depth = NO_DEPTH, **kwargs):
+    def download_and_link_freepats_general_midi_soundfont(self, depth = ROOT_DEPTH, **kwargs):
         debug_prefix = "[MMVInterface.download_and_link_midi_soundfont]"
         ndepth = depth + NEXT_DEPTH
 

@@ -78,6 +78,9 @@ class MMVContext:
         ndepth = depth + NEXT_DEPTH
         self.mmv_main = mmv_main
 
+        # TODO: Load from config file
+        self.HARD_DEBUG = True
+
         # Create classes
         logging.info(f"{depth}{debug_prefix} Creating MMVPath() class")
         self.paths = MMVPath(self.mmv_main, ndepth)

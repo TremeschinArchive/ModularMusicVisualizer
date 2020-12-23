@@ -56,7 +56,7 @@ class MMVMain:
         self.utils = Utils()
 
         logging.info(f"{depth}{debug_prefix} Creating MMVContext() class")
-        self.context = MMVContext(self)
+        self.context = MMVContext(mmv_main = self, depth = ndepth)
 
         logging.info(f"{depth}{debug_prefix} Creating SkiaNoWindowBackend() class")
         self.skia = SkiaNoWindowBackend()
