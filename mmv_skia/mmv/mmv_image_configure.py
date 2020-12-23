@@ -46,7 +46,8 @@ class MMVImageConfigure:
         debug_prefix = "[MMVImageConfigure.load_image]"
         ndepth = depth + NEXT_DEPTH
 
-        logging.info(f"{depth}{debug_prefix} [{self.identifier}] Loading from image path [{path}]")
+        # Log action
+        logging.info(f"{depth}{debug_prefix} [{self.identifier}] Loading image from path [{path}]")
 
         # Fail safe get the abspath and 
         self.parent_object.image.load_from_path(
@@ -67,7 +68,7 @@ class MMVImageConfigure:
 
         # Reset animation layer and set an infinite amount of steps
         self.start_or_reset_this_animation(depth = ndepth)
-        self.set_this_animation_steps(steps = math.inf)  # We start with infinite steps in the case this is one constant thingy
+        self.set_this_animation_steps(steps = math.inf, depth = ndepth)
 
     # Make an empty animation layer according to this animation index, dictionaries, RESETS EVERYTHING
     def start_or_reset_this_animation(self, depth = NO_DEPTH) -> None:
@@ -90,7 +91,14 @@ class MMVImageConfigure:
         self.animation_index = n
 
     # How much steps in this animation  
-    def set_this_animation_steps(self, steps: float) -> None:
+    def set_this_animation_steps(self, steps: float, depth = NO_DEPTH) -> None:
+        debug_prefix = "[MMVImageConfigure.start_or_reset_this_animation]"
+        ndepth = depth + NEXT_DEPTH
+
+        # Hard debug
+        if self.mmv_main.context.HARD_DEBUG:
+            logging.debug(f"{depth}{debug_prefix} [{self.identifier}] This animation N = [{self.animation_index}] will have [{steps}] steps")
+
         self.parent_object.animation[self.animation_index]["animation"]["steps"] = steps
 
     # Work on next animation index from the current one

@@ -71,7 +71,7 @@ class MMVMain:
         self.polar_coordinates = PolarCoordinates()
 
         logging.info(f"{depth}{debug_prefix} Creating Canvas() class")
-        self.canvas = MMVImage(self)
+        self.canvas = MMVImage(mmv_main = self, depth = ndepth)
 
         logging.info(f"{depth}{debug_prefix} Creating Fourier() class")
         self.fourier = Fourier()
@@ -86,7 +86,7 @@ class MMVMain:
         self.audio_processing = AudioProcessing()
 
         logging.info(f"{depth}{debug_prefix} Creating MMVAnimation() class")
-        self.mmv_animation = MMVAnimation(self)
+        self.mmv_animation = MMVAnimation(mmv_main = self, depth = ndepth)
     
         logging.info(f"{depth}{debug_prefix} Creating Core() class")
         self.core = Core(self)

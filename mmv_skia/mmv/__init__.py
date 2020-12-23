@@ -112,6 +112,14 @@ f"""{"-"*self.terminal_width}
 
         # # We can now set up logging as we have where this file is located at
 
+        # # Reset current handlers if any
+        
+        print(f"{depth}{debug_prefix} Resetting Python's logging logger handlers to empty list")
+
+        # Get logger and empty the list
+        logger = logging.getLogger()
+        logger.handlers = []
+
         # Handlers on logging to file and shell output, the first one if the user says to
         handlers = [logging.StreamHandler(sys.stdout)]
 
@@ -232,7 +240,7 @@ f"""{"-"*self.terminal_width}
 
         # Create or reset a mmv canvas with that target resolution
         logging.info(f"{depth}{debug_prefix} Creating / resetting canvas with that width and height")
-        self.mmv_main.canvas.create_canvas()
+        self.mmv_main.canvas.create_canvas(depth = ndepth)
 
     # Set the input audio file, raise exception if it does not exist
     def input_audio(self, path: str, depth = ROOT_DEPTH) -> None:
@@ -368,7 +376,7 @@ f"""{"-"*self.terminal_width}
 
     # If we ever need any unique id..? shorter than uuid4?
     def get_unique_id(self):
-        return self.utils.get_string_md5(str(uuid.uuid4()))
+        return self.utils.get_unique_id()
 
     # # [ Experiments / sub projects ] # #
 
