@@ -1,5 +1,12 @@
 """
 ===============================================================================
+                                GPL v3 License                                
+===============================================================================
+
+Copyright (c) 2020,
+  - Tremeschin < https://tremeschin.gitlab.io > 
+
+===============================================================================
 
 Purpose: Global variables / settings across files
 
@@ -19,16 +26,68 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH
+import logging
+import sys
 import os
 
 
+class MMVPath:
+    def __init__(self, mmv_main, depth = LOG_NO_DEPTH):
+        debug_prefix = "[MMVPath.__init__]"
+        ndepth = depth + LOG_NEXT_DEPTH
+        self.mmv_main = mmv_main
+
+        # The root directory we'll be refering to, it's the folder where __init__.py is located
+        # We need to get the mmv_main's interface class position as the "package mmv" is the interface itself
+        self.ROOT = self.mmv_main.interface.ROOT
+
+        # Path separator
+        sep = os.path.sep
+
+        # # Externals directory (ffmpeg binaries mainly on Windows)
+        
+        # Define it
+        self.externals_dir = f"{self.ROOT}{sep}externals"
+        logging.info(f"{depth}{debug_prefix} Externals folder path is: [{self.externals_dir}]")
+            
+        # Make the directory if it doesn't exist
+        logging.info(f"{depth}{debug_prefix} Make directory if doesn't exist Externals Directory")
+        self.mmv_main.utils.mkdir_dne(self.externals_dir, depth = ndepth)
+
+        # Append to PATH the 
+        logging.info(f"{depth}{debug_prefix} Appending Externals Directory to system PATH environment variable")
+        sys.path.append(self.externals_dir)
+
+        # # Data directory (configurations)
+
+        self.data_dir = f"{self.ROOT}{sep}data"
+        logging.info(f"{depth}{debug_prefix} Data folder path is: [{self.data_dir}]")
+
+        # # Error assertion the directories
+
+        self.error_assertion(depth = ndepth)
+
+    # Make sure the directories and files we'll need exist (required ones)
+    def error_assertion(self, depth = LOG_NO_DEPTH):
+        debug_prefix = "[MMVPath.error_assertion]"
+        ndepth = depth + LOG_NEXT_DEPTH
+
+        # # Directories
+        
+        self.mmv_main.utils.assert_dir(self.data_dir, depth = ndepth)
+        self.mmv_main.utils.assert_dir(self.externals_dir, depth = ndepth)
+        
+
 class MMVContext:
-    def __init__(self, mmv) -> None:
+    def __init__(self, mmv_main, depth = LOG_NO_DEPTH) -> None:
+        debug_prefix = "[MMVContext.__init__]"
+        ndepth = depth + LOG_NEXT_DEPTH
+        self.mmv_main = mmv_main
 
-        self.mmv = mmv
-
-        # Utils class and ROOT dir
-        self.ROOT = os.path.dirname(os.path.abspath(__file__))
+        # Create classes
+        logging.info(f"{depth}{debug_prefix} Creating MMVPath() class")
+        self.paths = MMVPath(self.mmv_main, ndepth)
 
         # Files, info
         self.output_video = None
@@ -37,8 +96,7 @@ class MMVContext:
         self.duration = None
 
         # External dependencies directory
-        self.externals = self.ROOT + "/externals"
-        self.data_dir = self.ROOT + "/data"
+        self.data_dir = self.paths.ROOT + "/data"
 
         # Video specs
         self.width = 1280

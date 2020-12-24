@@ -1,5 +1,12 @@
 """
 ===============================================================================
+                                GPL v3 License                                
+===============================================================================
+
+Copyright (c) 2020,
+  - Tremeschin < https://tremeschin.gitlab.io > 
+
+===============================================================================
 
 Purpose: MIDI file utilities for reading, organizing, sorting information
 
@@ -21,6 +28,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from mmv.common.cmn_utils import DataUtils
 from midi2audio import FluidSynth
+import mmv.common.cmn_any_logger
 import mido
 import copy
 import os
