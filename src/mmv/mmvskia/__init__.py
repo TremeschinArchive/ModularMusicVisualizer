@@ -31,11 +31,11 @@ print("[__init__.py] Importing MMV package files, this might take a while from t
 from mmv.common.cmn_constants import LOG_NEXT_DEPTH, PACKAGE_DEPTH, LOG_NO_DEPTH, LOG_SEPARATOR, STEP_SEPARATOR
 from mmv.mmvskia.pygradienter.pyg_main import PyGradienter
 from mmv.mmvskia.mmv_generator import MMVSkiaGenerator
-from mmv.common.cmn_midi import MidiFile
-from mmv.common.cmn_utils import Utils
 from mmv.mmvskia.mmv_image import MMVSkiaImage
 print("[__init__.py] Importing probably heaviest dependency [MMVSkiaMain], Skia might take a bit to load so does numpy, opencv etc..")
 from mmv.mmvskia.mmv_main import MMVSkiaMain
+from mmv.common.cmn_midi import MidiFile
+from mmv.common.cmn_utils import Utils
 import subprocess
 import tempfile
 import logging
@@ -51,7 +51,7 @@ import os
 # Main wrapper class for the end user, facilitates MMV in a whole
 class MMVSkiaInterface:
 
-    def __init__(self, interface, depth = LOG_NO_DEPTH):
+    def __init__(self, interface, depth = LOG_NO_DEPTH, **kwargs):
         debug_prefix = "[MMVSkiaInterface.__init__]"
         ndepth = depth + LOG_NEXT_DEPTH
         self.interface = interface
@@ -84,10 +84,10 @@ class MMVSkiaInterface:
         self.post_processing = self.mmv_main.canvas.configure
 
         # Has the user chosen to watch the processing video realtime?
-        # self.mmv_main.context.watch_processing_video_realtime = kwargs.get("watch_processing_video_realtime", False)
-        # self.mmv_main.context.pixel_format = kwargs.get("pixel_format", "auto")
-        # self.mmv_main.context.audio_amplitude_multiplier = kwargs.get("audio_amplitude_multiplier", 1)
-        # self.mmv_main.context.skia_render_backend = kwargs.get("render_backend", "gpu")
+        self.mmv_main.context.watch_processing_video_realtime = kwargs.get("watch_processing_video_realtime", False)
+        self.mmv_main.context.pixel_format = kwargs.get("pixel_format", "auto")
+        self.mmv_main.context.audio_amplitude_multiplier = kwargs.get("audio_amplitude_multiplier", 1)
+        self.mmv_main.context.skia_render_backend = kwargs.get("render_backend", "gpu")
 
         # Log a separator to mark the end of the __init__ phase
         logging.info(f"{depth}{debug_prefix} Initialize phase done!")

@@ -19,10 +19,12 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-import mmvshader
+import mmv
 import os
 
-mmv = mmvshader.MMVShaderMain()
+interface = mmv.MMVInterface()
+
+
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 

@@ -38,11 +38,19 @@ import os
 
 # Main wrapper class for the end user, facilitates MMV in a whole
 class MMVInterface:
-    def get_skia_interface(self, depth = LOG_NO_DEPTH):
+    def get_skia_interface(self, depth = LOG_NO_DEPTH, **kwargs):
         debug_prefix = "[MMVInterface.get_skia_interface]"
         ndepth = depth + LOG_NEXT_DEPTH
 
-        logging.info(f"{depth}{debug_prefix} Return MMVSkiaInterface")
+        logging.info(f"{depth}{debug_prefix} Get and return MMVSkiaInterface, kwargs: {kwargs}")
+        
+        return MMVSkiaInterface(self, **kwargs)
+    
+    def get_shader_interface(self, depth = LOG_NO_DEPTH):
+        debug_prefix = "[MMVInterface.get_shader_interface]"
+        ndepth = depth + LOG_NEXT_DEPTH
+
+        logging.info(f"{depth}{debug_prefix} Return MMVShaderInterface")
         
         return MMVSkiaInterface(self)
 

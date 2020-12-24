@@ -20,10 +20,10 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmvshader.mmv_shader_maker import MMVShaderMaker
-from mmvshader.mmv_shader_mpv import MMVShaderMPV
-from mmvshader.mmv_shader_context import Context
-from mmvshader.mmv_shader_utils import MMVUtils
+from mmv.mmvshader.mmv_shader_maker import MMVShaderMaker
+from mmv.mmvshader.mmv_shader_mpv import MMVShaderMPV
+from mmv.mmvshader.mmv_shader_context import Context
+from mmv.mmvshader.mmv_shader_utils import MMVUtils
 import shutil
 import math
 import sys
