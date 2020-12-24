@@ -26,16 +26,16 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.cmn_constants import NEXT_DEPTH, NO_DEPTH
+from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH
 import logging
 import sys
 import os
 
 
 class MMVPath:
-    def __init__(self, mmv_main, depth = NO_DEPTH):
+    def __init__(self, mmv_main, depth = LOG_NO_DEPTH):
         debug_prefix = "[MMVPath.__init__]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
         self.mmv_main = mmv_main
 
         # The root directory we'll be refering to, it's the folder where __init__.py is located
@@ -69,9 +69,9 @@ class MMVPath:
         self.error_assertion(depth = ndepth)
 
     # Make sure the directories and files we'll need exist (required ones)
-    def error_assertion(self, depth = NO_DEPTH):
+    def error_assertion(self, depth = LOG_NO_DEPTH):
         debug_prefix = "[MMVPath.error_assertion]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # # Directories
         
@@ -80,9 +80,9 @@ class MMVPath:
         
 
 class MMVContext:
-    def __init__(self, mmv_main, depth = NO_DEPTH) -> None:
+    def __init__(self, mmv_main, depth = LOG_NO_DEPTH) -> None:
         debug_prefix = "[MMVContext.__init__]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
         self.mmv_main = mmv_main
 
         # Create classes

@@ -27,7 +27,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.cmn_constants import NEXT_DEPTH, NO_DEPTH
+from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH
 from mmv.mmv_interpolation import MMVInterpolation
 from mmv.mmv_vectorial import MMVVectorial
 from mmv.mmv_modifiers import *
@@ -51,16 +51,16 @@ class MMVImageConfigure:
 
     # # # [ Load Image ] # # #
 
-    def load_image(self, path: str, depth = NO_DEPTH) -> None:
+    def load_image(self, path: str, depth = LOG_NO_DEPTH) -> None:
         debug_prefix = "[MMVImageConfigure.load_image]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Get absolute and real path
         path = self.mmv_main.utils.get_abspath(path, depth = ndepth, silent = not self.preludec["load_image"]["log_get_abspath"])
 
         # Log action
         if self.preludec["load_image"]["log_action"]:
-            logging.info(f"{ndepth}{debug_prefix} [{self.identifier}] Loading image from path [{path}]")
+            logging.info(f"{depth}{debug_prefix} [{self.identifier}] Loading image from path [{path}]")
 
         # Fail safe get the abspath and 
         self.parent_object.image.load_from_path(
@@ -70,27 +70,27 @@ class MMVImageConfigure:
     # # # [ Dealing with animation ] # # #
 
     # Macros for initializing this animation layer
-    def init_animation_layer(self, depth = NO_DEPTH) -> None:
+    def init_animation_layer(self, depth = LOG_NO_DEPTH) -> None:
         debug_prefix = "[MMVImageConfigure.init_animation_layer]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log info and run routine functions
         if self.preludec["init_animation_layer"]["log_action"]:
             logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Initializing animation layer")
 
-        ndepth += NEXT_DEPTH
+        ndepth += LOG_NEXT_DEPTH
 
         # Reset animation layer and set an infinite amount of steps
         self.start_or_reset_this_animation(depth = ndepth)
         self.set_this_animation_steps(steps = math.inf, depth = ndepth)
 
     # Make an empty animation layer according to this animation index, dictionaries, RESETS EVERYTHING
-    def start_or_reset_this_animation(self, depth = NO_DEPTH) -> None:
+    def start_or_reset_this_animation(self, depth = LOG_NO_DEPTH) -> None:
         debug_prefix = "[MMVImageConfigure.start_or_reset_this_animation]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         if self.preludec["start_or_reset_this_animation"]["log_action"]:
-            logging.info(f"{ndepth}{debug_prefix} [{self.identifier}] Reset the parent MMVImage object animation layers")
+            logging.info(f"{depth}{debug_prefix} [{self.identifier}] Reset the parent MMVImage object animation layers")
 
         # Emptry layer of stuff
         self.parent_object.animation[self.animation_index] = {}
@@ -99,9 +99,9 @@ class MMVImageConfigure:
         self.parent_object.animation[self.animation_index]["animation"] = {}
 
     # Override current animation index we're working on into new index
-    def set_animation_index(self, n: int, depth = NO_DEPTH) -> None:
+    def set_animation_index(self, n: int, depth = LOG_NO_DEPTH) -> None:
         debug_prefix = "[MMVImageConfigure.set_animation_index]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         if self.preludec["set_animation_index"]["log_action"]:
             logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Set animation index N = [{n}]")
@@ -109,9 +109,9 @@ class MMVImageConfigure:
         self.animation_index = n
 
     # How much steps in this animation  
-    def set_this_animation_steps(self, steps: float, depth = NO_DEPTH) -> None:
+    def set_this_animation_steps(self, steps: float, depth = LOG_NO_DEPTH) -> None:
         debug_prefix = "[MMVImageConfigure.set_this_animation_steps]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Hard debug
         if self.preludec["set_this_animation_steps"]["log_action"]:
@@ -127,9 +127,9 @@ class MMVImageConfigure:
 
     # Resize this Image (doesn't work with Video) to this resolution
     # kwargs: { "width": float, "height": float, "override": bool, False }
-    def resize_image_to_resolution(self, depth = NO_DEPTH, **kwargs) -> None:
+    def resize_image_to_resolution(self, depth = LOG_NO_DEPTH, **kwargs) -> None:
         debug_prefix = "[MMVImageConfigure.resize_image_to_resolution]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if self.preludec["resize_image_to_resolution"]["log_action"]:
@@ -143,9 +143,9 @@ class MMVImageConfigure:
 
     # kwargs: { "over_resize_width": float, 0, "over_resize_height": float, 0, "override": bool, True}
     # Over resizes mainly because Shake modifier
-    def resize_image_to_video_resolution(self, depth = NO_DEPTH, **kwargs) -> None:
+    def resize_image_to_video_resolution(self, depth = LOG_NO_DEPTH, **kwargs) -> None:
         debug_prefix = "[MMVImageConfigure.resize_image_to_video_resolution]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if self.preludec["resize_image_to_video_resolution"]["log_action"]:
@@ -170,9 +170,9 @@ class MMVImageConfigure:
             Adds to the width and height to resize a bit more, a bleed
     }
     """
-    def add_module_video(self, depth = NO_DEPTH, **kwargs):
+    def add_module_video(self, depth = LOG_NO_DEPTH, **kwargs):
         debug_prefix = "[MMVImageConfigure.add_module_video]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if self.preludec["add_module_video"]["log_action"]:
@@ -192,9 +192,9 @@ class MMVImageConfigure:
         y: float, Y coordinate
     }
     """
-    def add_path_point(self, depth = NO_DEPTH, **kwargs) -> None:
+    def add_path_point(self, depth = LOG_NO_DEPTH, **kwargs) -> None:
         debug_prefix = "[MMVImageConfigure.add_path_point]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if self.preludec["add_path_point"]["log_action"]:
@@ -216,9 +216,9 @@ class MMVImageConfigure:
             Remaining approach ratio
     }
     """
-    def simple_add_path_modifier_shake(self, depth = NO_DEPTH, **kwargs) -> None:
+    def simple_add_path_modifier_shake(self, depth = LOG_NO_DEPTH, **kwargs) -> None:
         debug_prefix = "[MMVImageConfigure.simple_add_path_modifier_shake]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if self.preludec["simple_add_path_modifier_shake"]["log_action"]:
@@ -246,9 +246,9 @@ class MMVImageConfigure:
     """     (MMVVectorial)
     Adds a MMVVectorial with configs on kwargs (piano roll, progression bar, music bars)
     """
-    def add_vectorial_by_kwargs(self, depth = NO_DEPTH, **kwargs):
+    def add_vectorial_by_kwargs(self, depth = LOG_NO_DEPTH, **kwargs):
         debug_prefix = "[MMVImageConfigure.add_vectorial_by_kwargs]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if self.preludec["add_vectorial_by_kwargs"]["log_action"]:
@@ -265,9 +265,9 @@ class MMVImageConfigure:
         Add a music bars visualizer module
     kwargs: configuration, see MMVMusicBarsVectorial class on MMVVectorial
     """
-    def add_module_visualizer(self, depth = NO_DEPTH, **kwargs) -> None:
+    def add_module_visualizer(self, depth = LOG_NO_DEPTH, **kwargs) -> None:
         debug_prefix = "[MMVImageConfigure.add_module_visualizer]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Talk to MMVVectorial, say this is a visualizer and add MMVVectorial
         kwargs["vectorial_type_class"] = "visualizer"
@@ -282,9 +282,9 @@ class MMVImageConfigure:
         Add a progression bar module
     kwargs: configuration, see MMVProgressionBarVectorial class on MMVVectorial
     """
-    def add_module_progression_bar(self, depth = NO_DEPTH, **kwargs) -> None:
+    def add_module_progression_bar(self, depth = LOG_NO_DEPTH, **kwargs) -> None:
         debug_prefix = "[MMVImageConfigure.add_module_progression_bar]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Talk to MMVVectorial, say this is a progression bar and add MMVVectorial
         kwargs["vectorial_type_class"] = "progression-bar"
@@ -299,9 +299,9 @@ class MMVImageConfigure:
         Add a piano roll module
     kwargs: configuration, see MMVPianoRollVectorial on MMVVectorial
     """
-    def add_module_piano_roll(self, depth = NO_DEPTH, **kwargs) -> None:
+    def add_module_piano_roll(self, depth = LOG_NO_DEPTH, **kwargs) -> None:
         debug_prefix = "[MMVImageConfigure.add_module_piano_roll]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Talk to MMVVectorial, say this is a piano roll and add MMVVectorial
         kwargs["vectorial_type_class"] = "piano-roll"
@@ -332,9 +332,9 @@ class MMVImageConfigure:
             4.5: high-plus
     }
     """
-    def add_module_resize(self, depth = NO_DEPTH, **kwargs)-> None:
+    def add_module_resize(self, depth = LOG_NO_DEPTH, **kwargs)-> None:
         debug_prefix = "[MMVImageConfigure.add_module_resize]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if self.preludec["add_module_resize"]["log_action"]:
@@ -364,9 +364,9 @@ class MMVImageConfigure:
             20: high
     }
     """
-    def add_module_blur(self, depth = NO_DEPTH, **kwargs)-> None:
+    def add_module_blur(self, depth = LOG_NO_DEPTH, **kwargs)-> None:
         debug_prefix = "[MMVImageConfigure.add_module_blur]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if self.preludec["add_module_blur"]["log_action"]:
@@ -397,9 +397,9 @@ class MMVImageConfigure:
         "phase": float, 0, start the sinewave with a certain phase in radians?
     }
     """
-    def add_module_swing_rotation(self, depth = NO_DEPTH, **kwargs)-> None:
+    def add_module_swing_rotation(self, depth = LOG_NO_DEPTH, **kwargs)-> None:
         debug_prefix = "[MMVImageConfigure.add_module_swing_rotation]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if self.preludec["add_module_swing_rotation"]["log_action"]:
@@ -417,9 +417,9 @@ class MMVImageConfigure:
         "phase": float, 0, start the sinewave with a certain phase in radians?
     }
     """
-    def add_module_linear_rotation(self, depth = NO_DEPTH, **kwargs)-> None:
+    def add_module_linear_rotation(self, depth = LOG_NO_DEPTH, **kwargs)-> None:
         debug_prefix = "[MMVImageConfigure.add_module_linear_rotation]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if self.preludec["add_module_linear_rotation"]["log_action"]:
@@ -439,9 +439,9 @@ class MMVImageConfigure:
         "smooth": float, how smooth changing values are on the interpolation
     }
     """
-    def add_module_vignetting(self, depth = NO_DEPTH, **kwargs)-> None:
+    def add_module_vignetting(self, depth = LOG_NO_DEPTH, **kwargs)-> None:
         debug_prefix = "[MMVImageConfigure.add_module_vignetting]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if self.preludec["add_module_vignetting"]["log_action"]:
