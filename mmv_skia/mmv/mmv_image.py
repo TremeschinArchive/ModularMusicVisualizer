@@ -26,7 +26,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.cmn_constants import NEXT_DEPTH, NO_DEPTH
+from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH
 from mmv.mmv_image_configure import MMVImageConfigure
 from mmv.common.cmn_frame import Frame
 from mmv.mmv_modifiers import *
@@ -38,15 +38,15 @@ import cv2
 
 # Basically everything on MMV as we have to render images
 class MMVImage:
-    def __init__(self, mmv_main, depth = NO_DEPTH) -> None:
+    def __init__(self, mmv_main, depth = LOG_NO_DEPTH) -> None:
         debug_prefix = "[MMVImage.__init__]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
         self.mmv_main = mmv_main
         self.preludec = self.mmv_main.prelude["mmvimage"]
 
         # Log the creation of this class
         if self.preludec["log_creation"]:
-            logging.info(f"{ndepth}{debug_prefix} Created new MMVImage object, getting unique identifier for it")
+            logging.info(f"{depth}{debug_prefix} Created new MMVImage object, getting unique identifier for it")
 
         # Get an unique identifier for this MMVImage object
         self.identifier = self.mmv_main.utils.get_unique_id(
@@ -81,9 +81,9 @@ class MMVImage:
         self._reset_effects_variables(depth = ndepth)
 
     # Clean this MMVImage's todo processing or applied
-    def _reset_effects_variables(self, depth = NO_DEPTH):
+    def _reset_effects_variables(self, depth = LOG_NO_DEPTH):
         debug_prefix = "[MMVImage._reset_effects_variables]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
         
         # Log action
         if self.preludec["_reset_effects_variables"]["log_action"]:
@@ -100,13 +100,13 @@ class MMVImage:
     # Our Canvas is an MMVImage object so we reset it, initialize the animation layers automatically, bla bla
     # we don't need the actual configuration from the user apart from post processing accesses by this
     # MMVImage's MMVImageConfigure class
-    def create_canvas(self, depth = NO_DEPTH) -> None:
+    def create_canvas(self, depth = LOG_NO_DEPTH) -> None:
         debug_prefix = "[MMVImage.create_canvas]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if self.preludec["create_canvas"]["log_action"]:
-            logging.info(f"{ndepth}{debug_prefix} [{self.identifier}] Create empty canvas (this ought be the video canvas?)")
+            logging.info(f"{depth}{debug_prefix} [{self.identifier}] Create empty canvas (this ought be the video canvas?)")
 
         # Will we be logging the steps?
         log_steps = self.preludec["create_canvas"]["log_steps"]
@@ -128,9 +128,9 @@ class MMVImage:
     
     # Create empty zeros canvas IMAGE, not CONTENTS.
     # If we ever wanna mirror the contents and apply post processing
-    def reset_canvas(self, depth = NO_DEPTH) -> None:
+    def reset_canvas(self, depth = LOG_NO_DEPTH) -> None:
         debug_prefix = "[MMVImage.reset_canvas]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Hard debug, this should be executed a lot and we don't wanna clutter the log file or stdout
         if self.preludec["reset_canvas"]["log_action"]:
@@ -140,9 +140,9 @@ class MMVImage:
         self.image.new(self.mmv_main.context.width, self.mmv_main.context.height)
 
     # Next step of animation
-    def next(self, depth = NO_DEPTH) -> None:
+    def next(self, depth = LOG_NO_DEPTH) -> None:
         debug_prefix = "[MMVImage.next]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Next step
         self.current_step += 1

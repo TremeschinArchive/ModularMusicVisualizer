@@ -26,7 +26,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.cmn_constants import NEXT_DEPTH, NO_DEPTH
+from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH, LOG_SEPARATOR
 import numpy as np
 import threading
 import logging
@@ -42,11 +42,12 @@ class MMVCore:
         self.prelude = self.mmv_main.prelude
 
     # Execute MMV, core loop
-    def run(self, depth = NO_DEPTH) -> None:
+    def run(self, depth = LOG_NO_DEPTH) -> None:
         debug_prefix = "[MMVCore.run]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
-        logging.info(f"{ndepth}{debug_prefix} Executing MMVCore.run()")
+        logging.info(LOG_SEPARATOR)
+        logging.info(f"{depth}{debug_prefix} Executing MMVCore.run()")
 
         # Quit if code flow says so
         if self.prelude["flow"]["stop_at_mmv_core_run"]:
@@ -54,7 +55,7 @@ class MMVCore:
             sys.exit(0)
 
         # Create the pipe write thread
-        logging.info(f"{ndepth}{debug_prefix} Creating pipe writer thread")
+        logging.info(f"{depth}{debug_prefix} Creating pipe writer thread")
         self.pipe_writer_loop_thread = threading.Thread(
             target = self.mmv_main.ffmpeg.pipe_writer_loop,
             args = (self.mmv_main.audio.duration,),
@@ -62,15 +63,15 @@ class MMVCore:
         )
 
         # Start the thread to write images onto FFmpeg
-        logging.info(f"{ndepth}{debug_prefix} Starting pipe writer thread")
+        logging.info(f"{depth}{debug_prefix} Starting pipe writer thread")
         self.pipe_writer_loop_thread.start()
         
         # How many steps is the audio duration times the frames per second
         self.mmv_main.context.total_steps = int(self.mmv_main.audio.duration * self.mmv_main.context.fps)
-        logging.info(f"{ndepth}{debug_prefix} Total steps: {self.mmv_main.context.total_steps}")
+        logging.info(f"{depth}{debug_prefix} Total steps: {self.mmv_main.context.total_steps}")
 
         # Init Skia
-        logging.info(f"{ndepth}{debug_prefix} Init Skia")
+        logging.info(f"{depth}{debug_prefix} Init Skia")
         self.mmv_main.skia.init(
             width = self.mmv_main.context.width,
             height = self.mmv_main.context.height,
@@ -78,11 +79,11 @@ class MMVCore:
         )
 
         # Update info that might have been changed by the user
-        logging.info(f"{ndepth}{debug_prefix} Update Context bases")
+        logging.info(f"{depth}{debug_prefix} Update Context bases")
         self.mmv_main.context.update_biases()
 
         # Main routine
-        logging.info(f"{ndepth}{debug_prefix} Start main routine")
+        logging.info(f"{depth}{debug_prefix} Start main routine")
         for step in range(0, self.mmv_main.context.total_steps):
 
             # The "raw" frame index we're at
@@ -156,5 +157,5 @@ class MMVCore:
             self.mmv_main.ffmpeg.write_to_pipe(global_frame_index, next_image)
 
         # End pipe
-        logging.info(f"{ndepth}{debug_prefix} Call to close pipe, let it wait until it's done")
+        logging.info(f"{depth}{debug_prefix} Call to close pipe, let it wait until it's done")
         self.mmv_main.ffmpeg.close_pipe()

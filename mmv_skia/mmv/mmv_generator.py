@@ -27,14 +27,14 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmv.generators.mmv_particle_generator import MMVParticleGenerator
-from mmv.common.cmn_constants import NEXT_DEPTH, ROOT_DEPTH, NO_DEPTH
+from mmv.common.cmn_constants import LOG_NEXT_DEPTH, ROOT_DEPTH, LOG_NO_DEPTH
 import logging
 
 
 class MMVGenerator:
-    def __init__(self, mmv_main, depth = NO_DEPTH) -> None:
+    def __init__(self, mmv_main, depth = LOG_NO_DEPTH) -> None:
         debug_prefix = "[MMVGenerator.__init__]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
         self.mmv_main = mmv_main
 
         # Log the creation of this class
@@ -53,9 +53,9 @@ class MMVGenerator:
         return self.generator.next()
 
     # Set a particle generator object
-    def particle_generator(self, depth = NO_DEPTH, **kwargs) -> None:
+    def particle_generator(self, depth = LOG_NO_DEPTH, **kwargs) -> None:
         debug_prefix = "[MMVGenerator.particle_generator]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         logging.info(f"{depth}{debug_prefix} [{self.identifier}] Setting this generator object to MMVParticleGenerator with kwargs: {kwargs}")
 
