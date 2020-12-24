@@ -12,7 +12,7 @@ log_format = "pretty"  # pretty, economic, onlymessage
 
 # Stop code at some specific point?
 [flow]
-stop_at_interface_init = true
+stop_at_interface_init = false
 stop_at_mmv_core_run = false
 
 # # Logging
