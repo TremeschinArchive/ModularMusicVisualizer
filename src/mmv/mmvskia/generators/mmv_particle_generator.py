@@ -29,8 +29,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from mmv.mmvskia.mmv_modifiers import MMVSkiaModifierMode, MMVSkiaModifierLine, MMVSkiaModifierPoint, MMVSkiaModifierShake, MMVSkiaModifierFade
 from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH
 from mmv.mmvskia.mmv_interpolation import MMVSkiaInterpolation
-from mmv.common.cmn_utils import Utils
 from mmv.mmvskia.mmv_image import MMVSkiaImage
+from mmv.common.cmn_utils import Utils
 import random
 import copy
 import math
