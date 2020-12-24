@@ -30,6 +30,12 @@ stop_at_mmv_core_run = false
         log_modulators = false
         log_next_steps = false
 
+[mmvgenerator]
+    log_creation = true
+    log_get_unique_id = true
+    [mmvgenerator.particle_generator]
+        log_action = true
+    
 [mmvanimation]
     log_creation = true
     [mmvanimation.mklayers_until]

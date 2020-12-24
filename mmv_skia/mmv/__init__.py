@@ -35,6 +35,7 @@ from mmv.mmv_generator import MMVGenerator
 from mmv.common.cmn_midi import MidiFile
 from mmv.common.cmn_utils import Utils
 from mmv.mmv_image import MMVImage
+print("[__init__.py] Importing probably heaviest dependency [MMVMain], Skia might take a bit to load so does numpy, opencv etc..")
 from mmv.mmv_main import MMVMain
 import subprocess
 import tempfile
