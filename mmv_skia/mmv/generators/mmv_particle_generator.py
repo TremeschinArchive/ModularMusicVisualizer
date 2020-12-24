@@ -1,5 +1,12 @@
 """
 ===============================================================================
+                                GPL v3 License                                
+===============================================================================
+
+Copyright (c) 2020,
+  - Tremeschin < https://tremeschin.gitlab.io > 
+
+===============================================================================
 
 Purpose: MMV objects generators
 
@@ -20,6 +27,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmv.mmv_modifiers import ModifierMode, MMVModifierLine, MMVModifierPoint, MMVModifierShake, MMVModifierFade
+from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH
 from mmv.mmv_interpolation import MMVInterpolation
 from mmv.common.cmn_utils import Utils
 from mmv.mmv_image import MMVImage
@@ -30,8 +38,9 @@ import os
 
 
 class MMVParticleGenerator:
-    def __init__(self, mmv, **kwargs):
-        self.mmv = mmv
+    def __init__(self, mmv_main, depth = LOG_NO_DEPTH, **kwargs):
+        debug_prefix = "[MMVParticleGenerator.__init__]"
+        self.mmv_main = mmv_main
         self.type = "mmvgenerator"
         self.is_deletable = False
 
@@ -205,10 +214,10 @@ class MMVParticleGenerator:
     def next(self):
         
         # Add progression until new generated object
-        self.next_particle_percentage += self.add_per_step * self.mmv.context.fps_ratio_multiplier
+        self.next_particle_percentage += self.add_per_step * self.mmv_main.context.fps_ratio_multiplier
 
         # Add more progression on particles according to sound level
-        self.next_particle_percentage += self.average_sound_amplitude_add_per_step * self.mmv.core.modulators["average_value"]
+        self.next_particle_percentage += self.average_sound_amplitude_add_per_step * self.mmv_main.core.modulators["average_value"]
 
         generate_amount = int(self.next_particle_percentage / 100)
 
@@ -239,23 +248,23 @@ class MMVParticleGenerator:
     # Bottom mid top preset generator function
     def preset_bottom_mid_top(self):
 
-        particle = MMVImage(self.mmv)
+        particle = MMVImage(mmv_main = self.mmv_main, from_generator = True)
 
         # Load random particle
         particle.image.load_from_path(
-            self.mmv.utils.random_file_from_dir (
-                self.particles_images_directory
+            self.mmv_main.utils.random_file_from_dir (
+                self.particles_images_directory, silent = True
             )
         )
         
-        horizontal_randomness = int(50 * self.mmv.context.resolution_ratio_multiplier)
-        vertical_randomness_min = self.mmv.context.height//1.7
-        vertical_randomness_max = self.mmv.context.height//2.3
+        horizontal_randomness = int(50 * self.mmv_main.context.resolution_ratio_multiplier)
+        vertical_randomness_min = self.mmv_main.context.height//1.7
+        vertical_randomness_max = self.mmv_main.context.height//2.3
 
         # # Create start, mid, end positions
 
-        x1 = random.randint(0, self.mmv.context.width)
-        y1 = self.mmv.context.height
+        x1 = random.randint(0, self.mmv_main.context.width)
+        y1 = self.mmv_main.context.height
         x2 = x1 + random.randint(-horizontal_randomness, horizontal_randomness)
         y2 = y1 + random.randint(-vertical_randomness_min, -vertical_randomness_max)
         x3 = x2 + random.randint(-horizontal_randomness, horizontal_randomness)
@@ -268,16 +277,16 @@ class MMVParticleGenerator:
         modules = {}
 
         line_path = MMVModifierLine(
-            self.mmv,
+            self.mmv_main,
             start = (x1, y1),
             end = (x2, y2),
             interpolation_x = MMVInterpolation(
-                self.mmv,
+                self.mmv_main,
                 function = "remaining_approach",
                 ratio = self.x_interpolation_agressive,
             ),
             interpolation_y = MMVInterpolation(
-                self.mmv,
+                self.mmv_main,
                 function = "remaining_approach",
                 ratio = self.y_interpolation_agressive,
             ),
@@ -290,15 +299,15 @@ class MMVParticleGenerator:
         # Create and append shake modifier if set
         if self.do_apply_shake:
             shake_path = MMVModifierShake(
-                self.mmv,
+                self.mmv_main,
                 interpolation_x = MMVInterpolation(
-                    self.mmv,
+                    self.mmv_main,
                     function = "remaining_approach",
                     ratio = self.shake_x_rationess,
                     start = 0,
                 ),
                 interpolation_y = MMVInterpolation(
-                    self.mmv,
+                    self.mmv_main,
                     function = "remaining_approach",
                     ratio = self.shake_y_rationess,
                     start = 0,
@@ -320,9 +329,9 @@ class MMVParticleGenerator:
             # Create Fade module
             modules["fade"] = {
                 "object": MMVModifierFade(
-                    self.mmv,
+                    self.mmv_main,
                     interpolation = MMVInterpolation(
-                        self.mmv,
+                        self.mmv_main,
                         function = "linear",
                         total_steps = self.fade_total_step,
                         start = self.fade_start,
@@ -350,16 +359,16 @@ class MMVParticleGenerator:
         modules = {}
 
         line_path = MMVModifierLine(
-            self.mmv,
+            self.mmv_main,
             start = (x2, y2),
             end = (x3, y3),
             interpolation_x = MMVInterpolation(
-                self.mmv,
+                self.mmv_main,
                 function = "remaining_approach",
                 ratio = self.x_interpolation_agressive,
             ),
             interpolation_y = MMVInterpolation(
-                self.mmv,
+                self.mmv_main,
                 function = "remaining_approach",
                 ratio = self.y_interpolation_agressive,
             ),
@@ -377,9 +386,9 @@ class MMVParticleGenerator:
         if self.do_apply_fade:
             modules["fade"] = {
                 "object": MMVModifierFade(
-                    self.mmv,
+                    self.mmv_main,
                     interpolation = MMVInterpolation(
-                        self.mmv,
+                        self.mmv_main,
                         function = "linear",
                         total_steps = self.fade_total_step,
                         start = self.fade_mid,
@@ -406,8 +415,8 @@ class MMVParticleGenerator:
         # Resize the image by a scalar
         particle.image.resize_by_ratio(
             random.uniform(
-                self.particle_minimum_size * self.mmv.context.resolution_ratio_multiplier,
-                self.particle_maximum_size * self.mmv.context.resolution_ratio_multiplier,
+                self.particle_minimum_size * self.mmv_main.context.resolution_ratio_multiplier,
+                self.particle_maximum_size * self.mmv_main.context.resolution_ratio_multiplier,
             ),
             override=True
         )
@@ -421,30 +430,30 @@ class MMVParticleGenerator:
 
     def preset_middle_out(self):
 
-        particle = MMVImage(self.mmv)
+        particle = MMVImage(mmv_main = self.mmv_main, from_generator = True)
 
         # Load random particle
         particle.image.load_from_path(
-            self.mmv.utils.random_file_from_dir (
-                self.particles_images_directory
+            self.mmv_main.utils.random_file_from_dir (
+                self.particles_images_directory, silent = True
             )
         )
         
         # #  Create start and end positions
 
         # We start at half the screen
-        x1 = self.mmv.context.width // 2
-        y1 = self.mmv.context.height // 2
+        x1 = self.mmv_main.context.width // 2
+        y1 = self.mmv_main.context.height // 2
 
         # The minimum distance we'll walk is the diagonal (Center - Corner) * minimum_distance_ratio
         # The maximum distance we'll walk is the diagonal (Center - Corner) * maximum_distance_ratio
-        self.mmv.polar_coordinates.from_r_theta(
-            r = self.mmv.context.resolution_diagonal / 2,
+        self.mmv_main.polar_coordinates.from_r_theta(
+            r = self.mmv_main.context.resolution_diagonal / 2,
             theta = random.uniform(0, 2*math.pi),
         )
 
         # The direction we'll walk..
-        walk_to = self.mmv.polar_coordinates.get_rectangular_coordinates()
+        walk_to = self.mmv_main.polar_coordinates.get_rectangular_coordinates()
 
         # Is where we're at plus that
         x2 = x1 + walk_to[0]
@@ -458,17 +467,17 @@ class MMVParticleGenerator:
 
         # Line path going from the center
         line_path = MMVModifierLine(
-            self.mmv,
+            self.mmv_main,
             start = (x1, y1),
             end = (x2, y2),
             interpolation_x = MMVInterpolation(
-                self.mmv,
+                self.mmv_main,
                 function = "remaining_approach",
                 ratio = self.x_interpolation_agressive,
                 speed_up_by_audio_volume = 0.3,
             ),
             interpolation_y = MMVInterpolation(
-                self.mmv,
+                self.mmv_main,
                 function = "remaining_approach",
                 ratio = self.y_interpolation_agressive,
                 speed_up_by_audio_volume = 0.3,
@@ -482,15 +491,15 @@ class MMVParticleGenerator:
         # Create and append shake modifier if set
         if self.do_apply_shake:
             shake_path = MMVModifierShake(
-                self.mmv,
+                self.mmv_main,
                 interpolation_x = MMVInterpolation(
-                    self.mmv,
+                    self.mmv_main,
                     function = "remaining_approach",
                     ratio = 0.01,
                     start = 0,
                 ),
                 interpolation_y = MMVInterpolation(
-                    self.mmv,
+                    self.mmv_main,
                     function = "remaining_approach",
                     ratio = 0.04,
                     start = 0,
@@ -505,9 +514,9 @@ class MMVParticleGenerator:
             # Create Fade module with random number to start of the fade
             modules["fade"] = {
                 "object": MMVModifierFade(
-                    self.mmv,
+                    self.mmv_main,
                     interpolation = MMVInterpolation(
-                        self.mmv,
+                        self.mmv_main,
                         function = "linear",
                         total_steps = self.fade_total_step,
                         start = self.fade_start + random.uniform(-self.fade_random, self.fade_random),
@@ -534,8 +543,8 @@ class MMVParticleGenerator:
         # Resize the image by a scalar
         particle.image.resize_by_ratio(
             random.uniform(
-                self.particle_minimum_size * self.mmv.context.resolution_ratio_multiplier,
-                self.particle_maximum_size * self.mmv.context.resolution_ratio_multiplier,
+                self.particle_minimum_size * self.mmv_main.context.resolution_ratio_multiplier,
+                self.particle_maximum_size * self.mmv_main.context.resolution_ratio_multiplier,
             ),
             override=True
         )

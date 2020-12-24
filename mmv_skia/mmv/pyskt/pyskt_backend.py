@@ -35,7 +35,7 @@ class SkiaNoWindowBackend:
     kwargs: {
         "width": int
         "height": int
-        "grender_backendpu": str
+        "render_backend": str
             Use or not a GPU accelerated 
     }
     """

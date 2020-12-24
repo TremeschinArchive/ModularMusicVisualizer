@@ -1,5 +1,12 @@
 """
 ===============================================================================
+                                GPL v3 License                                
+===============================================================================
+
+Copyright (c) 2020,
+  - Tremeschin < https://tremeschin.gitlab.io > 
+
+===============================================================================
 
 Purpose: Abstract, wrap, connect other files
 
@@ -19,6 +26,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH
 from mmv.pyskt.pyskt_backend import SkiaNoWindowBackend
 from mmv.common.cmn_coordinates import PolarCoordinates
 from mmv.common.cmn_interpolation import Interpolation
@@ -32,40 +40,107 @@ from mmv.common.cmn_fourier import Fourier
 from mmv.common.cmn_utils import Utils
 from mmv.mmv_context import MMVContext
 from mmv.mmv_image import MMVImage
-from mmv.mmv_core import Core
+from mmv.mmv_core import MMVCore
 from PIL import Image
 import numpy as np
 import argparse
-import shutil
+import logging
 import math
 import time
 import sys
 import os
 
 
-class Miscellaneous:
-    def __init__(self) -> None:
-        self.version = "2.3.5-dev"
+class MMVMain:
+    def __init__(self, interface):
+        self.interface = interface
+        self.prelude = self.interface.prelude
+        
+    # Creates classes and send to Core
+    def setup(self, depth = LOG_NO_DEPTH) -> None:
+        debug_prefix = "[MMVMain.setup]"
+        ndepth = depth + LOG_NEXT_DEPTH
 
-    def greeter_message(self) -> None:
+        self.utils = Utils()
 
-        self.terminal_width = shutil.get_terminal_size()[0]
+        logging.info(f"{depth}{debug_prefix} Creating MMVContext() class")
+        self.context = MMVContext(mmv_main = self, depth = ndepth)
 
-        bias = " "*(math.floor(self.terminal_width/2) - 14)
+        logging.info(f"{depth}{debug_prefix} Creating SkiaNoWindowBackend() class")
+        self.skia = SkiaNoWindowBackend()
 
-        message = \
-f"""{"-"*self.terminal_width}
-{bias} __  __   __  __  __     __
-{bias}|  \\/  | |  \\/  | \\ \\   / /
-{bias}| |\\/| | | |\\/| |  \\ \\ / / 
-{bias}| |  | | | |  | |   \\ V /  
-{bias}|_|  |_| |_|  |_|    \\_/   
-{bias}
-{bias[:-8]}  Modular Music Visualizer Skia Edition                       
-{bias}{(21-len("Version")-len(self.version))*" "}Version {self.version}
-{"-"*self.terminal_width}
-"""
-        print(message)
+        logging.info(f"{depth}{debug_prefix} Creating Functions() class")
+        self.functions = Functions()
+
+        logging.info(f"{depth}{debug_prefix} Creating Interpolation() class")
+        self.interpolation = Interpolation()
+
+        logging.info(f"{depth}{debug_prefix} Creating PolarCoordinates() class")
+        self.polar_coordinates = PolarCoordinates()
+
+        logging.info(f"{depth}{debug_prefix} Creating Canvas() class")
+        self.canvas = MMVImage(mmv_main = self, depth = ndepth)
+
+        logging.info(f"{depth}{debug_prefix} Creating Fourier() class")
+        self.fourier = Fourier()
+
+        logging.info(f"{depth}{debug_prefix} Creating FFmpegWrapper() class")
+        self.ffmpeg = FFmpegWrapper(self)
+
+        logging.info(f"{depth}{debug_prefix} Creating AudioFile() class")
+        self.audio = AudioFile()
+
+        logging.info(f"{depth}{debug_prefix} Creating AudioProcessing() class")
+        self.audio_processing = AudioProcessing()
+
+        logging.info(f"{depth}{debug_prefix} Creating MMVAnimation() class")
+        self.mmv_animation = MMVAnimation(mmv_main = self, depth = ndepth)
+    
+        logging.info(f"{depth}{debug_prefix} Creating MMVCore() class")
+        self.core = MMVCore(mmv_main = self, depth = ndepth)
+
+        logging.info(f"{depth}{debug_prefix} Creating Download() class")
+        self.download = Download()
+
+    # Execute the program
+    def run(self, depth = LOG_NO_DEPTH) -> None:
+        debug_prefix = "[MMVMain.run]"
+        ndepth = depth + LOG_NEXT_DEPTH
+        
+        # Read the audio and start FFmpeg pipe
+        logging.info(f"{depth}{debug_prefix} Read audio file")
+        self.audio.read(self.context.input_file)
+        
+        # Start video pipe
+        logging.info(f"{depth}{debug_prefix} Starting FFmpeg Pipe")
+        self.ffmpeg.pipe_one_time(self.context.output_video)
+
+        try:
+            # import cProfile
+            # p = cProfile.Profile()
+            # p.enable()
+            logging.info(f"{depth}{debug_prefix} Executing MMVCore.run()")
+            self.core.run(depth = ndepth)
+            
+            logging.info(f"{depth}{debug_prefix} Finished, terminating GLFW")
+            self.skia.terminate_glfw()
+            # p.disable()
+            # p.dump_stats("res.prof")
+        except KeyboardInterrupt:
+            self.skia.terminate_glfw()
+            self.ffmpeg.close_pipe()
+            sys.exit(-1)
+        
+        # Say thanks message
+        self.thanks_message()
+
+        # Wait for FFmpeg pipe to stop
+        while not self.ffmpeg.stop_piping:
+            time.sleep(0.05)
+
+        logging.info(f"{depth}{debug_prefix} Quitting Python")
+        sys.exit(0)
+        
 
     def thanks_message(self):
         # # Print thanks message :)
@@ -95,95 +170,3 @@ f"""
  [+-------------------------------------------------------------------------------------------+]
 """
         print(message)
-
-
-
-class MMVMain:
-    def __init__(self) -> None:
-        self.misc = Miscellaneous()
-        self.misc.greeter_message()
-
-    # Creates classes and send to Core
-    def setup(self) -> None:
-        
-        debug_prefix = "[MMVMain.setup]"
-
-        self.utils = Utils()
-
-        print(debug_prefix, "Creating MMVContext()")
-        self.context = MMVContext(self)
-
-        print(debug_prefix, "Creating SkiaNoWindowBackend()")
-        self.skia = SkiaNoWindowBackend()
-
-        print(debug_prefix, "Creating Functions()")
-        self.functions = Functions()
-
-        print(debug_prefix, "Creating Interpolation()")
-        self.interpolation = Interpolation()
-
-        print(debug_prefix, "Creating PolarCoordinates()")
-        self.polar_coordinates = PolarCoordinates()
-
-        print(debug_prefix, "Creating Canvas()")
-        self.canvas = MMVImage(self)
-
-        print(debug_prefix, "Creating Fourier()")
-        self.fourier = Fourier()
-
-        print(debug_prefix, "Creating FFmpegWrapper()")
-        self.ffmpeg = FFmpegWrapper(self)
-
-        print(debug_prefix, "Creating AudioFile()")
-        self.audio = AudioFile()
-
-        print(debug_prefix, "Creating AudioProcessing()")
-        self.audio_processing = AudioProcessing()
-
-        print(debug_prefix, "Creating MMVAnimation()")
-        self.mmv_animation = MMVAnimation(self)
-    
-        print(debug_prefix, "Creating Core()")
-        self.core = Core(self)
-
-        print(debug_prefix, "Creating Download()")
-        self.download = Download()
-
-    # Execute the program
-    def run(self) -> None:
-        debug_prefix = "[MMVMain.run]"
-        
-        # Read the audio and start FFmpeg pipe
-        print(debug_prefix, "Read audio file")
-        self.audio.read(self.context.input_file)
-        
-        # Start video pipe
-        print(debug_prefix, "Starting FFmpeg Pipe")
-        self.ffmpeg.pipe_one_time(self.context.output_video)
-
-        try:
-            # import cProfile
-            # p = cProfile.Profile()
-            # p.enable()
-            print(debug_prefix, "Executing MMVCore.run()")
-            self.core.run()
-            
-            print(debug_prefix, "Finished, terminating GLFW")
-            self.skia.terminate_glfw()
-            # p.disable()
-            # p.dump_stats("res.prof")
-        except KeyboardInterrupt:
-            self.skia.terminate_glfw()
-            self.ffmpeg.close_pipe()
-            sys.exit(-1)
-        
-        # Say thanks message
-        self.misc.thanks_message()
-
-        # Wait for FFmpeg pipe to stop
-        while not self.ffmpeg.stop_piping:
-            time.sleep(0.05)
-
-        print(debug_prefix, "Quitting Python")
-        sys.exit(0)
-        

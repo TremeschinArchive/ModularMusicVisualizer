@@ -1,0 +1,104 @@
+# This configuration file loads up before any MMV related stuff is set
+# and it doesn't change anything on the final video, this file is mostly
+# for configurations such as logging, namely Python stuff or QOL, let
+# you name it.
+
+
+[logging]
+hard_debug = true
+log_to_file = true
+log_level = "debug"  # critical, debug, error, info, warn, notset
+log_format = "pretty"  # pretty, economic, onlymessage
+
+# Stop code at some specific point?
+[flow]
+stop_at_interface_init = false
+stop_at_mmv_core_run = false
+
+# # Logging
+
+# Please be careful some functions gets called a lot or 
+# simply have too much data to output, mainly mmvcore.run
+# log_modulators, these should be avoided as the log file will
+# grow insanely large for small videos, very quickly
+
+[mmvcore]
+    log_creation = true
+    [mmvcore.run]
+        log_step = false
+        log_offsetted_step = false
+        log_modulators = false
+        log_next_steps = false
+
+[mmvgenerator]
+    log_creation = true
+    log_get_unique_id = true
+    [mmvgenerator.particle_generator]
+        log_action = true
+    
+[mmvanimation]
+    log_creation = true
+    [mmvanimation.mklayers_until]
+        log_action = false
+        log_new_layers = false
+
+[mmvimage]
+    log_creation = true
+    log_get_unique_id = true
+    [mmvimage._reset_effects_variables]
+        log_action = false
+    [mmvimage.create_canvas]
+        log_action = true
+        log_steps = true
+    [mmvimage.reset_canvas]
+        log_action = false
+    [mmvimage.next]
+        log_current_step = false
+        log_became_deletable = false
+
+[mmvimage_configure]
+    [mmvimage_configure.load_image]
+        log_action = false
+        log_get_abspath = false
+        log_load_image = false
+    [mmvimage_configure.init_animation_layer]
+        log_action = true
+    [mmvimage_configure.start_or_reset_this_animation]
+        log_action = true
+    [mmvimage_configure.set_animation_index]
+        log_action = true
+    [mmvimage_configure.set_this_animation_steps]
+        log_action = true
+    [mmvimage_configure.resize_image_to_resolution]
+        log_action = true
+    [mmvimage_configure.resize_image_to_video_resolution]
+        log_action = true
+    [mmvimage_configure.add_module_video]
+        log_action = true
+    [mmvimage_configure.add_path_point]
+        log_action = true
+    [mmvimage_configure.simple_add_path_modifier_shake]
+        log_action = true
+
+    # MMVVectorial calls
+    [mmvimage_configure.add_vectorial_by_kwargs]
+        log_action = true
+    [mmvimage_configure.add_module_visualizer]
+        log_action = true
+    [mmvimage_configure.add_module_progression_bar]
+        log_action = true
+    [mmvimage_configure.add_module_piano_roll]
+        log_action = true
+
+    # Modifiers
+    [mmvimage_configure.add_module_resize]
+        log_action = true
+    [mmvimage_configure.add_module_blur]
+        log_action = true
+    [mmvimage_configure.add_module_swing_rotation]
+        log_action = true
+    [mmvimage_configure.add_module_linear_rotation]
+        log_action = true
+    [mmvimage_configure.add_module_vignetting]
+        log_action = true
+    
