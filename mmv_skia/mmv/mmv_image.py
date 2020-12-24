@@ -1,5 +1,12 @@
 """
 ===============================================================================
+                                GPL v3 License                                
+===============================================================================
+
+Copyright (c) 2020,
+  - Tremeschin < https://tremeschin.gitlab.io > 
+
+===============================================================================
 
 Purpose: MMVImage object
 
@@ -19,23 +26,39 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH
 from mmv.mmv_image_configure import MMVImageConfigure
 from mmv.common.cmn_frame import Frame
 from mmv.mmv_modifiers import *
+import logging
 import skia
+import uuid
 import cv2
 
 
 # Basically everything on MMV as we have to render images
 class MMVImage:
-    def __init__(self, mmv) -> None:
-        self.mmv = mmv
+    def __init__(self, mmv_main, depth = LOG_NO_DEPTH, from_generator = False) -> None:
+        debug_prefix = "[MMVImage.__init__]"
+        ndepth = depth + LOG_NEXT_DEPTH
+        self.mmv_main = mmv_main
+        self.preludec = self.mmv_main.prelude["mmvimage"]
+
+        # Log the creation of this class
+        if self.preludec["log_creation"] and not from_generator:
+            logging.info(f"{depth}{debug_prefix} Created new MMVImage object, getting unique identifier for it")
+
+        # Get an unique identifier for this MMVImage object
+        self.identifier = self.mmv_main.utils.get_unique_id(
+            purpose = "MMVImage object", depth = ndepth,
+            silent = self.preludec["log_get_unique_id"] and from_generator
+        )
         
         # The "animation" and path this object will follow
         self.animation = {}
 
         # Create classes
-        self.configure = MMVImageConfigure(self.mmv, self)
+        self.configure = MMVImageConfigure(mmv_main = self.mmv_main, mmvimage_object = self)
         self.image = Frame()
 
         self.x = 0
@@ -56,9 +79,17 @@ class MMVImage:
 
         self.ROUND = 3
         
-        self._reset_effects_variables()
+        self._reset_effects_variables(depth = ndepth)
 
-    def _reset_effects_variables(self):
+    # Clean this MMVImage's todo processing or applied
+    def _reset_effects_variables(self, depth = LOG_NO_DEPTH):
+        debug_prefix = "[MMVImage._reset_effects_variables]"
+        ndepth = depth + LOG_NEXT_DEPTH
+        
+        # Log action
+        if self.preludec["_reset_effects_variables"]["log_action"]:
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Resetting effects variables (filters on image, mask, shaders, paint)")
+        
         self.image_filters = []
         self.mask_filters = []
         # self.color_filters = []
@@ -67,39 +98,74 @@ class MMVImage:
             "AntiAlias": True
         }
     
-    # Our Canvas is an MMVImage object
-    def create_canvas(self) -> None:
-        self.configure.init_animation_layer()
-        self.reset_canvas()
-        self.configure.add_path_point(x=0, y=0)
+    # Our Canvas is an MMVImage object so we reset it, initialize the animation layers automatically, bla bla
+    # we don't need the actual configuration from the user apart from post processing accesses by this
+    # MMVImage's MMVImageConfigure class
+    def create_canvas(self, depth = LOG_NO_DEPTH) -> None:
+        debug_prefix = "[MMVImage.create_canvas]"
+        ndepth = depth + LOG_NEXT_DEPTH
+
+        # Log action
+        if self.preludec["create_canvas"]["log_action"]:
+            logging.info(f"{depth}{debug_prefix} [{self.identifier}] Create empty canvas (this ought be the video canvas?)")
+
+        # Will we be logging the steps?
+        log_steps = self.preludec["create_canvas"]["log_steps"]
+
+        # Initialize blank animation layer
+        if log_steps:
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Init animation layer")
+        self.configure.init_animation_layer(depth = ndepth)
+        
+        # Reset the canvas, create new image of Contex's width and height
+        if log_steps:
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Reset canvas")
+        self.reset_canvas(depth = ndepth)
+        
+        # Add Path Point at (0, 0)
+        if log_steps:
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Add required static path of type Point at (x, y) = (0, 0)")
+        self.configure.add_path_point(x = 0, y = 0, depth = ndepth)
     
     # Create empty zeros canvas IMAGE, not CONTENTS.
     # If we ever wanna mirror the contents and apply post processing
-    def reset_canvas(self) -> None:
-        self.image.new(self.mmv.context.width, self.mmv.context.height)
+    def reset_canvas(self, depth = LOG_NO_DEPTH) -> None:
+        debug_prefix = "[MMVImage.reset_canvas]"
+        ndepth = depth + LOG_NEXT_DEPTH
 
-    # Don't pickle cv2 video  
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        if "video" in state:
-            del state["video"]
-        return state
-    
+        # Hard debug, this should be executed a lot and we don't wanna clutter the log file or stdout
+        if self.preludec["reset_canvas"]["log_action"]:
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Reset canvas, create new image of Context's width and height in size")
+            
+        # Actually create the new canvas
+        self.image.new(self.mmv_main.context.width, self.mmv_main.context.height)
+
     # Next step of animation
-    def next(self) -> None:
+    def next(self, depth = LOG_NO_DEPTH) -> None:
+        debug_prefix = "[MMVImage.next]"
+        ndepth = depth + LOG_NEXT_DEPTH
 
+        # Next step
         self.current_step += 1
+
+        if self.preludec["next"]["log_current_step"]:
+            logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Next step, current step = [{self.current_step}]")
 
         # Animation has ended, this current_animation isn't present on path.keys
         if self.current_animation not in list(self.animation.keys()):
             self.is_deletable = True
+        
+            # Log we are marked to be deleted
+            if self.preludec["next"]["log_became_deletable"]:
+                logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Object is out of animation, marking to be deleted")
+
             return
 
         # The animation we're currently playing
         this_animation = self.animation[self.current_animation]
 
         animation = this_animation["animation"]
-        steps = animation["steps"] * self.mmv.context.fps_ratio_multiplier  # Scale the interpolations
+        steps = animation["steps"] * self.mmv_main.context.fps_ratio_multiplier  # Scale the interpolations
 
         # The current step is one above the steps we've been told, next animation
         if self.current_step >= steps + 1:
@@ -143,7 +209,7 @@ class MMVImage:
 
                 self.image.load_from_array(frame)
                 self.image.resize_to_resolution(
-                    width = self.mmv.context.width, height = self.mmv.context.height,
+                    width = self.mmv_main.context.width, height = self.mmv_main.context.height,
                     override = True
                 )
 
@@ -209,7 +275,7 @@ class MMVImage:
 
                 # This is a somewhat fake vignetting, we just start a black point with full transparency
                 # at the center and make a radial gradient that is black with no transparency at the radius
-                self.mmv.skia.canvas.drawPaint({
+                self.mmv_main.skia.canvas.drawPaint({
                     'Shader': skia.GradientShader.MakeRadial(
                         center=(vignetting.center_x, vignetting.center_y),
                         radius=next_vignetting,
@@ -238,19 +304,19 @@ class MMVImage:
             argument = [self.x, self.y] + self.offset
 
             # Move according to a Point (be stationary)
-            if self.mmv.utils.is_matching_type([modifier], [MMVModifierPoint]):
+            if self.mmv_main.utils.is_matching_type([modifier], [MMVModifierPoint]):
                 # Attribute (x, y) to Point's x and y
                 [self.x, self.y], self.offset = modifier.next(*argument)
 
             # Move according to a Line (interpolate current steps)
-            if self.mmv.utils.is_matching_type([modifier], [MMVModifierLine]):
+            if self.mmv_main.utils.is_matching_type([modifier], [MMVModifierLine]):
                 # Interpolate and unpack next coordinate
                 [self.x, self.y], self.offset = modifier.next(*argument)
 
             # # Offset modules
 
             # Get next shake offset value
-            if self.mmv.utils.is_matching_type([modifier], [MMVModifierShake]):
+            if self.mmv_main.utils.is_matching_type([modifier], [MMVModifierShake]):
                 [self.x, self.y], self.offset = modifier.next(*argument)
 
     # Blit this item on the canvas
@@ -274,7 +340,7 @@ class MMVImage:
         paint = skia.Paint(self.paint_dict)
 
         # Blit this image
-        self.mmv.skia.canvas.drawImage(
+        self.mmv_main.skia.canvas.drawImage(
             self.image.image, x, y,
-            paint=paint,
+            paint = paint,
         )

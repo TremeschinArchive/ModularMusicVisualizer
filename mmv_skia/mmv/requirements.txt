@@ -11,5 +11,6 @@ pyunpack==0.2.2
 pyyaml==5.3.1
 samplerate==0.1.0
 skia-python==87.0
+toml==0.10.2
 tqdm==4.54.1
 wget==3.2

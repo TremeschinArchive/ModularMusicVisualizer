@@ -8,7 +8,9 @@ Copyright (c) 2020,
 
 ===============================================================================
 
-Purpose: Some type utils for type hinting
+Purpose: If no logger exists, create one logging handler outputting to 
+system's stdout. Just importing this file will run its content and we should
+be good to go
 
 ===============================================================================
 
@@ -25,8 +27,26 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
-from typing import NewType, Union
 
-class InlineDict:
-    def __init__(self, dict):
-        self.__dict__ = dict
+import logging
+import sys
+
+# If we're somehow loading / executing this file alone without MMV's
+# main interface class, we'll have no logging handler going one so
+# we empty out every logger handler and add one for outputting to
+# system's stdout with not really any special formatting apart from
+# the log level and the message string
+
+# Get current logger if any
+logger = logging.getLogger()
+
+# If handlers list is not empty
+if not logger.handlers:
+    print("[cmn_any_logger.py] No logger found, creating one with StreamHandler(sys.stdout)")
+
+    # Create basic logger
+    logging.basicConfig(
+        handlers = [logging.StreamHandler(sys.stdout)],
+        level = logging.DEBUG,
+        format = "[%(levelname)-7s] %(message)s",
+    )

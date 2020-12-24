@@ -1,5 +1,12 @@
 """
 ===============================================================================
+                                GPL v3 License                                
+===============================================================================
+
+Copyright (c) 2020,
+  - Tremeschin < https://tremeschin.gitlab.io > 
+
+===============================================================================
 
 Purpose: Set of 2D linear algebra, gotta put those LA engineering classes
 and Gram Schmidt shenanigans into practice for once
@@ -25,6 +32,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmv.common.cmn_utils import Utils
+import mmv.common.cmn_any_logger
 import math
 
 
