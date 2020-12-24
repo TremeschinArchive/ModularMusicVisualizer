@@ -59,7 +59,7 @@ class MMVCore:
 
         # Quit if code flow says so
         if self.prelude["flow"]["stop_at_mmv_core_run"]:
-            logging.critical(f"{ndepth}{debug_prefix} Not continuing because stop_at_mmv_core_run key on prelude.toml")
+            logging.critical(f"{ndepth}{debug_prefix} Not continuing because stop_at_mmv_core_run key on prelude.toml is True")
             sys.exit(0)
 
         # Create the pipe write thread
