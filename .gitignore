@@ -41,8 +41,8 @@ src/mmv/mmvshader/runtime
 src/mmv/mmvshader/glsl/test_sphere.glsl
 src/mmv/mmvshader/glsl/tideas
 src/mmv/mmvshader/data
-src/mmv/mmvshader/mmvshader/fragment
-src/mmv/mmvshader/mmvshader/glsl
+src/mmv/mmvshader/fragment
+src/mmv/mmvshader/glsl
 
 # # Tremx logos Yeah this is my identity, you should use yours here :)
 src/mmvskia/assets/tremx_assets

@@ -62,7 +62,9 @@ import os
 THIS_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Create the wrapper class
-interface = mmv.MMVInterface(
+interface = mmv.MMVInterface()
+
+processing = interface.get_skia_interface(
     # AFAIK skia-python on Linux and MacOS uses RGBA and on Windows BGRA pixel format.
     # "auto" does that, or manually put "rgba" or "bgra". If set wrongly the video
     # colors RED and BLUE will be swapped.
@@ -79,8 +81,6 @@ interface = mmv.MMVInterface(
     # particles and backgrounds is done on CPU as no textures are being moved.
     render_backend = args.render,
 )
-
-processing = interface.get_skia_interface()
 
 # Ensure we have FFmpeg on Windows, downloads, extracts etc
 # Does nothing for Linux, make sure you have ffmpeg package installed on your distro
