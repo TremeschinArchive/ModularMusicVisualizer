@@ -576,13 +576,14 @@ class Utils:
         unique_id = str(uuid.uuid4()).upper()[0:8]
 
         # Change the message based on if we have or have not a purpose
-        if purpose:
-            message = f"{depth}{debug_prefix} Get unique identifier for [{purpose}]: [{unique_id}]"
-        else:
-            message = f"{depth}{debug_prefix} Get unique identifier: [{unique_id}]"
+        if not silent:
+            if purpose:
+                message = f"{depth}{debug_prefix} Get unique identifier for [{purpose}]: [{unique_id}]"
+            else:
+                message = f"{depth}{debug_prefix} Get unique identifier: [{unique_id}]"
 
-        # Log the message
-        logging.info(message)
+            # Log the message
+            logging.info(message)
 
         return unique_id
 
