@@ -53,8 +53,7 @@ class MMVCore:
         debug_prefix = "[MMVCore.run]"
         ndepth = depth + LOG_NEXT_DEPTH
 
-        # Log the separator as we're entering some other stage
-        logging.info(LOG_SEPARATOR)
+        # Log action
         logging.info(f"{depth}{debug_prefix} Executing MMVCore.run()")
 
         # Quit if code flow says so
