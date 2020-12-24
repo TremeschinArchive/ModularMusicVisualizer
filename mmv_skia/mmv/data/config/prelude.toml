@@ -3,8 +3,6 @@
 # for configurations such as logging, namely Python stuff or QOL, let
 # you name it.
 
-[flow]
-stop_at_mmv_core_run = false
 
 [logging]
 hard_debug = true
@@ -12,10 +10,17 @@ log_to_file = true
 log_level = "debug"  # critical, debug, error, info, warn, notset
 log_format = "pretty"  # pretty, economic, onlymessage
 
-[debug_logging]
-log_generated_unique_ids = true
+# Stop code at some specific point?
+[flow]
+stop_at_mmv_core_run = false
+stop_at_interface_init = false
 
 # # Logging
+
+# Please be careful some functions gets called a lot or 
+# simply have too much data to output, mainly mmvcore.run
+# log_modulators, these should be avoided as the log file will
+# grow insanely large for small videos, very quickly
 
 [mmvcore]
     log_creation = true
