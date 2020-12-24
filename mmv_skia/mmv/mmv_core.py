@@ -26,7 +26,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH, LOG_SEPARATOR
+from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH, LOG_SEPARATOR, STEP_SEPARATOR
 import numpy as np
 import threading
 import logging
@@ -90,9 +90,20 @@ class MMVCore:
         logging.info(f"{depth}{debug_prefix} Update Context bases")
         self.mmv_main.context.update_biases()
 
+        # What to log and what not to
+        LOG_STEP = self.preludec["run"]["log_step"]
+        LOG_OFFSETTED_STEP = self.preludec["run"]["log_offsetted_step"]
+        LOG_MODULATORS = self.preludec["run"]["log_modulators"]
+        LOG_NEXT_STEPS = self.preludec["run"]["log_next_steps"]
+        
         # Main routine
         logging.info(f"{depth}{debug_prefix} Start main routine")
         for step in range(0, self.mmv_main.context.total_steps):
+
+            # Log current step, next iteration
+            if LOG_STEP:
+                logging.debug(STEP_SEPARATOR)
+                logging.debug(f"{depth}{debug_prefix} Next step:")
 
             # The "raw" frame index we're at
             global_frame_index = step
@@ -105,7 +116,11 @@ class MMVCore:
             # If this step is out of bounds because the offset, set it to its max value
             if self.this_step >= self.mmv_main.context.total_steps - 1:
                 self.this_step = self.mmv_main.context.total_steps - 1
-            
+
+            # Log offset step
+            if LOG_OFFSETTED_STEP:
+                logging.debug(f"{depth}{debug_prefix} Offsetted step by [{self.mmv_main.context.offset_audio_before_in_many_steps}] is [{self.this_step}]")
+
             # The current time in seconds we're going to slice the audio based on its sample rate
             # If we offset to the opposite way, the starting point can be negative hence the max function.
             current_time = max((1/self.mmv_main.context.fps) * self.this_step, 0)
@@ -150,18 +165,30 @@ class MMVCore:
                 "frequencies": frequencies_list,
             }
 
+            # Log modulators
+            if LOG_MODULATORS:
+                logging.debug(f"{depth}{debug_prefix} Modulators on this step: [{self.modulators}]")
+
             # # # [ Next steps ] # # #
 
             # Reset skia canvas
+            if LOG_NEXT_STEPS:
+                logging.debug(f"{depth}{debug_prefix} Reset skia canvas")
             self.mmv_main.skia.reset_canvas()
 
             # Process next animation with audio info and the step count to process on
+            if LOG_NEXT_STEPS:
+                logging.debug(f"{depth}{debug_prefix} Call MMVAnimation.next()")
             self.mmv_main.mmv_animation.next()
 
             # Next image to pipe
+            if LOG_NEXT_STEPS:
+                logging.debug(f"{depth}{debug_prefix} Get next image from canvas array")
             next_image = self.mmv_main.skia.canvas_array()
 
             # Save current canvas's Frame to the final video, the pipe writer thread will actually pipe it
+            if LOG_NEXT_STEPS:
+                logging.debug(f"{depth}{debug_prefix} Write image to FFmpeg pipe index [{global_frame_index}]")
             self.mmv_main.ffmpeg.write_to_pipe(global_frame_index, next_image)
 
         # End pipe

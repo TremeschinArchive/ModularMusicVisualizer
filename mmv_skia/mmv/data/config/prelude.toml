@@ -4,7 +4,7 @@
 # you name it.
 
 [flow]
-stop_at_mmv_core_run = true
+stop_at_mmv_core_run = false
 
 [logging]
 hard_debug = true
@@ -19,6 +19,11 @@ log_generated_unique_ids = true
 
 [mmvcore]
     log_creation = true
+    [mmvcore.run]
+        log_step = false
+        log_offsetted_step = false
+        log_modulators = false
+        log_next_steps = false
 
 [mmvanimation]
     log_creation = true
@@ -35,16 +40,16 @@ log_generated_unique_ids = true
         log_action = true
         log_steps = true
     [mmvimage.reset_canvas]
-        log_action = true
+        log_action = false
     [mmvimage.next]
         log_current_step = false
         log_became_deletable = false
 
 [mmvimage_configure]
     [mmvimage_configure.load_image]
-        log_action = true
-        log_get_abspath = true
-        log_load_image = true
+        log_action = false
+        log_get_abspath = false
+        log_load_image = false
     [mmvimage_configure.init_animation_layer]
         log_action = true
     [mmvimage_configure.start_or_reset_this_animation]
