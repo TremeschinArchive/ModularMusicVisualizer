@@ -28,7 +28,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 print("[__init__.py] Importing MMV package files, this might take a while first time..")
 
-from mmv.common.cmn_constants import LOG_NEXT_DEPTH, PACKAGE_DEPTH, LOG_NO_DEPTH
+from mmv.common.cmn_constants import LOG_NEXT_DEPTH, PACKAGE_DEPTH, LOG_NO_DEPTH, LOG_SEPARATOR, STEP_SEPARATOR
 from mmv.mmv_generator import MMVParticleGenerator
 from mmv.pygradienter.pyg_main import PyGradienter
 from mmv.mmv_generator import MMVGenerator
@@ -109,7 +109,7 @@ f"""{"-"*self.terminal_width}
         # Build the path the prelude file should be located at
         prelude_file = f"{self.ROOT}{sep}data{sep}config{sep}prelude.toml"
 
-        print(f"{depth}{debug_prefix} Attempting to load prelude file located at [{prelude_file}]")
+        print(f"{depth}{debug_prefix} Attempting to load prelude file located at [{prelude_file}], we cannot continue if this is wrong..")
 
         # Load the prefule file
         with open(prelude_file, "r") as f:
@@ -237,6 +237,10 @@ f"""{"-"*self.terminal_width}
         self.mmv_main.context.audio_amplitude_multiplier = kwargs.get("audio_amplitude_multiplier", 1)
         self.mmv_main.context.skia_render_backend = kwargs.get("render_backend", "gpu")
 
+        # Log a separator to mark the end of the __init__ phase
+        logging.info(f"{depth}{debug_prefix} Phase done!")
+        logging.info(LOG_SEPARATOR)
+
     # Execute MMV with the configurations we've done
     def run(self, depth = PACKAGE_DEPTH) -> None:
         debug_prefix = "[MMVInterface.run]"
@@ -252,6 +256,7 @@ f"""{"-"*self.terminal_width}
     def quality(self, width: int = 1280, height: int = 720, fps: int = 60, batch_size = 2048, depth = PACKAGE_DEPTH) -> None:
         debug_prefix = "[MMVInterface.quality]"
         ndepth = depth + LOG_NEXT_DEPTH
+        logging.info(STEP_SEPARATOR)
         
         logging.info(f"{depth}{debug_prefix} Setting width={width} height={height} fps={fps} batch_size={batch_size}")
         
@@ -272,6 +277,7 @@ f"""{"-"*self.terminal_width}
     def input_audio(self, path: str, depth = PACKAGE_DEPTH) -> None:
         debug_prefix = "[MMVInterface.input_audio]"
         ndepth = depth + LOG_NEXT_DEPTH
+        logging.info(STEP_SEPARATOR)
 
         # Log action, do action
         logging.info(f"{depth}{debug_prefix} Set audio file path: [{path}], getting absolute path..")
@@ -281,6 +287,7 @@ f"""{"-"*self.terminal_width}
     def input_midi(self, path: str, depth = PACKAGE_DEPTH) -> None:
         debug_prefix = "[MMVInterface.input_midi]"
         ndepth = depth + LOG_NEXT_DEPTH
+        logging.info(STEP_SEPARATOR)
 
         # Log action, do action
         logging.info(f"{depth}{debug_prefix} Set MIDI file path: [{path}], getting absolute path..")
@@ -290,6 +297,7 @@ f"""{"-"*self.terminal_width}
     def output_video(self, path: str, depth = PACKAGE_DEPTH) -> None:
         debug_prefix = "[MMVInterface.output_video]"
         ndepth = depth + LOG_NEXT_DEPTH
+        logging.info(STEP_SEPARATOR)
 
         # Log action, do action
         logging.info(f"{depth}{debug_prefix} Set output video path: [{path}], getting absolute path..")
@@ -299,6 +307,7 @@ f"""{"-"*self.terminal_width}
     def offset_audio_steps(self, steps: int = 0, depth = PACKAGE_DEPTH):
         debug_prefix = "[MMVInterface.offset_audio_steps]"
         ndepth = depth + LOG_NEXT_DEPTH
+        logging.info(STEP_SEPARATOR)
 
         # Log action, do action
         logging.info(f"{depth}{debug_prefix} Offset audio in N steps: [{steps}]")
@@ -310,6 +319,7 @@ f"""{"-"*self.terminal_width}
     def add(self, item, layer: int = 0, depth = PACKAGE_DEPTH) -> None:
         debug_prefix = "[MMVInterface.add]"
         ndepth = depth + LOG_NEXT_DEPTH
+        logging.info(STEP_SEPARATOR)
 
         # Make layers until this given layer if they don't exist
         logging.info(f"{depth}{debug_prefix} Making animations layer until N = [{layer}]")
@@ -328,6 +338,7 @@ f"""{"-"*self.terminal_width}
     def image_object(self, depth = PACKAGE_DEPTH) -> MMVImage:
         debug_prefix = "[MMVInterface.image_object]"
         ndepth = depth + LOG_NEXT_DEPTH
+        logging.info(STEP_SEPARATOR)
 
         # Log action
         logging.info(f"{depth}{debug_prefix} Creating blank MMVImage object and initializing first animation layer, returning it afterwards")
@@ -343,6 +354,7 @@ f"""{"-"*self.terminal_width}
     def generator_object(self, depth = PACKAGE_DEPTH):
         debug_prefix = "[MMVInterface.generator_object]"
         ndepth = depth + LOG_NEXT_DEPTH
+        logging.info(STEP_SEPARATOR)
 
         # Log action
         logging.info(f"{depth}{debug_prefix} Creating blank MMVGenerator object, returning it afterwards")
@@ -356,6 +368,7 @@ f"""{"-"*self.terminal_width}
     def random_file_from_dir(self, path, depth = PACKAGE_DEPTH):
         debug_prefix = "[MMVInterface.random_file_from_dir]"
         ndepth = depth + LOG_NEXT_DEPTH
+        logging.info(STEP_SEPARATOR)
 
         logging.info(f"{depth}{debug_prefix} Get absolute path and returning random file from directory: [{path}]")
 
@@ -365,6 +378,7 @@ f"""{"-"*self.terminal_width}
     def make_directory_if_doesnt_exist(self, path: str, depth = PACKAGE_DEPTH, silent = True) -> None:
         debug_prefix = "[MMVInterface.make_directory_if_doesnt_exist]"
         ndepth = depth + LOG_NEXT_DEPTH
+        logging.info(STEP_SEPARATOR)
 
         # Log action
         logging.info(f"{depth}{debug_prefix} Make directory if doesn't exist [{path}], get absolute realpath and mkdir_dne")
@@ -377,6 +391,7 @@ f"""{"-"*self.terminal_width}
     def delete_directory(self, path: str, depth = PACKAGE_DEPTH, silent = False) -> None:
         debug_prefix = "[MMVInterface.delete_directory]"
         ndepth = depth + LOG_NEXT_DEPTH
+        logging.info(STEP_SEPARATOR)
 
         # Log action
         logging.info(f"{depth}{debug_prefix} Delete directory [{path}], get absolute realpath and rmdir")
@@ -389,6 +404,7 @@ f"""{"-"*self.terminal_width}
     def get_absolute_path(self, path, message = "path", depth = PACKAGE_DEPTH):
         debug_prefix = "[MMVInterface.get_absolute_path]"
         ndepth = depth + LOG_NEXT_DEPTH
+        logging.info(STEP_SEPARATOR)
 
         # Log action
         logging.info(f"{depth}{debug_prefix} Getting absolute path of [{path}], also checking its existence")
@@ -410,6 +426,7 @@ f"""{"-"*self.terminal_width}
     def pygradienter(self, depth = PACKAGE_DEPTH, **kwargs):
         debug_prefix = "[MMVInterface.pygradienter]"
         ndepth = depth + LOG_NEXT_DEPTH
+        logging.info(STEP_SEPARATOR)
 
         # Log action
         logging.info(f"{depth}{debug_prefix} Generating and returning one PyGradienter object")
@@ -422,23 +439,24 @@ f"""{"-"*self.terminal_width}
     def download_check_ffmpeg(self, making_release = False, depth = PACKAGE_DEPTH):
         debug_prefix = "[MMVInterface.download_check_ffmpeg]"
         ndepth = depth + LOG_NEXT_DEPTH
-
-        # Temporary directory if needed
-        self.temp_dir = tempfile.gettempdir()
-        logging.info(f"{depth}{debug_prefix} Temp dir is: [{self.temp_dir}]")
+        logging.info(STEP_SEPARATOR)
 
         if getattr(sys, 'frozen', False):
-            print(debug_prefix, "Not checking ffmpeg.exe because is executable build")
+            logging.info(f"{depth}{debug_prefix} Not checking ffmpeg.exe because is executable build")
             return
 
         # If the code is being run on a Windows OS
         if self.mmv_main.utils.os == "windows" or making_release:
 
+            # Temporary directory if needed
+            self.temp_dir = tempfile.gettempdir()
+            logging.info(f"{depth}{debug_prefix} Temp dir is: [{self.temp_dir}]")
+
             if making_release:
-                print(debug_prefix, "Getting FFmpeg for Windows because making_release=True")
+                logging.info(f"{depth}{debug_prefix} Getting FFmpeg for Windows because making_release=True")
 
             # Where we should find the ffmpeg binary
-            FFMPEG_FINAL_BINARY = self.EXTERNALS_ROOT + "/ffmpeg.exe"
+            FFMPEG_FINAL_BINARY = self.mmv_main.context.paths.externals_dir + "/ffmpeg.exe"
 
             # If we don't have FFmpeg binary on externals dir
             if not os.path.isfile(FFMPEG_FINAL_BINARY):
@@ -466,9 +484,11 @@ f"""{"-"*self.terminal_width}
                 self.mmv_main.utils.move(ffmpeg_bin, FFMPEG_FINAL_BINARY)
 
             else:
-                print(debug_prefix, "Already have [ffmpeg.exe] downloaded and extracted")
+                logging.info(f"{depth}{debug_prefix} Already have [ffmpeg.exe] downloaded and extracted")
         else:
-            print(debug_prefix, "You are using Linux, please make sure you have FFmpeg package installed on your distro")
+            # We're on Linux so checking ffmpeg external dependency
+            logging.info(f"{depth}{debug_prefix} You are using Linux, please make sure you have FFmpeg package installed on your distro, we'll just check for it now..")
+            self.mmv_main.utils.has_executable_with_name("ffmpeg")
 
     # Attempt to download and configure a midi soundbank for not manually converting MIDI -> audio
     """
@@ -484,6 +504,7 @@ f"""{"-"*self.terminal_width}
     def download_and_link_freepats_general_midi_soundfont(self, depth = PACKAGE_DEPTH, **kwargs):
         debug_prefix = "[MMVInterface.download_and_link_midi_soundfont]"
         ndepth = depth + LOG_NEXT_DEPTH
+        logging.info(STEP_SEPARATOR)
 
         skip_fluidsynth_dep = kwargs.get("skip_fluidsynth_dep", False)
         skip_prompt = kwargs.get("skip_prompt", False)
@@ -521,11 +542,11 @@ f"""{"-"*self.terminal_width}
             version_tar = version_tar_xz.replace(".tar.xz", ".tar")
 
             # Paths
-            soundfont_tar_xz = f"{self.EXTERNALS_ROOT}/{version_tar_xz}"
-            soundfont_tar = f"{self.EXTERNALS_ROOT}/{version_tar}"
+            soundfont_tar_xz = f"{self.mmv_main.context.paths.externals_dir}/{version_tar_xz}"
+            soundfont_tar = f"{self.mmv_main.context.paths.externals_dir}/{version_tar}"
 
             # Already downloaded files
-            external_files = os.listdir(self.EXTERNALS_ROOT)
+            external_files = os.listdir(self.mmv_main.context.paths.externals_dir)
 
             print(debug_prefix, "Externals files are:", external_files)
 
@@ -544,19 +565,19 @@ f"""{"-"*self.terminal_width}
                     )
 
                 # Extract the tar xz files
-                self.mmv_main.download.extract_file(soundfont_tar_xz, self.EXTERNALS_ROOT)
+                self.mmv_main.download.extract_file(soundfont_tar_xz, self.mmv_main.context.paths.externals_dir)
 
             # Where the stuff will be
             extracted_no_extension = version_tar_xz.replace(".tar.xz", "")
             extracted_file_name = extracted_no_extension.replace("-SF2", "")
-            extracted_folder = f"{self.EXTERNALS_ROOT}/{extracted_no_extension}"
+            extracted_folder = f"{self.mmv_main.context.paths.externals_dir}/{extracted_no_extension}"
             freepats_sf2 = f"{extracted_folder}/{extracted_file_name}.sf2"
 
             # Extract if we need so
             if not os.path.isdir(extracted_folder):
                 # Extract the tar extracted from tar xz
                 logging.info(f"{depth}{debug_prefix} Extracting to folder [{extracted_folder}]")
-                self.mmv_main.download.extract_file(soundfont_tar, self.EXTERNALS_ROOT)
+                self.mmv_main.download.extract_file(soundfont_tar, self.mmv_main.context.paths.externals_dir)
             else:
                 logging.info(f"{depth}{debug_prefix} Extracted folder [{extracted_folder}] already exists, skipping extracting..")
     

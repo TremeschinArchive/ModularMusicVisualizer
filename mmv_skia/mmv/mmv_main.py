@@ -97,7 +97,7 @@ class MMVMain:
         self.mmv_animation = MMVAnimation(mmv_main = self, depth = ndepth)
     
         logging.info(f"{depth}{debug_prefix} Creating MMVCore() class")
-        self.core = MMVCore(self)
+        self.core = MMVCore(mmv_main = self, depth = ndepth)
 
         logging.info(f"{depth}{debug_prefix} Creating Download() class")
         self.download = Download()
