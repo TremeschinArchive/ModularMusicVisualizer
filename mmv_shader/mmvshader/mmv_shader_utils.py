@@ -27,6 +27,15 @@ class MMVUtils:
     def __init__(self):
         self.os = self.get_os()
 
+    def get_os(self):
+
+        # Get the desired name from a dict matching against os.name
+        return {
+            "posix": "linux",
+            "nt": "windows",
+            "darwin": "macos"
+        }.get(os.name)
+
     # Make directory / directories if it does not exist
     def mkdir_dne(self, path):
         path = self.get_abspath(path, silent = True)

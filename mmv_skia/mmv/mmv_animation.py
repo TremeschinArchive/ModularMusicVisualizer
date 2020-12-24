@@ -26,7 +26,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.cmn_constants import NEXT_DEPTH, NO_DEPTH
+from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH
 from mmv.mmv_generator import *
 from mmv.mmv_modifiers import *
 import logging
@@ -40,15 +40,15 @@ import os
 class MMVAnimation:
 
     # Initialize a MMVAnimation class with required arguments
-    def __init__(self, mmv_main, depth = NO_DEPTH) -> None:
+    def __init__(self, mmv_main, depth = LOG_NO_DEPTH) -> None:
         debug_prefix = "[MMVAnimation.__init__]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
         self.mmv_main = mmv_main
         self.preludec = self.mmv_main.prelude["mmvanimation"]
 
         # Log we started
         if self.preludec["log_creation"]:
-            logging.info(f"{ndepth}{debug_prefix} Creating empty content and generators dictionary and list respectively")
+            logging.info(f"{depth}{debug_prefix} Creating empty content and generators dictionary and list respectively")
 
         # Content are the MMV objects stored that gets rendered on the screen
         # generators are MMVGenerators that we get new objects from
@@ -56,9 +56,9 @@ class MMVAnimation:
         self.generators = []
 
     # Make layers until a given N value
-    def mklayers_until(self, n: int, depth = NO_DEPTH) -> None:
+    def mklayers_until(self, n: int, depth = LOG_NO_DEPTH) -> None:
         debug_prefix = "[MMVAnimation.__init__]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Hard debug this action
         if self.preludec["mklayers_until"]["log_action"]:
@@ -73,7 +73,7 @@ class MMVAnimation:
 
                 # Log that we'll be doing so
                 if self.preludec["mklayers_until"]["log_new_layers"]:
-                    logging.info(f"{ndepth}{debug_prefix} Animation layer index N = [{layer_index}] didn't existed, creating empty list")
+                    logging.info(f"{depth}{debug_prefix} Animation layer index N = [{layer_index}] didn't existed, creating empty list")
 
                 # Create empty list at
                 self.content[layer_index] = []

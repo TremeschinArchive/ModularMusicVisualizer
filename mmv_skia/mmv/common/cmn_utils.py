@@ -27,7 +27,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.cmn_constants import NEXT_DEPTH, NO_DEPTH
+from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH
 import mmv.common.cmn_any_logger
 import subprocess
 import hashlib
@@ -48,9 +48,9 @@ class Utils:
         self.os = self.get_os()
 
     # Make sure given path is a directory
-    def assert_dir(self, path, depth = NO_DEPTH, silent = False) -> None:
+    def assert_dir(self, path, depth = LOG_NO_DEPTH, silent = False) -> None:
         debug_prefix = "[Utils.assert_dir]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
@@ -67,9 +67,9 @@ class Utils:
             raise RuntimeError(err)
     
     # Make sure given path is a file
-    def assert_file(self, path, depth = NO_DEPTH, silent = False) -> None:
+    def assert_file(self, path, depth = LOG_NO_DEPTH, silent = False) -> None:
         debug_prefix = "[Utils.assert_file]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
@@ -89,9 +89,9 @@ class Utils:
     # Returns:
     # - True: existed before
     # - False: didn't existed before
-    def mkdir_dne(self, path, depth = NO_DEPTH, silent = False) -> bool:
+    def mkdir_dne(self, path, depth = LOG_NO_DEPTH, silent = False) -> bool:
         debug_prefix = "[Utils.mkdir_dne]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
@@ -132,9 +132,9 @@ class Utils:
     # Returns:
     # - True: existed before
     # - False: didn't existed before
-    def mkfile_dne(self, path, depth = NO_DEPTH, silent = False) -> bool:
+    def mkfile_dne(self, path, depth = LOG_NO_DEPTH, silent = False) -> bool:
         debug_prefix = "[Utils.mkfile_dne]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
@@ -169,9 +169,9 @@ class Utils:
         return True
     
     # Make sure a parent directory exists
-    def mkparent_dne(self, path, depth = NO_DEPTH, silent = False) -> None:
+    def mkparent_dne(self, path, depth = LOG_NO_DEPTH, silent = False) -> None:
         debug_prefix = "[Utils.mkparent_dne]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
@@ -180,8 +180,8 @@ class Utils:
         # Get the absolute and real path of the parent dir
         abspath_realpath_parent_dir = self.get_path_parent_dir(
                 self.get_abspath(
-                    path, depth = ndepth + (2*NEXT_DEPTH), silent = silent
-            ), depth = ndepth + NEXT_DEPTH, silent = silent
+                    path, depth = ndepth + (2*LOG_NEXT_DEPTH), silent = silent
+            ), depth = ndepth + LOG_NEXT_DEPTH, silent = silent
         )
 
         # Make it
@@ -191,9 +191,9 @@ class Utils:
             logging.debug(f"{depth}{debug_prefix} (Parent) Directory guaranteed to exist [{abspath_realpath_parent_dir}]")
 
     # Deletes an directory, fail safe? Quits if we can't delete it..
-    def rmdir(self, path, depth = NO_DEPTH, silent = False) -> None:
+    def rmdir(self, path, depth = LOG_NO_DEPTH, silent = False) -> None:
         debug_prefix = "[Utils.rmdir]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # If the asked directory is even a path
         if os.path.isdir(path):
@@ -244,9 +244,9 @@ class Utils:
             sys.exit(-1)
 
     # Get the full path of a random file from a given directory
-    def random_file_from_dir(self, path, depth = NO_DEPTH, silent = False):
+    def random_file_from_dir(self, path, depth = LOG_NO_DEPTH, silent = False):
         debug_prefix = "[Utils.random_file_from_dir]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
@@ -262,9 +262,9 @@ class Utils:
         return r
 
     # Get the basename of a path
-    def get_basename(self, path, depth = NO_DEPTH, silent = False):
+    def get_basename(self, path, depth = LOG_NO_DEPTH, silent = False):
         debug_prefix = "[Utils.get_basename]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
@@ -280,9 +280,9 @@ class Utils:
         return basename
     
     # Return an absolute path always, pointing to the 
-    def get_abspath(self, path, depth = NO_DEPTH, silent = False):
+    def get_abspath(self, path, depth = LOG_NO_DEPTH, silent = False):
         debug_prefix = "[Utils.get_abspath]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
@@ -318,9 +318,9 @@ class Utils:
         return abs_realpath
     
     # Some files can be symlinks on *nix or shortcuts on Windows, get the true real path
-    def get_realpath(self, path, depth = NO_DEPTH, silent = False):
+    def get_realpath(self, path, depth = LOG_NO_DEPTH, silent = False):
         debug_prefix = "[Utils.get_realpath]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
@@ -336,9 +336,9 @@ class Utils:
         return realpath
 
     # Get the filename without extension /home/linux/file.ogg -> "file"
-    def get_filename_no_extension(self, path, depth = NO_DEPTH, silent = False):
+    def get_filename_no_extension(self, path, depth = LOG_NO_DEPTH, silent = False):
         debug_prefix = "[Utils.get_filename_no_extension]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
@@ -354,9 +354,9 @@ class Utils:
         return filename_no_ext
     
     # Get the parent directory of a given path
-    def get_path_parent_dir(self, path, depth = NO_DEPTH, silent = False):
+    def get_path_parent_dir(self, path, depth = LOG_NO_DEPTH, silent = False):
         debug_prefix = "[Utils.get_path_parent_dir]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
     
         # Log action
         if not silent:
@@ -390,9 +390,9 @@ class Utils:
         }.get(os.name)
     
     # Load a yaml and return its content
-    def load_yaml(self, path, depth = NO_DEPTH, silent = False) -> None:
+    def load_yaml(self, path, depth = LOG_NO_DEPTH, silent = False) -> None:
         debug_prefix = "[Utils.load_yaml]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
         
         # Log action
         if not silent:
@@ -416,9 +416,9 @@ class Utils:
         return data
     
     # Save a dictionary to a YAML file, make sure the directory exists first..
-    def dump_yaml(self, data, path, depth = NO_DEPTH, silent = False) -> None:
+    def dump_yaml(self, data, path, depth = LOG_NO_DEPTH, silent = False) -> None:
         debug_prefix = "[Utils.dump_yaml]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
@@ -435,9 +435,9 @@ class Utils:
             yaml.dump(data, f, default_flow_style = False)
 
     # Waits until file exist
-    def until_exist(self, path, depth = NO_DEPTH, silent = False) -> None:
+    def until_exist(self, path, depth = LOG_NO_DEPTH, silent = False) -> None:
         debug_prefix = "[Utils.until_exist]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
@@ -449,9 +449,9 @@ class Utils:
                 break
         
     # $ mv A B
-    def move(self, src, dst, depth = NO_DEPTH, silent = False) -> None:
+    def move(self, src, dst, depth = LOG_NO_DEPTH, silent = False) -> None:
         debug_prefix = "[Utils.move]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
@@ -470,9 +470,9 @@ class Utils:
             raise RuntimeError(err)
     
     # $ cp A B
-    def copy(self, src, dst, depth = NO_DEPTH, silent = False) -> None:
+    def copy(self, src, dst, depth = LOG_NO_DEPTH, silent = False) -> None:
         debug_prefix = "[Utils.copy]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
@@ -504,9 +504,9 @@ class Utils:
         return True
 
     # If name is an file on PATH marked as executable returns True
-    def has_executable_with_name(self, binary, depth = NO_DEPTH, silent = False) -> None:
+    def has_executable_with_name(self, binary, depth = LOG_NO_DEPTH, silent = False) -> None:
         debug_prefix = "[Utils.has_executable_with_name]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
@@ -528,9 +528,9 @@ class Utils:
         return exists
     
     # Get a executable from path, returns False if it doesn't exist
-    def get_executable_with_name(self, binary, extra_paths = [None], depth = NO_DEPTH, silent = False):
+    def get_executable_with_name(self, binary, extra_paths = [None], depth = LOG_NO_DEPTH, silent = False):
         debug_prefix = "[Utils.get_executable_with_name]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
@@ -568,9 +568,9 @@ class Utils:
 
     # Get one (astronomically guaranteed) unique id, upper(uuid4)
     # purpose key is for logging messages so we identify which identifier is binded to what object
-    def get_unique_id(self, purpose = "", depth = NO_DEPTH, silent = False) -> str:
+    def get_unique_id(self, purpose = "", depth = LOG_NO_DEPTH, silent = False) -> str:
         debug_prefix = "[Utils.get_unique_id]"
-        ndepth = depth + NEXT_DEPTH
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Get an uppercase uuid4
         unique_id = str(uuid.uuid4()).upper()[0:8]
