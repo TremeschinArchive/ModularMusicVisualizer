@@ -38,19 +38,20 @@ import cv2
 
 # Basically everything on MMV as we have to render images
 class MMVImage:
-    def __init__(self, mmv_main, depth = LOG_NO_DEPTH) -> None:
+    def __init__(self, mmv_main, depth = LOG_NO_DEPTH, from_generator = False) -> None:
         debug_prefix = "[MMVImage.__init__]"
         ndepth = depth + LOG_NEXT_DEPTH
         self.mmv_main = mmv_main
         self.preludec = self.mmv_main.prelude["mmvimage"]
 
         # Log the creation of this class
-        if self.preludec["log_creation"]:
+        if self.preludec["log_creation"] and not from_generator:
             logging.info(f"{depth}{debug_prefix} Created new MMVImage object, getting unique identifier for it")
 
         # Get an unique identifier for this MMVImage object
         self.identifier = self.mmv_main.utils.get_unique_id(
-            purpose = "MMVImage object", depth = ndepth, silent = self.preludec["log_get_unique_id"]
+            purpose = "MMVImage object", depth = ndepth,
+            silent = self.preludec["log_get_unique_id"] and from_generator
         )
         
         # The "animation" and path this object will follow

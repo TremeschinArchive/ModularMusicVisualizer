@@ -26,8 +26,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH
 from mmv.generators.mmv_particle_generator import MMVParticleGenerator
-from mmv.common.cmn_constants import LOG_NEXT_DEPTH, ROOT_DEPTH, LOG_NO_DEPTH
 import logging
 
 
@@ -36,16 +36,19 @@ class MMVGenerator:
         debug_prefix = "[MMVGenerator.__init__]"
         ndepth = depth + LOG_NEXT_DEPTH
         self.mmv_main = mmv_main
-
-        # Log the creation of this class
-        logging.info(f"{depth}{debug_prefix} Created new MMVGenerator object, getting unique identifier for it")
-
+        self.preludec = self.mmv_main.interface.prelude["mmvgenerator"]
+ 
         # Get an unique identifier for this MMVImage object
         self.identifier = self.mmv_main.utils.get_unique_id(
-            purpose = "MMVImage object", depth = ndepth
+            purpose = "MMVImage object", depth = ndepth,
+            silent = self.preludec["log_get_unique_id"]
         )
 
-        logging.info(f"{depth}{debug_prefix} [{self.identifier}] Starting with empty generator attribute")
+        # Log the creation of this class
+        if self.preludec["log_creation"]:
+            logging.info(f"{depth}{debug_prefix} [{self.identifier}] Created new MMVGenerator object, getting unique identifier for it")
+
+        # Start with empty generator object
         self.generator = None
 
     # Main routine, wraps around generator files under the "generators" directory
@@ -57,7 +60,9 @@ class MMVGenerator:
         debug_prefix = "[MMVGenerator.particle_generator]"
         ndepth = depth + LOG_NEXT_DEPTH
 
-        logging.info(f"{depth}{debug_prefix} [{self.identifier}] Setting this generator object to MMVParticleGenerator with kwargs: {kwargs}")
+        # Log action
+        if self.preludec["particle_generator"]:
+            logging.info(f"{depth}{debug_prefix} [{self.identifier}] Setting this generator object to MMVParticleGenerator with kwargs: {kwargs}")
 
-        self.generator = MMVParticleGenerator(self.mmv_main, **kwargs)
-
+        # Set this generator to a MMVParticleGenerator
+        self.generator = MMVParticleGenerator(self.mmv_main, depth = ndepth, **kwargs)
