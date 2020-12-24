@@ -20,23 +20,29 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH
 import subprocess
+import logging
 import shutil
 import os
 
 
 class MMVShaderMPV:
-    def __init__(self, main):
+    def __init__(self, main, depth = LOG_NO_DEPTH):
         debug_prefix = "[MMVShaderMPV.__init__]"
+        ndepth = depth + LOG_NEXT_DEPTH
         self.mmv_main = main
 
         # Create empty config
         self.reset()
 
     # Reset configured stuff
-    def reset(self):
+    def reset(self, depth = LOG_NO_DEPTH):
         debug_prefix = "[MMVShaderMPV.reset]"
-        print(debug_prefix, "Resetting MMVShaderMPV to empty configuration")
+        ndepth = depth + LOG_NEXT_DEPTH
+
+        # Log action
+        logging.info(f"{depth}{debug_prefix} Resetting MMVShaderMPV to empty configuration")
 
         # List of shaders to apply
         self.shaders = []
@@ -60,7 +66,7 @@ class MMVShaderMPV:
             mpv_binary += ".exe"
         
         # Try finding mpv binary
-        print(debug_prefix, f"Getting mpv binary [{mpv_binary}] path..")
+        logging.info(f"{depth}{debug_prefix} Getting mpv binary [{mpv_binary}] path..")
         mpv_binary_path = self.mmv_main.utils.get_executable_with_name(mpv_binary)
 
         # get_executable_with_name returns False if it's not found, up for who
@@ -68,7 +74,7 @@ class MMVShaderMPV:
         if not mpv_binary_path:
             raise RuntimeError(f"Could not find mpv binary named [{mpv_binary}] on the system.")
 
-        print(debug_prefix, f"mpv binary path is [{mpv_binary_path}]")
+        logging.info(f"{depth}{debug_prefix} mpv binary path is [{mpv_binary_path}]")
 
         # Start with the mpv binary
         self.__command = [mpv_binary_path]
@@ -80,16 +86,19 @@ class MMVShaderMPV:
     # # Internal functions
 
     # Generate the final command to run
-    def __generate_command(self):
+    def __generate_command(self, depth = LOG_NO_DEPTH):
         debug_prefix = "[MMVShaderMPV.__generate_command]"
-        print(debug_prefix, "Generating run command")
+        ndepth = depth + LOG_NEXT_DEPTH
+
+        # Log action
+        logging.info(f"{depth}{debug_prefix} Generating run command")
         
         # Preliminary error assertion
         assert (not self.input_video == ""), "No input video specified"
 
         # Add input source
         self.__command += [self.input_video]
-        print(debug_prefix, f"Added input video [{self.input_video}] to command")
+        logging.info(f"{depth}{debug_prefix} Added input video [{self.input_video}] to command")
 
         # # Append shaders flags for every shader we added
 
@@ -98,11 +107,11 @@ class MMVShaderMPV:
 
             # Assert that every shader is a valid file on the disk
             assert (any([os.path.isfile(path) for path in self.shaders]))
-            print(debug_prefix, "All shaders given are existing files on the disk")
+            logging.info(f"{depth}{debug_prefix} All shaders given are existing files on the disk")
 
             # # For every shader add its flag
             
-            print(debug_prefix, "Adding all shaders to command:")            
+            logging.info(f"{depth}{debug_prefix} Adding all shaders to command:")            
             
             # Iterate over shaders
             for shader in self.shaders:
@@ -112,11 +121,11 @@ class MMVShaderMPV:
                 self.__command.append(flag)
 
                 # Pretty print
-                print(debug_prefix, f"> [{flag}]")            
+                logging.info(f"{depth}{debug_prefix} -> [{flag}]")            
 
         # If we have some output video, render to it, otherwise display realtime (no -o flag)
         if self.output_video is not None:
-            print(debug_prefix, f"Output video is not None, render to file [{self.output_video}]")       
+            logging.info(f"{depth}{debug_prefix} Output video is not None, render to file [{self.output_video}]")       
 
             # https://github.com/mpv-player/mpv/issues/7193#issuecomment-559898238
             if self.mmv_main.os == "windows":
@@ -142,37 +151,39 @@ class MMVShaderMPV:
             self.__command += ["-o", self.output_video]
         
         # Add x264 flags
-        print(debug_prefix, "Appending libx264 encoding flags:")            
+        logging.info(f"{depth}{debug_prefix} Appending libx264 encoding flags:")            
         for flag in self.x264_flags:
             self.__command.append(flag)
-            print(debug_prefix, f"> [{flag}]")            
+            logging.info(f"{depth}{debug_prefix} > [{flag}]")            
 
         # Print full command and we're done, just need to execute it
-        print(debug_prefix, "Full command is", self.__command)
+        logging.info(f"{depth}{debug_prefix} Full command is {self.__command}")
 
     # # Interface, end user functions
 
     # Adds a new shader as processing layer to the final video
-    def add_shader(self, shader_path):
+    def add_shader(self, shader_path, depth = LOG_NO_DEPTH):
         debug_prefix = "[MMVShaderMPV.add_shader]"
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Get absolute path always
         shader_path = self.mmv_main.utils.get_abspath(shader_path)
-        print(debug_prefix, f"> Add shader with path: [{shader_path}]")
+        logging.info(f"{depth}{debug_prefix} Add shader with path: [{shader_path}]")
 
         # Assign values
         self.shaders.append(shader_path)
 
     # Configure x264 encoding flags like crf, preset, audio codec and bitrate
-    def x264_settings(self, audio_codec = "libopus", audio_bitrate = 300000, crf = 18, preset = "fastest"):
+    def x264_settings(self, audio_codec = "libopus", audio_bitrate = 300000, crf = 18, preset = "fast", depth = LOG_NO_DEPTH):
         self.x264_flags = [
             f"--oac={audio_codec}", f"--oacopts=b={audio_bitrate}",
             "--ovc=libx264", f"--ovcopts=preset={preset}", f"--ovcopts=crf={crf}"
         ]
 
     # Configure input and output, if output is None that means don't render, only display real time
-    def input_output(self, input_video, output_video = None):
+    def input_output(self, input_video, output_video = None, depth = LOG_NO_DEPTH):
         debug_prefix = "[MMVShaderMPV.input_output]"
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Get absolute path always
         input_video = self.mmv_main.utils.get_abspath(input_video)
@@ -180,34 +191,40 @@ class MMVShaderMPV:
             output_video = self.mmv_main.utils.get_abspath(output_video)
 
         # Warn info
-        print(debug_prefix, f"> Set input video: [{input_video}]")
-        print(debug_prefix, f"> Set output video: [{output_video}]")
+        logging.info(f"{depth}{debug_prefix} Set input video: [{input_video}]")
+        logging.info(f"{depth}{debug_prefix} Set output video: [{output_video}]")
 
         # Assign values
         self.input_video = input_video
         self.output_video = output_video
     
     # Configure the resolution width, height to render
-    def resolution(self, width, height):
+    def resolution(self, width, height, depth = LOG_NO_DEPTH):
         debug_prefix = "[MMVShaderMPV.resolution]"
+        ndepth = depth + LOG_NEXT_DEPTH
 
         # Warn info
-        print(debug_prefix, f"> Set resolution width: [{width}]")
-        print(debug_prefix, f"> Set resolution height: [{height}]")
+        logging.info(f"{depth}{debug_prefix} Set resolution width: [{width}]")
+        logging.info(f"{depth}{debug_prefix} Set resolution height: [{height}]")
 
         # Assign values
         self.width = width
         self.height = height
         
     # Execute this class with the stuff configured
-    def run(self, execute = True):
+    def run(self, execute = True, depth = LOG_NO_DEPTH):
         debug_prefix = "[MMVShaderMPV.run]"
+        ndepth = depth + LOG_NEXT_DEPTH
         
         # Generate command
         self.__generate_command()
 
+        if self.mmv_main.prelude["flow"]["stop_at_run_command"]:
+            logging.critical(f"{depth}{debug_prefix} Stopping program as key stop_at_run_command is True on prelude.toml")
+            sys.exit(0)
+            
         # If we just wanna see the final command, don't execute
         if execute:
-            print(debug_prefix, "Starting mpv subprocess with self.__command list, here be dragons..\n")
+            logging.info(f"{depth}{debug_prefix} Starting mpv subprocess with self.__command list, here be dragons..")
             subprocess.run(self.__command)
 

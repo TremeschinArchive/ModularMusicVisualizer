@@ -40,7 +40,7 @@ class MMVSkiaPath:
 
         # The root directory we'll be refering to, it's the folder where __init__.py is located
         # We need to get the mmv_main's interface class position as the "package mmv" is the interface itself
-        self.ROOT = self.mmv_main.interface.ROOT
+        self.MMV_SKIA_ROOT = self.mmv_main.interface.MMV_SKIA_ROOT
 
         # Path separator
         sep = os.path.sep
@@ -48,7 +48,7 @@ class MMVSkiaPath:
         # # Externals directory (ffmpeg binaries mainly on Windows)
         
         # Define it
-        self.externals_dir = f"{self.ROOT}{sep}externals"
+        self.externals_dir = f"{self.MMV_SKIA_ROOT}{sep}externals"
         logging.info(f"{depth}{debug_prefix} Externals folder path is: [{self.externals_dir}]")
             
         # Make the directory if it doesn't exist
@@ -61,7 +61,7 @@ class MMVSkiaPath:
 
         # # Data directory (configurations)
 
-        self.data_dir = f"{self.ROOT}{sep}data"
+        self.data_dir = f"{self.MMV_SKIA_ROOT}{sep}data"
         logging.info(f"{depth}{debug_prefix} Data folder path is: [{self.data_dir}]")
 
         # # Error assertion the directories
@@ -96,7 +96,7 @@ class MMVContext:
         self.duration = None
 
         # External dependencies directory
-        self.data_dir = self.paths.ROOT + "/data"
+        self.data_dir = self.paths.MMV_SKIA_ROOT + "/data"
 
         # Video specs
         self.width = 1280
