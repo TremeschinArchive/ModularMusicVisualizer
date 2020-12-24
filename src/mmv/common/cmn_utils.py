@@ -528,7 +528,7 @@ class Utils:
         return exists
     
     # Get a executable from path, returns False if it doesn't exist
-    def get_executable_with_name(self, binary, extra_paths = [None], depth = LOG_NO_DEPTH, silent = False):
+    def get_executable_with_name(self, binary, extra_paths = [], depth = LOG_NO_DEPTH, silent = False):
         debug_prefix = "[Utils.get_executable_with_name]"
         ndepth = depth + LOG_NEXT_DEPTH
 
