@@ -37,15 +37,23 @@ import os
 
 
 class MMVCore:
-    def __init__(self, mmv_main) -> None:
+    def __init__(self, mmv_main, depth = LOG_NO_DEPTH) -> None:
+        debug_prefix = "[MMVCore.__init__]"
+        ndepth = depth + LOG_NEXT_DEPTH
         self.mmv_main = mmv_main
         self.prelude = self.mmv_main.prelude
+        self.preludec = self.prelude["mmvcore"]
+
+        # Log creation
+        if self.preludec["log_creation"]:
+            logging.info(f"{depth}{debug_prefix} Created MMVCore()")
 
     # Execute MMV, core loop
     def run(self, depth = LOG_NO_DEPTH) -> None:
         debug_prefix = "[MMVCore.run]"
         ndepth = depth + LOG_NEXT_DEPTH
 
+        # Log the separator as we're entering some other stage
         logging.info(LOG_SEPARATOR)
         logging.info(f"{depth}{debug_prefix} Executing MMVCore.run()")
 

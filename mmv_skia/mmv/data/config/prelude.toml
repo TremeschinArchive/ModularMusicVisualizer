@@ -17,6 +17,9 @@ log_generated_unique_ids = true
 
 # # Logging
 
+[mmvcore]
+    log_creation = true
+
 [mmvanimation]
     log_creation = true
     [mmvanimation.mklayers_until]
