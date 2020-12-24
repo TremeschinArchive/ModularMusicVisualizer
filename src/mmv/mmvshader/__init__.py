@@ -27,8 +27,11 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmv.common.cmn_constants import LOG_NEXT_DEPTH, PACKAGE_DEPTH, LOG_NO_DEPTH, LOG_SEPARATOR, STEP_SEPARATOR
+from mmv.mmvshader.mmv_shader_main import MMVShaderMain
+import logging
 import sys
 import os
+
 
 # Main wrapper class for the end user, facilitates MMV in a whole
 class MMVShaderInterface:
@@ -37,18 +40,25 @@ class MMVShaderInterface:
         debug_prefix = "[MMVShaderInterface.__init__]"
         ndepth = depth + LOG_NEXT_DEPTH
         self.interface = interface
-        self.prelude = self.interface.prelude
+        self.prelude = self.interface.prelude["mmvshader"]
+        self.os = self.interface.os
+
+        # Log prelude configuration
+        logging.info(f"{depth}{debug_prefix} Prelude configuration is: {self.prelude}")
 
         # Where this file is located, please refer using this on the whole package
-        # Refer to it as self.mmv_main.ROOT at any depth in the code
+        # Refer to it as self.mmv_main.MMV_SHADER_ROOT at any depth in the code
         # This deals with the case we used pyinstaller and it'll get the executable path instead
         if getattr(sys, 'frozen', True):    
-            self.ROOT = os.path.dirname(os.path.abspath(__file__))
-            print(f"{depth}{debug_prefix} Running directly from source code")
-            print(f"{depth}{debug_prefix} Modular Music Visualizer Python package [__init__.py] located at [{self.ROOT}]")
+            self.MMV_SHADER_ROOT = os.path.dirname(os.path.abspath(__file__))
+            logging.info(f"{depth}{debug_prefix} Running directly from source code")
+            logging.info(f"{depth}{debug_prefix} Modular Music Visualizer Python package [__init__.py] located at [{self.MMV_SHADER_ROOT}]")
         else:
-            self.ROOT = os.path.dirname(os.path.abspath(sys.executable))
-            print(f"{depth}{debug_prefix} Running from release (sys.executable..?)")
-            print(f"{depth}{debug_prefix} Modular Music Visualizer executable located at [{self.ROOT}]")
+            self.MMV_SHADER_ROOT = os.path.dirname(os.path.abspath(sys.executable))
+            logging.info(f"{depth}{debug_prefix} Running from release (sys.executable..?)")
+            logging.info(f"{depth}{debug_prefix} Modular Music Visualizer executable located at [{self.MMV_SHADER_ROOT}]")
 
         # # # Create MMV classes and stuff
+
+        logging.info(f"{depth}{debug_prefix} Creating ")
+        self.mmv_shader_main = MMVShaderMain(self, depth = ndepth)

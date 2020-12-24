@@ -27,7 +27,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmv.common.cmn_constants import LOG_NEXT_DEPTH, PACKAGE_DEPTH, LOG_NO_DEPTH, LOG_SEPARATOR, STEP_SEPARATOR
-from mmv.mmvskia import MMVSkiaInterface
 import logging
 import shutil
 import toml
@@ -36,23 +35,12 @@ import sys
 import os
 
 
-# Main wrapper class for the end user, facilitates MMV in a whole
+# Class that distributes MMV packages, sets up logging and behavior
+# This class is distributed as being called "interface" among mmvskia
+# and mmvshader packages, which this one have the "prelude" attribute
+# which is the dictionary of the file prelude.toml containing
+# general behavior of MMV
 class MMVInterface:
-    def get_skia_interface(self, depth = LOG_NO_DEPTH, **kwargs):
-        debug_prefix = "[MMVInterface.get_skia_interface]"
-        ndepth = depth + LOG_NEXT_DEPTH
-
-        logging.info(f"{depth}{debug_prefix} Get and return MMVSkiaInterface, kwargs: {kwargs}")
-        
-        return MMVSkiaInterface(self, **kwargs)
-    
-    def get_shader_interface(self, depth = LOG_NO_DEPTH):
-        debug_prefix = "[MMVInterface.get_shader_interface]"
-        ndepth = depth + LOG_NEXT_DEPTH
-
-        logging.info(f"{depth}{debug_prefix} Return MMVShaderInterface")
-        
-        return MMVSkiaInterface(self)
 
     # Hello world!
     def greeter_message(self, depth = PACKAGE_DEPTH) -> None:
@@ -91,27 +79,27 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
         sep = os.path.sep
 
         # Where this file is located, please refer using this on the whole package
-        # Refer to it as self.mmv_main.ROOT at any depth in the code
+        # Refer to it as self.mmv_main.MMV_INTERFACE_ROOT at any depth in the code
         # This deals with the case we used pyinstaller and it'll get the executable path instead
         if getattr(sys, 'frozen', True):    
-            self.ROOT = os.path.dirname(os.path.abspath(__file__))
+            self.MMV_INTERFACE_ROOT = os.path.dirname(os.path.abspath(__file__))
             print(f"{depth}{debug_prefix} Running directly from source code")
-            print(f"{depth}{debug_prefix} Modular Music Visualizer Python package [__init__.py] located at [{self.ROOT}]")
+            print(f"{depth}{debug_prefix} Modular Music Visualizer Python package [__init__.py] located at [{self.MMV_INTERFACE_ROOT}]")
         else:
-            self.ROOT = os.path.dirname(os.path.abspath(sys.executable))
+            self.MMV_INTERFACE_ROOT = os.path.dirname(os.path.abspath(sys.executable))
             print(f"{depth}{debug_prefix} Running from release (sys.executable..?)")
-            print(f"{depth}{debug_prefix} Modular Music Visualizer executable located at [{self.ROOT}]")
+            print(f"{depth}{debug_prefix} Modular Music Visualizer executable located at [{self.MMV_INTERFACE_ROOT}]")
 
         # # Load prelude configuration
 
         print(f"{depth}{debug_prefix} Loading prelude configuration file")
         
         # Build the path the prelude file should be located at
-        prelude_file = f"{self.ROOT}{sep}prelude.toml"
+        prelude_file = f"{self.MMV_INTERFACE_ROOT}{sep}prelude.toml"
 
         print(f"{depth}{debug_prefix} Attempting to load prelude file located at [{prelude_file}], we cannot continue if this is wrong..")
 
-        # Load the prefule file
+        # Load the prelude file
         with open(prelude_file, "r") as f:
             self.prelude = toml.loads(f.read())
         
@@ -147,21 +135,22 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
 
             # Hard coded where the log file will be located
             # this is only valid for the last time we run this software
-            self.LOG_FILE = f"{self.ROOT}{sep}log.log"
+            self.LOG_FILE = f"{self.MMV_INTERFACE_ROOT}{sep}last_log.log"
 
             # Reset the log file
             with open(self.LOG_FILE, "w") as f:
                 print(f"{depth}{debug_prefix} Reset log file located at [{self.LOG_FILE}]")
                 f.write("")
 
-            # Versobe and append the file handler
+            # Verbose and append the file handler
             print(f"{depth}{debug_prefix} Reset log file located at [{self.LOG_FILE}]")
             handlers.append(logging.FileHandler(filename = self.LOG_FILE, encoding = 'utf-8'))
 
         # .. otherwise just keep the StreamHandler to stdout
 
         log_format = {
-            "pretty": "[%(levelname)-8s] [%(filename)-32s:%(lineno)-3d] %(message)s",
+            "informational": "[%(levelname)-8s] [%(filename)-32s:%(lineno)-3d] (%(relativeCreated)-6d) %(message)s",
+            "pretty": "[%(levelname)-8s] (%(relativeCreated)-6d) %(message)s",
             "economic": "[%(levelname)s::%(filename)s::%(lineno)d] %(message)s",
             "onlymessage": "%(message)s"
         }.get(self.prelude["logging"]["log_format"])
@@ -220,3 +209,27 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
         # Log which OS we're running
         logging.info(f"{depth}{debug_prefix} Running Modular Music Visualizer on Operating System: [{self.os}]")
         logging.info(f"{depth}{debug_prefix} (os.path.sep) is [{os.path.sep}]")
+
+    # MMVSkia works with glfw plus Skia to draw on a GL canvas and pipe
+    # through FFmpeg to render a final video. Have Piano Roll options
+    # and modules as well!!
+    def get_skia_interface(self, depth = LOG_NO_DEPTH, **kwargs):
+        debug_prefix = "[MMVInterface.get_skia_interface]"
+        ndepth = depth + LOG_NEXT_DEPTH
+        from mmv.mmvskia import MMVSkiaInterface
+
+        logging.info(f"{depth}{debug_prefix} Get and return MMVSkiaInterface, kwargs: {kwargs}")
+        
+        return MMVSkiaInterface(self, depth = ndepth, **kwargs)
+    
+    # MMVShader works with GLSL shaders through MPV. Currently most
+    # applicable concept is post processing which bumps MMV quality
+    # by a lot
+    def get_shader_interface(self, depth = LOG_NO_DEPTH):
+        debug_prefix = "[MMVInterface.get_shader_interface]"
+        ndepth = depth + LOG_NEXT_DEPTH
+        from mmv.mmvshader import MMVShaderInterface
+
+        logging.info(f"{depth}{debug_prefix} Return MMVShaderInterface")
+        
+        return MMVShaderInterface(self, depth = ndepth)

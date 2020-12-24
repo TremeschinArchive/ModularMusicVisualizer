@@ -23,34 +23,35 @@ import os
 
 
 # Manage directories
-class Directories:
+class MMVShaderDirectories:
     def __init__(self, main):
-        debug_prefix = "[Directories.__init__]"
-        self.mmv_main = main
+        debug_prefix = "[MMVShaderDirectories.__init__]"
+        self.mmv_shader_main = main
 
         # Generate and create required directories
 
         # Generated shaders from template
-        self.runtime = f"{self.mmv_main.DIR}{os.path.sep}runtime"
-        print(debug_prefix, f"Runtime directory is [{self.runtime}]")
-        self.mmv_main.utils.rmdir(self.runtime)
-        self.mmv_main.utils.mkdir_dne(self.runtime)
+        self.runtime = f"{self.mmv_shader_main.MMV_SHADER_ROOT}{os.path.sep}runtime"
+        print(debug_prefix, f"MMVShaderRuntime directory is [{self.runtime}]")
+        self.mmv_shader_main.utils.rmdir(self.runtime)
+        self.mmv_shader_main.utils.mkdir_dne(self.runtime)
+
 
 # Free real state for changing, modifying runtime dependent vars
-class Runtime:
+class MMVShaderRuntime:
     def __init__(self, main):
-        debug_prefix = "[Runtime.__init__]"
-        self.mmv_main = main
+        debug_prefix = "[MMVShaderRuntime.__init__]"
+        self.mmv_shader_main = main
 
 
-# Context vars (configured stuff)
-class Context:
+# MMVShaderContext vars (configured stuff)
+class MMVShaderContext:
     def __init__(self, main):
-        debug_prefix = "[Context.__init__]"
-        self.mmv_main = main
+        debug_prefix = "[MMVShaderContext.__init__]"
+        self.mmv_shader_main = main
 
-        print(debug_prefix, "Creating Directories")
-        self.directories = Directories(self.mmv_main)
+        print(debug_prefix, "Creating MMVShaderDirectories")
+        self.directories = MMVShaderDirectories(self.mmv_shader_main)
 
-        print(debug_prefix, "Creating Runtime")
-        self.runtime = Runtime(self.mmv_main)
+        print(debug_prefix, "Creating MMVShaderRuntime")
+        self.runtime = MMVShaderRuntime(self.mmv_shader_main)
