@@ -26,7 +26,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-print("[__init__.py] Importing MMV package files, this might take a while first time..")
+print("[__init__.py] Importing MMV package files, this might take a while from time to time..")
 
 from mmv.common.cmn_constants import LOG_NEXT_DEPTH, PACKAGE_DEPTH, LOG_NO_DEPTH, LOG_SEPARATOR, STEP_SEPARATOR
 from mmv.mmv_generator import MMVParticleGenerator
@@ -401,6 +401,7 @@ f"""{"-"*self.terminal_width}
         self.utils.rmdir(path, depth = ndepth)
 
     # Get the absolute path to a file or directory, absolute starts with / on *nix and LETTER:// on Windows
+    # we expect it to exist so we quit if don't since this is the interface class?
     def get_absolute_path(self, path, message = "path", depth = PACKAGE_DEPTH):
         debug_prefix = "[MMVInterface.get_absolute_path]"
         ndepth = depth + LOG_NEXT_DEPTH
@@ -416,7 +417,7 @@ f"""{"-"*self.terminal_width}
             raise FileNotFoundError(f"Input {message} does not exist {path}")
         return path
 
-    # If we ever need any unique id..? shorter than uuid4?
+    # If we ever need any unique id..?
     def get_unique_id(self):
         return self.utils.get_unique_id()
 
@@ -488,7 +489,7 @@ f"""{"-"*self.terminal_width}
         else:
             # We're on Linux so checking ffmpeg external dependency
             logging.info(f"{depth}{debug_prefix} You are using Linux, please make sure you have FFmpeg package installed on your distro, we'll just check for it now..")
-            self.mmv_main.utils.has_executable_with_name("ffmpeg")
+            self.mmv_main.utils.has_executable_with_name("ffmpeg", depth = ndepth)
 
     # Attempt to download and configure a midi soundbank for not manually converting MIDI -> audio
     """
