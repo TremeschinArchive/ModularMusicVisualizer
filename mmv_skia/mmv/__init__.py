@@ -70,7 +70,7 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
 {bias}|_|  |_| |_|  |_|    \\_/   
 {bias}
 {bias[:-8]}  Modular Music Visualizer Skia Edition                       
-{bias}{(21-len("Version")-len(self.version))*" "}Version {self.version}
+{bias[:-1]}{(21-len("Version")-len(self.version))*" "}Version {self.version}
 {"-"*self.terminal_width}
 """
         logging.info(message)
@@ -172,11 +172,15 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
             handlers = handlers,
         )
 
+        # :)
         self.greeter_message()
 
         # Start logging message
-        bias = " " * ((self.terminal_width//2) - 13); print(f"{bias}# # [ Start Logging ] # #\n")
+        bias = " " * ((self.terminal_width//2) - 13); print(f"{bias[:-1]}# # [ Start Logging ] # #\n")
         print("-" * self.terminal_width + "\n")
+
+        # Log what we'll do next
+        logging.info(f"{depth}{debug_prefix} We're done with the pre configuration of Python's behavior and loading prelude.toml configuration file")
 
         # Log precise Python version
         sysversion = sys.version.replace("\n", " ").replace("  ", " ")
