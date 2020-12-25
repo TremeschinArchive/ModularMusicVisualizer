@@ -36,7 +36,6 @@ from mmv.common.cmn_audio import AudioProcessing
 from mmv.mmvskia.mmv_context import MMVContext
 from mmv.common.cmn_functions import Functions
 from mmv.mmvskia.mmv_image import MMVSkiaImage
-from mmv.common.cmn_download import Download
 from mmv.mmvskia.mmv_core import MMVSkiaCore
 from mmv.common.cmn_audio import AudioFile
 from mmv.common.cmn_fourier import Fourier
@@ -98,9 +97,6 @@ class MMVSkiaMain:
     
         logging.info(f"{depth}{debug_prefix} Creating MMVSkiaCore() class")
         self.core = MMVSkiaCore(mmv_main = self, depth = ndepth)
-
-        logging.info(f"{depth}{debug_prefix} Creating Download() class")
-        self.download = Download()
 
     # Execute the program
     def run(self, depth = LOG_NO_DEPTH) -> None:
