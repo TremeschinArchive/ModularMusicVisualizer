@@ -34,6 +34,7 @@ import hashlib
 import logging
 import random
 import shutil
+import toml
 import glob
 import math
 import time
@@ -451,6 +452,51 @@ class Utils:
 
         with open(path, "w") as f:
             yaml.dump(data, f, default_flow_style = False)
+
+    # Load a toml and return its content
+    def load_toml(self, path, depth = LOG_NO_DEPTH, silent = False) -> None:
+        debug_prefix = "[Utils.load_toml]"
+        ndepth = depth + LOG_NEXT_DEPTH
+        
+        # Log action
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Loading TOML file from path [{path}], getting absolute realpath first")
+
+        # Get absolute and realpath
+        path = self.get_abspath(path, depth = ndepth, silent = True)
+
+        # Error assertion
+        self.assert_file(path)
+
+        # Open file in read mode
+        with open(path, "r") as f:
+            data= toml.loads(f.read())
+
+        # Log read data
+        if not silent:
+            logging.debug(f"{depth}{debug_prefix} Loaded data is: {data}")
+
+        # Return the data
+        return data
+    
+    # Save a dictionary to a TOML file, make sure the directory exists first..
+    def dump_toml(self, data, path, depth = LOG_NO_DEPTH, silent = False) -> None:
+        debug_prefix = "[Utils.dump_toml]"
+        ndepth = depth + LOG_NEXT_DEPTH
+
+        # Log action
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Dumping some data to TOML located at: [{path}], getting absolute realpath first")
+            logging.debug(f"{depth}{debug_prefix} Data being dumped: [{data}]")
+
+        # Make sure the parent path exists
+        self.mkparent_dne(path)
+
+        # Get absolute and realpath
+        path = self.get_abspath(path, depth = ndepth, silent = True)
+
+        with open(path, "w") as f:
+            f.write(toml.dumps(data))
 
     # Waits until file exist
     def until_exist(self, path, depth = LOG_NO_DEPTH, silent = False) -> None:

@@ -62,13 +62,16 @@ class MMVSkiaCore:
         last_session_info_file = self.mmv_main.interface.top_level_interace.last_session_info_file
         logging.info(f"{depth}{debug_prefix} Saving partial session info to last_session_info file at [{last_session_info_file}]")
         
-        # Open file then dump toml
-        with open(last_session_info_file, "w") as f:
-            f.write(
-                toml.dumps({
-                    "output_video": self.mmv_main.context.output_video
-                })
-            )
+        # Reset last session info file
+        self.mmv_main.utils.reset_file(last_session_info_file)
+        
+        # Dump to toml file
+        self.mmv_main.utils.dump_toml(
+            data = {
+                "output_video": self.mmv_main.context.output_video
+            },
+            path = last_session_info_file
+        )
 
         # Quit if code flow says so
         if self.prelude["flow"]["stop_at_mmv_core_run"]:
