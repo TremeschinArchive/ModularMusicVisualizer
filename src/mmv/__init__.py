@@ -75,11 +75,11 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
     def get_skia_interface(self, depth = PACKAGE_DEPTH, **kwargs):
         debug_prefix = "[MMVInterface.get_skia_interface]"
         ndepth = depth + LOG_NEXT_DEPTH
-        from mmv.mmvskia import MMVInterface
+        from mmv.mmvskia import MMVSkiaInterface
 
-        logging.info(f"{depth}{debug_prefix} Get and return MMVInterface, kwargs: {kwargs}")
+        logging.info(f"{depth}{debug_prefix} Get and return MMVSkiaInterface, kwargs: {kwargs}")
         
-        return MMVInterface(self, depth = ndepth, **kwargs)
+        return MMVSkiaInterface(self, depth = ndepth, **kwargs)
     
     # MMVShader works with GLSL shaders through MPV. Currently most
     # applicable concept is post processing which bumps MMV quality
@@ -420,6 +420,6 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
                 logging.info(f"{depth}{debug_prefix} Already have [musescore.exe] downloaded and extracted at [{FINAL_MUSESCORE_FINAL_BINARY}]")
         else:
             # We're on Linux so checking ffmpeg external dependency
-            logging.info(f"{depth}{debug_prefix} You are using Linux, please make sure you have musescore package installed on your distro, we'll just check for it now.. or go to https://musescore.org/en/download and install for your platform")
+            logging.info(f"{depth}{debug_prefix} You are using Linux, please make sure you have musescore package installed on your distro, we'll just check for it now.. or go to [https://musescore.org/en/download] and install for your platform")
             self.utils.has_executable_with_name("musescore", depth = ndepth)
         logging.info(STEP_SEPARATOR)

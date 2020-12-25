@@ -199,16 +199,13 @@ elif MODE == "piano_roll":
     INPUT_MIDI  = THIS_FILE_DIR + "/assets/free_assets/piano_roll/contingency_times.mid"
 
     # "auto" or "manual"
-    #   auto: Downloads a midi soundset and converts your midi into a .flac
+    #   auto: Downloads and uses musescore for converting midi -> audio
     #   manutal: You configure the final audio of the video
 
-    # NOTE: I strongly recommend you making the sound of the midi first, "auto"
-    # mode isn't the most stable and reliable thing in the world
-
     # AUDIO_OF_MIDI = "auto"
-    AUDIO_OF_MIDI = "manual"
+    AUDIO_OF_MIDI = "auto"
 
-    # Invalid setting
+    # Invalid setting assertion
     if not AUDIO_OF_MIDI in ["manual", "auto"]:
         raise RuntimeError(f"Invalid option AUDIO_OF_MIDI=[{AUDIO_OF_MIDI}]")
 
@@ -219,21 +216,27 @@ elif MODE == "piano_roll":
     # Automatic conversion, NOT IMPLEMENTED FOR WINDOWS
     elif AUDIO_OF_MIDI == "auto":
 
-        # Check and downloads for a soundfont, this is not the most stable function
-        # Either let it configure itself or have a symlink or .sf2 under ~/.fluidsynth/default_sound_font.sf2
-        processing.download_and_link_freepats_general_midi_soundfont()
+        # Check and download musescore (Windows only, Linux homies pls install from package manager)
+        # or head to [https://musescore.org/en/download]
+        interface.download_check_musescore()
         
         # Get a MidiFile class and load the Midi
         midi = processing.get_midi_class()
         midi.set_path(INPUT_MIDI)
 
         # Save the converted audio on the same directory, change .mid to .flac
-        rendered_midi_to_audio_path = INPUT_MIDI.replace(".mid", ".flac")
+        rendered_midi_to_audio_path = INPUT_MIDI.replace(".mid", ".mp3")
+
+        # Remove this file so we render again if you change any setting
+        if os.path.exists(rendered_midi_to_audio_path):
+            os.remove(rendered_midi_to_audio_path)
 
         # Convert and assign
-        midi.convert_to_audio(rendered_midi_to_audio_path)
-        INPUT_AUDIO = rendered_midi_to_audio_path
-
+        INPUT_AUDIO = midi.convert_to_audio(
+            save_path = rendered_midi_to_audio_path,
+            musescore_binary = interface.utils.get_executable_with_name("musescore"),
+            bitrate = 400000,
+        )
     
 
     # If your audio is delayed according to the midi, delay the notes by how much seconds?
