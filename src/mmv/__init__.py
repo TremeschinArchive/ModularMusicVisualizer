@@ -421,5 +421,6 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
         else:
             # We're on Linux so checking ffmpeg external dependency
             logging.info(f"{depth}{debug_prefix} You are using Linux, please make sure you have musescore package installed on your distro, we'll just check for it now.. or go to [https://musescore.org/en/download] and install for your platform")
-            self.utils.has_executable_with_name("musescore", depth = ndepth)
+            if not self.utils.has_executable_with_name("musescore", depth = ndepth):
+                sys.exit(-1)
         logging.info(STEP_SEPARATOR)
