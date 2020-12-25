@@ -6,7 +6,7 @@
 
 - `git clone https://github.com/Tremeschin/modular-music-visualizer`
 
-- `cd ./modular-music-visualizer/mmv_skia`
+- `cd ./modular-music-visualizer/src`
 
 (the next python commands might change on your distro / OS, try one of `python3.8` `python38` or on Windows `python.exe`)
 
