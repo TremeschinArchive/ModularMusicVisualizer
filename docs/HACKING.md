@@ -44,7 +44,7 @@ What we can infer from this analogy is that on both cases, class A and B we havi
 
 If you come from a compiled language this is similar to polymorphism.
 
-This is used a LOT on the interpolation classes like MMVInterpolation and all the MMVModifiers and virtually on every MMVImage and MMVVectorial.
+This is used a LOT on the interpolation classes like MMVInterpolation and all the MMVModifiers and virtually on every MMVSkiaImage and MMVSkiaVectorial.
 
 See file `mmv_animation.py`, `.next()` function, we loop through every item on the layers calling their `.next()` and `.blit()` functions.
 
@@ -233,7 +233,7 @@ class Video:
 
 We get the main class on `Video.__init__`, so when creating the video pipe we can directly access the runtime vars on Main's class Context class instance, `self.context` var there (Main), `self.main.context` var here (Video).
 
-That's about it!! When you see any `self.mmv_main` on the code, it is referring to the `MMVMain` class where it creates everybody so we can communicate anyone!!
+That's about it!! When you see any `self.mmv_main` on the code, it is referring to the `MMVSkiaMain` class where it creates everybody so we can communicate anyone!!
 
 
 ## "bunch of arguments"

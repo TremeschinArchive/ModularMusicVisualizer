@@ -1,0 +1,13 @@
+# This configuration file loads up before any MMV related stuff is set
+# and it doesn't change anything on the final video, this file is mostly
+# for configurations such as logging, namely Python stuff or QOL, let
+# you name it.
+
+
+[logging]
+log_to_file = true
+log_level = "debug"  # critical, debug, error, info, warn, notset
+log_format = "pretty"  # informational, pretty, economic, onlymessage
+
+[flow]
+stop_at_initialization = false

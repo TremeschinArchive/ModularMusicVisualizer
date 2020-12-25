@@ -23,25 +23,27 @@ venvs
 # # MMV Skia
 
 # Assets, externals, release
-mmv_skia/assets/user_assets
-mmv_skia/assets/generated
-!mmv_skia/assets/free_assets/*
-mmv_skia/mmv/externals
-mmv_skia/release
+src/assets/user_assets
+src/assets/generated
+!src/assets/free_assets/*
+
+src/mmv/externals
+src/mmv/release
 
 # # MMV GLSL Shader
 
-mmv_shader/data
-mmv_shader/mmvshader/fragment
-mmv_shader/mmvshader/pyglslrender.py
-mmv_shader/mmvshader/glsl/experiment*
-mmv_shader/mmvshader/runtime
+src/mmv/data
+src/mmv/fragment
+src/mmv/mmvshader/pyglslrender.py
+src/mmv/mmvshader/glsl/experiment*
+src/mmv/mmvshader/runtime
 
-mmv_shader/mmvshader/glsl/test_sphere.glsl
-mmv_shader/mmvshader/glsl/tideas
+src/mmv/mmvshader/data
+src/mmv/mmvshader/fragment
+src/mmv/mmvshader/glsl/wip*
 
 # # Tremx logos Yeah this is my identity, you should use yours here :)
-mmv_skia/assets/tremx_assets
+src/mmvskia/assets/tremx_assets
 tremx*
 
 # # # # # # # # # # # # # # # # # # # # # # # # # #
