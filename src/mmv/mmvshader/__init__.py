@@ -60,5 +60,7 @@ class MMVShaderInterface:
 
         # # # Create MMV classes and stuff
 
-        logging.info(f"{depth}{debug_prefix} Creating ")
+        logging.info(f"{depth}{debug_prefix} Creating MMVShaderMain")
         self.mmv_shader_main = MMVShaderMain(self, depth = ndepth)
+
+        logging.info(LOG_SEPARATOR)
