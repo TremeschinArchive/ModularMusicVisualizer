@@ -36,12 +36,11 @@ interface.download_check_mpv()
 # Where this insterface is located
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# If you set an output video it'll render to a file.
-# Only works on Linux, Windows you can only visualize
-# I have no control over this since it's an mpv feature.
-# For more info, set output video on Windows and run this script.
+# If you set an output video it'll render to a file. Only works on Linux, Windows you can only visualize
+# I have no control over this since it's an mpv feature. For more info, set output video on Windows and run this script.
 mpv.input_output(
-    input_video = f"{THIS_DIR}/shy-piano.mkv",
+    # input_video = f"{THIS_DIR}/shy-piano.mkv",
+    input_video = "last_rendered",  # Setting it to "last_rendered" gets the last rendered file from mmvskia
     output_video = "out.mp4"
 )
 
@@ -53,10 +52,10 @@ mpv.resolution(width = 1280, height = 720)
 
 # mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_grayscale.glsl")
 # mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_bitcrush.glsl")
-# mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_chromatic_aberration.glsl")
-mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_vignetting.glsl")
+mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_chromatic_aberration.glsl")
+# mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_vignetting.glsl")
 mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_edge_saturation_low.glsl")
-mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/wip_test_sphere.glsl")
+# mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/wip_test_sphere.glsl")
 mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_tsubaup.glsl")
 mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/wip_adaptive-sharpen.glsl")
 

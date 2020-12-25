@@ -277,7 +277,6 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
 
         self.last_session_info_file = f"{self.data_dir}{sep}last_session_info.toml"
         logging.info(f"{depth}{debug_prefix} Last session info file is [{self.last_session_info_file}], resetting it..")
-        self.utils.reset_file(self.last_session_info_file)
 
         # Code flow management
         if self.prelude["flow"]["stop_at_initialization"]:
