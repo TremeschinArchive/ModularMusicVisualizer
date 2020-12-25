@@ -51,12 +51,12 @@ import os
 # Main wrapper class for the end user, facilitates MMV in a whole
 class MMVSkiaInterface:
 
-    def __init__(self, interface, depth = LOG_NO_DEPTH, **kwargs):
+    def __init__(self, top_level_interace, depth = LOG_NO_DEPTH, **kwargs):
         debug_prefix = "[MMVSkiaInterface.__init__]"
         ndepth = depth + LOG_NEXT_DEPTH
-        self.interface = interface
-        self.os = self.interface.os
-    
+        self.top_level_interace = top_level_interace
+        self.os = self.top_level_interace.os
+
         # Where this file is located, please refer using this on the whole package
         # Refer to it as self.mmv_main.MMV_SKIA_ROOT at any depth in the code
         # This deals with the case we used pyinstaller and it'll get the executable path instead
@@ -83,7 +83,7 @@ class MMVSkiaInterface:
         # # # Create MMV classes and stuff
 
         # Main class of MMV and tart MMV classes that main connects them, do not run
-        self.mmv_main = MMVSkiaMain(self)
+        self.mmv_main = MMVSkiaMain(interface = self)
         self.mmv_main.setup(depth = ndepth)
 
         # Utilities

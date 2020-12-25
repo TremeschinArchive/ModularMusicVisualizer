@@ -227,6 +227,24 @@ class Utils:
             if not silent:
                 logging.debug(f"{depth}{debug_prefix} Directory doesn't exists, nothing to do here... [{path}]")
 
+    # Reset an file to empty contents
+    def reset_file(self, path, depth = LOG_NO_DEPTH, silent = False) -> None:
+        debug_prefix = "[Utils.reset_file]"
+        ndepth = depth + LOG_NEXT_DEPTH
+
+        # Log action
+        if not silent:
+            logging.info(f"{depth}{debug_prefix} Reset file located at: [{path}]")
+
+        # Error assertion
+        if (not os.path.isfile(path)) and (os.path.exists(path)):
+            logging.error(f"{depth}{debug_prefix} [ERROR] Path is not a file: [{path}]")
+            sys.exit(-1)
+        
+        # Write nothing on the file with write + override mode
+        with open(path, "w") as f:
+            f.write("")
+
     # Copy every file of a directory to another
     # TODO: new code style
     def copy_files_recursive(self, src, dst):

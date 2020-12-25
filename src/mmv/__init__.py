@@ -32,6 +32,7 @@ from mmv.common.cmn_utils import Utils
 import subprocess
 import tempfile
 import logging
+import struct
 import shutil
 import toml
 import math
@@ -101,6 +102,15 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
         # Versioning, greeter message
         self.terminal_width = shutil.get_terminal_size()[0]
         self.version = "2.5-unite"
+
+        # Can only run on Python 64 bits, this expression returns 32 if 32 bit installation
+        # and 64 if 64 bit installation, we assert that (assume it's true, quit if it isn't)
+        assert (struct.calcsize("P") * 8) == 64, (
+            "You don't have an 64 bit Python installation, MMV will not work on 32 bit Python "
+            "because skia-python package only distributes 64 bit Python wheels (bundles).\n"
+            "This is out of my control, Skia devs don't release 32 bit version of Skia anyways\n\n"
+            "See issue [https://github.com/kyamagu/skia-python/issues/21]"
+        )
 
         # # Get this file's path
 
@@ -257,6 +267,17 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
         self.downloads_dir = f"{self.MMV_INTERFACE_ROOT}{sep}externals{sep}downloads"
         logging.info(f"{depth}{debug_prefix} Downloads dir is [{self.downloads_dir}]")
         self.utils.mkdir_dne(path = self.downloads_dir, depth = ndepth)
+
+        # Data dir
+        self.data_dir = f"{self.MMV_INTERFACE_ROOT}{sep}data"
+        logging.info(f"{depth}{debug_prefix} Data dir is [{self.data_dir}]")
+        self.utils.mkdir_dne(path = self.data_dir, depth = ndepth)
+
+        # # Common files
+
+        self.last_session_info_file = f"{self.data_dir}{sep}last_session_info.toml"
+        logging.info(f"{depth}{debug_prefix} Last session info file is [{self.last_session_info_file}], resetting it..")
+        self.utils.reset_file(self.last_session_info_file)
 
         # Code flow management
         if self.prelude["flow"]["stop_at_initialization"]:
