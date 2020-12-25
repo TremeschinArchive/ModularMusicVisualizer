@@ -21,6 +21,8 @@ So look for Python version 3.8 on your distro / MacOS homebrew / when downloadin
 
 # Running
 
+- **Basic navigation**: You'll mainly need to use basic command line interface and navigation such as `cd` (change directory), `mkdir` (make directory), `pwd` (print working directory). Don't be afraid of searching how those work on Windows because I am very rusty on its CLI. On the other OSs, most should be POSIX compliant and literally use the same command.
+
 Currently there are two "versions" of the Modular Music Visualizer project on this repository, one uses the Skia drawing library and the other uses GLSL shaders.
 
 The first one (Skia) is currently aimed at rendering the piano roll and music visualization bars mode.
