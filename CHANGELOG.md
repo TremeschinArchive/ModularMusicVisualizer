@@ -1,3 +1,8 @@
+## [2.5.0] :: Unite :: (2020-12-25)
+- Merge both MMVSkia and MMVShader into a "common interface package", this allows:
+  - Sharing common files between the two
+  - General modularity and easiness of implementing new stuff having their own namespace (kinda)
+
 ## [2.4.0] :: Boring :: (2020-12-22)
 - Start to replace every print() function with proper logging.....
 - Also commenting stuff
