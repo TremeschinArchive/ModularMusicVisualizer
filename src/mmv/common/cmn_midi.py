@@ -27,10 +27,11 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmv.common.cmn_utils import DataUtils
-from midi2audio import FluidSynth
 import mmv.common.cmn_any_logger
+import subprocess
 import mido
 import copy
+import sys
 import os
 
 
@@ -62,11 +63,11 @@ class MidiFile:
         self.tempo = mido.bpm2tempo(bpm)
         self.range_notes = RangeNotes()
         self.datautils = DataUtils()
-        self.path = path
+        self.midi_file_path = path
     
     # When we only want to convert to audio no need to load it
     def set_path(self, path):
-        self.path = path
+        self.midi_file_path = path
     
     # Midi note index (number) to name -> "C3", "A#4", F5, etc
     def note_to_name(self, n):
@@ -167,17 +168,42 @@ class MidiFile:
         # print("Range:", self.range_notes.min, self.range_notes.max)
         # print(self.timestamps)
     
-    # Uses midi2audio for converting the input midi file
-    def convert_to_audio(self, save_path, sample_rate = 44000):
-        print(f"[MidiFile.convert_to_audio] Converting [{self.path}] -> [{save_path}] @{sample_rate}Hz")
+    # Converts this midi file set previously to audio
+    def convert_to_audio(self, save_path, musescore_binary, bitrate = 300000):
+        debug_prefix = "[MidiFile.convert_to_audio]"
+        print(f"{debug_prefix} Converting [{self.midi_file_path}] -> [{save_path}]")
         
         # If there is already a file by the save_path name, don't convert
         if os.path.exists(save_path):
-            print(f"[MidiFile.convert_to_audio] Save path [{save_path}] already exists, not converting to audio and overwriting..")
+            print(f"{debug_prefix} Save path [{save_path}] already exists, not converting to audio and overwriting..")
             return
 
-        # Actually convert from midi to audio
-        fs = FluidSynth(sample_rate = sample_rate)
-        fs.midi_to_audio(self.path, save_path)
+        # Command for converting midi -> audio
+        command = [
+            musescore_binary,
+            "-i", self.midi_file_path,
+            "-o", save_path,
+            "-b", str(bitrate),  
+        ]
+
+        # Log for debug and info
+        print(f"{debug_prefix} Command to run for converting midi to audio: {command}")
+        print(f"{debug_prefix} This might take a while, be patient..")
+
+        # Don't try opening gui on headless ?
+        env = os.environ.copy()
+        if False:  # FIXME: workaround?
+            env["QT_QPA_PLATFORM"] = "offscreen"
         
+        # Run command
+        subprocess.check_output(
+            command, env = env
+        )
+
+        # Assert we were successful?
+        if not os.path.exists(save_path):
+            print(f"{debug_prefix} Target save path don't exist after converting to audio [{save_path}]")
+            sys.exit(-1)
+
+        # Return
         return save_path
