@@ -1,3 +1,5 @@
+This documentation needs some reviewing but should still be functional
+
 # Running MMV on Windows
 
 This project isn't extensively tested on Windows, feedback appreciated.
@@ -89,7 +91,7 @@ Open a shell on the downloaded and extracted folder
 
 On Windows you can right click an empty spot on the Windows File Manager app while holding the shift key for a option to "Open PowerShell" here to appear.
 
-Change the working directory of the shell to the folder `ROOT/mmv_skia` (or just execute the previous step on that folder which contains the file `base_video.py`)
+Change the working directory of the shell to the folder `.\src` (or just execute the previous step on that folder which contains the file `base_video.py`)
 
 This step is not required but good to do so, create an virtual environment (venv) and activate it:
 
@@ -103,7 +105,7 @@ This step is not required but good to do so, create an virtual environment (venv
 
 #### 1. Vanilla Python: automatic installation and running
 
-When you run `python .\base_video.py --auto-deps` it should take care of downloading and installing Python dependencies as well as FFmpeg by downloading from https://www.gyan.dev/ffmpeg/builds/ and extracting to a temp folder, moving the binary to the right place.
+When you run `python .\base_video.py --auto-deps` it should take care of downloading and installing Python dependencies as well as FFmpeg, mpv and musescore as needed by working on the externals folders, moving the binary to the right place.
 
 If you're on anaconda, perhaps running with `--user` as so: `python .\base_video.py --auto-deps --user` should fix permission errors.
 
@@ -130,3 +132,5 @@ Run MMV with `python .\base_video.py`
 You can't render videos out of this but only visualize real time
 
 Edit the file `post_processing.py` then run it. Don't set a target output video, comment the line by adding a # at the beginning.
+
+Head back to the original [RUNNING.md](RUNNING.md) for instructions on configuring your own stuff
