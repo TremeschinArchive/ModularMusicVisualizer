@@ -213,7 +213,7 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
     # MMVSkia works with glfw plus Skia to draw on a GL canvas and pipe
     # through FFmpeg to render a final video. Have Piano Roll options
     # and modules as well!!
-    def get_skia_interface(self, depth = LOG_NO_DEPTH, **kwargs):
+    def get_skia_interface(self, depth = PACKAGE_DEPTH, **kwargs):
         debug_prefix = "[MMVInterface.get_skia_interface]"
         ndepth = depth + LOG_NEXT_DEPTH
         from mmv.mmvskia import MMVSkiaInterface
@@ -225,7 +225,7 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
     # MMVShader works with GLSL shaders through MPV. Currently most
     # applicable concept is post processing which bumps MMV quality
     # by a lot
-    def get_shader_interface(self, depth = LOG_NO_DEPTH):
+    def get_shader_interface(self, depth = PACKAGE_DEPTH):
         debug_prefix = "[MMVInterface.get_shader_interface]"
         ndepth = depth + LOG_NEXT_DEPTH
         from mmv.mmvshader import MMVShaderInterface
