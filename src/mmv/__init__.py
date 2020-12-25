@@ -59,7 +59,7 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
 {bias}| |  | | | |  | |   \\ V /  
 {bias}|_|  |_| |_|  |_|    \\_/   
 {bias}
-{bias[:-8]}  Modular Music Visualizer Skia Edition                       
+{bias} Modular Music Visualizer                      
 {bias[:-1]}{(21-len("Version")-len(self.version))*" "}Version {self.version}
 {"-"*self.terminal_width}
 """
@@ -72,7 +72,7 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
 
         # Versioning, greeter message
         self.terminal_width = shutil.get_terminal_size()[0]
-        self.version = "2.4-dev-not-working"
+        self.version = "2.5-unite"
 
         # # Get this file's path
 

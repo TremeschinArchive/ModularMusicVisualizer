@@ -98,7 +98,9 @@ Feel free DM me, I'd be happy to explain how MMV works.
 
 # Running
 
-Currently there are two "versions" of the Modular Music Visualizer project on this repository, one uses the Skia drawing library and the other uses GLSL shaders, only the first one works and I'm into heavy R&D for getting the shaders one to run as it'll squeeze pretty much all performance we can get from a computer.
+Currently there are two "versions" of the Modular Music Visualizer project on this repository, one uses the Skia drawing library and the other uses GLSL shaders, the first one currently aimed at rendering the piano roll and music visualization bars mode and the second one while I hope some day will replace the first one it currently works as a post processing layer.
+
+Sadly due to factors outside my control (I use the `mpv` program as the backend) applying post processing and rendering to videos only works on Linux (and probably macOS, *BSD) operating systems (see [this comment](https://github.com/mpv-player/mpv/issues/7193#issuecomment-559898238)), Windows users will only be able to apply the post effects real time but not get an easy file out of the code. It's possible to record the screen though at severe costs of quality. If you're on Windows you CAN render to videos, only MMVSkia that is which is the base of the 
 
 - **Basic navigation**: You'll mainly need to use basic command line interface and navigation such as `cd` (change directory), `mkdir` (make directory), `pwd` (print working directory). Don't be afraid of searching how those work on Windows because I am very rusty on its CLI. On the other OSs, most should be POSIX compliant and literally use the same command.
 
@@ -121,8 +123,6 @@ Please see the file [mmv_shader/README.md](mmv_shader/README.md) for instruction
 # Goals, what is being developed
 
 Also see [CHANGELOG.md](CHANGELOG.md) file :)
-
-Some pretty heavy R&D is going towards MMV GLSL Shaders Edition™ and I'm mostly maintaining the "old" code of MMV Skia and not adding much features recently. This section mostly applies for MMV Skia
 
 #### Next stuff
 

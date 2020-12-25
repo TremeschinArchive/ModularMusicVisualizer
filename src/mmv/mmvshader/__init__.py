@@ -29,6 +29,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from mmv.common.cmn_constants import LOG_NEXT_DEPTH, PACKAGE_DEPTH, LOG_NO_DEPTH, LOG_SEPARATOR, STEP_SEPARATOR
 from mmv.mmvshader.mmv_shader_main import MMVShaderMain
 import logging
+import toml
 import sys
 import os
 
@@ -40,12 +41,8 @@ class MMVShaderInterface:
         debug_prefix = "[MMVShaderInterface.__init__]"
         ndepth = depth + LOG_NEXT_DEPTH
         self.interface = interface
-        self.prelude = self.interface.prelude["mmvshader"]
         self.os = self.interface.os
-
-        # Log prelude configuration
-        logging.info(f"{depth}{debug_prefix} Prelude configuration is: {self.prelude}")
-
+  
         # Where this file is located, please refer using this on the whole package
         # Refer to it as self.mmv_main.MMV_SHADER_ROOT at any depth in the code
         # This deals with the case we used pyinstaller and it'll get the executable path instead
@@ -57,6 +54,17 @@ class MMVShaderInterface:
             self.MMV_SHADER_ROOT = os.path.dirname(os.path.abspath(sys.executable))
             logging.info(f"{depth}{debug_prefix} Running from release (sys.executable..?)")
             logging.info(f"{depth}{debug_prefix} Modular Music Visualizer executable located at [{self.MMV_SHADER_ROOT}]")
+
+        # # Prelude configuration
+
+        prelude_file = f"{self.MMV_SHADER_ROOT}{os.path.sep}mmv_shader_prelude.toml"
+        logging.info(f"{depth}{debug_prefix} Attempting to load prelude file located at [{prelude_file}], we cannot continue if this is wrong..")
+
+        with open(prelude_file, "r") as f:
+            self.prelude = toml.loads(f.read())
+
+        # Log prelude configuration
+        logging.info(f"{depth}{debug_prefix} Prelude configuration is: {self.prelude}")
 
         # # # Create MMV classes and stuff
 
