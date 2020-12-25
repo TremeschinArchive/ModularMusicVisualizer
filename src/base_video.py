@@ -222,7 +222,6 @@ elif MODE == "piano_roll":
         
         # Get a MidiFile class and load the Midi
         midi = processing.get_midi_class()
-        midi.set_path(INPUT_MIDI)
 
         # Save the converted audio on the same directory, change .mid to .mp3
         rendered_midi_to_audio_path = INPUT_MIDI.replace(".mid", ".mp3")
@@ -233,6 +232,7 @@ elif MODE == "piano_roll":
 
         # Convert and assign
         INPUT_AUDIO = midi.convert_to_audio(
+            source_path = INPUT_MIDI,
             save_path = rendered_midi_to_audio_path,
             musescore_binary = interface.utils.get_executable_with_name("musescore"),
             bitrate = 400000,

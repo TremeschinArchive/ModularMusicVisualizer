@@ -29,6 +29,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from mmv.common.cmn_utils import DataUtils
 import mmv.common.cmn_any_logger
 import subprocess
+import logging
 import mido
 import copy
 import sys
@@ -63,10 +64,6 @@ class MidiFile:
         self.tempo = mido.bpm2tempo(bpm)
         self.range_notes = RangeNotes()
         self.datautils = DataUtils()
-        self.midi_file_path = path
-    
-    # When we only want to convert to audio no need to load it
-    def set_path(self, path):
         self.midi_file_path = path
     
     # Midi note index (number) to name -> "C3", "A#4", F5, etc
@@ -169,9 +166,9 @@ class MidiFile:
         # print(self.timestamps)
     
     # Converts this midi file set previously to audio
-    def convert_to_audio(self, save_path, musescore_binary, bitrate = 300000):
+    def convert_to_audio(self, source_path, save_path, musescore_binary, bitrate = 300000):
         debug_prefix = "[MidiFile.convert_to_audio]"
-        print(f"{debug_prefix} Converting [{self.midi_file_path}] -> [{save_path}]")
+        print(f"{debug_prefix} Converting [{source_path}] -> [{save_path}]")
         
         # If there is already a file by the save_path name, don't convert
         if os.path.exists(save_path):
@@ -181,7 +178,7 @@ class MidiFile:
         # Command for converting midi -> audio
         command = [
             musescore_binary,
-            "-i", self.midi_file_path,
+            "-i", source_path,
             "-o", save_path,
             "-b", str(bitrate),  
         ]

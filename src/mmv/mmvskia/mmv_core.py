@@ -30,6 +30,7 @@ from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH, LOG_SEPARATOR
 import numpy as np
 import threading
 import logging
+import toml
 import time
 import copy
 import sys
@@ -55,6 +56,19 @@ class MMVSkiaCore:
 
         # Log action
         logging.info(f"{depth}{debug_prefix} Executing MMVSkiaCore.run()")
+
+        # # Save info so we can utilize on post processing or somewhere else
+
+        last_session_info_file = self.mmv_main.interface.top_level_interace.last_session_info_file
+        logging.info(f"{depth}{debug_prefix} Saving partial session info to last_session_info file at [{last_session_info_file}]")
+        
+        # Open file then dump toml
+        with open(last_session_info_file, "w") as f:
+            f.write(
+                toml.dumps({
+                    "output_video": self.mmv_main.context.output_video
+                })
+            )
 
         # Quit if code flow says so
         if self.prelude["flow"]["stop_at_mmv_core_run"]:
