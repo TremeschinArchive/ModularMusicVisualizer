@@ -26,13 +26,13 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-print("[__init__.py] Importing MMV package files, this might take a while from time to time..")
+print("[mmvskia.__init__.py package] Importing MMV package files, this might take a while from time to time..")
 
 from mmv.common.cmn_constants import LOG_NEXT_DEPTH, PACKAGE_DEPTH, LOG_NO_DEPTH, LOG_SEPARATOR, STEP_SEPARATOR
 from mmv.mmvskia.pygradienter.pyg_main import PyGradienter
 from mmv.mmvskia.mmv_generator import MMVSkiaGenerator
 from mmv.mmvskia.mmv_image import MMVSkiaImage
-print("[__init__.py] Importing probably heaviest dependency [MMVSkiaMain], Skia might take a bit to load so does numpy, opencv etc..")
+print("[mmvskia.__init__.py package] Importing probably heaviest dependency [MMVSkiaMain], Skia might take a bit to load so does numpy, opencv etc..")
 from mmv.mmvskia.mmv_main import MMVSkiaMain
 from mmv.common.cmn_midi import MidiFile
 from mmv.common.cmn_utils import Utils
@@ -55,13 +55,8 @@ class MMVSkiaInterface:
         debug_prefix = "[MMVSkiaInterface.__init__]"
         ndepth = depth + LOG_NEXT_DEPTH
         self.interface = interface
-
-        self.prelude = self.interface.prelude["mmvskia"]
         self.os = self.interface.os
-
-        # Log prelude configuration
-        logging.info(f"{depth}{debug_prefix} Prelude configuration is: {self.prelude}")
-
+    
         # Where this file is located, please refer using this on the whole package
         # Refer to it as self.mmv_main.MMV_SKIA_ROOT at any depth in the code
         # This deals with the case we used pyinstaller and it'll get the executable path instead
@@ -73,6 +68,17 @@ class MMVSkiaInterface:
             self.MMV_SKIA_ROOT = os.path.dirname(os.path.abspath(sys.executable))
             logging.info(f"{depth}{debug_prefix} Running from release (sys.executable..?)")
             logging.info(f"{depth}{debug_prefix} Modular Music Visualizer executable located at [{self.MMV_SKIA_ROOT}]")
+
+        # # Prelude configuration
+
+        prelude_file = f"{self.MMV_SKIA_ROOT}{os.path.sep}mmv_skia_prelude.toml"
+        logging.info(f"{depth}{debug_prefix} Attempting to load prelude file located at [{prelude_file}], we cannot continue if this is wrong..")
+
+        with open(prelude_file, "r") as f:
+            self.prelude = toml.loads(f.read())
+
+        # Log prelude configuration
+        logging.info(f"{depth}{debug_prefix} Prelude configuration is: {self.prelude}")
 
         # # # Create MMV classes and stuff
 
