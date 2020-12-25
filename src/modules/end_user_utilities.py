@@ -75,7 +75,7 @@ class Requirements:
 
     # Install an pip package
     def _install(self, package) -> None:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package, "--use-feature=2020-resolver"])
+        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
     # Is there anything to do?
     def anything_to_do(self) -> bool:

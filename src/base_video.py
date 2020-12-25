@@ -224,7 +224,7 @@ elif MODE == "piano_roll":
         midi = processing.get_midi_class()
         midi.set_path(INPUT_MIDI)
 
-        # Save the converted audio on the same directory, change .mid to .flac
+        # Save the converted audio on the same directory, change .mid to .mp3
         rendered_midi_to_audio_path = INPUT_MIDI.replace(".mid", ".mp3")
 
         # Remove this file so we render again if you change any setting
