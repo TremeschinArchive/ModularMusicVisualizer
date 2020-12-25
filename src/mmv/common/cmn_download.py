@@ -31,6 +31,7 @@ from pyunpack import Archive
 from tqdm import tqdm
 import requests
 import zipfile
+import logging
 import time
 import wget
 import git

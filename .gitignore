@@ -27,8 +27,8 @@ src/assets/user_assets
 src/assets/generated
 !src/assets/free_assets/*
 
-src/mmv/mmvskia/externals
-src/mmv/mmvskia/release
+src/mmv/externals
+src/mmv/release
 
 # # MMV GLSL Shader
 
