@@ -3,9 +3,9 @@
 </p>
 <h3 align="center">Modular Music Visualizer</h3>
 <p align="center">
-  An attempt to make a free (as in freedom) and open source music visualization (After Effects and Synthesia)-like tool for the music production community.
+  High quality video music visualization tool for the music production community.
   <br><hr>
-  <i>Support for Music Bars mode, Piano Roll tutorials, Video as background, enable / disable whatever you want. Hack the code at your will.</i>
+  <i>Support for Music Bars and Piano Roll mode, Video as background, enable / disable whatever you want. Hack the code at your will. Custom GLSL shaders for post processing.</i>
 </p>
 <hr>
 
@@ -71,6 +71,7 @@ I also invite you to read about the [Free Software Definition / Philosophy](http
    * [Goals, what is being developed](#goals-what-is-being-developed)
    * [Contributing](#contributing)
    * [User Generated Content, legal](#user-generated-content-copyrighted-material-legal)
+   * [Thank you!](#thank-you)
 
 <hr>
 
@@ -98,31 +99,11 @@ Feel free DM me, I'd be happy to explain how MMV works.
 
 # Running
 
-Currently there are two "versions" of the Modular Music Visualizer project on this repository, one uses the Skia drawing library and the other uses GLSL shaders, only the first one works and I'm into heavy R&D for getting the shaders one to run as it'll squeeze pretty much all performance we can get from a computer.
-
-- **Basic navigation**: You'll mainly need to use basic command line interface and navigation such as `cd` (change directory), `mkdir` (make directory), `pwd` (print working directory). Don't be afraid of searching how those work on Windows because I am very rusty on its CLI. On the other OSs, most should be POSIX compliant and literally use the same command.
-
-<p>
-
-- **Windows Note**: You might need to replace `python` with `python.exe` if using PowerShell (recommended) or CMD (I'm not completely sure btw).
-
-<p>
-
-- **Windows Note**: Another point is that directories on Windows uses `\` instead of (what everything else uses) `/`, Python should convert those automatically, however the shell (where you call commands) might not convert those like `.\path\to\executable.exe` instead of `./path/to/executable.exe`, the second one might not run on Windows. This does not apply on the Python scripts as it'll auto convert `/` to `\\`.
-
-### Running MMV Skia
-
-Please see the file [mmv_skia/README.md](mmv_skia/README.md) for instructions
-
-### Running MMV GLSL Shaders
-
-Please see the file [mmv_shader/README.md](mmv_shader/README.md) for instructions
+Please see the file [docs/RUNNING.md](docs/RUNNING.md) for instructions on all platforms
 
 # Goals, what is being developed
 
 Also see [CHANGELOG.md](CHANGELOG.md) file :)
-
-Some pretty heavy R&D is going towards MMV GLSL Shaders Edition™ and I'm mostly maintaining the "old" code of MMV Skia and not adding much features recently. This section mostly applies for MMV Skia
 
 #### Next stuff
 
@@ -166,13 +147,13 @@ I give you a few "free assets" files, those, apart from the MMV logo I created m
 
 <hr>
 
-# Honest word
+# Thank You
 
 Don't abuse from your freedom the power to ascend with this software with much hard work put on it.
 
 Pay back your fees with a simple **"Thank you"** at least.
 
-It doesn't seem much but pursuing something others also keep an expectancy or genuinely changed their lifes for good is a hell of a great motivation: **being awknowledged not for feeling superior or meaningless better, but for being helpful, making a diference, gratitude.**
+It doesn't seem much but pursuing something others also keep an expectancy or genuinely changed their lives for good is a hell of a great motivation: **being acknowledged not for feeling superior or meaningless better, but for being helpful, making a difference, gratitude.**
 
 *Don't take this as an obligation, you're free, this software is free.*
 
@@ -182,9 +163,5 @@ Can't forget to **thank a lot all the people behind all the dependencies I used 
 
 <hr>
 
-# Thank You
-
 My sincere Thank You if you read the README all the way until here, hopefully you learned something new and that this project helped you!!
-
-<hr>
 

@@ -1,0 +1,3 @@
+# MMVShader package configuration
+[flow]
+stop_at_run_command = false
