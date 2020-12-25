@@ -153,7 +153,7 @@ Don't abuse from your freedom the power to ascend with this software with much h
 
 Pay back your fees with a simple **"Thank you"** at least.
 
-It doesn't seem much but pursuing something others also keep an expectancy or genuinely changed their lifes for good is a hell of a great motivation: **being awknowledged not for feeling superior or meaningless better, but for being helpful, making a diference, gratitude.**
+It doesn't seem much but pursuing something others also keep an expectancy or genuinely changed their lives for good is a hell of a great motivation: **being acknowledged not for feeling superior or meaningless better, but for being helpful, making a difference, gratitude.**
 
 *Don't take this as an obligation, you're free, this software is free.*
 
