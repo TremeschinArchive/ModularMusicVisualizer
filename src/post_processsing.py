@@ -29,6 +29,10 @@ interface = mmv.MMVInterface()
 processing = interface.get_shader_interface()
 mpv = processing.mmv_shader_main.mpv
 
+# Ensure we have mpv on Windows, downloads, extracts etc
+# Does nothing for Linux, make sure you have mpv package installed on your distro
+interface.download_check_mpv()
+
 # Where this insterface is located
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
