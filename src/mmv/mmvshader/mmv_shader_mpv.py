@@ -202,15 +202,19 @@ class MMVShaderMPV:
         logging.info(f"{depth}{debug_prefix} x264 flags: {self.x264_flags}")
         logging.info(STEP_SEPARATOR)
 
-    # Configure input and output, if output is None that means don't render, only display real time
-    def input_output(self, input_video, output_video = None, depth = LOG_NO_DEPTH):
+    # Configure input and output, if output is "last_rendered" then read last_session_info.toml
+    def input_output(self, input_video, output_video , depth = LOG_NO_DEPTH):
         debug_prefix = "[MMVShaderMPV.input_output]"
         ndepth = depth + LOG_NEXT_DEPTH
 
         # Get absolute path always
-        input_video = self.mmv_main.utils.get_abspath(input_video)
-        if output_video is not None:
-            output_video = self.mmv_main.utils.get_abspath(output_video)
+        if input_video == "last_rendered":
+            last_session_info = self.mmv_main.utils.load_toml(
+                path = self.mmv_main.interface.top_level_interace.last_session_info_file, depth = ndepth
+            )
+            input_video = last_session_info["output_video"]
+        else:
+            input_video = self.mmv_main.utils.get_abspath(input_video)
 
         # Warn info
         logging.info(f"{depth}{debug_prefix} Set input video: [{input_video}]")

@@ -6,7 +6,7 @@
 
 [logging]
 log_to_file = true
-log_level = "debug"  # critical, debug, error, info, warn, notset
+log_level = "info"  # critical, debug, error, info
 log_format = "pretty"  # informational, pretty, economic, onlymessage
 
 [flow]

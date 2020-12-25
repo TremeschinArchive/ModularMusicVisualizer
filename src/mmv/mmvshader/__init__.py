@@ -37,11 +37,11 @@ import os
 # Main wrapper class for the end user, facilitates MMV in a whole
 class MMVShaderInterface:
 
-    def __init__(self, interface, depth = LOG_NO_DEPTH, **kwargs):
+    def __init__(self, top_level_interace, depth = LOG_NO_DEPTH, **kwargs):
         debug_prefix = "[MMVShaderInterface.__init__]"
         ndepth = depth + LOG_NEXT_DEPTH
-        self.interface = interface
-        self.os = self.interface.os
+        self.top_level_interace = top_level_interace
+        self.os = self.top_level_interace.os
   
         # Where this file is located, please refer using this on the whole package
         # Refer to it as self.mmv_main.MMV_SHADER_ROOT at any depth in the code
@@ -69,6 +69,6 @@ class MMVShaderInterface:
         # # # Create MMV classes and stuff
 
         logging.info(f"{depth}{debug_prefix} Creating MMVShaderMain")
-        self.mmv_shader_main = MMVShaderMain(self, depth = ndepth)
+        self.mmv_shader_main = MMVShaderMain(interface = self, depth = ndepth)
 
         logging.info(LOG_SEPARATOR)
