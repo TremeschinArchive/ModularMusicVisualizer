@@ -66,8 +66,8 @@ I also invite you to read about the [Free Software Definition / Philosophy](http
 # Table of contents
 
    * [Community, Support, Help](#community-support-help)
-   * [Hacking the Code](#hacking-the-code)
    * [Running](#running)
+   * [Hacking the Code](#hacking-the-code)
    * [Goals, what is being developed](#goals-what-is-being-developed)
    * [Contributing](#contributing)
    * [User Generated Content, legal](#user-generated-content-copyrighted-material-legal)
@@ -87,6 +87,12 @@ I haven't yet made a decision on financial support, probably I'll have a donatio
 
 <hr>
 
+# Running
+
+Please see the file [docs/RUNNING.md](docs/RUNNING.md) for instructions on all platforms
+
+<hr>
+
 ## Hacking the code
 
 Want to understand how the code is structured so you can learn, modify, understand from it?
@@ -94,12 +100,6 @@ Want to understand how the code is structured so you can learn, modify, understa
 Please read [HACKING.md](docs/HACKING.md) file :)
 
 Feel free DM me, I'd be happy to explain how MMV works.
-
-<hr>
-
-# Running
-
-Please see the file [docs/RUNNING.md](docs/RUNNING.md) for instructions on all platforms
 
 # Goals, what is being developed
 
