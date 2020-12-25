@@ -2,6 +2,8 @@
 - Merge both MMVSkia and MMVShader into a "common interface package", this allows:
   - Sharing common files between the two
   - General modularity and easiness of implementing new stuff having their own namespace (kinda)
+- Split documentation into `RUNNING{_ON_LINUX,_ON_MACOS,_ON_WINDOWS,_TLDR,}`
+- Replace midi2audio with Musescore for converting midi -> audio (higher quality and it doesn't trim the start!!)
 
 ## [2.4.0] :: Boring :: (2020-12-22)
 - Start to replace every print() function with proper logging.....
@@ -9,7 +11,7 @@
 - Pass argument depth for every function so we have the call stack on the logging as well
 
 ## [2.3.5] :: Headache :: (2020-11-07)
-- Add option for automatically converting `MIDI -> Audio`, downloads FreePats General MIDI sound set, check their license at http://freepats.zenvoid.org/licenses.html before using.
+- ~~Add option for automatically converting `MIDI -> Audio`, downloads FreePats General MIDI sound set, check their license at http://freepats.zenvoid.org/licenses.html before using.~~ deprecated, see version [2.5.0]
 - New default demo sample sound, WIP kawaii bass
 - Code doesn't run if not Python >= 3.9 (`skia-python` packages not available for 3.9)
 - Experimental GLSL shader rendering to image and video

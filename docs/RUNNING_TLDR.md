@@ -14,7 +14,7 @@
 
 - `source ./mmv-venv/bin/activate`
 
-- `pip install -r ./mmv/requirements.txt`
+- `pip install -r ./mmv/requirements.txt` (or run next step with `--auto-deps` flag)
 
 - `python ./base_video.py` (music bars)
 

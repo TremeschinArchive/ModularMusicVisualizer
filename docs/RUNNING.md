@@ -83,6 +83,8 @@ Everything I considered useful for the end user is under `base_video.py` control
 
 Change those or keep reading the file for extra configurations.
 
+Can also configure first then run `python post_processing.py` for applying some shaders to the output (mpv dependency required), only limitation is that Windows users can't render to a file but are allowed to see the result in real time.
+
 If you're going to venture out on creating your own MMV scripts or hacking the code, making new presets, I highly recommend reading the basics of Python [here](https://learnxinyminutes.com/docs/python/), it doesn't take much to read and will avoid some beginner pitfalls.
 
 Though you probably should be fine by just creating a copy of the example scripting I provide on the repo and reading through my comments and seeing the Python code working, it's pretty straightforward the top most abstracted methods as I tried to simplify the syntax and naming functions with a more _"concrete"_ meaning. 
