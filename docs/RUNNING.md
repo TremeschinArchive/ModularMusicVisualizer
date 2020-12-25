@@ -77,7 +77,7 @@ Please see file [RUNNING_ON_MACOS.md](RUNNING_ON_MACOS.md)
 
 ## Editing configs
 
-Pass flag `mode=music` or `mode=piano` for a quick swap between the two: `python base_video.py --auto-deps mode=[music,piano]`.
+Pass flag `mode=music` or `mode=piano` for a quick swap between the two: `python base_video.py --auto-deps mode=[music,piano]`. (mode=music is already implied and default)
 
 Everything I considered useful for the end user is under `base_video.py` controlled by upper case vars such as `INPUT_AUDIO`, `MODE`, `OUTPUT_VIDEO`, etc.
 
