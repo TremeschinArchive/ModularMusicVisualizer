@@ -27,6 +27,10 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmv.common.cmn_constants import LOG_NEXT_DEPTH, PACKAGE_DEPTH, LOG_NO_DEPTH, LOG_SEPARATOR, STEP_SEPARATOR
+from mmv.common.cmn_download import Download
+from mmv.common.cmn_utils import Utils
+import subprocess
+import tempfile
 import logging
 import shutil
 import toml
@@ -65,7 +69,31 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
 """
         logging.info(message)
 
-    # Start default configs, creates wrapper classes
+    # MMVSkia works with glfw plus Skia to draw on a GL canvas and pipe
+    # through FFmpeg to render a final video. Have Piano Roll options
+    # and modules as well!!
+    def get_skia_interface(self, depth = PACKAGE_DEPTH, **kwargs):
+        debug_prefix = "[MMVInterface.get_skia_interface]"
+        ndepth = depth + LOG_NEXT_DEPTH
+        from mmv.mmvskia import MMVInterface
+
+        logging.info(f"{depth}{debug_prefix} Get and return MMVInterface, kwargs: {kwargs}")
+        
+        return MMVInterface(self, depth = ndepth, **kwargs)
+    
+    # MMVShader works with GLSL shaders through MPV. Currently most
+    # applicable concept is post processing which bumps MMV quality
+    # by a lot
+    def get_shader_interface(self, depth = PACKAGE_DEPTH):
+        debug_prefix = "[MMVInterface.get_shader_interface]"
+        ndepth = depth + LOG_NEXT_DEPTH
+        from mmv.mmvshader import MMVShaderInterface
+
+        logging.info(f"{depth}{debug_prefix} Return MMVShaderInterface")
+        
+        return MMVShaderInterface(self, depth = ndepth)
+
+    # Main interface class, mainly sets up root dirs, get config, distributes classes
     def __init__(self, depth = PACKAGE_DEPTH, **kwargs) -> None:
         debug_prefix = "[MMVInterface.__init__]"
         ndepth = depth + LOG_NEXT_DEPTH
@@ -208,28 +236,190 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
 
         # Log which OS we're running
         logging.info(f"{depth}{debug_prefix} Running Modular Music Visualizer on Operating System: [{self.os}]")
-        logging.info(f"{depth}{debug_prefix} (os.path.sep) is [{os.path.sep}]")
+        logging.info(f"{depth}{debug_prefix} (os.path.sep) is [{sep}]")
 
-    # MMVSkia works with glfw plus Skia to draw on a GL canvas and pipe
-    # through FFmpeg to render a final video. Have Piano Roll options
-    # and modules as well!!
-    def get_skia_interface(self, depth = PACKAGE_DEPTH, **kwargs):
-        debug_prefix = "[MMVInterface.get_skia_interface]"
+        # # Create interface's classes
+
+        logging.info(f"{depth}{debug_prefix} Creating Utils() class")
+        self.utils = Utils()
+
+        logging.info(f"{depth}{debug_prefix} Creating Download() class")
+        self.download = Download()
+
+        # # Common directories between packages
+
+        # Externals
+        self.externals_dir = f"{self.MMV_INTERFACE_ROOT}{sep}externals"
+        logging.info(f"{depth}{debug_prefix} Externals dir is [{self.externals_dir}]")
+        self.utils.mkdir_dne(path = self.externals_dir, depth = ndepth)
+
+        # Downloads (inside externals)
+        self.downloads_dir = f"{self.MMV_INTERFACE_ROOT}{sep}externals{sep}downloads"
+        logging.info(f"{depth}{debug_prefix} Downloads dir is [{self.downloads_dir}]")
+        self.utils.mkdir_dne(path = self.downloads_dir, depth = ndepth)
+
+        # Code flow management
+        if self.prelude["flow"]["stop_at_initialization"]:
+            logging.critical(f"{depth}{debug_prefix} Exiting as stop_at_initialization key on prelude.toml is True")
+            sys.exit(0)
+
+
+    # # [ QOL // Micro management ] # #
+
+
+    # Make sure we have FFmpeg
+    def download_check_ffmpeg(self, making_release = False, depth = PACKAGE_DEPTH):
+        debug_prefix = "[MMVInterface.download_check_ffmpeg]"
         ndepth = depth + LOG_NEXT_DEPTH
-        from mmv.mmvskia import MMVSkiaInterface
+        logging.info(LOG_SEPARATOR)
 
-        logging.info(f"{depth}{debug_prefix} Get and return MMVSkiaInterface, kwargs: {kwargs}")
-        
-        return MMVSkiaInterface(self, depth = ndepth, **kwargs)
-    
-    # MMVShader works with GLSL shaders through MPV. Currently most
-    # applicable concept is post processing which bumps MMV quality
-    # by a lot
-    def get_shader_interface(self, depth = PACKAGE_DEPTH):
-        debug_prefix = "[MMVInterface.get_shader_interface]"
+        # Log action
+        logging.info(f"{depth}{debug_prefix} Checking for FFmpeg on Linux or downloading for Windows / if (making release: [{making_release}]")
+
+        if getattr(sys, 'frozen', False):
+            logging.info(f"{depth}{debug_prefix} Not checking ffmpeg.exe because is executable build.. should have ffmpeg.exe bundled?")
+            return
+
+        sep = os.path.sep
+
+        # If the code is being run on a Windows OS
+        if (self.os == "windows") or (making_release):
+
+            # Temporary directory if needed
+            # self.temp_dir = tempfile.gettempdir()
+            # logging.info(f"{depth}{debug_prefix} Temp dir is: [{self.temp_dir}]")
+
+            if making_release:
+                logging.info(f"{depth}{debug_prefix} Getting FFmpeg for Windows because making_release=True")
+
+            # Where we should find the ffmpeg binary
+            FINAL_FFMPEG_FINAL_BINARY = self.externals_dir + f"{sep}ffmpeg.exe"
+
+            # If we don't have FFmpeg binary on externals dir
+            if not os.path.isfile(FINAL_FFMPEG_FINAL_BINARY):
+
+                # Get the latest release number of ffmpeg
+                ffmpeg_release = self.download.get_html_content("https://www.gyan.dev/ffmpeg/builds/release-version")
+                logging.info(f"{depth}{debug_prefix} FFmpeg release number is [{ffmpeg_release}]")
+
+                # Where we'll save the compressed zip of FFmpeg
+                ffmpeg_7z = self.downloads_dir + f"{sep}ffmpeg-{ffmpeg_release}-essentials_build.7z"
+
+                # Download FFmpeg build
+                self.download.wget(
+                    "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.7z",
+                    ffmpeg_7z, f"FFmpeg v={ffmpeg_release}"
+                )
+
+                # Extract the files
+                self.download.extract_file(ffmpeg_7z, self.downloads_dir)
+
+                # Where the FFmpeg binary is located
+                ffmpeg_bin = ffmpeg_7z.replace(".7z", "") + f"{sep}bin{sep}ffmpeg.exe"
+
+                # Move to this directory
+                self.utils.move(ffmpeg_bin, FINAL_FFMPEG_FINAL_BINARY)
+
+            else:
+                logging.info(f"{depth}{debug_prefix} Already have [ffmpeg.exe] downloaded and extracted at [{FINAL_FFMPEG_FINAL_BINARY}]")
+        else:
+            # We're on Linux so checking ffmpeg external dependency
+            logging.info(f"{depth}{debug_prefix} You are using Linux, please make sure you have FFmpeg package installed on your distro, we'll just check for it now..")
+            self.utils.has_executable_with_name("ffmpeg", depth = ndepth)
+        logging.info(STEP_SEPARATOR)
+
+
+    # Make sure we have MPV
+    def download_check_mpv(self, making_release = False, depth = PACKAGE_DEPTH):
+        debug_prefix = "[MMVInterface.download_check_mpv]"
         ndepth = depth + LOG_NEXT_DEPTH
-        from mmv.mmvshader import MMVShaderInterface
+        logging.info(LOG_SEPARATOR)
 
-        logging.info(f"{depth}{debug_prefix} Return MMVShaderInterface")
-        
-        return MMVShaderInterface(self, depth = ndepth)
+        # Log action
+        logging.info(f"{depth}{debug_prefix} Checking for MPV on Linux or downloading for Windows / if (making release: [{making_release}]")
+
+        if getattr(sys, 'frozen', False):
+            logging.info(f"{depth}{debug_prefix} Not checking mpv.exe because is executable build.. should have ffmpeg.exe bundled?")
+            return
+
+        sep = os.path.sep
+
+        # If the code is being run on a Windows OS
+        if (self.os == "windows") or (making_release):
+
+            if making_release:
+                logging.info(f"{depth}{debug_prefix} Getting mpv for Windows because making_release=True")
+
+            # Where we should find the ffmpeg binary
+            FINAL_MPV_FINAL_BINARY = self.externals_dir + f"{sep}mpv{sep}mpv.exe"
+
+            # If we don't have FFmpeg binary on externals dir
+            if not os.path.isfile(FINAL_MPV_FINAL_BINARY):
+
+                # Where we'll save the compressed zip of FFmpeg
+                mpv_7z = self.downloads_dir + f"{sep}mpv-x86_64-20201220-git-dde0189.7z"
+
+                # Download FFmpeg build
+                self.download.wget(
+                    "https://sourceforge.net/projects/mpv-player-windows/files/64bit/mpv-x86_64-20201220-git-dde0189.7z/download",
+                    mpv_7z, f"MPV v=20201220-git-dde0189"
+                )
+
+                # Where to extract final mpv
+                mpv_extracted_folder = f"{self.externals_dir}{sep}mpv"
+                self.utils.mkdir_dne(path = mpv_extracted_folder, depth = ndepth)
+
+                # Extract the files
+                self.download.extract_file(mpv_7z, mpv_extracted_folder)
+
+            else:
+                logging.info(f"{depth}{debug_prefix} Already have [mpv.exe] downloaded and extracted at [{FINAL_MPV_FINAL_BINARY}]")
+        else:
+            # We're on Linux so checking ffmpeg external dependency
+            logging.info(f"{depth}{debug_prefix} You are using Linux, please make sure you have MPV package installed on your distro, we'll just check for it now..")
+            self.utils.has_executable_with_name("mpv", depth = ndepth)
+        logging.info(STEP_SEPARATOR)
+
+
+    # Make sure we have musescore
+    def download_check_musescore(self, making_release = False, depth = PACKAGE_DEPTH):
+        debug_prefix = "[MMVInterface.download_check_mpv]"
+        ndepth = depth + LOG_NEXT_DEPTH
+        logging.info(LOG_SEPARATOR)
+
+        # Log action
+        logging.info(f"{depth}{debug_prefix} Checking for Musescore on Linux or downloading for Windows / if (making release: [{making_release}]")
+
+        if getattr(sys, 'frozen', False):
+            logging.info(f"{depth}{debug_prefix} Not checking musescore.exe because is executable build.. should have ffmpeg.exe bundled?")
+            return
+
+        sep = os.path.sep
+
+        # If the code is being run on a Windows OS
+        if (self.os == "windows") or (making_release):
+
+            if making_release:
+                logging.info(f"{depth}{debug_prefix} Getting mpv for Windows because making_release=True")
+
+            # Where we should find the ffmpeg binary
+            FINAL_MUSESCORE_FINAL_BINARY = self.externals_dir + f"{sep}musescore.exe"
+
+            # If we don't have FFmpeg binary on externals dir
+            if not os.path.isfile(FINAL_MUSESCORE_FINAL_BINARY):
+                
+                musescore_version = "v3.5.2/MuseScorePortable-3.5.2.311459983-x86.paf.exe"
+
+                # Download FFmpeg build
+                self.download.wget(
+                    f"https://cdn.jsdelivr.net/musescore/{musescore_version}",
+                    FINAL_MUSESCORE_FINAL_BINARY, f"Musescore v=[{musescore_version}]"
+                )
+
+            else:
+                logging.info(f"{depth}{debug_prefix} Already have [musescore.exe] downloaded and extracted at [{FINAL_MUSESCORE_FINAL_BINARY}]")
+        else:
+            # We're on Linux so checking ffmpeg external dependency
+            logging.info(f"{depth}{debug_prefix} You are using Linux, please make sure you have musescore package installed on your distro, we'll just check for it now.. or go to https://musescore.org/en/download and install for your platform")
+            self.utils.has_executable_with_name("musescore", depth = ndepth)
+        logging.info(STEP_SEPARATOR)
