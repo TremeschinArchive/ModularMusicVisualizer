@@ -1,5 +1,12 @@
 """
 ===============================================================================
+                                GPL v3 License                                
+===============================================================================
+
+Copyright (c) 2020,
+  - Tremeschin < https://tremeschin.gitlab.io > 
+
+===============================================================================
 
 Purpose: Utility to wrap around mpv and add processing shaders, target
 resolutions, input / output
@@ -20,11 +27,12 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH
+from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH, STEP_SEPARATOR
 from mmv.mmvshader.mmv_shader_context import MMVShaderContext
 from mmv.mmvshader.mmv_shader_maker import MMVShaderMaker
 from mmv.mmvshader.mmv_shader_mpv import MMVShaderMPV
 from mmv.common.cmn_utils import Utils
+import logging
 import shutil
 import math
 import sys
@@ -43,15 +51,19 @@ class MMVShaderMain:
 
         # # Create classes
 
-        print(debug_prefix, "Creating Utils")
+        logging.info(f"{depth}{debug_prefix} Creating Utils")
+        logging.info(STEP_SEPARATOR)
         self.utils = Utils()
 
-        print(debug_prefix, "Creating MMVShaderContext")
+        logging.info(f"{depth}{debug_prefix} Creating MMVShaderContext")
+        logging.info(STEP_SEPARATOR)
         self.context = MMVShaderContext(self)
 
-        print(debug_prefix, "Creating MMVShaderMPV")
+        logging.info(f"{depth}{debug_prefix} Creating MMVShaderMPV")
+        logging.info(STEP_SEPARATOR)
         self.mpv = MMVShaderMPV(self)
 
-        print(debug_prefix, "Creating MMVShaderMaker")
+        logging.info(f"{depth}{debug_prefix} Creating MMVShaderMaker")
+        logging.info(STEP_SEPARATOR)
         self.shader_maker = MMVShaderMaker(self)
 

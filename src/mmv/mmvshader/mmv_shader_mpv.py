@@ -1,5 +1,12 @@
 """
 ===============================================================================
+                                GPL v3 License                                
+===============================================================================
+
+Copyright (c) 2020,
+  - Tremeschin < https://tremeschin.gitlab.io > 
+
+===============================================================================
 
 Purpose: Utility to wrap around mpv and add processing shaders, target
 resolutions, input / output
@@ -20,10 +27,11 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH
+from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH, STEP_SEPARATOR
 import subprocess
 import logging
 import shutil
+import sys
 import os
 
 
@@ -81,7 +89,12 @@ class MMVShaderMPV:
 
         # Blank x264 settings
         self.x264_flags = []
+        logging.info(f"{depth}{debug_prefix} Resetting to default x264 settings")
         self.x264_settings()
+
+        logging.info(f"{depth}{debug_prefix} Done!!")
+
+        logging.info(STEP_SEPARATOR)
 
     # # Internal functions
 
@@ -158,6 +171,7 @@ class MMVShaderMPV:
 
         # Print full command and we're done, just need to execute it
         logging.info(f"{depth}{debug_prefix} Full command is {self.__command}")
+        logging.info(STEP_SEPARATOR)
 
     # # Interface, end user functions
 
@@ -172,13 +186,21 @@ class MMVShaderMPV:
 
         # Assign values
         self.shaders.append(shader_path)
+        logging.info(STEP_SEPARATOR)
 
     # Configure x264 encoding flags like crf, preset, audio codec and bitrate
     def x264_settings(self, audio_codec = "libopus", audio_bitrate = 300000, crf = 18, preset = "fast", depth = LOG_NO_DEPTH):
+        debug_prefix = "[MMVShaderMPV.x264_settings]"
+        ndepth = depth + LOG_NEXT_DEPTH
+
+        # Set new x264 flags
         self.x264_flags = [
             f"--oac={audio_codec}", f"--oacopts=b={audio_bitrate}",
             "--ovc=libx264", f"--ovcopts=preset={preset}", f"--ovcopts=crf={crf}"
         ]
+
+        logging.info(f"{depth}{debug_prefix} x264 flags: {self.x264_flags}")
+        logging.info(STEP_SEPARATOR)
 
     # Configure input and output, if output is None that means don't render, only display real time
     def input_output(self, input_video, output_video = None, depth = LOG_NO_DEPTH):
@@ -197,6 +219,7 @@ class MMVShaderMPV:
         # Assign values
         self.input_video = input_video
         self.output_video = output_video
+        logging.info(STEP_SEPARATOR)
     
     # Configure the resolution width, height to render
     def resolution(self, width, height, depth = LOG_NO_DEPTH):
@@ -210,12 +233,15 @@ class MMVShaderMPV:
         # Assign values
         self.width = width
         self.height = height
+        logging.info(STEP_SEPARATOR)
         
     # Execute this class with the stuff configured
     def run(self, execute = True, depth = LOG_NO_DEPTH):
         debug_prefix = "[MMVShaderMPV.run]"
         ndepth = depth + LOG_NEXT_DEPTH
         
+        logging.info(f"{depth}{debug_prefix} Generate command then run!")
+
         # Generate command
         self.__generate_command()
 
