@@ -102,6 +102,7 @@ class MMVSkiaMusicBarsCircle:
             self.color_rotates = kwargs.get("color_rotates", True)
             self.color_rotate_speed = kwargs.get("color_rotate_speed", 100)
         
+        elif self.color_preset == "white": pass
         else:
             raise RuntimeError(debug_prefix, f"Invalid color preset: [{self.color_preset}]")
 
@@ -210,6 +211,22 @@ class MMVSkiaMusicBarsCircle:
                         abs( math.sin((color_shift_on_angle + ((1/3)*2*math.pi)) / 2) ),
                         abs( math.sin((color_shift_on_angle + ((2/3)*2*math.pi)) / 2) ),
                     ] + [0.89] # not full opacity
+
+                    # Make a skia color with the colors list as argument
+                    color = skia.Color4f(*colors)
+
+                    # Make the skia Paint and
+                    this_bar_paint = skia.Paint(
+                        AntiAlias = True,
+                        Color = color,
+                        Style = skia.Paint.kStroke_Style,
+                        StrokeWidth = 8 * self.mmv.context.resolution_ratio_multiplier + bigger_bars_on_magnitude,
+                    )
+
+                if self.color_preset == "white":
+
+                    # Define the color of the bars
+                    colors = [1.0, 1.0, 1.0, 0.89]
 
                     # Make a skia color with the colors list as argument
                     color = skia.Color4f(*colors)

@@ -105,9 +105,21 @@ processing.quality(
     # width = 3840,
     # height = 2160,
 
+    # # [WUHD "4k" / 2160p]
+    # width = 5120,
+    # height = 2160,
+
+    # # [WQHD+ Ultra Wide 1600p]
+    # width = 3840,
+    # height = 1600,
+
     # # [Quad HD 1440p]
     # width = 2560,
     # height = 1440,
+
+    # # [WFHD Ultra Wide Full HD 1080p]
+    # width = 2560,
+    # height = 1080,
 
     # [Full HD 1080p]
     width = 1920,
@@ -215,6 +227,9 @@ if MODE == "music":
     # Enable / disable features
     VISUALIZER = True
     LOGO = True
+
+    # Color presets
+    VISUALIZER_BARS_COLOR_PRESET = "colorful"  # Available: ["colorful", "white"]
 
 # Piano Roll general configuration
 elif MODE == "piano_roll":
@@ -589,7 +604,7 @@ if ((MODE == "music") and LOGO) and (TREMX_LOGO):
     )
 
     sawtooth_logo.configure.add_module_resize(
-        smooth = 0.3,
+        smooth = 0.7,
         scalar = 2,
     )
 
@@ -617,7 +632,7 @@ if ((MODE == "music") and LOGO) and (TREMX_LOGO):
     )
 
     sawtooth_logo.configure.add_module_resize(
-        smooth = 0.3,
+        smooth = 0.6,
         scalar = 2,
     )
 
@@ -641,12 +656,13 @@ if (MODE == "music") and VISUALIZER:
         bar_responsiveness = 0.6,
         bigger_bars_on_magnitude_add_magnitude_divided_by = 32,
         bar_magnitude_multiplier = 4,
+        color_preset = VISUALIZER_BARS_COLOR_PRESET,
     )
 
     # visualizer.configure.simple_add_linear_blur(intensity="high")
     visualizer.configure.add_module_resize(
         smooth = 0.12,
-        scalar = 2,
+        scalar = 2.1,
     )
 
     processing.add(visualizer, layer=3)
