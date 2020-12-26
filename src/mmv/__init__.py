@@ -252,6 +252,9 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
         logging.info(f"{depth}{debug_prefix} Creating Utils() class")
         self.utils = Utils()
 
+        logging.info(f"{depth}{debug_prefix} Creating Download() class")
+        self.download = Download()
+
         # Don't need for the casual run, be sure to init this with the 
         # create_downloads_class function before using it
         self.download = None
@@ -282,17 +285,6 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
         if self.prelude["flow"]["stop_at_initialization"]:
             logging.critical(f"{depth}{debug_prefix} Exiting as stop_at_initialization key on prelude.toml is True")
             sys.exit(0)
-
-
-    # # [ QOL // Micro management ] # #
-
-    def create_downloads_class(self, depth = PACKAGE_DEPTH):
-        debug_prefix = "[MMVInterface.create_downloads_class]"
-
-        from mmv.common.cmn_download import Download
-
-        logging.info(f"{depth}{debug_prefix} Creating Download() class")
-        self.download = Download()
 
     # Make sure we have FFmpeg
     def download_check_ffmpeg(self, making_release = False, depth = PACKAGE_DEPTH):

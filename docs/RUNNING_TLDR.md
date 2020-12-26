@@ -20,7 +20,7 @@
 
 - `python ./base_video.py mode=piano` (piano roll)
   
-- `python ./post_processing.py` (edit the file first with your config / what want to apply)
+- `python ./post_processing.py` (edit the file first with your config / what want to apply, can only render to video on Linux, viewing realtime works on any platform)
 
 Final video will be located at `/src/renders` and where you configured your post processing output.
   
