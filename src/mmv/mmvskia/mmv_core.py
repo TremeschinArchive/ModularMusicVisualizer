@@ -168,7 +168,10 @@ class MMVSkiaCore:
             for channel_data in self.mmv_main.audio_processing.audio_slice:
                
                 # Process this audio sample
-                fft, frequencies = self.mmv_main.audio_processing.process(channel_data, self.mmv_main.audio.sample_rate)
+                fft, frequencies = self.mmv_main.audio_processing.process(
+                    data = channel_data,
+                    original_sample_rate = self.mmv_main.audio.sample_rate,
+                )
 
                 # Add to the lists
                 fft_list.append(fft)
