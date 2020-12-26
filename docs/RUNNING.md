@@ -41,15 +41,26 @@ Sadly due to factors outside my control (I use the `mpv` program as the backend)
 
 **Windows and macOS** users **CAN** and **HAVE THE FULL FUNCTIONALITY OF MMV SKIA** available, only video with shaders applied won't be possible **rendering to files, viewing realtime is possible**.
 
-It's possible to record the screen of the video with shaders applied running at severe costs of quality.
+For a better visualization, please refer to this next table **SPECIFIC FOR MMV SKIA**:
 
-For a better visualization, please refer to this next table:
+| Base MMV + Configuration script | Rendering to Video |
+|---------------------------------|--------------------|
+| Linux                           | V                  |
+| Windows                         | V                  |
+| macOS                           | V                  |
+
+It's possible to record the screen of the video with shaders applied running at severe costs of quality in the case of MMV GLSL shaders and non Linux platform.
+
+For a better visualization, please refer to this next table **SPECIFIC FOR MMV GLSL**:
 
 | Video + GLSL Shaders | Viewing Realtime | Rendering to Video |
 |----------------------|------------------|--------------------|
 | Linux                | V                | V                  |
 | Windows              | V                | X                  |
 | macOS                | V                | X                  |
+
+
+
 
 ## Getting the source code
 
