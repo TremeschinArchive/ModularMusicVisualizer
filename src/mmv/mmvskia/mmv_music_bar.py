@@ -30,7 +30,6 @@ from mmv.mmvskia.music_bars.mmv_music_bar_circle import MMVSkiaMusicBarsCircle
 from mmv.common.cmn_coordinates import PolarCoordinates
 from mmv.common.cmn_interpolation import Interpolation
 from mmv.common.cmn_functions import Functions
-from mmv.common.cmn_functions import FitIndex
 from mmv.common.cmn_frame import Frame
 from mmv.common.cmn_utils import Utils
 from mmv.mmvskia.mmv_modifiers import *
@@ -87,7 +86,6 @@ class MMVSkiaMusicBarsVectorial:
         
         self.kwargs = kwargs
 
-        self.fit_transform_index = FitIndex()
         self.functions = Functions()
         self.utils = Utils()
 

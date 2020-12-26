@@ -46,7 +46,7 @@ mpv.input_output(
 
 # Target render resolution, won't be applied
 # if you only visualize the video
-mpv.resolution(width = 1280, height = 720)
+mpv.resolution(width = 1920, height = 1080)
 
 # # For now comment / uncomment the shaders you want to apply
 
