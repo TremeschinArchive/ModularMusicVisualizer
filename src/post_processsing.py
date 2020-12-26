@@ -41,7 +41,7 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 mpv.input_output(
     # input_video = f"{THIS_DIR}/shy-piano.mkv",
     input_video = "last_rendered",  # Setting it to "last_rendered" gets the last rendered file from mmvskia
-    output_video = "out.mp4"
+    # output_video = "out.mp4"
 )
 
 # Target render resolution, won't be applied
