@@ -27,7 +27,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmv.common.cmn_constants import LOG_NEXT_DEPTH, PACKAGE_DEPTH, LOG_NO_DEPTH, LOG_SEPARATOR, STEP_SEPARATOR
-from mmv.common.cmn_download import Download
 from mmv.common.cmn_utils import Utils
 import subprocess
 import tempfile
@@ -253,8 +252,9 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
         logging.info(f"{depth}{debug_prefix} Creating Utils() class")
         self.utils = Utils()
 
-        logging.info(f"{depth}{debug_prefix} Creating Download() class")
-        self.download = Download()
+        # Don't need for the casual run, be sure to init this with the 
+        # create_downloads_class function before using it
+        self.download = None
 
         # # Common directories between packages
 
@@ -286,6 +286,13 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
 
     # # [ QOL // Micro management ] # #
 
+    def create_downloads_class(self, depth = PACKAGE_DEPTH):
+        debug_prefix = "[MMVInterface.create_downloads_class]"
+
+        from mmv.common.cmn_download import Download
+
+        logging.info(f"{depth}{debug_prefix} Creating Download() class")
+        self.download = Download()
 
     # Make sure we have FFmpeg
     def download_check_ffmpeg(self, making_release = False, depth = PACKAGE_DEPTH):
