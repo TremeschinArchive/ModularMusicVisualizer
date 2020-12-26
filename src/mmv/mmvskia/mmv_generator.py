@@ -36,7 +36,7 @@ class MMVSkiaGenerator:
         debug_prefix = "[MMVSkiaGenerator.__init__]"
         ndepth = depth + LOG_NEXT_DEPTH
         self.mmv_main = mmv_main
-        self.preludec = self.mmv_main.interface.prelude["mmvgenerator"]
+        self.preludec = self.mmv_main.mmvskia_interface.prelude["mmvgenerator"]
  
         # Get an unique identifier for this MMVSkiaImage object
         self.identifier = self.mmv_main.utils.get_unique_id(

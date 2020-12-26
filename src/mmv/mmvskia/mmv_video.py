@@ -162,7 +162,7 @@ class MMVSkiaFFmpegWrapper:
                 eta = f"{int(eta)}m:{(eta - int(eta))*60:.0f}s"
 
                 
-                print(f"\rFrame count=[{self.count} - {current_time:.2f}s / {duration_seconds:.2f}s = {propfinished:0.2f}%] Took=[{took}] ETA=[{eta}] EST Total=[{took_plus_eta}]", end="")
+                print(f"\rProgress=[Frame: {self.count} - {current_time:.2f}s / {duration_seconds:.2f}s = {propfinished:0.2f}%] Took=[{took}] ETA=[{eta}] EST Total=[{took_plus_eta}]", end="")
             else:
                 time.sleep(0.1)
         

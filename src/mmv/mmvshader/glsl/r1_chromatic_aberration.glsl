@@ -4,7 +4,7 @@
 vec4 hook() {
     vec4 video = vec4(0.0);
 
-    float amount = 0.5;
+    float amount = 0.35;
     
     // Random values for organic FX
     float b1 = (sin(frame/30.0)/100.0) * amount;

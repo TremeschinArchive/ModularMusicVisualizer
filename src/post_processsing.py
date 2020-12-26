@@ -41,7 +41,7 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 mpv.input_output(
     # input_video = f"{THIS_DIR}/shy-piano.mkv",
     input_video = "last_rendered",  # Setting it to "last_rendered" gets the last rendered file from mmvskia
-    # output_video = "out.mp4"
+    output_video = "out.mp4"
 )
 
 # Target render resolution, won't be applied
@@ -51,10 +51,11 @@ mpv.resolution(width = 1920, height = 1080)
 # # For now comment / uncomment the shaders you want to apply
 
 # mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_grayscale.glsl")
-# mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_bitcrush.glsl")
+mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_bitcrush.glsl")
 mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_chromatic_aberration.glsl")
 # mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_vignetting.glsl")
 mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_edge_saturation_low.glsl")
+mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/grain.glsl")
 # mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/wip_test_sphere.glsl")
 mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_tsubaup.glsl")
 mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/wip_adaptive-sharpen.glsl")

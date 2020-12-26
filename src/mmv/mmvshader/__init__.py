@@ -37,6 +37,18 @@ import os
 # Main wrapper class for the end user, facilitates MMV in a whole
 class MMVShaderInterface:
 
+    # This top level interface is the "global package manager" for every subproject / subimplementation of
+    # MMV, it is the class that will deal with stuff not directly related to functionality of this class 
+    # and package here, mainly dealing with external deps, micro managing stuff, setting up logging,
+    # loading "prelude" configurations, that is, defining behavior, not configs related to this package
+    # and functionality.
+    #
+    # We create a MMV{Skia,Shader}Main class and we send this interface to it, and we send that instance
+    # of MMV*Main to every other sub class so if we access self.mmv_main.interface we are accessing this
+    # file here, MMVShaderInterface, and we can quickly refer to the most top level package by doing
+    # self.mmv_main.interface.top_level_interface, since this interface here is just the MMVSkia 
+    # interface for the mmvshader package while the top level one manages both MMVSkia and MMVShader
+    #
     def __init__(self, top_level_interace, depth = LOG_NO_DEPTH, **kwargs):
         debug_prefix = "[MMVShaderInterface.__init__]"
         ndepth = depth + LOG_NEXT_DEPTH
@@ -44,7 +56,7 @@ class MMVShaderInterface:
         self.os = self.top_level_interace.os
   
         # Where this file is located, please refer using this on the whole package
-        # Refer to it as self.mmv_main.MMV_SHADER_ROOT at any depth in the code
+        # Refer to it as self.mmv_main.interface.MMV_SHADER_ROOT at any depth in the code
         # This deals with the case we used pyinstaller and it'll get the executable path instead
         if getattr(sys, 'frozen', True):    
             self.MMV_SHADER_ROOT = os.path.dirname(os.path.abspath(__file__))
