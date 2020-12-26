@@ -24,7 +24,7 @@
 - **Everything configurable.**
 
 <hr>
-Officially works on Linux, macOS and Windows, high chance of working *BSD
+Officially works on Linux with all features, most features working on macOS, Windows
 <hr>
 
 ## Showcase
