@@ -141,24 +141,25 @@ class MMVShaderMPV:
             logging.info(f"{depth}{debug_prefix} Output video is not None, render to file [{self.output_video}]")       
 
             # https://github.com/mpv-player/mpv/issues/7193#issuecomment-559898238
-            if self.mmv_main.os == "windows":
+            if self.mmv_main.os in ["windows", "macos"]:
                 spacer = "-" * shutil.get_terminal_size()[0]
                 raise RuntimeError((
                     f"\n\n{spacer}\n"
                     "\n  # # [ ERROR ] # #\n\n"
-                    "Current implementation for rendering shaders to videos is simply not possible on Windows due mpv limitations..\n"
+                    "Current implementation for rendering shaders to videos is simply not possible on Windows / macOS due mpv limitations..\n"
                     "See comment https://github.com/mpv-player/mpv/issues/7193#issuecomment-559898238\n\n"
                     "You can however visualize the final output and perhaps record the screen but quality will be bad.\n"
                     "You can consider:\n"
                     " - Installing an Linux distro on spare HDD and running MMV there.\n"
                     " - Help fixing this (recommending other ways to render the shaders).\n"
-                    " - Wait until it's doable rendering to video on Windows OS.\n"
+                    " - Wait until it's doable rendering to video on your platform.\n"
                     f"\n{spacer}\n"
-                    "I really wanted it to work there properly but this --vf=gpu flag is experimental anyways, I should be expecting those\n"
+                    "I really wanted it to work there properly but this --vf=gpu flag is experimental anyways, I should be expecting those even on Linux.\n"
                 ))
 
-            # Render on the GPU with the specified width and height
-            self.__command.append(f'--vf=gpu=w={self.width}:h={self.height}')
+            # Render on the GPU with the specified width and height.
+            # This does NOT work on Windows or macOS
+            self.__command += [f'--vf=gpu=w={self.width}', f'--vf=gpu=h={self.height}']
 
             # Add flag asking mpv to render to a file
             self.__command += ["-o", self.output_video]
