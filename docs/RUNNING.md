@@ -35,13 +35,21 @@ As said previously, base video is MMVSkia and post processing is MMVShader
 
 <hr>
 
-#### Important NOTE for Windows users
+#### Important NOTE for Windows and macOS users
 
-Sadly due to factors outside my control (I use the `mpv` program as the backend) applying post processing **AND RENDERING TO A FILE** only works on **Linux** (and probably macOS, *BSD) operating systems (see [this comment](https://github.com/mpv-player/mpv/issues/7193#issuecomment-559898238))
+Sadly due to factors outside my control (I use the `mpv` program as the backend) applying post processing **AND RENDERING TO A FILE** only works on **Linux** operating systems (see [this comment](https://github.com/mpv-player/mpv/issues/7193#issuecomment-559898238))
 
-**Windows** users **CAN** and **HAVE THE FULL FUNCTIONALITY OF MMV SKIA** available, only applying shaders on top of the base video rendered by this part of the MMV won't be possible **rendering to files, viewing realtime is possible**.
+**Windows and macOS** users **CAN** and **HAVE THE FULL FUNCTIONALITY OF MMV SKIA** available, only video with shaders applied won't be possible **rendering to files, viewing realtime is possible**.
 
 It's possible to record the screen of the video with shaders applied running at severe costs of quality.
+
+For a better visualization, please refer to this next table:
+
+| Video + GLSL Shaders | Viewing Realtime | Rendering to Video |
+|----------------------|------------------|--------------------|
+| Linux                | V                | V                  |
+| Windows              | V                | X                  |
+| macOS                | V                | X                  |
 
 ## Getting the source code
 
