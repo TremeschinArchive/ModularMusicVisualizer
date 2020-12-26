@@ -52,8 +52,8 @@ import os
 
 class MMVSkiaMain:
     def __init__(self, interface):
-        self.interface = interface
-        self.prelude = self.interface.prelude
+        self.mmvskia_interface = interface
+        self.prelude = self.mmvskia_interface.prelude
         
     # Creates classes and send to Core
     def setup(self, depth = LOG_NO_DEPTH) -> None:

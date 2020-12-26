@@ -40,7 +40,7 @@ class MMVSkiaPath:
 
         # The root directory we'll be refering to, it's the folder where __init__.py is located
         # We need to get the mmv_main's interface class position as the "package mmv" is the interface itself
-        self.MMV_SKIA_ROOT = self.mmv_main.interface.MMV_SKIA_ROOT
+        self.MMV_SKIA_ROOT = self.mmv_main.mmvskia_interface.MMV_SKIA_ROOT
 
         # Path separator
         sep = os.path.sep
