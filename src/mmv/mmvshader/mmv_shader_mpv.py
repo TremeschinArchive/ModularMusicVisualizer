@@ -203,7 +203,7 @@ class MMVShaderMPV:
         logging.info(STEP_SEPARATOR)
 
     # Configure input and output, if output is "last_rendered" then read last_session_info.toml
-    def input_output(self, input_video, output_video , depth = LOG_NO_DEPTH):
+    def input_output(self, input_video, output_video = None, depth = LOG_NO_DEPTH):
         debug_prefix = "[MMVShaderMPV.input_output]"
         ndepth = depth + LOG_NEXT_DEPTH
 
