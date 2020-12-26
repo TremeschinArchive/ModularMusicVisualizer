@@ -209,7 +209,7 @@ class MMVSkiaMusicBarsCircle:
                         abs( math.sin((color_shift_on_angle / 2)) ),
                         abs( math.sin((color_shift_on_angle + ((1/3)*2*math.pi)) / 2) ),
                         abs( math.sin((color_shift_on_angle + ((2/3)*2*math.pi)) / 2) ),
-                    ] + [0.7] # not full opacity
+                    ] + [0.89] # not full opacity
 
                     # Make a skia color with the colors list as argument
                     color = skia.Color4f(*colors)
