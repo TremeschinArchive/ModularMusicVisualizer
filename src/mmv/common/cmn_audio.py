@@ -26,6 +26,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.common.cmn_functions import Functions
 from mmv.common.cmn_utils import DataUtils
 from mmv.common.cmn_fourier import Fourier
 import mmv.common.cmn_any_logger
@@ -34,6 +35,7 @@ import numpy as np
 import subprocess
 import samplerate
 import librosa
+import math
 import os
 
 
@@ -60,6 +62,7 @@ class AudioProcessing:
     def __init__(self) -> None:
         self.fourier = Fourier()
         self.datautils = DataUtils()
+        self.functions = Functions()
         self.config = None
 
     # Slice a mono and stereo audio data
@@ -154,9 +157,24 @@ class AudioProcessing:
             for freq in wanted_freqs:
                 # nearest[0] -> index (item)
                 # nearest[1] -> index (value)
+                
+                # How much bars we'll render duped at this freq, see
+                # this function on the Functions class for more detail
+                N = math.ceil(
+                    self.functions.how_much_bars_on_this_frequency(
+                        x = freq,
+                        where_decay_less_than_one = 440,
+                        value_at_zero = 4,
+                    )
+                )
+
+                # Get the nearest and FFT value
                 nearest = self.find_nearest(binned_fft[0], freq)
                 value = binned_fft[1][nearest[0]]
-                processed[nearest[1]] = value
+
+                # Add repeated bars or just one
+                for i in range(N):
+                    processed[nearest[1] + (i/10)] = value
                 
         linear_processed_fft = []
         frequencies = []

@@ -66,67 +66,21 @@ class Functions:
             return array_smooth
         return array
     
-"""
-How to "fit" the linear FFT into any shape we want?
-
-I noticed that any polynomial in the form y = x^n with n >= 0, WILL hit the points
-(0, 0) and (1, 1) but the curve shape depends on this exponent n. That is because 0^n for every n
-different than 0 equals zero and 1^n for any n {*note 1} will hit the point (1, 1).
-
-What we can do is get a proportion of the index according to the total on a interval of [0, 1],
-that is, if the maximum value is 20 and we're at position 10, this proportion will be 0.5, or half,
-50%, if we're at number one, we'll be at 1/20, or 0.05, 5% of the way through it.
-
-I want you to imagine the functions or go onto a online graph tool and put y=x^n and add a slider for n,
-zoom in on the square points (0, 0) and (1, 1) and change the n. Think X as the input and Y as the output,
-we're "modulating", applying a "fit function" to this proportion if we get a value between zero and one.
-
-On the case we're at 0.5 the way through, if n=1, we do 0.5^1 which is itself, that is, linear, but
-if you put n=2 and square 0.5, we'll be at the 0.25 mark.
-
-Remember that X is our input and Y our output, you can see this clearly on the graph, when x=0.5, y=0.25 and
-that it doesn't increase linearly, it starts slow then starts to speed up. (the same concept as derivatives,
-d(x^2) is 2x so we're increasing our slope as X increases)
-
-So after we apply this fitting thingy to the proportion number, we just have to multiply it back by
-the maximum number on the sequence that we got the proportion from!! This way we "transposed", "fitted"
-the indexes on a linear style into a shape we want in a new list.
-
-We can do the same with any graph we want virtually, let's take the log10 for example, when x=1, log10(x)=0
-and when x=10, log10(x) = 1, we can apply this same concept here. So we start at point 1 and find a proportion
-from this index to the total between 0 and 9 since we're already at 1 and multiply back by the max number
-and apply the function, so we'll get something like total*log10(1 + proportion(current_index is one, total is what))
-
-*note 1: yes that is wrong, the lim_{n to infinity} (1 + 1/n)^n when you apply the limit rules
-is (1 + 0)^infinity which is technically 1^infinity that evaluates to the Euler number e, (2.718281828..)
-so if 1 is (as weird as this may seem) exactly one, then 1^infinity is 1, otherwise 1 is ever so
-slightly more than 1 into that e number proportion it'll evaluate to e. This is why 1^infinity
-is undefined, calculus 1 people :)
-
-This functions were basically deprecated, keeping them here as they can be useful in the future
-"""
-class FitIndex:
-    def __init__(self):
-        self.functions = Functions()
-
-    # Is out value between 
-    def out_of_bounds(self, value: float, above: float, below: float) -> bool:
-        if value < below:
-            return [True, below]
-        if value > above:
-            return [True, above]
-        return [False]
-
-    def polynomial(self, index: float, total: float, exponent: float) -> float:
-        oob = self.out_of_bounds(index, total, 0)
-        if oob[0]: return oob[1]
-
-        index = (total) * (self.functions.proportion(total, 1, index) ** exponent)
-        return index
+    #
+    # I wanted a function such that it gets evaluated with F(x, d, m) will have the properties:
+    #
+    # - F(0) = m
+    # - F(x < d) < 1
+    #
+    # See: https://www.desmos.com/calculator/7omtsbxema
+    #
+    # There can be an improvement on controling the slope but that's a bit too much
+    # for my applied maths intuition.
+    #
+    # This function is mainly used and interpreted as: the y value at this x will be
+    # how much repeated music bars we'll render for the same frequency
+    def how_much_bars_on_this_frequency(self, x, where_decay_less_than_one, value_at_zero):
+        d = where_decay_less_than_one
+        m = value_at_zero
+        return m / ((x + (d/3)) * (1/(d/3)))
     
-    def log10(self, index: float, total: float) -> float:
-        oob = self.out_of_bounds(index, total, 0)
-        if oob[0]: return oob[1]
-
-        index = (total) * ( math.log(1 + self.functions.proportion(total - 1, 9, index), 10) )
-        return index
