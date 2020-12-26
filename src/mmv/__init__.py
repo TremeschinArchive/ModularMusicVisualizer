@@ -40,7 +40,7 @@ import sys
 import os
 
 
-# Class that distributes MMV packages, sets up logging and behavior
+# Class that distributes MMV packages, sets up logging and behavior;
 # This class is distributed as being called "interface" among mmvskia
 # and mmvshader packages, which this one have the "prelude" attribute
 # which is the dictionary of the file prelude.toml containing
@@ -80,7 +80,8 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
 
         logging.info(f"{depth}{debug_prefix} Get and return MMVSkiaInterface, kwargs: {kwargs}")
         
-        return MMVSkiaInterface(self, depth = ndepth, **kwargs)
+        # See NOTE below
+        return MMVSkiaInterface(top_level_interace = self, depth = ndepth, **kwargs)
     
     # MMVShader works with GLSL shaders through MPV. Currently most
     # applicable concept is post processing which bumps MMV quality
@@ -92,7 +93,10 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
 
         logging.info(f"{depth}{debug_prefix} Return MMVShaderInterface")
         
-        return MMVShaderInterface(self, depth = ndepth)
+        # See NOTE below
+        return MMVShaderInterface(top_level_interace = self, depth = ndepth)
+
+    # NOTE: 
 
     # Main interface class, mainly sets up root dirs, get config, distributes classes
     def __init__(self, depth = PACKAGE_DEPTH, **kwargs) -> None:
@@ -282,6 +286,16 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
         if self.prelude["flow"]["stop_at_initialization"]:
             logging.critical(f"{depth}{debug_prefix} Exiting as stop_at_initialization key on prelude.toml is True")
             sys.exit(0)
+        
+        # # External dependencies where to append for PATH
+
+        # When using some function like Utils.get_executable_with_name, it have an
+        # argument called extra_paths, add this for searching for the full externals
+        # directory
+        self.EXTERNALS_SEARCH_PATH = [
+            self.externals_dir + f"{sep}mpv",
+            self.externals_dir
+        ]
 
     # Make sure we have FFmpeg
     def download_check_ffmpeg(self, making_release = False, depth = PACKAGE_DEPTH):

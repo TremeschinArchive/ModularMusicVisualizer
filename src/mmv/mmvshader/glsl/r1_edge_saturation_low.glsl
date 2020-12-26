@@ -6,7 +6,8 @@ vec4 hook() {
     vec2 center = vec2(0.5, 0.5);
 
     vec2 polar = HOOKED_pos - center;
-    float r = pow(pow(polar.y, 2.0) + pow(polar.x, 2.0), 0.5);
+    // float r = pow(pow(polar.y, 2.0) + pow(polar.x, 2.0), 0.5);
+    float r = pow(pow(polar.y, 2.0) + pow(polar.x, 2.0), 0.2);
 
     vec4 video = HOOKED_tex(HOOKED_pos);
 
