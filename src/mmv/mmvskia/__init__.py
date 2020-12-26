@@ -90,7 +90,6 @@ class MMVSkiaInterface:
         self.utils = Utils()
 
         # Configuring options
-        self.quality_preset = QualityPreset(self)
         self.audio_processing = AudioProcessingPresets(self)
         self.post_processing = self.mmv_main.canvas.configure
 
@@ -304,46 +303,21 @@ class MMVSkiaInterface:
         logging.info(STEP_SEPARATOR)
         return PyGradienter(self.mmv_main, depth = ndepth, **kwargs)
     
-    
     # Returns a cmn_midi.py MidiFile class
     def get_midi_class(self):
         return MidiFile()
 
+    # # [ Advanced ] # #
 
-# Presets on width and height
-class QualityPreset:
+    def advanced_audio_processing_constants(self, where_decay_less_than_one, value_at_zero, depth = PACKAGE_DEPTH):
+        debug_prefix = "[MMVSkiaInterface.advanced_audio_processing_constants]"
+        ndepth = depth + LOG_NEXT_DEPTH
 
-    # Get this file main mmv class
-    def __init__(self, mmv) -> None:
-        self.mmv_main = mmv
-    
-    # Standard definition, 480p @ 24 fps
-    def sd24(self) -> None:
-        print("[QualityPreset.sd24]", "Setting MMVContext [width=854], [height=480], [fps=24]")
-        self.mmv_main.main.context.width = 854 
-        self.mmv_main.main.context.height = 480
-        self.mmv_main.main.context.fps = 24
-    
-    # (old) HD definition, 720p @ 30 fps
-    def hd30(self) -> None:
-        print("[QualityPreset.hd30]", "Setting MMVContext [width=1280], [height=720], [fps=30]")
-        self.mmv_main.main.context.width = 1280 
-        self.mmv_main.main.context.height = 720
-        self.mmv_main.main.context.fps = 30
-    
-    # Full HD definition, 1080p @ 60 fps
-    def fullhd60(self) -> None:
-        print("[QualityPreset.fullhd60]", "Setting MMVContext [width=1920], [height=1080], [fps=60]")
-        self.mmv_main.main.context.width = 1920 
-        self.mmv_main.main.context.height = 1080
-        self.mmv_main.main.context.fps = 60
+        # Log action
+        logging.info(f"{depth}{debug_prefix} Setting AudioProcessing constants to where_decay_less_than_one=[{where_decay_less_than_one}], value_at_zero=[{value_at_zero}]")
 
-    # Quad HD (4x720p) definition, 1440p @ 60 fps
-    def quadhd60(self) -> None:
-        print("[QualityPreset.quadhd60]", "Setting MMVContext [width=2560], [height=1440], [fps=60]")
-        self.mmv_main.main.context.width = 2560
-        self.mmv_main.main.context.height = 1440
-        self.mmv_main.main.context.fps = 60
+        self.mmv_main.audio.where_decay_less_than_one = where_decay_less_than_one
+        self.mmv_main.audio.value_at_zero = value_at_zero
 
 
 # Presets on the audio processing, like how and where to apply FFTs, frequencies we want
@@ -360,13 +334,6 @@ class AudioProcessingPresets:
     def preset_balanced(self) -> None:
         print("[AudioProcessingPresets.preset_balanced]", "Configuring MMV.AudioProcessing to get by matching musical notes frequencies on the FFT, balanced across high frequencies and bass")
         self.mmv.mmv_main.audio_processing.config = {
-            # 0: {
-            #     "sample_rate": 40000,
-            #     "get_frequencies": "musical",
-            #     "start_freq": 20,
-            #     "end_freq": 10000,
-            #     "nbars": "original",
-            # }
             0: {
                 "sample_rate": 1000,
                 "start_freq": 20,
