@@ -98,14 +98,37 @@ Set the video quality
         Frame rate of the video, animations should scale accordingly
 """
 processing.quality(
+    
+    # # # [ Common resolution values ] # # #
+
+    # # ["4k" / 2160p]
+    # width = 3840,
+    # height = 2160,
+
+    # # [Quad HD 1440p]
+    # width = 2560,
+    # height = 1440,
+
+    # [Full HD 1080p]
     width = 1920,
     height = 1080,
+
+    # # [HD SD 720p]
+    # width = 1280,
+    # height = 720,
+
+    # # # [ Common FPS values ] # # #
+
+    # fps = 240,
+    # fps = 144,
     fps = 60,
+    # fps = 30,
+    # fps = 24,
+
+    # # # [ FFT config ] # # #
+
     batch_size = 4096,
 )
-
-# We can also set by a preset like so
-# processing.quality_preset.fullhd60()
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -329,6 +352,14 @@ X increases rightwards
 Y increases downwards
 """
 
+# # # # # # Advanced
+
+# processing.advanced_audio_processing_constants(
+#     where_decay_less_than_one = 440,
+#     value_at_zero = 5
+# )
+
+# # # # # # # # # #
 
 # Generate random particles
 if PARTICLES:
@@ -608,7 +639,7 @@ if (MODE == "music") and VISUALIZER:
         minimum_bar_size = logo_size//2,
         maximum_bar_size = 260,
         bar_responsiveness = 0.6,
-        bigger_bars_on_magnitude_add_magnitude_divided_by = 64,
+        bigger_bars_on_magnitude_add_magnitude_divided_by = 32,
         bar_magnitude_multiplier = 4,
     )
 

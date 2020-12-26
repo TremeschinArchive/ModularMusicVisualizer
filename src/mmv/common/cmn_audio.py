@@ -65,6 +65,9 @@ class AudioProcessing:
         self.functions = Functions()
         self.config = None
 
+        self.where_decay_less_than_one = 440
+        self.value_at_zero = 5
+
     # Slice a mono and stereo audio data
     def slice_audio(self,
             stereo_data: np.ndarray,
@@ -121,7 +124,7 @@ class AudioProcessing:
     # Calculate the FFT of this data, get only wanted frequencies based on the musical notes
     def process(self,
             data: np.ndarray,
-            original_sample_rate: int
+            original_sample_rate: int,
         ) -> None:
         
         # The returned dictionary
@@ -163,8 +166,8 @@ class AudioProcessing:
                 N = math.ceil(
                     self.functions.how_much_bars_on_this_frequency(
                         x = freq,
-                        where_decay_less_than_one = 440,
-                        value_at_zero = 4,
+                        where_decay_less_than_one = self.where_decay_less_than_one,
+                        value_at_zero = self.value_at_zero,
                     )
                 )
 
