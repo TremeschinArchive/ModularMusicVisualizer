@@ -87,8 +87,8 @@ class MMVSkiaMusicBarsCircle:
         #
         # See that this forms two points and a line
         # A = (20, fft_20hz_multiplier) and B = (20k, fft_20khz_multiplier)
-        self.fft_20hz_multiplier = kwargs.get("fft_20hz_multiplier", 0.4)
-        self.fft_20khz_multiplier = kwargs.get("fft_20khz_multiplier", 17)
+        self.fft_20hz_multiplier = kwargs.get("fft_20hz_multiplier", 1.2)
+        self.fft_20khz_multiplier = kwargs.get("fft_20khz_multiplier", 12)
         print(debug_prefix, f"Points A=(20, {self.fft_20hz_multiplier}) B=(20 000, {self.fft_20khz_multiplier}) with X=frequency and Y=scalar will multiply the magnitudes")
 
         # Color preset
