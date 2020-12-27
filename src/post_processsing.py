@@ -1,5 +1,12 @@
 """
 ===============================================================================
+                                GPL v3 License                                
+===============================================================================
+
+Copyright (c) 2020,
+  - Tremeschin < https://tremeschin.gitlab.io > 
+
+===============================================================================
 
 Purpose: Developers, developers, developers
 
@@ -27,7 +34,13 @@ import os
 # a shorthand for accessing MMVShaderMPV class
 interface = mmv.MMVInterface()
 processing = interface.get_shader_interface()
+
+# Aliases for faster accessing functions
 mpv = processing.mmv_shader_main.mpv
+shader_maker = processing.mmv_shader_main.shader_maker
+
+processing.list_shaders()
+if False: exit()  # Change this to True for listing the shaders and their description then quit
 
 # Ensure we have mpv on Windows, downloads, extracts etc
 # Does nothing for Linux, make sure you have mpv package installed on your distro
@@ -35,38 +48,71 @@ interface.download_check_mpv()
 
 # Where this insterface is located
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+sep = os.path.sep
 
-# If you set an output video it'll render to a file. Only works on Linux, Windows you can only visualize
-# I have no control over this since it's an mpv feature. For more info, set output video on Windows and run this script.
-mpv.input_output(
-    # input_video = f"{THIS_DIR}/shy-piano.mkv",
-    input_video = "last_rendered",  # Setting it to "last_rendered" gets the last rendered file from mmvskia
-    output_video = "out.mp4"
-)
+# # What code branch to follow? read lasT_session_info.toml or custon
 
-# Target render resolution, won't be applied
-# if you only visualize the video
-mpv.resolution(width = 1920, height = 1080)
+POST_PROCESS_TYPE = "last_render"
+# POST_PROCESS_TYPE = "custom"
 
-# # For now comment / uncomment the shaders you want to apply
 
-# mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_grayscale.glsl")
-mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_bitcrush.glsl")
-mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_chromatic_aberration.glsl")
-# mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_vignetting.glsl")
-mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_edge_saturation_low.glsl")
-mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/grain.glsl")
-# mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/wip_test_sphere.glsl")
-mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_tsubaup.glsl")
-mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/wip_adaptive-sharpen.glsl")
+# If set to False will play real time
+# Rendering to video is a Linux only feature, not available due MPV limitations on Windows and macOS
+RENDER_TO_VIDEO = False
+OUTPUT_VIDEO_NAME = f"{THIS_DIR}{sep}post_process_output.mkv"
 
-# Ignore, testing
-# texture_shader_test_path = f"{mmv.context.directories.runtime}/test_texture.glsl"
-# mmv.shader_maker.generic_image_shader(
-#     output_path = texture_shader_test_path,
-#     image = f"{THIS_DIR}/../repo/mmv-project-logo.png"
-# )
-# mpv.add_shader(texture_shader_test_path)
 
-# Run!
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+
+# Micro managing
+if RENDER_TO_VIDEO:
+    output_video = OUTPUT_VIDEO_NAME
+else:
+    output_video = None
+
+# Grab info on the last rendered video and pass it through here
+if POST_PROCESS_TYPE == "last_render":
+
+    # Last session info file doesn't exist, error and quit
+    if not os.path.exists(interface.last_session_info_file):
+        raise RuntimeError(f"Could not find last_session_info.toml at path [{interface.last_session_info_file}], did you run MMVSkia (base_video.py) first?")
+
+    # I have no control over this since it's an mpv feature. For more info, set output video on Windows and run this script.
+    mpv.input_output(
+        input_video = "last_rendered",  # Setting it to "last_rendered" gets the last rendered file from mmvskia
+        output_video = output_video
+    )
+
+    # Get the last rendered video 
+    activation_values = interface.utils.load_toml(
+        interface.last_session_info_file
+    )["audio_amplitudes"]
+
+    # # Chromatic aberration
+    chromatic_aberration_shader = shader_maker.replaced_values_shader(
+        input_shader_path = f"{processing.MMV_SHADER_ROOT}/glsl/fx/r1_chromatic_aberration.glsl",
+        changing_amount = activation_values,
+        activation = "amount = amount * 4.0",
+    )  # This .replaced_values_shader returns the path of the replaced shader
+    mpv.add_shader(chromatic_aberration_shader)
+
+    # # Edge = low saturation
+    edge_low_saturation_shader = shader_maker.replaced_values_shader(
+        input_shader_path = f"{processing.MMV_SHADER_ROOT}/glsl/fx/r1_edge_saturation_low.glsl",
+        changing_amount = [
+            max(2 - (value*5), 0.2) for value in activation_values
+        ],
+    )  # This .replaced_values_shader returns the path of the replaced shader
+    mpv.add_shader(edge_low_saturation_shader)
+
+# Custom processing, TODO: read the 
+elif POST_PROCESS_TYPE == "custom":
+    mpv.input_output(
+        input_video = f"{THIS_DIR}/shy-piano.mkv",
+        output_video = output_video
+    )
+    mpv.resolution(width = 1920, height = 1080)
+
+# Run! (or render)
 mpv.run()

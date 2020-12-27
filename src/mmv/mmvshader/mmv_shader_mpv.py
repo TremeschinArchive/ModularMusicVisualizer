@@ -36,10 +36,10 @@ import os
 
 
 class MMVShaderMPV:
-    def __init__(self, main, depth = LOG_NO_DEPTH):
+    def __init__(self, mmvshader_main, depth = LOG_NO_DEPTH):
         debug_prefix = "[MMVShaderMPV.__init__]"
         ndepth = depth + LOG_NEXT_DEPTH
-        self.mmv_main = main
+        self.mmvshader_main = mmvshader_main
 
         # Create empty config
         self.reset()
@@ -70,12 +70,12 @@ class MMVShaderMPV:
         mpv_binary = "mpv"
 
         # On Windows look for an .exe extensions
-        if (self.mmv_main.utils.os == "windows"):
+        if (self.mmvshader_main.utils.os == "windows"):
             mpv_binary += ".exe"
         
         # Try finding mpv binary
         logging.info(f"{depth}{debug_prefix} Getting mpv binary [{mpv_binary}] path..")
-        mpv_binary_path = self.mmv_main.utils.get_executable_with_name(mpv_binary)
+        mpv_binary_path = self.mmvshader_main.utils.get_executable_with_name(mpv_binary)
 
         # get_executable_with_name returns False if it's not found, up for who
         # uses the function to handle errors so here we are
@@ -141,7 +141,7 @@ class MMVShaderMPV:
             logging.info(f"{depth}{debug_prefix} Output video is not None, render to file [{self.output_video}]")       
 
             # https://github.com/mpv-player/mpv/issues/7193#issuecomment-559898238
-            if self.mmv_main.os in ["windows", "macos"]:
+            if self.mmvshader_main.os in ["windows", "macos"]:
                 spacer = "-" * shutil.get_terminal_size()[0]
                 raise RuntimeError((
                     f"\n\n{spacer}\n"
@@ -182,7 +182,7 @@ class MMVShaderMPV:
         ndepth = depth + LOG_NEXT_DEPTH
 
         # Get absolute path always
-        shader_path = self.mmv_main.utils.get_abspath(shader_path)
+        shader_path = self.mmvshader_main.utils.get_abspath(shader_path)
         logging.info(f"{depth}{debug_prefix} Add shader with path: [{shader_path}]")
 
         # Assign values
@@ -210,12 +210,23 @@ class MMVShaderMPV:
 
         # Get absolute path always
         if input_video == "last_rendered":
-            last_session_info = self.mmv_main.utils.load_toml(
-                path = self.mmv_main.interface.top_level_interace.last_session_info_file, depth = ndepth
+            
+            # Load the last_session_info.toml
+            last_session_info = self.mmvshader_main.utils.load_toml(
+                path = self.mmvshader_main.interface.top_level_interace.last_session_info_file, depth = ndepth
             )
+
+            # Assign input video
             input_video = last_session_info["output_video"]
+
+            # Assign resolution to the last session's video
+            self.resolution(
+                width = last_session_info["width"],
+                height = last_session_info["height"],
+                depth = ndepth
+            )
         else:
-            input_video = self.mmv_main.utils.get_abspath(input_video)
+            input_video = self.mmvshader_main.utils.get_abspath(input_video)
 
         # Warn info
         logging.info(f"{depth}{debug_prefix} Set input video: [{input_video}]")
@@ -250,7 +261,7 @@ class MMVShaderMPV:
         # Generate command
         self.__generate_command()
 
-        if self.mmv_main.prelude["flow"]["stop_at_run_command"]:
+        if self.mmvshader_main.prelude["flow"]["stop_at_run_command"]:
             logging.critical(f"{depth}{debug_prefix} Stopping program as key stop_at_run_command is True on prelude.toml")
             sys.exit(0)
             

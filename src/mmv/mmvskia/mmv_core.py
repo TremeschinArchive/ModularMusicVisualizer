@@ -61,46 +61,40 @@ class MMVSkiaCore:
 
         last_session_info_file = self.mmv_main.mmvskia_interface.top_level_interace.last_session_info_file
         logging.info(f"{depth}{debug_prefix} Saving partial session info to last_session_info file at [{last_session_info_file}]")
-        
-        # Reset last session info file
-        self.mmv_main.utils.reset_file(last_session_info_file)
-        
-        # Dump to toml file
-        self.mmv_main.utils.dump_toml(
-            data = {
-                "output_video": self.mmv_main.context.output_video
-            },
-            path = last_session_info_file
-        )
 
         # Quit if code flow says so
         if self.prelude["flow"]["stop_at_mmv_core_run"]:
             logging.critical(f"{ndepth}{debug_prefix} Not continuing because stop_at_mmv_core_run key on prelude.toml is True")
             sys.exit(0)
 
-        # Create the pipe write thread
-        logging.info(f"{depth}{debug_prefix} Creating pipe writer thread")
-        self.pipe_writer_loop_thread = threading.Thread(
-            target = self.mmv_main.ffmpeg.pipe_writer_loop,
-            args = (self.mmv_main.audio.duration,),
-            daemon = True,
-        )
+        # Don't write any videos, just process the audio (useful for debugging)
+        ONLY_PROCESS_AUDIO = self.prelude["flow"]["only_process_audio"]
+        logging.info(f"{depth}{debug_prefix} Only process audio: [{ONLY_PROCESS_AUDIO}]")
 
-        # Start the thread to write images onto FFmpeg
-        logging.info(f"{depth}{debug_prefix} Starting pipe writer thread")
-        self.pipe_writer_loop_thread.start()
-        
+        # Create the pipe write thread
+        if not ONLY_PROCESS_AUDIO:
+            logging.info(f"{depth}{debug_prefix} Creating pipe writer thread")
+            self.pipe_writer_loop_thread = threading.Thread(
+                target = self.mmv_main.ffmpeg.pipe_writer_loop,
+                args = (self.mmv_main.audio.duration,),
+                daemon = True,
+            )
+
+            # Start the thread to write images onto FFmpeg
+            logging.info(f"{depth}{debug_prefix} Starting pipe writer thread")
+            self.pipe_writer_loop_thread.start()
+
+            # Init Skia
+            logging.info(f"{depth}{debug_prefix} Init Skia")
+            self.mmv_main.skia.init(
+                width = self.mmv_main.context.width,
+                height = self.mmv_main.context.height,
+                render_backend = self.mmv_main.context.skia_render_backend,
+            )
+
         # How many steps is the audio duration times the frames per second
         self.mmv_main.context.total_steps = int(self.mmv_main.audio.duration * self.mmv_main.context.fps)
         logging.info(f"{depth}{debug_prefix} Total steps: {self.mmv_main.context.total_steps}")
-
-        # Init Skia
-        logging.info(f"{depth}{debug_prefix} Init Skia")
-        self.mmv_main.skia.init(
-            width = self.mmv_main.context.width,
-            height = self.mmv_main.context.height,
-            render_backend = self.mmv_main.context.skia_render_backend,
-        )
 
         # Update info that might have been changed by the user
         logging.info(f"{depth}{debug_prefix} Update Context bases")
@@ -111,8 +105,35 @@ class MMVSkiaCore:
         LOG_OFFSETTED_STEP = self.preludec["run"]["log_offsetted_step"]
         LOG_MODULATORS = self.preludec["run"]["log_modulators"]
         LOG_NEXT_STEPS = self.preludec["run"]["log_next_steps"]
+
+        # We use audio amplitudes on MMVShaders for syncing shaders with the last rendered
+        # video. Does not easily work with custom input video, you have to feed values for
+        # every frame
+        WRITE_AUDIO_AMPLITUDE_VALUES_TO_LAST_SESSION_INFO = \
+            self.preludec["run"]["last_session_info"]["write_audio_amplitude_values"]
+
+        # Create empty array for saving the audio amplitudes
+        if WRITE_AUDIO_AMPLITUDE_VALUES_TO_LAST_SESSION_INFO:
+            recorded_audio_amplitudes = []
         
-        # Main routine
+        # # Last session info
+
+        # Reset last session info file
+        self.mmv_main.utils.reset_file(last_session_info_file)
+        
+        # Dump to toml file
+        self.mmv_main.utils.dump_toml(
+            data = {
+                "output_video": self.mmv_main.context.output_video,
+                "frame_count": self.mmv_main.context.total_steps,
+                "width": self.mmv_main.context.width,
+                "height": self.mmv_main.context.height,
+            },
+            path = last_session_info_file
+        )
+
+        # # Main routine
+
         logging.info(f"{depth}{debug_prefix} Start main routine")
         for step in range(0, self.mmv_main.context.total_steps):
 
@@ -141,6 +162,7 @@ class MMVSkiaCore:
             # If we offset to the opposite way, the starting point can be negative hence the max function.
             current_time = max((1/self.mmv_main.context.fps) * self.this_step, 0)
 
+            # Current time we're processing
             self.mmv_main.context.current_time = (1/self.mmv_main.context.fps) * self.this_step
 
             # The current time in sample count to slice the audio
@@ -184,32 +206,56 @@ class MMVSkiaCore:
                 "frequencies": frequencies_list,
             }
 
+            # Append audio amplitude to the list
+            if WRITE_AUDIO_AMPLITUDE_VALUES_TO_LAST_SESSION_INFO:
+                recorded_audio_amplitudes.append(self.modulators["average_value"])
+        
             # Log modulators
             if LOG_MODULATORS:
                 logging.debug(f"{depth}{debug_prefix} Modulators on this step: [{self.modulators}]")
 
             # # # [ Next steps ] # # #
 
-            # Reset skia canvas
-            if LOG_NEXT_STEPS:
-                logging.debug(f"{depth}{debug_prefix} Reset skia canvas")
-            self.mmv_main.skia.reset_canvas()
+            # Don't draw anything or pipe to FFmpeg if we're only processing the audio
+            if not ONLY_PROCESS_AUDIO:
+                
+                # Reset skia canvas
+                if LOG_NEXT_STEPS:
+                    logging.debug(f"{depth}{debug_prefix} Reset skia canvas")
+                self.mmv_main.skia.reset_canvas()
 
-            # Process next animation with audio info and the step count to process on
-            if LOG_NEXT_STEPS:
-                logging.debug(f"{depth}{debug_prefix} Call MMVSkiaAnimation.next()")
-            self.mmv_main.mmv_animation.next()
+                # Process next animation with audio info and the step count to process on
+                if LOG_NEXT_STEPS:
+                    logging.debug(f"{depth}{debug_prefix} Call MMVSkiaAnimation.next()")
+                self.mmv_main.mmv_animation.next()
 
-            # Next image to pipe
-            if LOG_NEXT_STEPS:
-                logging.debug(f"{depth}{debug_prefix} Get next image from canvas array")
-            next_image = self.mmv_main.skia.canvas_array()
+                # Next image to pipe
+                if LOG_NEXT_STEPS:
+                    logging.debug(f"{depth}{debug_prefix} Get next image from canvas array")
+                next_image = self.mmv_main.skia.canvas_array()
 
-            # Save current canvas's Frame to the final video, the pipe writer thread will actually pipe it
-            if LOG_NEXT_STEPS:
-                logging.debug(f"{depth}{debug_prefix} Write image to FFmpeg pipe index [{global_frame_index}]")
-            self.mmv_main.ffmpeg.write_to_pipe(global_frame_index, next_image)
+                # Save current canvas's Frame to the final video, the pipe writer thread will actually pipe it
+                if LOG_NEXT_STEPS:
+                    logging.debug(f"{depth}{debug_prefix} Write image to FFmpeg pipe index [{global_frame_index}]")
+                self.mmv_main.ffmpeg.write_to_pipe(global_frame_index, next_image)
+            
+            else:  # QOL print what is happening
+                print(f"\rOnly process audio [{global_frame_index} / {self.mmv_main.context.total_steps}", end="")
 
-        # End pipe
-        logging.info(f"{depth}{debug_prefix} Call to close pipe, let it wait until it's done")
-        self.mmv_main.ffmpeg.close_pipe()
+        # End pipe, no pipe to close if we're only processing audio
+        if not ONLY_PROCESS_AUDIO:
+            logging.info(f"{depth}{debug_prefix} Call to close pipe, let it wait until it's done")
+            self.mmv_main.ffmpeg.close_pipe()
+
+        # Update the TOML with the new data
+        if WRITE_AUDIO_AMPLITUDE_VALUES_TO_LAST_SESSION_INFO:
+
+            # Load and change the key we're interested in
+            previous_session_info_data = self.mmv_main.utils.load_toml(path = last_session_info_file)
+            previous_session_info_data["audio_amplitudes"] = recorded_audio_amplitudes
+
+            # Dump to toml file
+            self.mmv_main.utils.dump_toml(
+                data = previous_session_info_data,
+                path = last_session_info_file,
+            )
