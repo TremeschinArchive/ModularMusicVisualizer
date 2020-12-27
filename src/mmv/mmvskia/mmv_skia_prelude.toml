@@ -49,6 +49,7 @@ only_process_audio = false  # Don't draw any videos or create FFmpeg process, on
     [mmvimage.next]
         log_current_step = false
         log_became_deletable = false
+        debug_timings = false
 
 [mmvimage_configure]
     [mmvimage_configure.load_image]
