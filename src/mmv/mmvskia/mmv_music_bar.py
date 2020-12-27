@@ -141,11 +141,8 @@ class MMVSkiaMusicBarsVectorial:
         # Add mean FFT, the "mid/mean" (m) channel
         ffts.append( (ffts[0] + ffts[1]) / 2 )
 
-        # Smooth the ffts
-        # ffts = [ self.mmv.functions.smooth(fft, fitfourier["pre_fft_smoothing"]) for fft in ffts ]
-
         # The order of channels on the ffts list
-        channels = ["l", "r", "m"]
+        channels = ["l", "r"]
 
         # The points to draw the visualization
         points = {}
@@ -184,16 +181,6 @@ class MMVSkiaMusicBarsVectorial:
 
             # Start a zero fitted fft list
             fitted_fft = np.copy( self.current_fft[channel] )
-
-            # # Smoothing can look weird, "musical notes" preset fixes almost everything
-
-            # Smooth the peaks
-            #if fitfourier["pos_fft_smoothing"] > 0:
-            #    fitted_fft = self.mmv.function.smooth(fitted_fft, fitfourier["pos_fft_smoothing"])
-
-            # Apply "subdivision", break jagged edges into more smooth parts
-            #if fitfourier["subdivide"] > 0:
-            #    fitted_fft = resample(fitted_fft, fitted_fft.shape[0], fitted_fft.shape[0] * fitfourier["subdivide"])
 
             # Send the fitted fft to its list
             fitted_ffts[channel] = np.copy(fitted_fft)

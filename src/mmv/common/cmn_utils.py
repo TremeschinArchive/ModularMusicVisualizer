@@ -739,33 +739,6 @@ class DataUtils:
 
         return intervals
     
-    # Creates nbars of "bins" from a dictionary data
-    def equal_bars_average(self, data, nbars, mode):
-
-        # Sorted keys and equal slice 'em
-        sorted_data = sorted(list(data.keys()))
-        slices_index = self.equal_slices(sorted_data, nbars)
-
-        return_values = {}
-        
-        if mode == "average":
-            for bar_index, list_indexes in enumerate(slices_index):
-                total_sum = 0
-                for index in list_indexes:
-                    total_sum += data[index]
-                average = total_sum / len(list_indexes)
-                return_values[bar_index] = average
-
-        elif mode == "max":
-            for bar_index, list_indexes in enumerate(slices_index):
-                values = []
-                for index in list_indexes:
-                    values.append(data[index])
-                return_values[bar_index] = max(values)
-            
-        return return_values
-
-
 # Python's subprocess utilities because I'm lazy remembering things
 class SubprocessUtils():
 

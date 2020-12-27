@@ -71,8 +71,17 @@ class MMVSkiaCore:
         ONLY_PROCESS_AUDIO = self.prelude["flow"]["only_process_audio"]
         logging.info(f"{depth}{debug_prefix} Only process audio: [{ONLY_PROCESS_AUDIO}]")
 
+        # Read the audio and start FFmpeg pipe
+        logging.info(f"{depth}{debug_prefix} Read audio file")
+        self.mmv_main.audio.read(path = self.mmv_main.context.input_file, depth = ndepth)
+        
         # Create the pipe write thread
         if not ONLY_PROCESS_AUDIO:
+           
+            # Start video pipe
+            logging.info(f"{depth}{debug_prefix} Starting FFmpeg Pipe")
+            self.mmv_main.ffmpeg.pipe_one_time(self.mmv_main.context.output_video)
+
             logging.info(f"{depth}{debug_prefix} Creating pipe writer thread")
             self.pipe_writer_loop_thread = threading.Thread(
                 target = self.mmv_main.ffmpeg.pipe_writer_loop,
@@ -135,6 +144,9 @@ class MMVSkiaCore:
         # # Main routine
 
         logging.info(f"{depth}{debug_prefix} Start main routine")
+        logging.info(f"{depth}{debug_prefix} Video will be saved in [{self.mmv_main.context.output_video}]")
+
+        # Iterate over all steps
         for step in range(0, self.mmv_main.context.total_steps):
 
             # Log current step, next iteration

@@ -103,14 +103,6 @@ class MMVSkiaMain:
         debug_prefix = "[MMVSkiaMain.run]"
         ndepth = depth + LOG_NEXT_DEPTH
         
-        # Read the audio and start FFmpeg pipe
-        logging.info(f"{depth}{debug_prefix} Read audio file")
-        self.audio.read(path = self.context.input_file, depth = ndepth)
-        
-        # Start video pipe
-        logging.info(f"{depth}{debug_prefix} Starting FFmpeg Pipe")
-        self.ffmpeg.pipe_one_time(self.context.output_video)
-
         try:
             # import cProfile
             # p = cProfile.Profile()
