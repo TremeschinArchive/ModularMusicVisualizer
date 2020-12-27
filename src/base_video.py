@@ -657,6 +657,10 @@ if (MODE == "music") and VISUALIZER:
         bigger_bars_on_magnitude_add_magnitude_divided_by = 32,
         bar_magnitude_multiplier = 4,
         color_preset = VISUALIZER_BARS_COLOR_PRESET,
+
+        # Advanced config (sorta)
+        fft_20hz_multiplier = 0.8,
+        fft_20khz_multiplier = 12,
     )
 
     # visualizer.configure.simple_add_linear_blur(intensity="high")

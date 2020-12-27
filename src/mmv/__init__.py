@@ -142,7 +142,7 @@ f"""{depth}{debug_prefix} Show thanks message
 
         # Versioning, greeter message
         self.terminal_width = shutil.get_terminal_size()[0]
-        self.version = "2.5.1-optimize-broke"
+        self.version = "2.5.1-optimize"
 
         # Can only run on Python 64 bits, this expression returns 32 if 32 bit installation
         # and 64 if 64 bit installation, we assert that (assume it's true, quit if it isn't)

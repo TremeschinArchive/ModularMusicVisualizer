@@ -47,13 +47,15 @@ class Fourier:
     #
     # This function accepts a data input, its samplerate and the "original sample rate" before
     # we downsample the data for getting better information of the FFT at lower frequencies.
-    # We return a single array with the following strucutre:
+    # We return a 2d array with pairs of
     #
-    # > [[FFT_freq_1, FFT_value_1], [FFT_freq_3, FFT_value_2], ...]
+    # > [[FFT freq], [FFT values]]
+    #
+    # Where each index of the FFT freq correspond to the other array's index FFT value
     #
     def binned_fft(self, data: np.ndarray, sample_rate: int, original_sample_rate: int = 48000) -> list:
 
-        # # Get the "normalized" fft based on the sample rates
+        # # Get the "normalized" FFT based on the sample rates
 
         # " The height is a reflection of power density, so if you double the sampling frequency,
         # and hence half the width of each frequency bin, you'll double the amplitude of the FFT result.""
@@ -97,33 +99,5 @@ class Fourier:
         # Only need the first half of frequencies cause imaginary mirroring
         fftf = fftf[1 : len(fftf) // 2]
 
-        # # Return pairs of [freq, fft]
-
-        # We return a single array with pairs of ffreq and fft
-        # So we do a vertical stack, that is:
-        #
-        # a = [1, 2, 3, 4, 5]
-        # b = [6, 7, 8, 9, 0]
-        #
-        # c = np.vstack(a, b) -> 
-        #       [[1, 2, 3, 4, 5],
-        #        [6, 7, 8, 9, 0]]
-        # 
-        # Then  we transpose it, that is, flip it 90° clockwise then
-        # mirror vertically so we end up with the pairs:
-        #
-        # c.T ->
-        #   [[1, 6],
-        #    [2, 7],
-        #    [3, 8],
-        #    [4, 9],
-        #    [5, 0]]
-        #
-        # Which is what our specification says and what we need.
-        #
-        # Note that the first array is the index 0 of each vector
-        # so we represent it with th eFFT frequencies and that's why
-        # we put fftf first than fft, actually it is already explicitly
-        # in the order we want.
-        #
-        return np.vstack((fftf, fft)).T
+        # # Return pairs of [[freq], [fft]] array
+        return np.array([fftf, fft])

@@ -106,7 +106,7 @@ class AudioProcessing:
         right_slice = stereo_data[1][start_cut:end_cut]
 
         # Cut the mono points range
-        mono_slice = mono_data[start_cut:end_cut]
+        # mono_slice = mono_data[start_cut:end_cut]
 
         if not batch_size == None:
             # Empty audio slice array if we're at the end of the audio
@@ -115,13 +115,16 @@ class AudioProcessing:
             # Get the audio slices of the left and right channel
             self.audio_slice[0][ 0:left_slice.shape[0] ] = left_slice
             self.audio_slice[1][ 0:right_slice.shape[0] ] = right_slice
-            self.audio_slice[2][ 0:mono_slice.shape[0] ] = mono_slice
+            # self.audio_slice[2][ 0:mono_slice.shape[0] ] = mono_slice
 
         else:
-            self.audio_slice = [left_slice, right_slice, mono_slice]
+            # self.audio_slice = [left_slice, right_slice, mono_slice]
+            self.audio_slice = [left_slice, right_slice]
 
         # Calculate average amplitude
-        self.average_value = float(np.mean(np.abs(mono_slice)))
+        self.average_value = float(np.mean(np.abs(
+            mono_data[start_cut:end_cut]
+        )))
 
     def resample(self,
             data: np.ndarray,
@@ -136,8 +139,13 @@ class AudioProcessing:
             return samplerate.resample(data, ratio, 'sinc_best')
 
     # Get N semitones above / below A4 key, 440 Hz
+    #
+    # get_frequency_of_key(-12) = 220 Hz
+    # get_frequency_of_key(  0) = 440 Hz
+    # get_frequency_of_key( 12) = 880 Hz
+    #
     def get_frequency_of_key(self, n):
-        return 440 * ( (2**(1/12)) ** n )
+        return 440 * (2**(n/12))
 
     # https://stackoverflow.com/a/2566508
     def find_nearest(self, array, value):
@@ -154,34 +162,35 @@ class AudioProcessing:
         processed = {}
 
         # Iterate on config
-        for key, value in self.config.items():
+        for _, value in self.config.items():
 
             # Get info on config
             sample_rate = value.get("sample_rate")
             start_freq = value.get("start_freq")
             end_freq = value.get("end_freq")
 
-            N = len(data)
-
-            # Resample audio to target sample rate
-            resampled = self.resample(data, original_sample_rate, sample_rate)
-
-            # Get freqs vs fft value dictionary
-            # binnedft_fft[0] -> freqs
-            # binnedft_fft[1] -> values
-            binned_fft = self.fourier.binned_fft(resampled, sample_rate)
-            LENFFT = len(binned_fft[0])
-
-            # All frequencies and the ones we want
+            # Get the frequencies we want and will return in the end
             wanted_freqs = self.datautils.list_items_in_between(
                 self.piano_keys_frequencies,
                 start_freq, end_freq,
             )
 
+            # Calculate the binned FFT, we get N vectors of [freq, value]
+            # of this FFT
+            binned_fft = self.fourier.binned_fft(
+                # Resample our data to the one specified on the config
+                data = self.resample(
+                    data = data,
+                    original_sample_rate = original_sample_rate,
+                    new_sample_rate = sample_rate,
+                ),
+                # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+                sample_rate =  sample_rate,
+                original_sample_rate = original_sample_rate,
+            )
+
             # Get the nearest freq and add to processed            
             for freq in wanted_freqs:
-                # nearest[0] -> index (item)
-                # nearest[1] -> index (value)
 
                 # Get the nearest and FFT value
                 nearest = self.find_nearest(binned_fft[0], freq)
