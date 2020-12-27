@@ -102,7 +102,7 @@ class MMVSkiaMusicBarsCircle:
             self.color_rotates = kwargs.get("color_rotates", True)
             self.color_rotate_speed = kwargs.get("color_rotate_speed", 100)
         
-        elif self.color_preset == "white": pass
+        elif self.color_preset == "white": pass  # TODO: make this "monochromatic" and get user value
         else:
             raise RuntimeError(debug_prefix, f"Invalid color preset: [{self.color_preset}]")
 

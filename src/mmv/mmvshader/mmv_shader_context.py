@@ -41,7 +41,7 @@ class MMVShaderDirectories:
         # Generate and create required directories
 
         # Generated shaders from template
-        self.runtime = f"{self.mmv_shader_main.MMV_SHADER_ROOT}{os.path.sep}runtime"
+        self.runtime = f"{self.mmv_shader_main.MMV_SHADER_ROOT}{os.path.sep}runtime{os.path.sep}mmvshader_runtime_glsl"
 
         logging.info(f"{depth}{debug_prefix} MMVShader Runtime directory is [{self.runtime}]")
         
