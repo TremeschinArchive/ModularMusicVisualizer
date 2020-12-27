@@ -89,11 +89,14 @@ if POST_PROCESS_TYPE == "last_render":
         interface.last_session_info_file
     )["audio_amplitudes"]
 
+    # mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/wip_adaptive-sharpen.glsl")
+    mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/r1_tsubaup.glsl")
+
     # # Chromatic aberration
     chromatic_aberration_shader = shader_maker.replaced_values_shader(
         input_shader_path = f"{processing.MMV_SHADER_ROOT}/glsl/fx/r1_chromatic_aberration.glsl",
         changing_amount = activation_values,
-        activation = "amount = amount * 4.0",
+        activation = "amount = amount * 3.4",
     )  # This .replaced_values_shader returns the path of the replaced shader
     mpv.add_shader(chromatic_aberration_shader)
 
@@ -105,6 +108,8 @@ if POST_PROCESS_TYPE == "last_render":
         ],
     )  # This .replaced_values_shader returns the path of the replaced shader
     mpv.add_shader(edge_low_saturation_shader)
+  
+    mpv.add_shader(f"{processing.MMV_SHADER_ROOT}/glsl/grain.glsl")
 
 # Custom processing, TODO: read the 
 elif POST_PROCESS_TYPE == "custom":

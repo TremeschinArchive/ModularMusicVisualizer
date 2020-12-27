@@ -243,7 +243,9 @@ class MMVSkiaCore:
                 print(f"\rOnly process audio [{global_frame_index} / {self.mmv_main.context.total_steps}", end="")
 
         # End pipe, no pipe to close if we're only processing audio
-        if not ONLY_PROCESS_AUDIO:
+        if ONLY_PROCESS_AUDIO:
+            self.mmv_main.skia.terminate_glfw()
+        else:
             logging.info(f"{depth}{debug_prefix} Call to close pipe, let it wait until it's done")
             self.mmv_main.ffmpeg.close_pipe()
 
