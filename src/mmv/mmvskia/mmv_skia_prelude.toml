@@ -2,8 +2,9 @@
 
 # Stop code at some specific point?
 [flow]
-stop_at_interface_init = false
-stop_at_mmv_core_run = false
+stop_at_interface_init = false  # Stop after we instantiate MMVSkiaInterfac
+stop_at_mmv_core_run = false  # Stop before executing the main routines
+only_process_audio = false  # Don't draw any videos or create FFmpeg process, only process the audio
 
 # # Logging
 
@@ -19,6 +20,9 @@ stop_at_mmv_core_run = false
         log_offsetted_step = false
         log_modulators = false
         log_next_steps = false
+
+        [mmvcore.run.last_session_info]
+            write_audio_amplitude_values = true  # If you're gonna post process the video this is absolutely required
 
 [mmvgenerator]
     log_creation = true

@@ -192,7 +192,7 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
 
         log_format = {
             "informational": "[%(levelname)-8s] [%(filename)-32s:%(lineno)-3d] (%(relativeCreated)-6d) %(message)s",
-            "pretty": "[%(levelname)-8s] (%(relativeCreated)-6d) %(message)s",
+            "pretty": "[%(levelname)-8s] (%(relativeCreated)-5d)ms %(message)s",
             "economic": "[%(levelname)s::%(filename)s::%(lineno)d] %(message)s",
             "onlymessage": "%(message)s"
         }.get(self.prelude["logging"]["log_format"])

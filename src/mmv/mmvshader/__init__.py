@@ -28,6 +28,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from mmv.common.cmn_constants import LOG_NEXT_DEPTH, PACKAGE_DEPTH, LOG_NO_DEPTH, LOG_SEPARATOR, STEP_SEPARATOR
 from mmv.mmvshader.mmv_shader_main import MMVShaderMain
+from mmv.common.cmn_tree import DisplayablePath
+from pathlib import Path
 import logging
 import toml
 import sys
@@ -83,4 +85,43 @@ class MMVShaderInterface:
         logging.info(f"{depth}{debug_prefix} Creating MMVShaderMain")
         self.mmv_shader_main = MMVShaderMain(interface = self, depth = ndepth)
 
+        # # Where stuff will be located
+
+        self.SHADERS_LOCATED_AT = f"{self.MMV_SHADER_ROOT}{os.path.sep}glsl"
+        logging.info(f"{depth}{debug_prefix} Shader folder / files should be located at [{self.SHADERS_LOCATED_AT}]")
+
         logging.info(LOG_SEPARATOR)
+
+    # List the shaders on the self.SHADERS_LOCATED_AT folder and also
+    # reads every shader for pattern matching and printing available
+    # options / settings
+    def list_shaders(self, depth = LOG_NEXT_DEPTH):
+        debug_prefix = "[list_shaders]"
+        logging.info(f"{depth}{debug_prefix} Listing shader paths and documentation")
+        logging.info(STEP_SEPARATOR)
+        depth = depth + LOG_NEXT_DEPTH
+
+        # # Read every file and print documentation (lines starting with ///)
+        for root, d, f in os.walk(self.SHADERS_LOCATED_AT):
+            for file in f:
+                file = os.path.join(root, file)
+                if file.endswith(".glsl"):
+                    logging.info(f"{depth}{debug_prefix} File: [{file}]")
+                    with open(file, "r") as glsl:
+                        for line in glsl:
+                            if line.startswith("//DESC"):
+                                line = line.replace("//DESC", "").replace("//DESC ", "").replace("\n", "")
+                                logging.info(f"{depth}{debug_prefix} >{line}")
+                    logging.info(STEP_SEPARATOR)
+
+        # # Pretty printing the whole directory
+
+        logging.info(f"{depth}{debug_prefix} [Here's the complete file / folder tree structure of the GLSL shaders directory]:")
+
+        # Create a iterator for printing the tree of the directory
+        paths = DisplayablePath.make_tree(Path(self.SHADERS_LOCATED_AT))
+        
+        # Print every path
+        for path in paths:
+            logging.info(f"{depth}{debug_prefix} :: {path.displayable()}")
+

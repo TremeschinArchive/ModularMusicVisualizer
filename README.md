@@ -57,6 +57,8 @@ So I searched up for a free **(as in freedom and price)** tool that does exactly
 
 I embraced this opportunity on making a suckless music visualization tool (a more traditional approach than 3D random nonsense) with the programming languages and tools I love and care.
 
+I cannot deny I took some heavy inspiration on 3blue1brown's [Manim](https://github.com/3b1b/manim) project, specifically the way we configure the MObjects there and simply add attributes, ask them to be drawn. While both are very different projects their usability are somewhat similar in a core level of how to operate.
+
 I also invite you to read about the [Free Software Definition / Philosophy](https://www.gnu.org/philosophy/free-sw.html) and join us on this amazing community!! :)
 
 *Let's make music more accessible for small producers and keep it affordable for such tallented people, I'm doing my part, are you doing yours?*
