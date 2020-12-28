@@ -268,5 +268,6 @@ class MMVShaderMPV:
         # If we just wanna see the final command, don't execute
         if execute:
             logging.info(f"{depth}{debug_prefix} Starting mpv subprocess with self.__command list, here be dragons..")
+            logging.info(f"{depth}{debug_prefix} MPV Might take a bit to startup depending on how much shaders you put // their complexity, size. Be patient.")
             subprocess.run(self.__command)
 

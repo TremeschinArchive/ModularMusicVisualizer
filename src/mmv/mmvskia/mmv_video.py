@@ -68,7 +68,7 @@ class MMVSkiaFFmpegWrapper:
                 pixel_format = "rgba"
             
             # MacOS
-            elif self.mmv.utils.os == "darwin":
+            elif self.mmv.utils.os == "macos":
                 print(debug_prefix, f"Pixel format set to [rgba] because Darwin / MacOS")
                 pixel_format = "rgba"
 
@@ -90,7 +90,7 @@ class MMVSkiaFFmpegWrapper:
             print(debug_prefix, (
                 "Couldn't find FFmpeg binary\n"
                 "  Linux: Did you install using your distro package manager?\n"
-                "  Windows: Is [ffmpeg.exe] under ROOT/mmv/mmv/externals/ffmpeg.exe?"))
+                "  Windows: Is [ffmpeg.exe] under the externals directory?"))
             sys.exit(-1)
 
         print(debug_prefix, "Open one time pipe")
