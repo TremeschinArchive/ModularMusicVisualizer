@@ -214,8 +214,8 @@ class MMVSkiaImage:
 
                 self.image.load_from_array(frame)
                 self.image.resize_to_resolution(
-                    width = self.mmv_main.context.width + this_module["over_resize_width"],
-                    height = self.mmv_main.context.height + this_module["over_resize_height"],
+                    width = this_module["width"],
+                    height = this_module["height"],
                     override = True
                 )
 
