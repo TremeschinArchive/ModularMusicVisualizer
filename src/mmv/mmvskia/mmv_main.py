@@ -103,14 +103,6 @@ class MMVSkiaMain:
         debug_prefix = "[MMVSkiaMain.run]"
         ndepth = depth + LOG_NEXT_DEPTH
         
-        # Read the audio and start FFmpeg pipe
-        logging.info(f"{depth}{debug_prefix} Read audio file")
-        self.audio.read(self.context.input_file)
-        
-        # Start video pipe
-        logging.info(f"{depth}{debug_prefix} Starting FFmpeg Pipe")
-        self.ffmpeg.pipe_one_time(self.context.output_video)
-
         try:
             # import cProfile
             # p = cProfile.Profile()
@@ -128,7 +120,7 @@ class MMVSkiaMain:
             sys.exit(-1)
         
         # Say thanks message
-        self.thanks_message()
+        self.mmvskia_interface.top_level_interace.thanks_message()
 
         # Wait for FFmpeg pipe to stop
         while not self.ffmpeg.stop_piping:
@@ -136,33 +128,3 @@ class MMVSkiaMain:
 
         logging.info(f"{depth}{debug_prefix} Quitting Python")
         sys.exit(0)
-        
-
-    def thanks_message(self):
-        # # Print thanks message :)
-
-        message = \
-f"""
- [+-------------------------------------------------------------------------------------------+]
-  |                                                                                           |
-  |              :: Thanks for using the Modular Music Visualizer project !! ::               |
-  |              ==============================================================               |
-  |                                                                                           |
-  |  Here's a few official links for MMV:                                                     |
-  |                                                                                           |
-  |    - Telegram group:          [          https://t.me/modular_music_visualizer         ]  |
-  |    - GitHub Repository:       [ https://github.com/Tremeschin/modular-music-visualizer ]  |
-  |    - GitLab Repository:       [ https://gitlab.com/Tremeschin/modular-music-visualizer ]  |
-  |                                                                                           |
-  |  > Always check for the copyright info on the material you are using (audios, images)     |
-  |  before distributing the content generated with MMV, I take absolutely no responsibility  |
-  |  for any UGC (user generated content) violations. See LICENSE file as well.               |
-  |                                                                                           |
-  |  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  |
-  |                                                                                           |
-  |             Don't forget sharing your releases made with MMV on the discussion groups :)  |
-  |                 Feel free asking for help or giving new ideas for the project as well !!  |
-  |                                                                                           |
- [+-------------------------------------------------------------------------------------------+]
-"""
-        print(message)

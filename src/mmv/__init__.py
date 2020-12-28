@@ -70,6 +70,43 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
 """
         logging.info(message)
 
+    def thanks_message(self, depth = PACKAGE_DEPTH):
+        debug_prefix = "[MMVInterface.thanks_message]"
+        ndepth = depth + LOG_NEXT_DEPTH
+
+        # # Print thanks message :)
+
+        self.terminal_width = shutil.get_terminal_size()[0]
+
+        bias = " "*(math.floor(self.terminal_width/2) - 45)
+        message = \
+f"""{depth}{debug_prefix} Show thanks message
+\n{"-"*self.terminal_width}\n
+{bias}[+-------------------------------------------------------------------------------------------+]
+{bias} |                                                                                           |
+{bias} |              :: Thanks for using the Modular Music Visualizer project !! ::               |
+{bias} |              ==============================================================               |
+{bias} |                                                                                           |
+{bias} |  Here's a few official links for MMV:                                                     |
+{bias} |                                                                                           |
+{bias} |    - Telegram group:          [          https://t.me/modular_music_visualizer         ]  |
+{bias} |    - GitHub Repository:       [ https://github.com/Tremeschin/modular-music-visualizer ]  |
+{bias} |    - GitLab Repository:       [ https://gitlab.com/Tremeschin/modular-music-visualizer ]  |
+{bias} |                                                                                           |
+{bias} |  > Always check for the copyright info on the material you are using (audios, images)     |
+{bias} |  before distributing the content generated with MMV, I take absolutely no responsibility  |
+{bias} |  for any UGC (user generated content) violations. See LICENSE file as well.               |
+{bias} |                                                                                           |
+{bias} |  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  |
+{bias} |                                                                                           |
+{bias} |             Don't forget sharing your releases made with MMV on the discussion groups :)  |
+{bias} |                 Feel free asking for help or giving new ideas for the project as well !!  |
+{bias} |                                                                                           |
+{bias}[+-------------------------------------------------------------------------------------------+]
+\n{"-"*self.terminal_width}
+"""
+        logging.info(message)
+
     # MMVSkia works with glfw plus Skia to draw on a GL canvas and pipe
     # through FFmpeg to render a final video. Have Piano Roll options
     # and modules as well!!
@@ -105,7 +142,7 @@ f"""{depth}{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
 
         # Versioning, greeter message
         self.terminal_width = shutil.get_terminal_size()[0]
-        self.version = "2.5-unite"
+        self.version = "2.5.1-optimize"
 
         # Can only run on Python 64 bits, this expression returns 32 if 32 bit installation
         # and 64 if 64 bit installation, we assert that (assume it's true, quit if it isn't)
