@@ -79,8 +79,10 @@ class MMVSkiaAnimation:
                 self.content[layer_index] = []
 
     # Call every next step of the content animations
-    def next(self) -> None:
-
+    def next(self, depth = LOG_NO_DEPTH) -> None:
+        debug_prefix = "[MMVSkiaAnimation.next]"
+        ndepth = depth + LOG_NEXT_DEPTH
+        
         # Iterate through the generators
         for item in self.generators:
 
@@ -101,7 +103,7 @@ class MMVSkiaAnimation:
 
         # Dictionary of layers and item indexes on that layer to delete
         items_to_delete = {}
-
+        
         for layer_index in sorted(list(self.content.keys())):
             for position, item in enumerate(self.content[layer_index]):
 
@@ -124,7 +126,7 @@ class MMVSkiaAnimation:
         for layer_index in items_to_delete.keys():
             # For each item in the REVERSED list of items indexes to delete,
             # otherwise we break out iteration and index linking
-            for items in sorted(items_to_delete[layer_index], reverse=True):
+            for items in sorted(items_to_delete[layer_index], reverse = True):
                 del self.content[ layer_index ][ items ]
 
         # Post process this final frame as we added all the items

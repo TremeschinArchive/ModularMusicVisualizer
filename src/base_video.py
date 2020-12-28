@@ -71,8 +71,8 @@ processing = interface.get_skia_interface(
     pixel_format = "auto",
 
     # If your audio isn't properly normalized or you want a more aggressive video,
-    # set this to 1.5 - 2 or so
-    audio_amplitude_multiplier = 1,
+    # set this to 1.5 - 2 or so.
+    audio_amplitude_multiplier = 1.1,
 
     # Use or not a GPU accelerated context, pass render=gpu or render=cpu flags
     # For higher resolutions 720p+, GPUs are definitely faster for raw output
@@ -652,11 +652,15 @@ if (MODE == "music") and VISUALIZER:
     visualizer.configure.add_module_visualizer(
         type = "circle",
         minimum_bar_size = logo_size//2,
-        maximum_bar_size = 260,
+        maximum_bar_size = 300,
         bar_responsiveness = 0.6,
         bigger_bars_on_magnitude_add_magnitude_divided_by = 32,
         bar_magnitude_multiplier = 4,
         color_preset = VISUALIZER_BARS_COLOR_PRESET,
+
+        # Advanced config (sorta)
+        fft_20hz_multiplier = 0.8,
+        fft_20khz_multiplier = 12,
     )
 
     # visualizer.configure.simple_add_linear_blur(intensity="high")

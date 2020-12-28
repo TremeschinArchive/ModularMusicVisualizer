@@ -31,6 +31,7 @@ from mmv.mmvskia.mmv_image_configure import MMVSkiaImageConfigure
 from mmv.common.cmn_frame import Frame
 from mmv.mmvskia.mmv_modifiers import *
 import logging
+import time
 import skia
 import uuid
 import cv2
@@ -177,6 +178,8 @@ class MMVSkiaImage:
         self.offset = [0, 0]
         self.image.pending = {}
 
+        sg = time.time()
+
         self.image.reset_to_original_image()
         self._reset_effects_variables()
 
@@ -185,12 +188,14 @@ class MMVSkiaImage:
 
         if "modules" in this_animation:
             
+            
             modules = this_animation["modules"]
 
             self.is_vectorial = "vectorial" in modules
 
             # The video module must be before everything as it gets the new frame                
             if "video" in modules:
+                s = time.time()
 
                 this_module = modules["video"]
 
@@ -209,12 +214,17 @@ class MMVSkiaImage:
 
                 self.image.load_from_array(frame)
                 self.image.resize_to_resolution(
-                    width = self.mmv_main.context.width + this_module["over_resize_width"],
-                    height = self.mmv_main.context.height + this_module["over_resize_height"],
+                    width = this_module["width"],
+                    height = this_module["height"],
                     override = True
                 )
 
+                if self.preludec["next"]["debug_timings"]:
+                    logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Video module .next() took [{time.time() - s:.010f}]")
+
             if "rotate" in modules:
+                s = time.time()
+                
                 this_module = modules["rotate"]
                 rotate = this_module["object"]
 
@@ -226,7 +236,12 @@ class MMVSkiaImage:
                 else:
                     self.rotate_value = amount
 
+                if self.preludec["next"]["debug_timings"]:
+                    logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Rotate module .next() took [{time.time() - s:.010f}]")
+
             if "resize" in modules:
+                s = time.time()
+                
                 this_module = modules["resize"]
                 resize = this_module["object"]
 
@@ -243,8 +258,13 @@ class MMVSkiaImage:
                         self.offset[0] += offset[0]
                         self.offset[1] += offset[1]
 
+                if self.preludec["next"]["debug_timings"]:
+                    logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Resize module .next() took [{time.time() - s:.010f}]")
+
             # DONE
             if "blur" in modules:
+                s = time.time()
+                
                 this_module = modules["blur"]
                 blur = this_module["object"]
 
@@ -255,17 +275,27 @@ class MMVSkiaImage:
                 self.image_filters.append(
                     skia.ImageFilters.Blur(amount, amount)
                 )
+
+                if self.preludec["next"]["debug_timings"]:
+                    logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Blur module .next() took [{time.time() - s:.010f}]")
             
             if "fade" in modules:
+                s = time.time()
+                
                 this_module = modules["fade"]
                 fade = this_module["object"]
 
                 fade.next()
            
                 self.image.transparency( fade.get_value() )
+
+                if self.preludec["next"]["debug_timings"]:
+                    logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Fade module .next() took [{time.time() - s:.010f}]")
                     
             # Apply vignetting
             if "vignetting" in modules:
+                s = time.time()
+                
                 this_module = modules["vignetting"]
                 vignetting = this_module["object"]
 
@@ -283,8 +313,14 @@ class MMVSkiaImage:
                         colors=[skia.Color4f(0, 0, 0, 0), skia.Color4f(0, 0, 0, 1)]
                     )
                 })
+
+                if self.preludec["next"]["debug_timings"]:
+                    logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Vignetting module .next() took [{time.time() - s:.010f}]")
+
             
             if "vectorial" in modules:
+                s = time.time()
+                
                 this_module = modules["vectorial"]
                 vectorial = this_module["object"]
 
@@ -296,6 +332,12 @@ class MMVSkiaImage:
 
                 # Visualizer blit itself into the canvas automatically
                 vectorial.next(effects)
+
+                if self.preludec["next"]["debug_timings"]:
+                    logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Vectorial module .next() took [{time.time() - s:.010f}]")
+
+            if self.preludec["next"]["debug_timings"]:
+                logging.debug(f"{depth}{debug_prefix} [{self.identifier}] Global .next() took [{time.time() - sg:.010f}]")
 
         # Iterate through every position module
         for modifier in path:
