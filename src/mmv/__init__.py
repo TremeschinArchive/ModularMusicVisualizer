@@ -140,8 +140,7 @@ f"""{depth}{debug_prefix} Show thanks message
         debug_prefix = "[MMVInterface.__init__]"
         ndepth = depth + LOG_NEXT_DEPTH
 
-        # Versioning, greeter message
-        self.terminal_width = shutil.get_terminal_size()[0]
+        # Versioning
         self.version = "2.5.1-optimize"
 
         # Can only run on Python 64 bits, this expression returns 32 if 32 bit installation
@@ -241,11 +240,12 @@ f"""{depth}{debug_prefix} Show thanks message
             handlers = handlers,
         )
 
-        # :)
+        # Greeter message :)
         self.greeter_message()
 
         # Start logging message
-        bias = " " * ((self.terminal_width//2) - 13); print(f"{bias[:-1]}# # [ Start Logging ] # #\n")
+        bias = " " * ((self.terminal_width//2) - 13);
+        print(f"{bias[:-1]}# # [ Start Logging ] # #\n")
         print("-" * self.terminal_width + "\n")
 
         # Log what we'll do next
@@ -275,6 +275,7 @@ f"""{depth}{debug_prefix} Show thanks message
         else:
             # Warn Python 3.9 is a bit unstable, even the developer had issues making it work
             logging.warn(f"{depth}{debug_prefix} Python 3.9 is acting a bit weird regarding some dependencies on some systems, while it should be possible to run, take it with some grain of salt and report back into the discussions troubles or workarounds you found?")
+            input("\n [ Press enter to continue.. ]: ")
 
         # # The operating system we're on, one of "linux", "windows", "macos"
 
@@ -313,6 +314,11 @@ f"""{depth}{debug_prefix} Show thanks message
         self.data_dir = f"{self.MMV_INTERFACE_ROOT}{sep}data"
         logging.info(f"{depth}{debug_prefix} Data dir is [{self.data_dir}]")
         self.utils.mkdir_dne(path = self.data_dir, depth = ndepth)
+
+        # Windoe juuuust in case
+        if self.os == "windows":
+            logging.info(f"{depth}{debug_prefix} Appending the Externals directory to system path juuuust in case...")
+            sys.path.append(self.externals_dir)
 
         # # Common files
 

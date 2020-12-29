@@ -31,10 +31,12 @@ from mmv.common.cmn_functions import Functions
 from mmv.common.cmn_utils import DataUtils
 from mmv.common.cmn_fourier import Fourier
 import mmv.common.cmn_any_logger
+import audio2numpy
 import numpy as np
 import subprocess
 import samplerate
 import soundfile
+import audioread
 import logging
 import math
 import os
@@ -48,7 +50,11 @@ class AudioFile:
         ndepth = depth + LOG_NEXT_DEPTH
 
         logging.info(f"{depth}{debug_prefix} Reading stereo audio in path [{path}], trying soundfile")
-        self.stereo_data, self.sample_rate = soundfile.read(path)
+        try:
+            self.stereo_data, self.sample_rate = soundfile.read(path)
+        except RuntimeError:
+            logging.warn(f"{depth}{debug_prefix} Couldn't read file with soundfile, trying audio2numpy..")
+            self.stereo_data, self.sample_rate = audio2numpy.open_audio(path)
 
         # We need to transpose to a (2, -1) array
         logging.info(f"{depth}{debug_prefix} Transposing audio data")

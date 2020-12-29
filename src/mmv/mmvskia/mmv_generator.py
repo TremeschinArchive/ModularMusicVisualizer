@@ -32,14 +32,14 @@ import logging
 
 
 class MMVSkiaGenerator:
-    def __init__(self, mmv_main, depth = LOG_NO_DEPTH) -> None:
+    def __init__(self, mmvskia_main, depth = LOG_NO_DEPTH) -> None:
         debug_prefix = "[MMVSkiaGenerator.__init__]"
         ndepth = depth + LOG_NEXT_DEPTH
-        self.mmv_main = mmv_main
-        self.preludec = self.mmv_main.mmvskia_interface.prelude["mmvgenerator"]
+        self.mmvskia_main = mmvskia_main
+        self.preludec = self.mmvskia_main.mmvskia_interface.prelude["mmvgenerator"]
  
         # Get an unique identifier for this MMVSkiaImage object
-        self.identifier = self.mmv_main.utils.get_unique_id(
+        self.identifier = self.mmvskia_main.utils.get_unique_id(
             purpose = "MMVSkiaImage object", depth = ndepth,
             silent = self.preludec["log_get_unique_id"]
         )
@@ -65,4 +65,4 @@ class MMVSkiaGenerator:
             logging.info(f"{depth}{debug_prefix} [{self.identifier}] Setting this generator object to MMVSkiaParticleGenerator with kwargs: {kwargs}")
 
         # Set this generator to a MMVSkiaParticleGenerator
-        self.generator = MMVSkiaParticleGenerator(self.mmv_main, depth = ndepth, **kwargs)
+        self.generator = MMVSkiaParticleGenerator(self.mmvskia_main, depth = ndepth, **kwargs)

@@ -39,18 +39,18 @@ import cv2
 
 # Basically everything on MMV as we have to render images
 class MMVSkiaImage:
-    def __init__(self, mmv_main, depth = LOG_NO_DEPTH, from_generator = False) -> None:
+    def __init__(self, mmvskia_main, depth = LOG_NO_DEPTH, from_generator = False) -> None:
         debug_prefix = "[MMVSkiaImage.__init__]"
         ndepth = depth + LOG_NEXT_DEPTH
-        self.mmv_main = mmv_main
-        self.preludec = self.mmv_main.prelude["mmvimage"]
+        self.mmvskia_main = mmvskia_main
+        self.preludec = self.mmvskia_main.prelude["mmvimage"]
 
         # Log the creation of this class
         if self.preludec["log_creation"] and not from_generator:
             logging.info(f"{depth}{debug_prefix} Created new MMVSkiaImage object, getting unique identifier for it")
 
         # Get an unique identifier for this MMVSkiaImage object
-        self.identifier = self.mmv_main.utils.get_unique_id(
+        self.identifier = self.mmvskia_main.utils.get_unique_id(
             purpose = "MMVSkiaImage object", depth = ndepth,
             silent = self.preludec["log_get_unique_id"] and from_generator
         )
@@ -59,7 +59,7 @@ class MMVSkiaImage:
         self.animation = {}
 
         # Create classes
-        self.configure = MMVSkiaImageConfigure(mmv_main = self.mmv_main, mmvimage_object = self)
+        self.configure = MMVSkiaImageConfigure(mmvskia_main = self.mmvskia_main, mmvimage_object = self)
         self.image = Frame()
 
         self.x = 0
@@ -139,7 +139,7 @@ class MMVSkiaImage:
             logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Reset canvas, create new image of Context's width and height in size")
             
         # Actually create the new canvas
-        self.image.new(self.mmv_main.context.width, self.mmv_main.context.height)
+        self.image.new(self.mmvskia_main.context.width, self.mmvskia_main.context.height)
 
     # Next step of animation
     def next(self, depth = LOG_NO_DEPTH) -> None:
@@ -166,7 +166,7 @@ class MMVSkiaImage:
         this_animation = self.animation[self.current_animation]
 
         animation = this_animation["animation"]
-        steps = animation["steps"] * self.mmv_main.context.fps_ratio_multiplier  # Scale the interpolations
+        steps = animation["steps"] * self.mmvskia_main.context.fps_ratio_multiplier  # Scale the interpolations
 
         # The current step is one above the steps we've been told, next animation
         if self.current_step >= steps + 1:
@@ -306,7 +306,7 @@ class MMVSkiaImage:
 
                 # This is a somewhat fake vignetting, we just start a black point with full transparency
                 # at the center and make a radial gradient that is black with no transparency at the radius
-                self.mmv_main.skia.canvas.drawPaint({
+                self.mmvskia_main.skia.canvas.drawPaint({
                     'Shader': skia.GradientShader.MakeRadial(
                         center=(vignetting.center_x, vignetting.center_y),
                         radius=next_vignetting,
@@ -347,19 +347,19 @@ class MMVSkiaImage:
             argument = [self.x, self.y] + self.offset
 
             # Move according to a Point (be stationary)
-            if self.mmv_main.utils.is_matching_type([modifier], [MMVSkiaModifierPoint]):
+            if self.mmvskia_main.utils.is_matching_type([modifier], [MMVSkiaModifierPoint]):
                 # Attribute (x, y) to Point's x and y
                 [self.x, self.y], self.offset = modifier.next(*argument)
 
             # Move according to a Line (interpolate current steps)
-            if self.mmv_main.utils.is_matching_type([modifier], [MMVSkiaModifierLine]):
+            if self.mmvskia_main.utils.is_matching_type([modifier], [MMVSkiaModifierLine]):
                 # Interpolate and unpack next coordinate
                 [self.x, self.y], self.offset = modifier.next(*argument)
 
             # # Offset modules
 
             # Get next shake offset value
-            if self.mmv_main.utils.is_matching_type([modifier], [MMVSkiaModifierShake]):
+            if self.mmvskia_main.utils.is_matching_type([modifier], [MMVSkiaModifierShake]):
                 [self.x, self.y], self.offset = modifier.next(*argument)
 
     # Blit this item on the canvas
@@ -383,7 +383,7 @@ class MMVSkiaImage:
         paint = skia.Paint(self.paint_dict)
 
         # Blit this image
-        self.mmv_main.skia.canvas.drawImage(
+        self.mmvskia_main.skia.canvas.drawImage(
             self.image.image, x, y,
             paint = paint,
         )

@@ -38,9 +38,9 @@ import os
 
 
 class MMVSkiaParticleGenerator:
-    def __init__(self, mmv_main, depth = LOG_NO_DEPTH, **kwargs):
+    def __init__(self, mmvskia_main, depth = LOG_NO_DEPTH, **kwargs):
         debug_prefix = "[MMVSkiaParticleGenerator.__init__]"
-        self.mmv_main = mmv_main
+        self.mmvskia_main = mmvskia_main
         self.type = "mmvgenerator"
         self.is_deletable = False
 
@@ -214,10 +214,10 @@ class MMVSkiaParticleGenerator:
     def next(self):
         
         # Add progression until new generated object
-        self.next_particle_percentage += self.add_per_step * self.mmv_main.context.fps_ratio_multiplier
+        self.next_particle_percentage += self.add_per_step * self.mmvskia_main.context.fps_ratio_multiplier
 
         # Add more progression on particles according to sound level
-        self.next_particle_percentage += self.average_sound_amplitude_add_per_step * self.mmv_main.core.modulators["average_value"]
+        self.next_particle_percentage += self.average_sound_amplitude_add_per_step * self.mmvskia_main.core.modulators["average_value"]
 
         generate_amount = int(self.next_particle_percentage / 100)
 
@@ -248,23 +248,23 @@ class MMVSkiaParticleGenerator:
     # Bottom mid top preset generator function
     def preset_bottom_mid_top(self):
 
-        particle = MMVSkiaImage(mmv_main = self.mmv_main, from_generator = True)
+        particle = MMVSkiaImage(mmvskia_main = self.mmvskia_main, from_generator = True)
 
         # Load random particle
         particle.image.load_from_path(
-            self.mmv_main.utils.random_file_from_dir (
+            self.mmvskia_main.utils.random_file_from_dir (
                 self.particles_images_directory, silent = True
             )
         )
         
-        horizontal_randomness = int(50 * self.mmv_main.context.resolution_ratio_multiplier)
-        vertical_randomness_min = self.mmv_main.context.height//1.7
-        vertical_randomness_max = self.mmv_main.context.height//2.3
+        horizontal_randomness = int(50 * self.mmvskia_main.context.resolution_ratio_multiplier)
+        vertical_randomness_min = self.mmvskia_main.context.height//1.7
+        vertical_randomness_max = self.mmvskia_main.context.height//2.3
 
         # # Create start, mid, end positions
 
-        x1 = random.randint(0, self.mmv_main.context.width)
-        y1 = self.mmv_main.context.height
+        x1 = random.randint(0, self.mmvskia_main.context.width)
+        y1 = self.mmvskia_main.context.height
         x2 = x1 + random.randint(-horizontal_randomness, horizontal_randomness)
         y2 = y1 + random.randint(-vertical_randomness_min, -vertical_randomness_max)
         x3 = x2 + random.randint(-horizontal_randomness, horizontal_randomness)
@@ -277,16 +277,16 @@ class MMVSkiaParticleGenerator:
         modules = {}
 
         line_path = MMVSkiaModifierLine(
-            self.mmv_main,
+            self.mmvskia_main,
             start = (x1, y1),
             end = (x2, y2),
             interpolation_x = MMVSkiaInterpolation(
-                self.mmv_main,
+                self.mmvskia_main,
                 function = "remaining_approach",
                 ratio = self.x_interpolation_agressive,
             ),
             interpolation_y = MMVSkiaInterpolation(
-                self.mmv_main,
+                self.mmvskia_main,
                 function = "remaining_approach",
                 ratio = self.y_interpolation_agressive,
             ),
@@ -299,15 +299,15 @@ class MMVSkiaParticleGenerator:
         # Create and append shake modifier if set
         if self.do_apply_shake:
             shake_path = MMVSkiaModifierShake(
-                self.mmv_main,
+                self.mmvskia_main,
                 interpolation_x = MMVSkiaInterpolation(
-                    self.mmv_main,
+                    self.mmvskia_main,
                     function = "remaining_approach",
                     ratio = self.shake_x_rationess,
                     start = 0,
                 ),
                 interpolation_y = MMVSkiaInterpolation(
-                    self.mmv_main,
+                    self.mmvskia_main,
                     function = "remaining_approach",
                     ratio = self.shake_y_rationess,
                     start = 0,
@@ -329,9 +329,9 @@ class MMVSkiaParticleGenerator:
             # Create Fade module
             modules["fade"] = {
                 "object": MMVSkiaModifierFade(
-                    self.mmv_main,
+                    self.mmvskia_main,
                     interpolation = MMVSkiaInterpolation(
-                        self.mmv_main,
+                        self.mmvskia_main,
                         function = "linear",
                         total_steps = self.fade_total_step,
                         start = self.fade_start,
@@ -359,16 +359,16 @@ class MMVSkiaParticleGenerator:
         modules = {}
 
         line_path = MMVSkiaModifierLine(
-            self.mmv_main,
+            self.mmvskia_main,
             start = (x2, y2),
             end = (x3, y3),
             interpolation_x = MMVSkiaInterpolation(
-                self.mmv_main,
+                self.mmvskia_main,
                 function = "remaining_approach",
                 ratio = self.x_interpolation_agressive,
             ),
             interpolation_y = MMVSkiaInterpolation(
-                self.mmv_main,
+                self.mmvskia_main,
                 function = "remaining_approach",
                 ratio = self.y_interpolation_agressive,
             ),
@@ -386,9 +386,9 @@ class MMVSkiaParticleGenerator:
         if self.do_apply_fade:
             modules["fade"] = {
                 "object": MMVSkiaModifierFade(
-                    self.mmv_main,
+                    self.mmvskia_main,
                     interpolation = MMVSkiaInterpolation(
-                        self.mmv_main,
+                        self.mmvskia_main,
                         function = "linear",
                         total_steps = self.fade_total_step,
                         start = self.fade_mid,
@@ -415,8 +415,8 @@ class MMVSkiaParticleGenerator:
         # Resize the image by a scalar
         particle.image.resize_by_ratio(
             random.uniform(
-                self.particle_minimum_size * self.mmv_main.context.resolution_ratio_multiplier,
-                self.particle_maximum_size * self.mmv_main.context.resolution_ratio_multiplier,
+                self.particle_minimum_size * self.mmvskia_main.context.resolution_ratio_multiplier,
+                self.particle_maximum_size * self.mmvskia_main.context.resolution_ratio_multiplier,
             ),
             override=True
         )
@@ -430,11 +430,11 @@ class MMVSkiaParticleGenerator:
 
     def preset_middle_out(self):
 
-        particle = MMVSkiaImage(mmv_main = self.mmv_main, from_generator = True)
+        particle = MMVSkiaImage(mmvskia_main = self.mmvskia_main, from_generator = True)
 
         # Load random particle
         particle.image.load_from_path(
-            self.mmv_main.utils.random_file_from_dir (
+            self.mmvskia_main.utils.random_file_from_dir (
                 self.particles_images_directory, silent = True
             )
         )
@@ -442,18 +442,18 @@ class MMVSkiaParticleGenerator:
         # #  Create start and end positions
 
         # We start at half the screen
-        x1 = self.mmv_main.context.width // 2
-        y1 = self.mmv_main.context.height // 2
+        x1 = self.mmvskia_main.context.width // 2
+        y1 = self.mmvskia_main.context.height // 2
 
         # The minimum distance we'll walk is the diagonal (Center - Corner) * minimum_distance_ratio
         # The maximum distance we'll walk is the diagonal (Center - Corner) * maximum_distance_ratio
-        self.mmv_main.polar_coordinates.from_r_theta(
-            r = self.mmv_main.context.resolution_diagonal / 2,
+        self.mmvskia_main.polar_coordinates.from_r_theta(
+            r = self.mmvskia_main.context.resolution_diagonal / 2,
             theta = random.uniform(0, 2*math.pi),
         )
 
         # The direction we'll walk..
-        walk_to = self.mmv_main.polar_coordinates.get_rectangular_coordinates()
+        walk_to = self.mmvskia_main.polar_coordinates.get_rectangular_coordinates()
 
         # Is where we're at plus that
         x2 = x1 + walk_to[0]
@@ -467,17 +467,17 @@ class MMVSkiaParticleGenerator:
 
         # Line path going from the center
         line_path = MMVSkiaModifierLine(
-            self.mmv_main,
+            self.mmvskia_main,
             start = (x1, y1),
             end = (x2, y2),
             interpolation_x = MMVSkiaInterpolation(
-                self.mmv_main,
+                self.mmvskia_main,
                 function = "remaining_approach",
                 ratio = self.x_interpolation_agressive,
                 speed_up_by_audio_volume = 0.3,
             ),
             interpolation_y = MMVSkiaInterpolation(
-                self.mmv_main,
+                self.mmvskia_main,
                 function = "remaining_approach",
                 ratio = self.y_interpolation_agressive,
                 speed_up_by_audio_volume = 0.3,
@@ -491,15 +491,15 @@ class MMVSkiaParticleGenerator:
         # Create and append shake modifier if set
         if self.do_apply_shake:
             shake_path = MMVSkiaModifierShake(
-                self.mmv_main,
+                self.mmvskia_main,
                 interpolation_x = MMVSkiaInterpolation(
-                    self.mmv_main,
+                    self.mmvskia_main,
                     function = "remaining_approach",
                     ratio = 0.01,
                     start = 0,
                 ),
                 interpolation_y = MMVSkiaInterpolation(
-                    self.mmv_main,
+                    self.mmvskia_main,
                     function = "remaining_approach",
                     ratio = 0.04,
                     start = 0,
@@ -514,9 +514,9 @@ class MMVSkiaParticleGenerator:
             # Create Fade module with random number to start of the fade
             modules["fade"] = {
                 "object": MMVSkiaModifierFade(
-                    self.mmv_main,
+                    self.mmvskia_main,
                     interpolation = MMVSkiaInterpolation(
-                        self.mmv_main,
+                        self.mmvskia_main,
                         function = "linear",
                         total_steps = self.fade_total_step,
                         start = self.fade_start + random.uniform(-self.fade_random, self.fade_random),
@@ -543,8 +543,8 @@ class MMVSkiaParticleGenerator:
         # Resize the image by a scalar
         particle.image.resize_by_ratio(
             random.uniform(
-                self.particle_minimum_size * self.mmv_main.context.resolution_ratio_multiplier,
-                self.particle_maximum_size * self.mmv_main.context.resolution_ratio_multiplier,
+                self.particle_minimum_size * self.mmvskia_main.context.resolution_ratio_multiplier,
+                self.particle_maximum_size * self.mmvskia_main.context.resolution_ratio_multiplier,
             ),
             override=True
         )
