@@ -1,4 +1,4 @@
-## [2.5.1] :: Optimize :: (2020-12-25
+## [2.5.1] :: Optimize :: (2020-12-28)
 - Don't calculate FFT for the mono channel
 - Overhaul shave some extra 10% speed on rendering times
 - Remove some deprecated code
