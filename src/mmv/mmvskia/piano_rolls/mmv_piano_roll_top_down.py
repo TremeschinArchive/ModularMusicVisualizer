@@ -39,7 +39,7 @@ import os
     
 class MMVSkiaPianoRollTopDown:
     def __init__(self, mmv, MMVSkiaPianoRollVectorial):
-        self.mmv = mmv
+        self.mmvskia_main = mmv
         self.vectorial = MMVSkiaPianoRollVectorial
         self.config = self.vectorial.config
         self.functions = Functions()
@@ -52,9 +52,13 @@ class MMVSkiaPianoRollTopDown:
         Because skia works like that.
         """
 
+        sep = os.path.sep
+
         # Load the yaml config file
         color_preset = self.config["color_preset"]
-        color_config_yaml = self.mmv.utils.load_yaml(f"{self.mmv.context.data_dir}/piano_roll_color_{color_preset}.yaml")
+        color_config_yaml = self.mmvskia_main.utils.load_yaml(
+            f"{self.mmvskia_main.mmvskia_interface.top_level_interace.data_dir}{sep}mmvskia{sep}piano_roll{sep}color_{color_preset}.yaml"
+        )
 
         # Get the global colors into a dictionary
 
@@ -89,8 +93,8 @@ class MMVSkiaPianoRollTopDown:
         debug_prefix = "[MMVSkiaPianoRollTopDown.generate_piano]"
 
         # NOTE: EDIT HERE STATIC VARIABLES  TODO: set them on config
-        self.piano_height = (3.5/19) * self.mmv.context.height
-        self.viewport_height = self.mmv.context.height - self.piano_height
+        self.piano_height = (3.5/19) * self.mmvskia_main.context.height
+        self.viewport_height = self.mmvskia_main.context.height - self.piano_height
 
         # Pretty print
         print("Add key by index: {", end = "", flush = True)
@@ -99,7 +103,7 @@ class MMVSkiaPianoRollTopDown:
         for key_index in range(min_note - self.config["bleed"], max_note + self.config["bleed"]):
 
             # Create a PianoKey object and set its index
-            next_key = PianoKey(self.mmv, self.vectorial, self)
+            next_key = PianoKey(self.mmvskia_main, self.vectorial, self)
             next_key.by_key_index(key_index)
 
             # Pretty print
@@ -139,7 +143,7 @@ class MMVSkiaPianoRollTopDown:
                 divisions += (prevkey.is_white) + (key.is_white)
 
         # The keys intervals for walking
-        self.semitone_width = self.mmv.context.width / divisions
+        self.semitone_width = self.mmvskia_main.context.width / divisions
         self.tone_width = self.semitone_width * 2
 
         # Current center we're at on the X axis so we send to the keys their positions
@@ -173,7 +177,7 @@ class MMVSkiaPianoRollTopDown:
             # Set attributes to this note we're looping
             self.piano_keys[key_index].width = this_note_width
             self.piano_keys[key_index].height = self.piano_height
-            self.piano_keys[key_index].resolution_height = self.mmv.context.height
+            self.piano_keys[key_index].resolution_height = self.mmvskia_main.context.height
             self.piano_keys[key_index].center_x = current_center
 
             # And add to the key centers list this key center_x
@@ -215,9 +219,9 @@ class MMVSkiaPianoRollTopDown:
                         current_center - self.semitone_width,
                         0,
                         current_center - self.semitone_width,
-                        self.mmv.context.height
+                        self.mmvskia_main.context.height
                     )
-                    self.mmv.skia.canvas.drawRect(rect, white_white_paint)
+                    self.mmvskia_main.skia.canvas.drawRect(rect, white_white_paint)
                 else:
                     current_center += self.semitone_width
 
@@ -248,7 +252,7 @@ class MMVSkiaPianoRollTopDown:
             Color = color,
             Style = skia.Paint.kFill_Style,
             # Shader=skia.GradientShader.MakeLinear(
-            #     points=[(0.0, 0.0), (self.mmv.context.width, self.mmv.context.height)],
+            #     points=[(0.0, 0.0), (self.mmvskia_main.context.width, self.mmvskia_main.context.height)],
             #     colors=[skia.Color4f(0, 0, 1, 1), skia.Color4f(0, 1, 0, 1)]),
             StrokeWidth = 2,
         )
@@ -260,7 +264,7 @@ class MMVSkiaPianoRollTopDown:
             Style = skia.Paint.kStroke_Style,
             # ImageFilter=skia.ImageFilters.DropShadow(3, 3, 5, 5, skia.ColorBLUE),
             # MaskFilter=skia.MaskFilter.MakeBlur(skia.kNormal_BlurStyle, 2.0),
-            StrokeWidth = max(self.mmv.context.resolution_ratio_multiplier * 2, 1),
+            StrokeWidth = max(self.mmvskia_main.context.resolution_ratio_multiplier * 2, 1),
         )
         
         # Horizontal we have it based on the tones and semitones we calculated previously
@@ -272,7 +276,7 @@ class MMVSkiaPianoRollTopDown:
         y = self.functions.proportion(
             self.config["seconds_of_midi_content"],
             self.viewport_height, #*2,
-            self.mmv.context.current_time - start
+            self.mmvskia_main.context.current_time - start
         )
 
         # The height is just the proportion of, seconds of midi content is the maximum height
@@ -297,15 +301,15 @@ class MMVSkiaPianoRollTopDown:
         rect = skia.Rect(*coords)
         
         # Draw the note and border
-        self.mmv.skia.canvas.drawRect(rect, note_paint)
-        self.mmv.skia.canvas.drawRect(rect, note_border_paint)
+        self.mmvskia_main.skia.canvas.drawRect(rect, note_paint)
+        self.mmvskia_main.skia.canvas.drawRect(rect, note_border_paint)
 
 
     # Build, draw the notes
     def build(self, effects):
 
         # Clear the background
-        self.mmv.skia.canvas.clear(skia.Color4f(*self.global_colors["background"], 1))
+        self.mmvskia_main.skia.canvas.clear(skia.Color4f(*self.global_colors["background"], 1))
 
         # Draw the orientation markers 
         if self.config["do_draw_markers"]:
@@ -323,7 +327,7 @@ class MMVSkiaPianoRollTopDown:
             # offset = time_first_note # .. if audio is trimmed?
 
         # Offsetted current time at the piano key top most part
-        current_time = self.mmv.context.current_time - offset
+        current_time = self.mmvskia_main.context.current_time - offset
 
         # What keys we'll bother rendering? Check against the first note time offset
         # That's because current_time should be the real midi key not the offsetted one
@@ -397,7 +401,7 @@ class MMVSkiaPianoRollTopDown:
 
 class PianoKey:
     def __init__(self, mmv, vectorial, MMVSkiaPianoRollTopDown):
-        self.mmv = mmv
+        self.mmvskia_main = mmv
         self.vectorial = vectorial
         self.piano_roll = MMVSkiaPianoRollTopDown
 
@@ -488,8 +492,8 @@ class PianoKey:
         rect = skia.Rect(*coords)
         
         # Draw the border
-        self.mmv.skia.canvas.drawRect(rect, key_paint)
-        self.mmv.skia.canvas.drawRect(rect, key_border)
+        self.mmvskia_main.skia.canvas.drawRect(rect, key_paint)
+        self.mmvskia_main.skia.canvas.drawRect(rect, key_border)
     
     # Draw the markers ON THE KEY ITSELF, cutting through its center
     def draw_marker(self):
@@ -518,4 +522,4 @@ class PianoKey:
             max(self.center_x + (self.width / 10), 1),
             self.resolution_height - self.height
         )
-        self.mmv.skia.canvas.drawRect(rect, marker)
+        self.mmvskia_main.skia.canvas.drawRect(rect, marker)

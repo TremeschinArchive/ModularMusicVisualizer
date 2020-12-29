@@ -105,20 +105,39 @@ class MMVSkiaInterface:
         self.audio_processing = AudioProcessingPresets(self)
         self.post_processing = self.mmv_main.canvas.configure
 
-        # Has the user chosen to watch the processing video realtime?
-        self.mmv_main.context.watch_processing_video_realtime = kwargs.get("watch_processing_video_realtime", False)
-        self.mmv_main.context.pixel_format = kwargs.get("pixel_format", "auto")
-        self.mmv_main.context.audio_amplitude_multiplier = kwargs.get("audio_amplitude_multiplier", 1)
-        self.mmv_main.context.skia_render_backend = kwargs.get("render_backend", "gpu")
-
         # Log a separator to mark the end of the __init__ phase
         logging.info(f"{depth}{debug_prefix} Initialize phase done!")
         logging.info(LOG_SEPARATOR)
+
+        self.configure_mmv_main()
 
         # Quit if code flow says so
         if self.prelude["flow"]["stop_at_interface_init"]:
             logging.critical(f"{ndepth}{debug_prefix} Not continuing because stop_at_interface_init key on prelude.toml is True")
             sys.exit(0)
+
+    # Read the function body for more info
+    def configure_mmv_main(self, **kwargs):
+
+        # Has the user chosen to watch the processing video realtime?
+        self.mmv_main.context.audio_amplitude_multiplier = kwargs.get("audio_amplitude_multiplier", 1)
+        self.mmv_main.context.skia_render_backend = kwargs.get("render_backend", "gpu")
+
+        # # Encoding options
+
+        # FFmpeg
+        self.mmv_main.context.ffmpeg_pixel_format = kwargs.get("ffmpeg_pixel_format", "auto")
+        self.mmv_main.context.ffmpeg_dumb_player = kwargs.get("ffmpeg_dumb_player", "auto")
+        self.mmv_main.context.ffmpeg_hwaccel = kwargs.get("ffmpeg_hwaccel", "auto")
+
+        # x264 specific
+        self.mmv_main.context.x264_use_opencl = kwargs.get("x264_use_opencl", False)
+        self.mmv_main.context.x264_preset = kwargs.get("x264_preset", "slow")
+        self.mmv_main.context.x264_tune = kwargs.get("x264_tune", "film")
+        self.mmv_main.context.x264_crf = kwargs.get("x264_crf", "17")
+
+        # Pipe writer
+        self.mmv_main.context.max_images_on_pipe_buffer = kwargs.get("max_images_on_pipe_buffer", 20)
 
     # Execute MMV with the configurations we've done
     def run(self, depth = PACKAGE_DEPTH) -> None:
@@ -160,7 +179,7 @@ class MMVSkiaInterface:
 
         # Log action, do action
         logging.info(f"{depth}{debug_prefix} Set audio file path: [{path}], getting absolute path..")
-        self.mmv_main.context.input_file = self.get_absolute_path(path, depth = ndepth)
+        self.mmv_main.context.input_audio_file = self.get_absolute_path(path, depth = ndepth)
         logging.info(STEP_SEPARATOR)
     
     # Set the input audio file, raise exception if it does not exist

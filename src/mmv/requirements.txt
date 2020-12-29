@@ -1,7 +1,7 @@
-ffmpeg-python==0.2.0
+audio2numpy==0.1.2
+audioread==2.1.9
 gitpython==3.1.11
 glfw==2.0.0
-librosa==0.8.0
 mido==1.2.9
 opencv-python-headless==4.4.0.46
 patool==1.12
@@ -9,8 +9,11 @@ pillow==8.0.1
 pip-chill==1.0.0
 pyunpack==0.2.2
 pyyaml==5.3.1
+requests==2.25.1
 samplerate==0.1.0
+scipy==1.5.4
 skia-python==87.0
+soundfile==0.10.3.post1
 toml==0.10.2
 tqdm==4.54.1
 wget==3.2

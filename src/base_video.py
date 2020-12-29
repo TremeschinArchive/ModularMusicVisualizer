@@ -64,11 +64,13 @@ THIS_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Create the wrapper class
 interface = mmv.MMVInterface()
 
-processing = interface.get_skia_interface(
-    # AFAIK skia-python on Linux and MacOS uses RGBA and on Windows BGRA pixel format.
-    # "auto" does that, or manually put "rgba" or "bgra". If set wrongly the video
-    # colors RED and BLUE will be swapped.
-    pixel_format = "auto",
+# # Get MMVSkia interface
+processing = interface.get_skia_interface()
+
+# Configure stuff
+processing.configure_mmv_main(
+
+    # # MMV settings
 
     # If your audio isn't properly normalized or you want a more aggressive video,
     # set this to 1.5 - 2 or so.
@@ -80,6 +82,51 @@ processing = interface.get_skia_interface(
     # on the final video render if no flag was passed. Generating images such as
     # particles and backgrounds is done on CPU as no textures are being moved.
     render_backend = args.render,
+
+    # # Video encoding settings
+
+    # AFAIK skia-python on Linux and MacOS uses RGBA and on Windows BGRA pixel format.
+    # "auto" does that, or manually put "rgba" or "bgra". If set wrongly the video
+    # colors RED and BLUE will be swapped.
+    ffmpeg_pixel_format = "auto",
+
+    # Try utilizing hardware acceleration? Set to None for ignoting this
+    ffmpeg_hwaccel = "auto",
+
+    # Quote from FFmpeg H264 encode guide:
+    #   "Encoding for dumb players
+    #  You may need to use -vf format=yuv420p (or the alias -pix_fmt yuv420p) for
+    #  your output to work in QuickTime and most other players. These players only
+    #  support the YUV planar color space with 4:2:0 chroma subsampling for H.264 video.
+    #  Otherwise, depending on your source, ffmpeg may output to a pixel format that may
+    #                                               be incompatible with these players."
+    ffmpeg_dumb_player = True, 
+
+    # If True adds "-x264opts opencl" to the FFmpeg command. Can make FFmpeg have a
+    # startup time of a few seconds, will disable for compatibility since not everyone
+    # have opencl loaders, etc.
+    x264_use_opencl = False,
+
+    # Constant Rate Factor of x264 or x265 encoding, 0 is lossless, 51 is the worst,
+    # 23 the the default. Low values means higher quality and bigger file size
+    x264_crf = 17,
+
+    # Encoder preset, possible values are:
+    #  > ["placebo", "veryslow", "slowest", "slow",
+    #     "medium", "fast", "faster", "veryfast",
+    #     "superfast", "ultrafast"]
+    #
+    # Slower presets yields a higher quality encoding but utilize more CPU,
+    # since MMVSkia is by no means no realtime, a slow preset should be enough since
+    # the FFmpeg process is run in parallel. 
+    x264_preset = "slow",
+
+    # Tune video encoder for:
+    # "film":       Mostly IRL stuff, shouldn't hurt letting this default
+    # "animation":  Animes in general, we use this default as
+    # "grain":      Optimized for old / grainy contents for preserving it
+    # "fastdecode": For low compute power devices to have less trouble with
+    x264_tune = "film",
 )
 
 # Ensure we have FFmpeg on Windows, downloads, extracts etc
@@ -483,7 +530,7 @@ elif (MODE == "music") and (BACKGROUND_TYPE == "video"):
     )
 
     # Set the object fixed point position off screen
-    background.configure.add_path_point(x = 0, y = 0)
+    background.configure.add_path_point(x = -shake, y = -shake)
 
     # Shake by "shake" amount of pixels at max on any direction
     background.configure.simple_add_path_modifier_shake(

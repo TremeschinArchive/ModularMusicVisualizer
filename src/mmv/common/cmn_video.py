@@ -26,72 +26,96 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH
 import mmv.common.cmn_any_logger
 from PIL import Image
 import numpy as np
 import subprocess
-import ffmpeg
+import logging
 import copy
 import time
 import sys
 import cv2
 
 
-class MMVSkiaFFmpegWrapper:
-    def __init__(self, mmv):
-        self.mmv = mmv
+class FFmpegWrapper:
 
     # Create a FFmpeg writable pipe for generating a video
-    def pipe_one_time(self, output):
+    # For more detailed info see [https://trac.ffmpeg.org/wiki/Encode/H.264]
+    def pipe_images_to_video(self, 
+        ffmpeg_binary_path: str,  # Path to the ffmpeg binary
+        width: int,
+        height: int,
+        input_audio_file: str,  # Path
+        output_video: str, # Path
+        pix_fmt: str,  # rgba, rgb24, bgra
+        framerate: int,
+        preset: str = "slow",  # libx264 ffmpeg preset
+        hwaccel = "auto",  # Try utilizing hardware acceleration? None ignores this flag
+        opencl: bool = False,  # Add -x264opts opencl ?
+        dumb_player: bool = True,  # Add -vf format=yuv420p for compatibility
+        crf: int = 17,  # Constant Rate Factor [0: lossless, 23: default, 51: worst] 
+        vcodec: str = "libx264",  # Encoder library, libx264 or libx265
+        override: bool = True,  # Do override the target output video if it exists?
+        depth = LOG_NO_DEPTH,
+    ) -> None:
 
-        debug_prefix = "[MMVSkiaFFmpegWrapper.pipe_one_time]"
+        debug_prefix = "[FFmpegWrapper.pipe_images_to_video]"
+        ndepth = depth + LOG_NEXT_DEPTH
 
-        # Get the pixel format configured
-        pixel_format = self.mmv.context.pixel_format
+        # Generate the command for piping images to
+        ffmpeg_pipe_command = [
+            ffmpeg_binary_path
+        ]
 
-        # Fail safe
-        if not pixel_format in ["rgba", "bgra", "auto"]:
-            raise RuntimeError(f"Unexpected pixel format: {pixel_format}")
+        # Add hwaccel flag if it's set
+        if hwaccel is not None:
+            ffmpeg_pipe_command += ["-hwaccel", hwaccel]
 
-        # Set pixel format according to the OS
-        if pixel_format == "auto":
-            print(debug_prefix, f"Pixel format is [auto], getting right one based on the OS..")
+        # Add the rest of the command
+        ffmpeg_pipe_command += [
+            "-loglevel", "panic",
+            "-nostats",
+            "-hide_banner",
+            "-f", "rawvideo",
+            # "-vcodec", "rawvideo",
+            "-pix_fmt", pix_fmt,
+            "-r", f"{framerate}",
+            "-s", f"{width}x{height}",
+            "-i", "-",
+            "-i", input_audio_file,
+            "-c:v", f"{vcodec}",
+            "-preset", preset,
+            "-r", f"{framerate}",
+            "-crf", f"{crf}",
+            "-c:a", "copy",
+        ]
 
-            # Windows
-            if self.mmv.utils.os == "windows":
-                print(debug_prefix, f"Pixel format set to [bgra] because Windows OS")
-                pixel_format = "bgra"
+        # Compatibility mode
+        if dumb_player:
+            ffmpeg_pipe_command += ["-vf", "format=yuv420p"]
 
-            # Linux
-            elif self.mmv.utils.os == "linux":
-                print(debug_prefix, f"Pixel format set to [rgba] because GNU/Linux OS")
-                pixel_format = "rgba"
-            
-            # MacOS
-            elif self.mmv.utils.os == "macos":
-                print(debug_prefix, f"Pixel format set to [rgba] because Darwin / MacOS")
-                pixel_format = "rgba"
+        # Add opencl to x264 flags?
+        if opencl:
+            ffmpeg_pipe_command += ["-x264opts", "opencl"]
+   
+        # Add output video
+        ffmpeg_pipe_command += [output_video]
 
-            else: # Not configured, found?
-                raise RuntimeError(f"Pixel format not found for os: [{self.mmv.utils.os}]")
+        # Do override the target output video
+        if override:
+            ffmpeg_pipe_command.append("-y")
 
-        # Create the FFmpeg pipe child process
-        try:
-            self.pipe_subprocess = (
-                ffmpeg
-                .input('pipe:', format='rawvideo', pix_fmt=pixel_format, r=self.mmv.context.fps, s='{}x{}'.format(self.mmv.context.width, self.mmv.context.height))
-                .output(output, pix_fmt='yuv420p', vcodec='libx264', r=self.mmv.context.fps, crf=14, loglevel="quiet")
-                .global_args('-i', self.mmv.context.input_file, "-c:a", "copy")
-                .overwrite_output()
-                .run_async(pipe_stdin=True)
-            )
-        except FileNotFoundError as e:
-            print(e)
-            print(debug_prefix, (
-                "Couldn't find FFmpeg binary\n"
-                "  Linux: Did you install using your distro package manager?\n"
-                "  Windows: Is [ffmpeg.exe] under the externals directory?"))
-            sys.exit(-1)
+        # Log the command for generating final video
+        logging.info(f"{depth}{debug_prefix} FFmpeg command is: {ffmpeg_pipe_command}")
+        logging.info(f"{depth}{debug_prefix} Starting FFmpeg pipe subprocess..")
+
+        # Create a subprocess in the background
+        self.pipe_subprocess = subprocess.Popen(
+            ffmpeg_pipe_command,
+            stdin  = subprocess.PIPE,
+            stdout = subprocess.PIPE,
+        )
 
         print(debug_prefix, "Open one time pipe")
 
@@ -99,9 +123,9 @@ class MMVSkiaFFmpegWrapper:
         self.lock_writing = False
         self.images_to_pipe = {}
 
-    # Write images into pipe
+    # Write images into pipe, run pipe_writer_loop first!!
     def write_to_pipe(self, index, image):
-        while len(list(self.images_to_pipe.keys())) >= 20:
+        while len(list(self.images_to_pipe.keys())) >= self.max_images_on_pipe_buffer:
             print("Too many images on pipe buffer")
             time.sleep(0.1)
 
@@ -109,10 +133,10 @@ class MMVSkiaFFmpegWrapper:
         del image
 
     # Thread save the images to the pipe, this way processing.py can do its job while we write the images
-    def pipe_writer_loop(self, duration_seconds: float):
+    def pipe_writer_loop(self, duration_seconds: float, fps: float, frame_count: int, max_images_on_pipe_buffer: int):
+        debug_prefix = "[FFmpegWrapper.pipe_writer_loop]"
 
-        debug_prefix = "[MMVSkiaFFmpegWrapper.pipe_writer_loop]"
-
+        self.max_images_on_pipe_buffer = max_images_on_pipe_buffer
         self.count = 0
 
         while not self.stop_piping:
@@ -126,12 +150,6 @@ class MMVSkiaFFmpegWrapper:
                 # Get the next image from the list as count is on the images to pipe dictionary keys
                 image = self.images_to_pipe.pop(self.count)
 
-                # If user set to watch the realtime video, convert RGB numpy array to BGR cv2 image
-                if self.mmv.context.watch_processing_video_realtime and self.count > 0:
-                    cvimage = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-                    cv2.imshow("Current piped frame", cvimage)
-                    cv2.waitKey(1)
-
                 # Pipe the numpy RGB array as image
                 self.pipe_subprocess.stdin.write(image)
 
@@ -139,18 +157,18 @@ class MMVSkiaFFmpegWrapper:
                 self.lock_writing = False
 
                 # Are we finished on the expected total number of images?
-                if self.count == self.mmv.context.total_steps - 1:
+                if self.count == frame_count - 1:
                     self.close_pipe()
                 
                 self.count += 1
 
                 # Stats
-                current_time = (self.count/self.mmv.context.fps)   # Current second we're processing
-                propfinished = ((current_time + (1/self.mmv.context.fps)) / duration_seconds) * 100  # Overhaul percentage completion
+                current_time = (self.count / fps)   # Current second we're processing
+                propfinished = ((current_time + (1/fps)) / duration_seconds) * 100  # Overhaul percentage completion
                 remaining = duration_seconds - current_time  # How much seconds left to produce
                 now = time.time()
                 took = now - start  # Total time took in this runtime
-                eta = self.mmv.functions.proportion(current_time, took, remaining)
+                eta = (took * remaining) / current_time
 
                 # Convert to minutes
                 took /= 60
@@ -161,7 +179,6 @@ class MMVSkiaFFmpegWrapper:
                 took = f"{int(took)}m:{(took - int(took))*60:.0f}s"
                 eta = f"{int(eta)}m:{(eta - int(eta))*60:.0f}s"
 
-                
                 print(f"\rProgress=[Frame: {self.count} - {current_time:.2f}s / {duration_seconds:.2f}s = {propfinished:0.2f}%] Took=[{took}] ETA=[{eta}] EST Total=[{took_plus_eta}]", end="")
             else:
                 time.sleep(0.1)
@@ -171,7 +188,7 @@ class MMVSkiaFFmpegWrapper:
     # Close stdin and stderr of pipe_subprocess and wait for it to finish properly
     def close_pipe(self):
 
-        debug_prefix = "[MMVSkiaFFmpegWrapper.close_pipe]"
+        debug_prefix = "[FFmpegWrapper.close_pipe]"
 
         print(debug_prefix, "Closing pipe")
 
