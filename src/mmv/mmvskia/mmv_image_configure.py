@@ -40,9 +40,9 @@ import sys
 class MMVSkiaImageConfigure:
 
     # Get MMVSkiaImage object and set image index to zero
-    def __init__(self, mmv_main, mmvimage_object) -> None:
-        self.mmv_main = mmv_main
-        self.preludec = self.mmv_main.prelude["mmvimage_configure"]
+    def __init__(self, mmvskia_main, mmvimage_object) -> None:
+        self.mmvskia_main = mmvskia_main
+        self.preludec = self.mmvskia_main.prelude["mmvimage_configure"]
 
         self.parent_object = mmvimage_object
 
@@ -56,7 +56,7 @@ class MMVSkiaImageConfigure:
         ndepth = depth + LOG_NEXT_DEPTH
 
         # Get absolute and real path
-        path = self.mmv_main.utils.get_abspath(path, depth = ndepth, silent = not self.preludec["load_image"]["log_get_abspath"])
+        path = self.mmvskia_main.utils.get_abspath(path, depth = ndepth, silent = not self.preludec["load_image"]["log_get_abspath"])
 
         # Log action
         if self.preludec["load_image"]["log_action"]:
@@ -152,8 +152,8 @@ class MMVSkiaImageConfigure:
             logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Resize image to video, kwargs: {kwargs}")
 
         self.resize_image_to_resolution(
-            width = self.parent_object.mmv_main.context.width + kwargs.get("over_resize_width", 0),
-            height = self.parent_object.mmv_main.context.height + kwargs.get("over_resize_height", 0),
+            width = self.parent_object.mmvskia_main.context.width + kwargs.get("over_resize_width", 0),
+            height = self.parent_object.mmvskia_main.context.height + kwargs.get("over_resize_height", 0),
             override = kwargs.get("override", True)
         )
 
@@ -202,7 +202,7 @@ class MMVSkiaImageConfigure:
 
         self.parent_object.animation[self.animation_index]["position"]["path"].append(
             MMVSkiaModifierPoint(
-                self.mmv_main,
+                self.mmvskia_main,
                 y = kwargs["y"], x = kwargs["x"],
             )
         )
@@ -226,14 +226,14 @@ class MMVSkiaImageConfigure:
 
         self.parent_object.animation[self.animation_index]["position"]["path"].append(
             MMVSkiaModifierShake(
-                self.mmv_main,
+                self.mmvskia_main,
                 interpolation_x = MMVSkiaInterpolation(
-                    self.mmv_main,
+                    self.mmvskia_main,
                     function = "remaining_approach",
                     ratio = kwargs["x_smoothness"],
                 ),
                 interpolation_y = MMVSkiaInterpolation(
-                    self.mmv_main,
+                    self.mmvskia_main,
                     function = "remaining_approach",
                     ratio = kwargs["y_smoothness"],
                 ),
@@ -256,7 +256,7 @@ class MMVSkiaImageConfigure:
 
         self.parent_object.animation[self.animation_index]["modules"]["vectorial"] = {
             "object": MMVSkiaVectorial(
-                self.parent_object.mmv_main,
+                self.parent_object.mmvskia_main,
                 **kwargs,
             )
         }
@@ -342,9 +342,9 @@ class MMVSkiaImageConfigure:
 
         self.parent_object.animation[self.animation_index]["modules"]["resize"] = {
             "object": MMVSkiaModifierScalarResize(
-                self.mmv_main,
+                self.mmvskia_main,
                 interpolation = MMVSkiaInterpolation(
-                    self.mmv_main,
+                    self.mmvskia_main,
                     function = "remaining_approach",
                     ratio = kwargs["smooth"],
                 ),
@@ -374,9 +374,9 @@ class MMVSkiaImageConfigure:
 
         self.parent_object.animation[self.animation_index]["modules"]["blur"] = {
             "object": MMVSkiaModifierGaussianBlur(
-                self.mmv_main,
+                self.mmvskia_main,
                 interpolation = MMVSkiaInterpolation(
-                    self.mmv_main,
+                    self.mmvskia_main,
                     function = "remaining_approach",
                     ratio = kwargs["smooth"],
                 ),
@@ -406,7 +406,7 @@ class MMVSkiaImageConfigure:
             logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Add module swing rotation, kwargs: {kwargs}")
 
         self.parent_object.animation[self.animation_index]["modules"]["rotate"] = {
-            "object": MMVSkiaModifierSineSwing(self.mmv_main, **kwargs)
+            "object": MMVSkiaModifierSineSwing(self.mmvskia_main, **kwargs)
         }
 
 
@@ -426,7 +426,7 @@ class MMVSkiaImageConfigure:
             logging.debug(f"{ndepth}{debug_prefix} [{self.identifier}] Add module linear rotation, kwargs: {kwargs}")
 
         self.parent_object.animation[self.animation_index]["modules"]["rotate"] = {
-            "object": MMVSkiaModifierLinearSwing(self.mmv_main, **kwargs)
+            "object": MMVSkiaModifierLinearSwing(self.mmvskia_main, **kwargs)
         }
 
 
@@ -449,9 +449,9 @@ class MMVSkiaImageConfigure:
 
         self.parent_object.animation[self.animation_index]["modules"]["vignetting"] = {
             "object": MMVSkiaModifierVignetting(
-                self.mmv_main,
+                self.mmvskia_main,
                 interpolation = MMVSkiaInterpolation(
-                    self.mmv_main,
+                    self.mmvskia_main,
                     function = "remaining_approach",
                     ratio = kwargs["smooth"],
                 ),

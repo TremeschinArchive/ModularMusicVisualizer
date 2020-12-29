@@ -30,12 +30,12 @@ from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH
 from mmv.mmvskia.pyskt.pyskt_backend import SkiaNoWindowBackend
 from mmv.common.cmn_coordinates import PolarCoordinates
 from mmv.common.cmn_interpolation import Interpolation
-from mmv.mmvskia.mmv_video import MMVSkiaFFmpegWrapper
 from mmv.mmvskia.mmv_animation import MMVSkiaAnimation
 from mmv.common.cmn_audio import AudioProcessing
 from mmv.mmvskia.mmv_context import MMVContext
 from mmv.common.cmn_functions import Functions
 from mmv.mmvskia.mmv_image import MMVSkiaImage
+from mmv.common.cmn_video import FFmpegWrapper
 from mmv.mmvskia.mmv_core import MMVSkiaCore
 from mmv.common.cmn_audio import AudioFile
 from mmv.common.cmn_fourier import Fourier
@@ -78,13 +78,13 @@ class MMVSkiaMain:
         self.polar_coordinates = PolarCoordinates()
 
         logging.info(f"{depth}{debug_prefix} Creating Canvas() class")
-        self.canvas = MMVSkiaImage(mmv_main = self, depth = ndepth)
+        self.canvas = MMVSkiaImage(mmvskia_main = self, depth = ndepth)
 
         logging.info(f"{depth}{debug_prefix} Creating Fourier() class")
         self.fourier = Fourier()
 
-        logging.info(f"{depth}{debug_prefix} Creating MMVSkiaFFmpegWrapper() class")
-        self.ffmpeg = MMVSkiaFFmpegWrapper(self)
+        logging.info(f"{depth}{debug_prefix} Creating FFmpegWrapper() class")
+        self.ffmpeg = FFmpegWrapper()
 
         logging.info(f"{depth}{debug_prefix} Creating AudioFile() class")
         self.audio = AudioFile()
@@ -96,7 +96,7 @@ class MMVSkiaMain:
         self.mmv_animation = MMVSkiaAnimation(mmv_main = self, depth = ndepth)
     
         logging.info(f"{depth}{debug_prefix} Creating MMVSkiaCore() class")
-        self.core = MMVSkiaCore(mmv_main = self, depth = ndepth)
+        self.core = MMVSkiaCore(mmvskia_main = self, depth = ndepth)
 
     # Execute the program
     def run(self, depth = LOG_NO_DEPTH) -> None:
