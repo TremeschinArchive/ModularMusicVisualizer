@@ -19,6 +19,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from OpenGL import GL
+import numpy as np
 import contextlib
 import threading
 import uuid
@@ -28,19 +30,17 @@ import time
 
 
 class SkiaNoWindowBackend:
-    def __init__(self) -> None:
-        self.REALTIME = False
-    
     """
     kwargs: {
         "width": int
         "height": int
-        "render_backend": str
+        "render_backend": str, ["gpu", "cpu"]
             Use or not a GPU accelerated 
+        "show_preview_window": bool, False
+            Visualize the window in real time?
     }
     """
     def init(self, **kwargs) -> None:
-        
         debug_prefix = "[SkiaNoWindowBackend.init]"
 
         self.width = kwargs["width"]
@@ -48,6 +48,7 @@ class SkiaNoWindowBackend:
 
         # Assume to render on CPU if not said GPU, GPU is less "compatible"
         self.render_backend = kwargs.get("render_backend", "cpu")
+        self.show_preview_window = kwargs.get("show_preview_window", True)
 
         print(debug_prefix, f"Render backend is [{self.render_backend}]")
         
@@ -55,8 +56,22 @@ class SkiaNoWindowBackend:
         if self.render_backend == "gpu":
             self.glfw_context()
             self.gl_context = skia.GrDirectContext.MakeGL()
-            self.info = skia.ImageInfo.MakeN32Premul(self.width, self.height)
-            self.surface = skia.Surface.MakeRenderTarget(self.gl_context, skia.Budgeted.kNo, self.info)
+
+            if self.show_preview_window:
+                backend_render_target = skia.GrBackendRenderTarget(
+                    self.width,
+                    self.height,
+                    0,  # sampleCnt
+                    0,  # stencilBits
+                    skia.GrGLFramebufferInfo(0, GL.GL_RGBA8)
+                )
+                self.info = skia.ImageInfo.MakeN32Premul(self.width, self.height)
+                self.surface = skia.Surface.MakeFromBackendRenderTarget(
+                    self.gl_context, backend_render_target, skia.kBottomLeft_GrSurfaceOrigin,
+                    skia.kRGBA_8888_ColorType, skia.ColorSpace.MakeSRGB())
+            else:
+                self.info = skia.ImageInfo.MakeN32Premul(self.width, self.height)
+                self.surface = skia.Surface.MakeRenderTarget(self.gl_context, skia.Budgeted.kNo, self.info)
 
         # Use CPU for rasterizing, faster transportation of images but slow rendering
         elif self.render_backend == "cpu":
@@ -72,27 +87,24 @@ class SkiaNoWindowBackend:
         with self.surface as canvas:
             self.canvas = canvas
         
-        if self.REALTIME:
-            print(debug_prefix, f"Is REALTIME, threading self.keep_updating")
-            threading.Thread(target=self.keep_updating).start()
-
     @contextlib.contextmanager
     def glfw_context(self) -> None:
         if not glfw.init():
             raise RuntimeError('glfw.init() failed')
-        rt = glfw.TRUE if self.REALTIME else glfw.FALSE
+        rt = glfw.TRUE if self.show_preview_window else glfw.FALSE
         glfw.window_hint(glfw.VISIBLE, rt)
         glfw.window_hint(glfw.STENCIL_BITS, 8)
-        self.window = glfw.create_window(self.width, self.height, str(uuid.uuid4()), None, None)
+        # glfw.window_hint(glfw.DOUBLEBUFFER, glfw.FALSE)
+        self.window = glfw.create_window(self.width, self.height, "Modular Music Visualizer Realtime Preview", None, None)
         glfw.make_context_current(self.window)
+        # glfw.swap_interval(0)
 
-    def keep_updating(self):
-        while not glfw.window_should_close(self.window):
-            # Swap front and back buffers
-            glfw.swap_buffers(self.window)
-
-            # Poll for and process events
-            glfw.poll_events()
+    def update(self):
+        self.surface.flushAndSubmit()
+        # Swap front and back buffers
+        glfw.swap_buffers(self.window)
+        # Poll for and process events
+        glfw.poll_events()
 
     def terminate_glfw(self) -> None:
         glfw.terminate()
@@ -101,5 +113,12 @@ class SkiaNoWindowBackend:
         self.canvas.clear(skia.ColorTRANSPARENT)
 
     def canvas_array(self) -> None:
-        return self.surface.toarray()
+        # Nah not any faster
+        # self.surface.flushAndSubmit()
+        # image = self.surface.makeImageSnapshot()
+        # return np.array(image.makeRasterImage())
+
+        return self.surface.toarray(
+            colorType = skia.kRGBA_8888_ColorType
+        )
 
