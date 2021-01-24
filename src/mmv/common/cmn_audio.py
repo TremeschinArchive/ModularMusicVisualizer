@@ -3,7 +3,7 @@
                                 GPL v3 License                                
 ===============================================================================
 
-Copyright (c) 2020,
+Copyright (c) 2020 - 2021,
   - Tremeschin < https://tremeschin.gitlab.io > 
 
 ===============================================================================
@@ -26,7 +26,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH
+
 from mmv.common.cmn_functions import Functions
 from mmv.common.cmn_utils import DataUtils
 from mmv.common.cmn_fourier import Fourier
@@ -45,19 +45,18 @@ import os
 class AudioFile:
 
     # Read a .wav file from disk and gets the values on a list
-    def read(self, path: str, depth = LOG_NO_DEPTH) -> None:
+    def read(self, path: str) -> None:
         debug_prefix = "[AudioFile.read]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
-        logging.info(f"{depth}{debug_prefix} Reading stereo audio in path [{path}], trying soundfile")
+        logging.info(f"{debug_prefix} Reading stereo audio in path [{path}], trying soundfile")
         try:
             self.stereo_data, self.sample_rate = soundfile.read(path)
         except RuntimeError:
-            logging.warn(f"{depth}{debug_prefix} Couldn't read file with soundfile, trying audio2numpy..")
+            logging.warn(f"{debug_prefix} Couldn't read file with soundfile, trying audio2numpy..")
             self.stereo_data, self.sample_rate = audio2numpy.open_audio(path)
 
         # We need to transpose to a (2, -1) array
-        logging.info(f"{depth}{debug_prefix} Transposing audio data")
+        logging.info(f"{debug_prefix} Transposing audio data")
         self.stereo_data = self.stereo_data.T
 
         # Calculate the duration and see how much channels this audio file have
@@ -65,22 +64,21 @@ class AudioFile:
         self.channels = self.stereo_data.shape[0]
         
         # Log few info on the audio file
-        logging.info(f"{depth}{debug_prefix} Duration of the audio file = [{self.duration:.2f}s]")
-        logging.info(f"{depth}{debug_prefix} Audio sample rate is         [{self.sample_rate}]")
-        logging.info(f"{depth}{debug_prefix} Audio data shape is          [{self.stereo_data.shape}]")
-        logging.info(f"{depth}{debug_prefix} Audio have                   [{self.channels}]")
+        logging.info(f"{debug_prefix} Duration of the audio file = [{self.duration:.2f}s]")
+        logging.info(f"{debug_prefix} Audio sample rate is         [{self.sample_rate}]")
+        logging.info(f"{debug_prefix} Audio data shape is          [{self.stereo_data.shape}]")
+        logging.info(f"{debug_prefix} Audio have                   [{self.channels}]")
 
         # Get the mono data of the audio
-        logging.info(f"{depth}{debug_prefix} Calculating mono audio")
+        logging.info(f"{debug_prefix} Calculating mono audio")
         self.mono_data = (self.stereo_data[0] + self.stereo_data[1]) / 2
 
         # Just make sure the mono data is right..
-        logging.info(f"{depth}{debug_prefix} Mono data shape:             [{self.mono_data.shape}]")
+        logging.info(f"{debug_prefix} Mono data shape:             [{self.mono_data.shape}]")
 
 class AudioProcessing:
-    def __init__(self, depth = LOG_NO_DEPTH) -> None:
+    def __init__(self) -> None:
         debug_prefix = "[AudioProcessing.__init__]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
         self.fourier = Fourier()
         self.datautils = DataUtils()
@@ -95,7 +93,7 @@ class AudioProcessing:
         # List of full frequencies of notes
         # - 50 to 68 yields freqs of 24.4 Hz up to 
         self.piano_keys_frequencies = [round(self.get_frequency_of_key(x), 2) for x in range(-50, 68)]
-        logging.info(f"{depth}{debug_prefix} Whole notes frequencies we'll care: [{self.piano_keys_frequencies}]")
+        logging.info(f"{debug_prefix} Whole notes frequencies we'll care: [{self.piano_keys_frequencies}]")
 
     # Slice a mono and stereo audio data
     def slice_audio(self,

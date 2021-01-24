@@ -3,7 +3,7 @@
                                 GPL v3 License                                
 ===============================================================================
 
-Copyright (c) 2020,
+Copyright (c) 2020 - 2021,
   - Tremeschin < https://tremeschin.gitlab.io > 
 
 ===============================================================================
@@ -94,7 +94,6 @@ class Frame:
 
     # Load image from a given path
     def load_from_path(self, path: str, convert_to_png: bool=False) -> None:
-
         debug_prefix = "[Frame.load_from_path]"
 
         tries = 0

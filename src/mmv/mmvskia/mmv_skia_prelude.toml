@@ -3,7 +3,7 @@
 # Stop code at some specific point?
 [flow]
 stop_at_interface_init = false  # Stop after we instantiate MMVSkiaInterfac
-stop_at_mmv_core_run = false  # Stop before executing the main routines
+stop_at_mmv_skia_core_run = false  # Stop before executing the main routines
 only_process_audio = false  # Don't draw any videos or create FFmpeg process, only process the audio
 
 # # Logging
