@@ -2,7 +2,7 @@
 
 **Windows Note:** Pathing here uses the backslash instead of the traditional slash (use `\\`, not `/`)
 
-- `yay -Syu ffmpeg python38 mpv` (Arch Linux) (mpv is optional)
+- `yay -Syu ffmpeg python38 mpv musescore` (Arch Linux)
 
 - `git clone https://github.com/Tremeschin/modular-music-visualizer`
 

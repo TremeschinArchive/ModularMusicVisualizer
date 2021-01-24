@@ -1,6 +1,1 @@
 STEP_SEPARATOR = "-" * 100
-LOG_SEPARATOR = "=" * 100
-PACKAGE_DEPTH = ":: "
-LOG_NEXT_DEPTH = "| "
-LOG_NO_DEPTH = ">> "
-ROOT_DEPTH = "- "
