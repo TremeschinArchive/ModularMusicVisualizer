@@ -117,7 +117,10 @@ If this fails then you might want to install the corresponding Python setup tool
 
 - Edit these scripts (or don't for the default demo config and audio) and run MMV with:
   - `$ python3.8 ./base_video.py`
-  - `$ python3.8 ./piano_roll.py`
+  - `$ python3.8 ./base_video.py mode=music` (default)
+  - `$ python3.8 ./base_video.py mode=piano`
+  - `$ python3.8 ./base_video.py mode=piano preview` (realtime preview, don't render to video)
+  - `$ python3.8 ./base_video.py preview` (realtime preview music mode, don't render to video)
 
 <hr>
 
@@ -141,7 +144,10 @@ It's not bad to create a virtual environment for isolating the Python packages:
   - `$ python3.8 -m pip install -r ./mmv/requirements.txt`
 - Edit these scripts (or don't for the default demo config and audio) and run MMV with:
   - `$ python3.8 ./base_video.py`
-  - `$ python3.8 ./piano_roll.py`
+  - `$ python3.8 ./base_video.py mode=music` (default)
+  - `$ python3.8 ./base_video.py mode=piano`
+  - `$ python3.8 ./base_video.py mode=piano preview` (realtime preview, don't render to video)
+  - `$ python3.8 ./base_video.py preview` (realtime preview music mode, don't render to video)
 
 <hr>
 
@@ -155,8 +161,11 @@ Shift right click inside that bootstrap folder, click `Open PowerShell` here, yo
 
 After that either type `cd ..` or open another shell into the `/src/` dir, you should be able to run MMV with:
 
-- `python38.exe ./base_video.py`
-- `python38.exe ./piano_roll.py`
+  - `python38.exe ./base_video.py`
+  - `python38.exe ./base_video.py mode=music` (default)
+  - `python38.exe ./base_video.py mode=piano`
+  - `python38.exe ./base_video.py mode=piano preview` (realtime preview, don't render to video)
+  - `python38.exe ./base_video.py preview` (realtime preview music mode, don't render to video)
 
 If this fails then just read the Linux instructions and follow along on the section after some demo commands for some distributions, of course searching for how to do that on Windows.
 
