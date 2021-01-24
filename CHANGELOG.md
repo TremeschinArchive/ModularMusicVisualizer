@@ -1,3 +1,11 @@
+## [2.6.0] :: Revamp R&D :: (2020-01-23)
+- Heavy R&D, lost track of what really changed but the major ones:
+- Revamp piano roll, more "3D" looking, customizable colors, image background mode
+- Add proper preview mode without FFplay shenanigans
+- Write shader renderer code, MMVShaderMGL
+- Refactor video encoder wrapper so user can change settings more easily
+- Better externals handling on Windows hopefully
+
 ## [2.5.1] :: Optimize :: (2020-12-28)
 - Don't calculate FFT for the mono channel
 - Overhaul shave some extra 10% speed on rendering times
@@ -56,13 +64,13 @@
 - Minor performance improvement, remove unnecessary list comprehension on MMVSkiaCore
 - Get the old `fftinfo` and `this_step` by attributes on MMVCore, so from anywhere just `self.mmv.core.modulators` or `self.mmv.core.this_step`
 - Rename every instance of Number to float, as float includes integers (technically)
-- *MASSIVE*, **MASSIVE**, **M A S S I V E** rewrite and overhaul of `mmv_image_configure.py`
+- *MASSIVE*, **MASSIVE**, **M A S S I V E** rewrite and overhaul of `mmv_skia_image_configure.py`
 - Accelerate particles speed on audio average amplitude for preset middle out
 
 ## [2.3.2] :: Quality of Life :: (2020-10-06)
 
 - Start organizing music bars circle kwargs for custom shiny stuff
-- Comment `mmv_music_bar_circle.py`, add configs options on `mmv_music_bar.py`
+- Comment `mmv_skia_music_bar_circle.py`, add configs options on `mmv_skia_music_bar.py`
 - Add `bigger_bars_on_magnitude` for MMVSkiaMusicBarsCircle and its scalar
 - Start to overhaul generators, preset bottom mid up and middle out
 - Fix bar colors (weird having to reset the path to apply a new paint)

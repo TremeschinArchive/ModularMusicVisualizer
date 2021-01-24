@@ -3,7 +3,7 @@
                                 GPL v3 License                                
 ===============================================================================
 
-Copyright (c) 2020,
+Copyright (c) 2020 - 2021,
   - Tremeschin < https://tremeschin.gitlab.io > 
 
 ===============================================================================
@@ -47,6 +47,6 @@ if not logger.handlers:
     # Create basic logger
     logging.basicConfig(
         handlers = [logging.StreamHandler(sys.stdout)],
-        level = logging.DEBUG,
+        level = logging.INFO,
         format = "[%(levelname)-7s] %(message)s",
     )

@@ -3,7 +3,7 @@
                                 GPL v3 License                                
 ===============================================================================
 
-Copyright (c) 2020,
+Copyright (c) 2020 - 2021,
   - Tremeschin < https://tremeschin.gitlab.io > 
 
 ===============================================================================
@@ -58,7 +58,7 @@ class Fourier:
         # # Get the "normalized" FFT based on the sample rates
 
         # " The height is a reflection of power density, so if you double the sampling frequency,
-        # and hence half the width of each frequency bin, you'll double the amplitude of the FFT result.""
+        # and hence half the width of each frequency bin, you'll double the amplitude of the FFT result."
         # >> https://wiki.analytica.com/FFT
         #
         # sample_rate * 2^n = original_sample_rate

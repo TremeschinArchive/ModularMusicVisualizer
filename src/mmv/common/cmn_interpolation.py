@@ -3,7 +3,7 @@
                                 GPL v3 License                                
 ===============================================================================
 
-Copyright (c) 2020,
+Copyright (c) 2020 - 2021,
   - Tremeschin < https://tremeschin.gitlab.io > 
 
 ===============================================================================
@@ -84,15 +84,3 @@ class Interpolation:
         ratio = kwargs["ratio"] + random.uniform(0, kwargs.get("ratio_randomness", 0))
 
         return kwargs["current_value"] + (remaining_distance * ratio)
-
-    # Sigmoid activation between two points, smoothed out "linear" curver
-    def sigmoid(self,
-            start_value: float,
-            target_value: float,
-            smooth: float,
-        ) -> float:
-
-        distance = (target_value - start_value)
-        where = self.functions.proportion(total, 1, current)
-        walk = distance * self.functions.sigmoid(where, smooth)
-        return a + walk

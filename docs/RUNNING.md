@@ -19,93 +19,151 @@ So look for Python version 3.8 on your distro / MacOS homebrew / when downloadin
 
 <hr>
 
+### The "versions" of MMV
+
+- **MMVSkia**
+  - "Old" code (first iteration of it).
+  - Piano roll mode
+  - Music Bars mode
+  - Uses Skia as drawing backend
+  - Should work on every platform
+  - Quite slow if using video as background or 1080p+ resolutions
+  - Files `/src/base_video.py` and `/src/piano_roll.py`
+  - Music bars mode *can be deprecated* in favor of MMVShaderMGL in the long term but not Piano Roll.
+
+- **MMVShaderMGL**
+  - Heavily *WIP*
+  - Uses Python's `moderngl` package:
+    - Renders a single GLSL Shader file to a video
+  - Can map videos, images and other shaders as textures (layers)
+  - Stupidly fast, real time + performance
+  - Astronomically more possibilities relative to MMVSkia
+  - Needs lot of work to be done or even usable
+  - File `/src/mmv/test_mgl.py`
+
+- **MMVShaderMPV**
+  - Uses the MPV video player
+  - Applies MPV syntax specific shaders to video real time
+  - Only works on Linux rendering to a video file, others can visualize
+  - Was experimental when I was R&D, probably will be removed soon
+
 # Running
 
-- **Basic navigation**: You'll mainly need to use basic command line interface and navigation such as `cd` (change directory), `mkdir` (make directory), `pwd` (print working directory). Don't be afraid of searching how those work on Windows because I am very rusty on its CLI. On the other OSs, most should be POSIX compliant and literally use the same command.
+## External dependencies
 
-Currently there are two "versions" of the Modular Music Visualizer project on this repository, one uses the Skia drawing library and the other uses GLSL shaders.
+If you're on Windows the code should (hopefully) take care of the external dependencies.
 
-The first one (Skia) is currently aimed at rendering the piano roll and music visualization bars mode.
+Both MMVSkia and MMVShaderMGL will require FFmpeg for encoding the final video.
 
-The second one (Shaders / GLSL) while I hope some day will replace the first one (it's a lot faster) it currently works as a post processing **extra** layer.
+MMVSkia Piano roll optional dependency is `musescore` for converting the MIDI file to an audio file automatically, you can set this up manually otherwise (your own source audio for the midi file).
 
-Every end user script is located under the first directory after the `/src/` folder, namely `base_video.py` and `post_processing.py`.
+MMVShaderMPV will require `mpv` as an external dependency.
 
-As said previously, base video is MMVSkia and post processing is MMVShader
-
-<hr>
-
-#### Important NOTE for Windows and macOS users
-
-Sadly due to factors outside my control (I use the `mpv` program as the backend) applying post processing **AND RENDERING TO A FILE** only works on **Linux** operating systems (see [this comment](https://github.com/mpv-player/mpv/issues/7193#issuecomment-559898238))
-
-**Windows and macOS** users **CAN** and **HAVE THE FULL FUNCTIONALITY OF MMV SKIA** available, only video with shaders applied won't be possible **rendering to files, viewing realtime is possible**.
-
-For a better visualization, please refer to this next table **SPECIFIC FOR MMV SKIA**:
-
-| Base MMV + Configuration script | Rendering to Video |
-|---------------------------------|--------------------|
-| Linux                           | V                  |
-| Windows                         | V                  |
-| macOS                           | V                  |
-
-It's possible to record the screen of the video with shaders applied running at severe costs of quality in the case of MMV GLSL shaders and non Linux platform.
-
-For a better visualization, please refer to this next table **SPECIFIC FOR MMV GLSL**:
-
-| Video + GLSL Shaders | Viewing Realtime | Rendering to Video |
-|----------------------|------------------|--------------------|
-| Linux                | V                | V                  |
-| Windows              | V                | X                  |
-| macOS                | V                | X                  |
-
-
-
-
-## Getting the source code
-
-Either go to the main repository page located at [GitHub](https://github.com/Tremeschin/modular-music-visualizer) or [GitLab](https://gitlab.com/Tremeschin/modular-music-visualizer), find the download button button (Down Arrow Code usually), or..
-
-Alternatively install GitHub Command Line Interface (or git from your Linux distro / MacOS Homebrew) and run:
-
-- `git clone https://github.com/Tremeschin/modular-music-visualizer`
-
-# Editing your configs
-
-You can read through the scripts located
+If you're on macOS and Linux, you'll need to install the `mpv, musescore, ffmpeg` on your distro package manager / homebrew on macOS. It's better to do so as they'll download the latest one and be available on PATH immediately.
 
 <hr>
-
-# Instructions per platform
-
-Also see [EXTRAS.md](EXTRAS.md) file for squeezing some extra performance.
 
 ## Linux
 
-Please see file [RUNNING_ON_LINUX.md](RUNNING_ON_LINUX.md)
+Install from your distro package manager:
 
-## Windows
+- `git ffmpeg python38 musescore`
 
-Please see file [RUNNING_ON_WINDOWS.md](RUNNING_ON_WINDOWS.md)
+_(musescore is optional)_
 
-## MacOS
+Also please have the corresponding graphics driver package for your GPU, I run MMV with `mesa` (AMD and Intel GPUs), while NVIDIA GPUs will require the `nvidia-drivers`, though out of the scope to get them running.
 
-Please see file [RUNNING_ON_MACOS.md](RUNNING_ON_MACOS.md)
+Don't know if Noveau drivers will work with NVIDIA nor AMDGPU pro use at your own risk.
+  
+Few examples:
+
+- **Arch Linux, Manjaro:**
+  - `$ sudo pacman -Syu base-devel git ffmpeg python38 musescore`
+- **Ubuntu**:
+  - `$ sudo apt update && sudo apt upgrade`
+  - `$ sudo apt install python3 python3-venv python3-dev python3-setuptools python3-pip ffmpeg git libglfw3 libglfw3-dev build-essential`
+- **Fedora**:
+  - Enable repo for FFmpeg: 
+    - `$ sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm`
+  - `$ sudo dnf upgrade`
+  - `$ sudo dnf install python-devel ffmpeg git blas openblas lapack atlas libgfortran atlas-devel gcc-c++ gcc-gfortran subversion redhat-rpm-config python38 musescore`
+- **OpenSUSE**:
+  - `$sudo zypper install git ffmpeg musescore` (it already came with Python 3.8 and lapack / openblas shenanigans)
+
+Feel free to open issue for bad usage of these package managers or steps for some other distro, I can't know 'em all
 
 <hr>
 
-## Editing configs
+Open a shell on a directory, clone the repo and install dependencies:
 
-Pass flag `mode=music` or `mode=piano` for a quick swap between the two: `python base_video.py --auto-deps mode=[music,piano]`. (mode=music is already implied and default)
+- `$ git clone https://github.com/Tremeschin/modular-music-visualizer`
+- `$ cd ./modular-music-visualizer/src/`
 
-Everything I considered useful for the end user is under `base_video.py` controlled by upper case vars such as `INPUT_AUDIO`, `MODE`, `OUTPUT_VIDEO`, etc.
+It's not bad to create a virtual environment for isolating the Python packages:
 
-Change those or keep reading the file for extra configurations.
+- `$ python3.8 -m venv mmv_python_virtualenv`
+- `$ source ./mmv_python_virtualenv/bin/activate` (always source this before using MMV)
 
-Can also configure first then run `python post_processing.py` for applying some shaders to the output (mpv dependency required), only limitation is that Windows users can't render to a file but are allowed to see the result in real time.
+- `$ python3.8 -m pip install -r ./mmv/requirements.txt`
+
+Depending on which distro you are `python3.8` can be called `python38`, just type `python` and tab through the results.
+
+You might want also to run:
+
+- `$ python3.8 -m ensurepip`
+
+If this fails then you might want to install the corresponding Python setup tools package.
+
+
+- Edit these scripts (or don't for the default demo config and audio) and run MMV with:
+  - `$ python3.8 ./base_video.py`
+  - `$ python3.8 ./piano_roll.py`
+
+<hr>
+
+## MacOS
+
+Open a terminal on a directory you want to download and execute MMV. 
+
+- Install Python and dependencies with:
+  - `$ brew install python@3.8 ffmpeg musescore git`
+- Clone the source code:
+  - `$ git clone https://github.com/Tremeschin/modular-music-visualizer`
+- Change the working directory:
+  - `$ cd ./modular-music-visualizer/src/`
+
+It's not bad to create a virtual environment for isolating the Python packages:
+
+- `$ python3.8 -m venv mmv_python_virtualenv`
+- `$ source ./mmv_python_virtualenv/bin/activate` (always source this before using MMV)
+  
+- Install Python requirements:
+  - `$ python3.8 -m pip install -r ./mmv/requirements.txt`
+- Edit these scripts (or don't for the default demo config and audio) and run MMV with:
+  - `$ python3.8 ./base_video.py`
+  - `$ python3.8 ./piano_roll.py`
+
+<hr>
+
+## Windows
+
+Download the source code of the project on the main repository page, should be a button with an arrow pointing down, otherwise install Git CLI and open a shell on some directory, run `git clone https://github.com/Tremeschin/modular-music-visualizer`
+
+There is two .bat scripts I wrote located at `/src/bootstrap/{install_python,install_dependencies}.bat`, I don't guarantee them to work but you should be good to go by running those.
+
+Shift right click inside that bootstrap folder, click `Open PowerShell` here, you can them execute those scripts by typing `.\install_python.bat` and pressing enter then `.\install_dependencies.bat`.
+
+After that either type `cd ..` or open another shell into the `/src/` dir, you should be able to run MMV with:
+
+- `python38.exe ./base_video.py`
+- `python38.exe ./piano_roll.py`
+
+If this fails then just read the Linux instructions and follow along on the section after some demo commands for some distributions, of course searching for how to do that on Windows.
+
+<hr>
+
+# Editing configs
 
 If you're going to venture out on creating your own MMV scripts or hacking the code, making new presets, I highly recommend reading the basics of Python [here](https://learnxinyminutes.com/docs/python/), it doesn't take much to read and will avoid some beginner pitfalls.
 
-Though you probably should be fine by just creating a copy of the example scripting I provide on the repo and reading through my comments and seeing the Python code working, it's pretty straightforward the top most abstracted methods as I tried to simplify the syntax and naming functions with a more _"concrete"_ meaning. 
-
-At one point I'll have a proper wiki on every argument we can send to MMV objects.
+Otherwise just read through the example scripts for stuff you can do, it's hard to micro manage everything.
