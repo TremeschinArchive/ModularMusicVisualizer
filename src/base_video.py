@@ -342,7 +342,7 @@ elif MODE == "piano":
             "white": {"x": 8, "y": 4},
             "black": {"x": 8, "y": 4}
         },
-        "notes": {"x": 40, "y": 4}
+        "notes": {"x": 4, "y": 4}
     }
 
     # This will ignore the pressing colors states of the color dictionary configuration, setting
