@@ -24,44 +24,39 @@
 - **Everything configurable.**
 
 <hr>
-Officially works on Linux with all features, most features working on macOS and Windows
+Officially works on Linux with all features, most work on macOS and Windows
 <hr>
 
 ## Showcase
 
 ![Demo image of MMV](repo/music-mode.jpg)
+![Demo image of MMV](repo/music-mode-2.jpg)
 
-This screenshot is from a track of mine I released using MMV!!
-
-_The DAW is Ardour 6.0_
-
-[Link on YouTube](https://www.youtube.com/watch?v=KRI9cKPsK1Q) (Music Bars)
+[Link on YouTube](https://www.youtube.com/watch?v=5cUhRTab4Ks) (Music Bars Mode)
 
 <hr>
 
-![Demo image of MMV Piano Roll](repo/piano-roll.jpg)
+![Demo image of MMV Piano Roll](repo/piano-roll-4.jpg)
 
-[Link on YouTube](https://youtu.be/CoFoRsoerjk) (Piano Roll)
-
-This screenshot is the piano tutorial of the previous music track!
+[Link on YouTube](https://www.youtube.com/watch?v=NwP5LESrceY) (Piano Roll Mode)
 
 <hr>
 
 # Idea
 
-I am a Free and Open Source music producer and code hobbyist and at some point it's inevitable I'd be releasing my tracks to the internet and create some project to make the music industry less harsh and more accessible.
+I am a Free and Open Source music producer and code hobbyist, at some point I'd be releasing my tracks to the internet and create some project to make the music industry less harsh and more accessible, that was once my thought.
 
-The problem is, I don't want to release a music video on a platform with a static image or just recording the screen, nor pay for *some software* to generate an "music visualization" for me without much control of it, taking out all the fun on hacking the non open source code.
+The problem is, I don't want to release a music video on a platform with a static image or just recording the screen, nor pay for some software to generate an "music visualization" for me without "much control" of it, taking out all the fun on hacking the non open source code.
 
-So I searched up for a free **(as in freedom and price)** tool that does exactly that, they do exist but aren't as good as they could be, most of the time a bit basic.
+So I searched up for a free **(as in freedom and price)** tool that does exactly that, they do exist but aren't as good as they could be, most of the time a bit basic or random looking.
 
-I embraced this opportunity on making a suckless music visualization tool (a more traditional approach than 3D random nonsense) with the programming languages and tools I love and care.
+I embraced this opportunity on making a suckless music visualization tool with the programming languages and tools I love and care.
 
 I cannot deny I took some heavy inspiration on 3blue1brown's [Manim](https://github.com/3b1b/manim) project, specifically the way we configure the MObjects there and simply add attributes, ask them to be drawn. While both are very different projects their usability are somewhat similar in a core level of how to operate.
 
 I also invite you to read about the [Free Software Definition / Philosophy](https://www.gnu.org/philosophy/free-sw.html) and join us on this amazing community!! :)
 
-*Let's make music more accessible for small producers and keep it affordable for such tallented people, I'm doing my part, are you doing yours?*
+*Let's make music more accessible for small producers and keep it affordable for such talented people, are you doing your part?*
 
 <hr>
 
@@ -73,7 +68,7 @@ I also invite you to read about the [Free Software Definition / Philosophy](http
    * [Goals, what is being developed](#goals-what-is-being-developed)
    * [Contributing](#contributing)
    * [User Generated Content, legal](#user-generated-content-copyrighted-material-legal)
-   * [Thank you!](#thank-you)
+   * [Acknowledgements | Thanks to](#acknowledgements-thanks-to)
 
 <hr>
 
@@ -147,23 +142,72 @@ Any information, images, file names you configure manually is considered (by me)
 
 I give you a few "free assets" files, those, apart from the MMV logo I created myself on Inkscape, were generated with Python with some old code written by me, you can use them freely. Some are generated on the go if configured (they are on by default) on the running script of MMV.
 
+# Acknowledgements, Thanks to
+
+I want to show my gratitude to these projects, no joke, MMV wouldn't be possible if these projects didn't exist.
+
+Those are not in order of importance at all, they are always used together.
+
+I'll mainly list the main name and where to find more info, it's just impossible to list every contributor and person that took place into those.
+
+### Main ones
+
+- Python language (https://www.python.org), where development speed is also a feature.
+
+- [Skia-Python wrapper](https://github.com/kyamagu/skia-python), for a stable Python interface with the [Skia Graphics Library](https://skia.org).
+  
+  - Generates the base videos and piano roll mode graphics.
+
+- [ModernGL Python package](https://github.com/moderngl/moderngl) for making it simple to render fragment shaders at insane speeds under Python.
+  
+  - Also the ModernGL main developer [einarf](https://github.com/einarf) for helping me an substantial amount with some good practices and how to do's
+  
+- [FFmpeg, FFplay](https://ffmpeg.org), _"A complete, cross-platform solution to record, convert and stream audio and video."_ - and they are not lying!!
+
+  - "The Only One". Transforms images into videos, adds sound, filters.
+
+- The [GLSL](https://en.wikipedia.org/wiki/OpenGL_Shading_Language) language, OpenGL, Vulkan (on mpv flag), the [Khronos group](https://www.khronos.org) on its entirety, seriously, you guys are awesome!!
+
+  - Also the [Python wrapper](https://pypi.org/project/glfw/) for the [GLFW](https://www.glfw.org/) library for setting up an GL canvas so Skia can draw on.
+
+- [MPV](https://mpv.io), the best video player of all, `mpv --list-options | wc -l -> 1097`, near 1100 command line flags and options.
+  
+  - Used for applying specific post processing on videos and encoding them.
+  - Might become deprecated code in the near future
+
+### Python packages and others involved
+
+- [SciPy](https://www.scipy.org/) and [NumPy](https://numpy.org/), the two must have packages on Python, very fast and flexible for scientific computing, lots of QOL functions.
+  
+  - Mainly used for calculating the FFTs and getting their frequencies domain representation.
+
+- [audio2numpy](https://pypi.org/project/audio2numpy), [audioread](https://pypi.org/project/audioread), [soundfile](https://pypi.org/project/SoundFile) for reading an WAV, MP3, OGG and giving me the raw audio data.
+
+- [mido](https://pypi.org/project/mido/) for reading MIDI files, transforming ticks to seconds and other utilities for the piano roll visualization.
+
+- [OpenCV](https://opencv.org/) and [opencv-python](https://pypi.org/project/opencv-python/), for reading images of a video file without having to extract all of them in the start.
+
+- [pip-chill](https://pypi.org/project/pip-chill/) for simplifying the `requirements.txt`.
+
+- _Tom's Obvious, Minimal Language._: [Python interface](https://pypi.org/project/toml/), [main project](https://github.com/toml-lang/toml); _YAML Ain't Markup Language_: [Python interface](https://pypi.org/project/PyYAML/), [main project](https://yaml.org/): Both for reading / saving configuration files.
+  
+  - I dislike a bit JSON due to its kinda steep UX at first on fixing the syntax the end user itself, those two helps a lot on the overhaul UX on project I believe.
+
+- The [Python Image Library](https://pypi.org/project/Pillow/) Pillow, was extensively used in the past as a render backend but now it is used only for rotating images then sending to Skia.
+
+- Python package [samplerate](https://pypi.org/project/samplerate/) for a binding to libsamplerate, used for downsampling audio before calculating the FFT so we get more information on the lower frequencies.
+
+- [requests](https://pypi.org/project/requests/). [tqdm](https://pypi.org/project/tqdm), [wget](https://pypi.org/project/wget), [pyunpack](https://pypi.org/project/pyunpack/), [patool](https://pypi.org/project/patool/) for fetching, downloading, showing progress bars and extracting External dependencies automatically for the users.
+
 <hr>
 
-# Thank You
+_(There are missing Python dependencies here, mostly others that these packages depends on, but micro managing would be very hard)_
 
-Don't abuse from your freedom the power to ascend with this software with much hard work put on it.
+### Extras
 
-Pay back your fees with a simple **"Thank you"** at least.
+The GNU/Linux operating system, contributors with code or money, every distribution I / you used, their package managers, developers, etc; For this amazing platform to develop on.
 
-It doesn't seem much but pursuing something others also keep an expectancy or genuinely changed their lives for good is a hell of a great motivation: **being acknowledged not for feeling superior or meaningless better, but for being helpful, making a difference, gratitude.**
+The platforms MMV code is hosted on.
 
-*Don't take this as an obligation, you're free, this software is free.*
-
-The Modular Music Visualizer project definitely changed my life, I grew up so much as a programmer, my problem solving skills accuracy and speed improved a lot, not to mention general organization of stuff.. I'm already victorious on the existence and execution of such code.
-
-Can't forget to **thank a lot all the people behind all the dependencies I used in this project**. We don't need to come up with pythagoras theorem from scratch anymore as someone did that for us in the past. Just like I don't need to make an complex video encoder, there's the FFmpeg team already. Old generations making a better world and time for future ones.
-
-<hr>
-
-My sincere Thank You if you read the README all the way until here, hopefully you learned something new and that this project helped you!!
+The Open Source community.
 
