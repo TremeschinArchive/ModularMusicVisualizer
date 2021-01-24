@@ -3,7 +3,7 @@
                                 GPL v3 License                                
 ===============================================================================
 
-Copyright (c) 2020,
+Copyright (c) 2020 - 2021,
   - Tremeschin < https://tremeschin.gitlab.io > 
 
 ===============================================================================
@@ -27,7 +27,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.common.cmn_constants import LOG_NEXT_DEPTH, LOG_NO_DEPTH
 import mmv.common.cmn_any_logger
 import subprocess
 import hashlib
@@ -49,13 +48,12 @@ class Utils:
         self.os = self.get_os()
 
     # Make sure given path is a directory
-    def assert_dir(self, path, depth = LOG_NO_DEPTH, silent = False) -> None:
+    def assert_dir(self, path, silent = False) -> None:
         debug_prefix = "[Utils.assert_dir]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
-            logging.debug(f"{depth}{debug_prefix} Making sure path [{path}] is a directory")
+            logging.debug(f"{debug_prefix} Making sure path [{path}] is a directory")
 
         # Error assertion
 
@@ -63,18 +61,17 @@ class Utils:
         exists = os.path.exists(path)
         
         if not (exists and correct):
-            err = f"{depth}{debug_prefix} [ERROR] Path exists: [{exists}], correct type (dir): [{correct}]"
+            err = f"{debug_prefix} [ERROR] Path exists: [{exists}], correct type (dir): [{correct}]"
             logging.error(err)
             raise RuntimeError(err)
     
     # Make sure given path is a file
-    def assert_file(self, path, depth = LOG_NO_DEPTH, silent = False) -> None:
+    def assert_file(self, path, silent = False) -> None:
         debug_prefix = "[Utils.assert_file]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
-            logging.debug(f"{depth}{debug_prefix} Making sure path [{path}] is a file")
+            logging.debug(f"{debug_prefix} Making sure path [{path}] is a file")
 
         # Error assertion
 
@@ -82,7 +79,7 @@ class Utils:
         exists = os.path.exists(path)
         
         if not (exists and correct):
-            err = f"{depth}{debug_prefix} [ERROR] Path exists: [{exists}], correct type (file): [{correct}]"
+            err = f"{debug_prefix} [ERROR] Path exists: [{exists}], correct type (file): [{correct}]"
             logging.error(err)
             raise RuntimeError(err)
  
@@ -90,29 +87,28 @@ class Utils:
     # Returns:
     # - True: existed before
     # - False: didn't existed before
-    def mkdir_dne(self, path, depth = LOG_NO_DEPTH, silent = False) -> bool:
+    def mkdir_dne(self, path, silent = False) -> bool:
         debug_prefix = "[Utils.mkdir_dne]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Make directory if doesn't exist on path: [{path}], getting absolute and realpath first")
+            logging.info(f"{debug_prefix} Make directory if doesn't exist on path: [{path}], getting absolute and realpath first")
 
         # Get the absolute and realpath of it
-        path = self.get_abspath(path = path, depth = ndepth, silent = silent)
+        path = self.get_absolute_realpath(path = path, silent = silent)
 
         # Log the absolute and realpath we got
         if not silent:
-            logging.debug(f"{depth}{debug_prefix} Got absolute and realpath: [{path}]")
+            logging.debug(f"{debug_prefix} Got absolute and realpath: [{path}]")
 
         # If path already exists, checks if it is in fact a directory otherwise something is wrong
         if os.path.exists(path):
             if not silent:
-                logging.debug(f"{depth}{debug_prefix} Path already existed, checking if it's a file for error assertion..")
+                logging.debug(f"{debug_prefix} Path already existed, checking if it's a file for error assertion..")
             
             # If path is a directory then something is wrong
             if os.path.isfile(path):
-                logging.error(f"{depth}{debug_prefix} Path already existed and is a file, this function creates directories so for safety we'll quit as this is technically not intended behavior (mkdir on a file location, that means we probably misspelled something and created a file where we should in fact have a directory)")
+                logging.error(f"{debug_prefix} Path already existed and is a file, this function creates directories so for safety we'll quit as this is technically not intended behavior (mkdir on a file location, that means we probably misspelled something and created a file where we should in fact have a directory)")
                 sys.exit(-1)
             
             # Return True - target already existed
@@ -123,7 +119,7 @@ class Utils:
 
         # Check we created the path
         if not os.path.isdir(path):
-            logging.error(f"{depth}{debug_prefix} Target path didn't exist and Python's os.makedirs() function couldn't create the directory (should be some sort of permission errors on Windows os? If we're here then only other option is the path naming is just wrong but os.makedirs would error out on its own")
+            logging.error(f"{debug_prefix} Target path didn't exist and Python's os.makedirs() function couldn't create the directory (should be some sort of permission errors on Windows os? If we're here then only other option is the path naming is just wrong but os.makedirs would error out on its own")
             sys.exit(-1)
 
         # Return False - target didn't existed
@@ -133,35 +129,34 @@ class Utils:
     # Returns:
     # - True: existed before
     # - False: didn't existed before
-    def mkfile_dne(self, path, depth = LOG_NO_DEPTH, silent = False) -> bool:
+    def mkfile_dne(self, path, silent = False) -> bool:
         debug_prefix = "[Utils.mkfile_dne]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Make empty if doesn't exist on path: [{path}], getting absolute and realpath first")
+            logging.info(f"{debug_prefix} Make empty if doesn't exist on path: [{path}], getting absolute and realpath first")
 
         # Get the absolute and realpath of it
-        path = self.get_abspath(path = path, depth = ndepth, silent = silent)
+        path = self.get_absolute_realpath(path = path, silent = silent)
 
         # Log the absolute and realpath we got
         if not silent:
-            logging.debug(f"{depth}{debug_prefix} Got absolute and realpath: [{path}]")
+            logging.debug(f"{debug_prefix} Got absolute and realpath: [{path}]")
 
         # If path already exists, checks if it is in fact a directory otherwise something is wrong
         if os.path.exists(path):
             if not silent:
-                logging.debug(f"{depth}{debug_prefix} Path already existed, checking if it's a directory for error assertion..")
+                logging.debug(f"{debug_prefix} Path already existed, checking if it's a directory for error assertion..")
 
             # If path is a directory then something is wrong
             if os.path.isdir(path):
-                logging.error(f"{depth}{debug_prefix} Path already existed and is a file, this function creates directories so for safety we'll quit as this is technically not intended behavior (mkdir on a file location, that means we probably misspelled something and created a file where we should in fact have a directory)")
+                logging.error(f"{debug_prefix} Path already existed and is a file, this function creates directories so for safety we'll quit as this is technically not intended behavior (mkdir on a file location, that means we probably misspelled something and created a file where we should in fact have a directory)")
                 sys.exit(-1)
 
             # # Reset file content
 
             if not silent:
-                logging.warn(f"{depth}{debug_prefix} Resetting file content [{path}]")
+                logging.warn(f"{debug_prefix} Resetting file content [{path}]")
 
             with open(path, "w") as f:
                 f.write("")
@@ -170,38 +165,36 @@ class Utils:
         return True
     
     # Make sure a parent directory exists
-    def mkparent_dne(self, path, depth = LOG_NO_DEPTH, silent = False) -> None:
+    def mkparent_dne(self, path, silent = False) -> None:
         debug_prefix = "[Utils.mkparent_dne]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
-            logging.debug(f"{depth}{debug_prefix} Make sure the parent directory of the path [{path}] exists")
+            logging.debug(f"{debug_prefix} Make sure the parent directory of the path [{path}] exists")
 
         # Get the absolute and real path of the parent dir
         abspath_realpath_parent_dir = self.get_path_parent_dir(
-                self.get_abspath(
-                    path, depth = ndepth + (2*LOG_NEXT_DEPTH), silent = silent
-            ), depth = ndepth + LOG_NEXT_DEPTH, silent = silent
+                self.get_absolute_realpath(
+                    path, silent = silent
+            ), silent = silent
         )
 
         # Make it
-        self.mkdir_dne(abspath_realpath_parent_dir, depth = ndepth, silent = silent)
+        self.mkdir_dne(abspath_realpath_parent_dir, silent = silent)
 
         if not silent:
-            logging.debug(f"{depth}{debug_prefix} (Parent) Directory guaranteed to exist [{abspath_realpath_parent_dir}]")
+            logging.debug(f"{debug_prefix} (Parent) Directory guaranteed to exist [{abspath_realpath_parent_dir}]")
 
     # Deletes an directory, fail safe? Quits if we can't delete it..
-    def rmdir(self, path, depth = LOG_NO_DEPTH, silent = False) -> None:
+    def rmdir(self, path, silent = False) -> None:
         debug_prefix = "[Utils.rmdir]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
         # If the asked directory is even a path
         if os.path.isdir(path):
 
             # Log action
             if not silent:
-                logging.info(f"{depth}{debug_prefix} Removing dir: [{path}]")
+                logging.info(f"{debug_prefix} Removing dir: [{path}]")
 
             # Try removing with ignoring errors first..?
             shutil.rmtree(path, ignore_errors = True)
@@ -210,36 +203,35 @@ class Utils:
             if os.path.isdir(path):
 
                 # Ok. We can't be silent here we're about to error out probably
-                logging.warn(f"{depth}{debug_prefix} Error removing directory with ignore_errors=True, trying again.. will quit if we can't")
+                logging.warn(f"{debug_prefix} Error removing directory with ignore_errors=True, trying again.. will quit if we can't")
 
                 # Remove without ignoring errors?
                 shutil.rmtree(path, ignore_errors = False)
 
                 # Still exists? oops, better quit
                 if os.path.isdir(path):
-                    logging.error(f"{depth}{debug_prefix} COULD NOT REMOVE DIRECTORY: [{path}]")
+                    logging.error(f"{debug_prefix} COULD NOT REMOVE DIRECTORY: [{path}]")
                     sys.exit(-1)
 
             # Warn we're done
             if not silent:
-                logging.debug(f"{depth}{debug_prefix} Removed directory successfully")
+                logging.debug(f"{debug_prefix} Removed directory successfully")
         else:
             # Directory didn't exist at first, nothing to do here
             if not silent:
-                logging.debug(f"{depth}{debug_prefix} Directory doesn't exists, nothing to do here... [{path}]")
+                logging.debug(f"{debug_prefix} Directory doesn't exists, nothing to do here... [{path}]")
 
     # Reset an file to empty contents
-    def reset_file(self, path, depth = LOG_NO_DEPTH, silent = False) -> None:
+    def reset_file(self, path, silent = False) -> None:
         debug_prefix = "[Utils.reset_file]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Reset file located at: [{path}]")
+            logging.info(f"{debug_prefix} Reset file located at: [{path}]")
 
         # Error assertion
         if (not os.path.isfile(path)) and (os.path.exists(path)):
-            logging.error(f"{depth}{debug_prefix} [ERROR] Path is not a file: [{path}]")
+            logging.error(f"{debug_prefix} [ERROR] Path is not a file: [{path}]")
             sys.exit(-1)
         
         # Write nothing on the file with write + override mode
@@ -263,60 +255,59 @@ class Utils:
             sys.exit(-1)
 
     # Get the full path of a random file from a given directory
-    def random_file_from_dir(self, path, depth = LOG_NO_DEPTH, silent = False):
+    def random_file_from_dir(self, path, silent = False):
         debug_prefix = "[Utils.random_file_from_dir]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
-            logging.debug(f"{depth}{debug_prefix} Get random file / name from path [{path}]")
+            logging.debug(f"{debug_prefix} Get random file / name from path [{path}]")
 
         # Actually get the random file from the directory
         r = random.choice([f"{path}{os.path.sep}{name}" for name in os.listdir(path)])
 
         # Debug and return the path
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Got file [{r}], ")
+            logging.info(f"{debug_prefix} Got file [{r}], ")
 
         return r
 
     # Get the basename of a path
-    def get_basename(self, path, depth = LOG_NO_DEPTH, silent = False):
+    def get_basename(self, path, silent = False):
         debug_prefix = "[Utils.get_basename]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
-            logging.debug(f"{depth}{debug_prefix} Get basename of path [{path}]")
+            logging.debug(f"{debug_prefix} Get basename of path [{path}]")
 
         # Actually get the basename
         basename = os.path.basename(path)
 
         # Debug and return the basename
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Basename is [{basename}]")
+            logging.info(f"{debug_prefix} Basename is [{basename}]")
 
         return basename
     
-    # Return an absolute path always, pointing to the 
-    def get_abspath(self, path, depth = LOG_NO_DEPTH, silent = False):
-        debug_prefix = "[Utils.get_abspath]"
-        ndepth = depth + LOG_NEXT_DEPTH
+    # Return an absolute and real path always, pointing to the file / directory on the tree
+    # structure where it is truly located (no symlinks) and also relative to the root of the system
+    # that is the absolute path, not relative one, starts with / on Posix and LETTER:\\ on Windows
+    def get_absolute_realpath(self, path, silent = False):
+        debug_prefix = "[Utils.get_absolute_realpath]"
 
         # Log action
         if not silent:
-            logging.debug(f"{depth}{debug_prefix} Get abspath of path [{path}]")
+            logging.debug(f"{debug_prefix} Get abspath of path [{path}]")
 
         # On Linux / MacOS we expand the ~ to the current user's home directory, ~ = /home/$USER
         if self.os in ["linux", "macos"]:
             if not silent:
-                logging.debug(f"{depth}{debug_prefix} POSIX: Expanding path with user home folder ~ if any")
+                logging.debug(f"{debug_prefix} POSIX: Expanding path with user home folder ~ if any")
 
             # Expand the path
             path = os.path.expanduser(path)
 
             if not silent:
-                logging.debug(f"{depth}{debug_prefix} POSIX: Expanded path is [{path}]")
+                logging.debug(f"{debug_prefix} POSIX: Expanded path is [{path}]")
 
         # Actually get the absolute path, that is, if we're on the file /home/user/folder and type
         # ./binary we are actually referring it as /home/user/folder/binary, that is the absolute
@@ -326,69 +317,91 @@ class Utils:
 
         # Did the path changed at all?
         if (abspath != path) and (not silent):
-            logging.debug(f"{depth}{debug_prefix} Original path changed!! It probably was a relative reference [{path}] -> [{abspath}]")
+            logging.debug(f"{debug_prefix} Original path changed!! It probably was a relative reference [{path}] -> [{abspath}]")
 
         # Get the real path
-        abs_realpath = self.get_realpath(path = abspath, depth = ndepth, silent = False)
+        abs_realpath = self.get_realpath(path = abspath, silent = False)
 
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Return absolute and real path: [{abs_realpath}]")
+            logging.info(f"{debug_prefix} Return absolute and real path: [{abs_realpath}]")
 
         return abs_realpath
     
     # Some files can be symlinks on *nix or shortcuts on Windows, get the true real path
-    def get_realpath(self, path, depth = LOG_NO_DEPTH, silent = False):
+    def get_realpath(self, path, silent = False):
         debug_prefix = "[Utils.get_realpath]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
-            logging.debug(f"{depth}{debug_prefix} Get realpath of path [{path}]")
+            logging.debug(f"{debug_prefix} Get realpath of path [{path}]")
 
         # Actually get the realpath
         realpath = os.path.realpath(path)
 
         # Did the path changed at all?
         if (not realpath == path) and (not silent):
-            logging.debug(f"{depth}{debug_prefix} Got and returning realpath of [{path}] -> [{realpath}")
+            logging.debug(f"{debug_prefix} Got and returning realpath of [{path}] -> [{realpath}")
             
         return realpath
 
     # Get the filename without extension /home/linux/file.ogg -> "file"
-    def get_filename_no_extension(self, path, depth = LOG_NO_DEPTH, silent = False):
+    def get_filename_no_extension(self, path, silent = False):
         debug_prefix = "[Utils.get_filename_no_extension]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Get filename without extension of path [{path}]")
+            logging.info(f"{debug_prefix} Get filename without extension of path [{path}]")
 
         # Actually get the filename without extension
-        filename_no_ext = os.path.splitext(os.path.basename(self.get_abspath(path)))[0]
+        filename_no_ext = os.path.splitext(os.path.basename(self.get_absolute_realpath(path)))[0]
 
         # Log what we'll return
         if not silent:
-            logging.debug(f"{depth}{debug_prefix} Got and returning filename [{filename_no_ext}]")
+            logging.debug(f"{debug_prefix} Got and returning filename [{filename_no_ext}]")
 
         return filename_no_ext
     
     # Get the parent directory of a given path
-    def get_path_parent_dir(self, path, depth = LOG_NO_DEPTH, silent = False):
+    def get_path_parent_dir(self, path, silent = False):
         debug_prefix = "[Utils.get_path_parent_dir]"
-        ndepth = depth + LOG_NEXT_DEPTH
     
         # Log action
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Get the parent directory of the path [{path}]")
+            logging.info(f"{debug_prefix} Get the parent directory of the path [{path}]")
         
         # Get the dirname of the path
-        parent = os.path.dirname(self.get_abspath(path))
+        parent = os.path.dirname(self.get_absolute_realpath(path, silent = True))
 
         # Log action
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Parent directory is [{parent}]")
+            logging.info(f"{debug_prefix} Parent directory is [{parent}]")
         
         return parent
+    
+    # The name says it all, given a path get all of its subdirectories
+    # Returns empty list "None" --> [] if there is no directory
+    def get_recursively_all_subdirectories(self, path, silent = False):
+        debug_prefix = "[Utils.get_recursive_subdirectories]"
+
+        # Log action
+        if not silent:
+            logging.info(f"{debug_prefix} Get recursively all subdirectories of path [{path}]")
+
+        # The subdirectories we find
+        subdirectories = []
+
+        # Walk on the path
+        for root, directories, files in os.walk(path):
+            
+            # Append the root + subdir for every subdir (if there is any)
+            for directory in directories:
+                subdirectories.append(os.path.join(root, directory))
+        
+        # Hard debug
+        if not silent:
+            logging.debug(f"{debug_prefix} Return subdirectories {subdirectories}")
+
+        return subdirectories
 
     # Get operating system we're running on
     # FIXME: Need testing / get edge cases like:
@@ -409,16 +422,15 @@ class Utils:
         }.get(os.name)
     
     # Load a yaml and return its content
-    def load_yaml(self, path, depth = LOG_NO_DEPTH, silent = False) -> None:
+    def load_yaml(self, path, silent = False) -> None:
         debug_prefix = "[Utils.load_yaml]"
-        ndepth = depth + LOG_NEXT_DEPTH
         
         # Log action
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Loading YAML file from path [{path}], getting absolute realpath first")
+            logging.info(f"{debug_prefix} Loading YAML file from path [{path}], getting absolute realpath first")
 
         # Get absolute and realpath
-        path = self.get_abspath(path, depth = ndepth, silent = True)
+        path = self.get_absolute_realpath(path, silent = True)
 
         # Error assertion
         self.assert_file(path)
@@ -429,41 +441,39 @@ class Utils:
 
         # Log read data
         if not silent:
-            logging.debug(f"{depth}{debug_prefix} Loaded data is: {data}")
+            logging.debug(f"{debug_prefix} Loaded data is: {data}")
 
         # Return the data
         return data
     
     # Save a dictionary to a YAML file, make sure the directory exists first..
-    def dump_yaml(self, data, path, depth = LOG_NO_DEPTH, silent = False) -> None:
+    def dump_yaml(self, data, path, silent = False) -> None:
         debug_prefix = "[Utils.dump_yaml]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Dumping some data to YAML located at: [{path}], getting absolute realpath first")
-            logging.debug(f"{depth}{debug_prefix} Data being dumped: [{data}]")
+            logging.info(f"{debug_prefix} Dumping some data to YAML located at: [{path}], getting absolute realpath first")
+            logging.debug(f"{debug_prefix} Data being dumped: [{data}]")
 
         # Make sure the parent path exists
         self.mkparent_dne(path)
 
         # Get absolute and realpath
-        path = self.get_abspath(path, depth = ndepth, silent = True)
+        path = self.get_absolute_realpath(path, silent = True)
 
         with open(path, "w") as f:
             yaml.dump(data, f, default_flow_style = False)
 
     # Load a toml and return its content
-    def load_toml(self, path, depth = LOG_NO_DEPTH, silent = False) -> None:
+    def load_toml(self, path, silent = False) -> None:
         debug_prefix = "[Utils.load_toml]"
-        ndepth = depth + LOG_NEXT_DEPTH
-        
+
         # Log action
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Loading TOML file from path [{path}], getting absolute realpath first")
+            logging.info(f"{debug_prefix} Loading TOML file from path [{path}], getting absolute realpath first")
 
         # Get absolute and realpath
-        path = self.get_abspath(path, depth = ndepth, silent = True)
+        path = self.get_absolute_realpath(path, silent = True)
 
         # Error assertion
         self.assert_file(path)
@@ -474,38 +484,36 @@ class Utils:
 
         # Log read data
         if not silent:
-            logging.debug(f"{depth}{debug_prefix} Loaded data is: {data}")
+            logging.debug(f"{debug_prefix} Loaded data is: {data}")
 
         # Return the data
         return data
     
     # Save a dictionary to a TOML file, make sure the directory exists first..
-    def dump_toml(self, data, path, depth = LOG_NO_DEPTH, silent = False) -> None:
+    def dump_toml(self, data, path, silent = False) -> None:
         debug_prefix = "[Utils.dump_toml]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Dumping some data to TOML located at: [{path}], getting absolute realpath first")
-            logging.debug(f"{depth}{debug_prefix} Data being dumped: [{data}]")
+            logging.info(f"{debug_prefix} Dumping some data to TOML located at: [{path}], getting absolute realpath first")
+            logging.debug(f"{debug_prefix} Data being dumped: [{data}]")
 
         # Make sure the parent path exists
         self.mkparent_dne(path)
 
         # Get absolute and realpath
-        path = self.get_abspath(path, depth = ndepth, silent = True)
+        path = self.get_absolute_realpath(path, silent = True)
 
         with open(path, "w") as f:
             f.write(toml.dumps(data))
 
     # Waits until file exist
-    def until_exist(self, path, depth = LOG_NO_DEPTH, silent = False) -> None:
+    def until_exist(self, path, silent = False) -> None:
         debug_prefix = "[Utils.until_exist]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
-            logging.warn(f"{depth}{debug_prefix} Waiting for file or diretory: [{path}]")
+            logging.warn(f"{debug_prefix} Waiting for file or diretory: [{path}]")
 
         while True:
             time.sleep(0.1)
@@ -513,45 +521,43 @@ class Utils:
                 break
         
     # $ mv A B
-    def move(self, src, dst, depth = LOG_NO_DEPTH, silent = False) -> None:
+    def move(self, src, dst, silent = False) -> None:
         debug_prefix = "[Utils.move]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Moving path [{src}] -> [{dst}]")
+            logging.info(f"{debug_prefix} Moving path [{src}] -> [{dst}]")
 
         # Make sure we have the absolute and real path of the targets
-        src = self.get_abspath(src, depth = ndepth, silent = silent)
-        dst = self.get_abspath(dst, depth = ndepth, silent = silent)
+        src = self.get_absolute_realpath(src, silent = silent)
+        dst = self.get_absolute_realpath(dst, silent = silent)
 
         # Only move if the target directory doesn't exist
         if not os.path.exists(dst):
             shutil.move(src, dst)
         else:
-            err = f"{depth}{debug_prefix} Target path already exist"
+            err = f"{debug_prefix} Target path already exist"
             logging.error(err)
             raise RuntimeError(err)
     
     # $ cp A B
-    def copy(self, src, dst, depth = LOG_NO_DEPTH, silent = False) -> None:
+    def copy(self, src, dst, silent = False) -> None:
         debug_prefix = "[Utils.copy]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Copying path [{src}] -> [{dst}]")
+            logging.info(f"{debug_prefix} Copying path [{src}] -> [{dst}]")
 
         # Make sure we have the absolute and real path of the targets
-        src = self.get_abspath(src, depth = ndepth, silent = silent)
-        dst = self.get_abspath(dst, depth = ndepth, silent = silent)
+        src = self.get_absolute_realpath(src, silent = silent)
+        dst = self.get_absolute_realpath(dst, silent = silent)
 
         # Copy the directories
         # Only move if the target directory doesn't exist
         if not os.path.exists(dst):
             shutil.copy(src, dst)
         else:
-            err = f"{depth}{debug_prefix} Target path already exist"
+            err = f"{debug_prefix} Target path already exist"
             logging.error(err)
             raise RuntimeError(err)
 
@@ -568,20 +574,19 @@ class Utils:
         return True
 
     # If name is an file on PATH marked as executable returns True
-    def has_executable_with_name(self, binary, depth = LOG_NO_DEPTH, silent = False) -> None:
+    def has_executable_with_name(self, binary, silent = False) -> None:
         debug_prefix = "[Utils.has_executable_with_name]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Checking we can find the executable [{binary}] in PATH")
+            logging.info(f"{debug_prefix} Checking we can find the executable [{binary}] in PATH")
 
         # Tell if we can find the binary
         exists = shutil.which(binary) is not None
 
         # If it doesn't exist show warning, no need to quit
         if not silent:
-            msg = f"{depth}{debug_prefix} Executable exists: [{exists}]"
+            msg = f"{debug_prefix} Executable exists: [{exists}]"
 
             # Info if exists else warn
             if exists:
@@ -592,13 +597,12 @@ class Utils:
         return exists
     
     # Get a executable from path, returns False if it doesn't exist
-    def get_executable_with_name(self, binary, extra_paths = [], depth = LOG_NO_DEPTH, silent = False):
+    def get_executable_with_name(self, binary, extra_paths = [], silent = False):
         debug_prefix = "[Utils.get_executable_with_name]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
         # Log action
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Get executable with name [{binary}]")
+            logging.info(f"{debug_prefix} Get executable with name [{binary}]")
 
         # Force list variable
         extra_paths = self.force_list(extra_paths)
@@ -606,8 +610,8 @@ class Utils:
 
         # Log search paths
         if not silent:
-            logging.warn(f"{depth}{debug_prefix} Extra paths to search: [{extra_paths}]")
-            logging.warn(f"{depth}{debug_prefix} Full search path: [{search_path}]")
+            logging.debug(f"{debug_prefix} Extra paths to search: [{extra_paths}]")
+            logging.debug(f"{debug_prefix} Full search path: [{search_path}]")
 
         # Locate it
         locate = shutil.which(binary, path = search_path)
@@ -615,12 +619,12 @@ class Utils:
         # If it's not found then return False
         if locate is None:
             if not silent:
-                logging.warn(f"{depth}{debug_prefix} Couldn't find binary, returning False..")
+                logging.warn(f"{debug_prefix} Couldn't find binary, returning False..")
             return False
             
         # Else return its path
         if not silent:
-            logging.info(f"{depth}{debug_prefix} Binary found and located at [{locate}]")
+            logging.info(f"{debug_prefix} Binary found and located at [{locate}]")
 
         return locate
     
@@ -632,9 +636,8 @@ class Utils:
 
     # Get one (astronomically guaranteed) unique id, upper(uuid4)
     # purpose key is for logging messages so we identify which identifier is binded to what object
-    def get_unique_id(self, purpose = "", depth = LOG_NO_DEPTH, silent = False) -> str:
+    def get_unique_id(self, purpose = "", silent = False) -> str:
         debug_prefix = "[Utils.get_unique_id]"
-        ndepth = depth + LOG_NEXT_DEPTH
 
         # Get an uppercase uuid4
         unique_id = str(uuid.uuid4()).upper()[0:8]
@@ -642,9 +645,9 @@ class Utils:
         # Change the message based on if we have or have not a purpose
         if not silent:
             if purpose:
-                message = f"{depth}{debug_prefix} Get unique identifier for [{purpose}]: [{unique_id}]"
+                message = f"{debug_prefix} Get unique identifier for [{purpose}]: [{unique_id}]"
             else:
-                message = f"{depth}{debug_prefix} Get unique identifier: [{unique_id}]"
+                message = f"{debug_prefix} Get unique identifier: [{unique_id}]"
 
             # Log the message
             logging.info(message)
@@ -743,7 +746,6 @@ class DataUtils:
 class SubprocessUtils():
 
     def __init__(self, name, utils, context):
-
         debug_prefix = "[SubprocessUtils.__init__]"
 
         self.name = name
@@ -754,7 +756,6 @@ class SubprocessUtils():
 
     # Get the commands from a list to call the subprocess
     def from_list(self, list):
-
         debug_prefix = "[SubprocessUtils.run]"
 
         print(debug_prefix, "Getting command from list:")
@@ -764,7 +765,6 @@ class SubprocessUtils():
 
     # Run the subprocess with or without a env / working directory
     def run(self, working_directory=None, env=None, shell=False):
-
         debug_prefix = "[SubprocessUtils.run]"
         
         print(debug_prefix, "Popen SubprocessUtils with name [%s]" % self.name)
@@ -796,7 +796,6 @@ class SubprocessUtils():
 
     # Wait until the subprocess has finished
     def wait(self):
-
         debug_prefix = "[SubprocessUtils.wait]"
 
         print(debug_prefix, "Waiting SubprocessUtils with name [%s] to finish" % self.name)
@@ -805,7 +804,6 @@ class SubprocessUtils():
 
     # Kill subprocess
     def terminate(self):
-
         debug_prefix = "[SubprocessUtils.terminate]"
 
         print(debug_prefix, "Terminating SubprocessUtils with name [%s]" % self.name)
@@ -814,7 +812,6 @@ class SubprocessUtils():
 
     # See if subprocess is still running
     def is_alive(self):
-
         debug_prefix = "[SubprocessUtils.is_alive]"
 
         # Get the status of the subprocess

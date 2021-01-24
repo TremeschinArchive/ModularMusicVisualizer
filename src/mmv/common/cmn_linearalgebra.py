@@ -3,7 +3,7 @@
                                 GPL v3 License                                
 ===============================================================================
 
-Copyright (c) 2020,
+Copyright (c) 2020 - 2021,
   - Tremeschin < https://tremeschin.gitlab.io > 
 
 ===============================================================================
@@ -37,8 +37,7 @@ import math
 
 
 # Define some basic N-dimentional linear algebra mechanisms
-class LinearAlgebra():
-
+class LinearAlgebra:
     def __init__(self):
         self.utils = Utils()
 
