@@ -98,11 +98,9 @@ Please read [HACKING.md](docs/HACKING.md) file :)
 
 Feel free DM me, I'd be happy to explain how MMV works.
 
-# Goals, what is being developed
+# Goals, next idea
 
 Also see [CHANGELOG.md](CHANGELOG.md) file :)
-
-#### Next stuff
 
 - [ ] Progression bar (square, circle, pie graph?)
 
@@ -112,11 +110,7 @@ Also see [CHANGELOG.md](CHANGELOG.md) file :)
 
 - [ ] Generate rain droplets using shaders
 
-#### Ideas for the future or waiting to be executed
-
 - [ ] Rectangle bars visualizer (only circle + linear or symmetric currently)
-
-#### Impossible / hard / dream
 
 - [ ] Make MMV Piano Roll interactive for learning, writing midi files?
 
@@ -125,8 +119,6 @@ Also see [CHANGELOG.md](CHANGELOG.md) file :)
 <hr>
 
 # Contributing
-
-Please read [CONTRIBUTING.md](docs/CONTRIBUTING.md) file :)
 
 This repository on GitHub is a mirror from the main development repository under [GitLab](https://gitlab.com/Tremeschin/modular-music-visualizer), I'm mostly experimenting with the other service.
 

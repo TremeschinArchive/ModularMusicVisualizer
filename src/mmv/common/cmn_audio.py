@@ -26,7 +26,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-
 from mmv.common.cmn_functions import Functions
 from mmv.common.cmn_utils import DataUtils
 from mmv.common.cmn_fourier import Fourier
@@ -50,8 +49,11 @@ class AudioFile:
 
         logging.info(f"{debug_prefix} Reading stereo audio in path [{path}], trying soundfile")
         try:
+            # Attempt to use soundfile for reading the audio
             self.stereo_data, self.sample_rate = soundfile.read(path)
+            
         except RuntimeError:
+            # Except it can't, try audio2numpy
             logging.warn(f"{debug_prefix} Couldn't read file with soundfile, trying audio2numpy..")
             self.stereo_data, self.sample_rate = audio2numpy.open_audio(path)
 
@@ -76,10 +78,12 @@ class AudioFile:
         # Just make sure the mono data is right..
         logging.info(f"{debug_prefix} Mono data shape:             [{self.mono_data.shape}]")
 
+
 class AudioProcessing:
     def __init__(self) -> None:
         debug_prefix = "[AudioProcessing.__init__]"
 
+        # Create some util classes
         self.fourier = Fourier()
         self.datautils = DataUtils()
         self.functions = Functions()
@@ -95,7 +99,7 @@ class AudioProcessing:
         self.piano_keys_frequencies = [round(self.get_frequency_of_key(x), 2) for x in range(-50, 68)]
         logging.info(f"{debug_prefix} Whole notes frequencies we'll care: [{self.piano_keys_frequencies}]")
 
-    # Slice a mono and stereo audio data
+    # Slice a mono and stereo audio data TODO: make this a generator and also accept "real time input?"
     def slice_audio(self,
             stereo_data: np.ndarray,
             mono_data: np.ndarray,
@@ -130,16 +134,22 @@ class AudioProcessing:
             mono_data[start_cut:end_cut]
         )))
 
+    # Resample an audio slice (raw array) to some other frequency, this is useful when calculating
+    # FFTs because a lower sample rate means we get more info on the bass freqs
     def resample(self,
             data: np.ndarray,
             original_sample_rate: int,
             new_sample_rate: int
         ) -> None:
 
+        # The exact ratio to resample
         ratio = new_sample_rate / original_sample_rate
+
+        # If the ratio is 1 then we don't do anything cause new/old = 1, just return the input data
         if ratio == 1:
             return data
         else:
+            # Use libsamplerate for resampling the audio otherwise
             return samplerate.resample(data, ratio, 'sinc_best')
 
     # Get N semitones above / below A4 key, 440 Hz
@@ -152,6 +162,9 @@ class AudioProcessing:
         return 440 * (2**(n/12))
 
     # https://stackoverflow.com/a/2566508
+    # Find nearest value inside one array from a given target value
+    # I could make my own but this one is more efficient because it uses numpy
+    # Returns: index of the match and its value
     def find_nearest(self, array, value):
         index = (np.abs(array - value)).argmin()
         return index, array[index]
@@ -188,7 +201,9 @@ class AudioProcessing:
                     original_sample_rate = original_sample_rate,
                     new_sample_rate = sample_rate,
                 ),
-                # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+                # # Target (re?)sample rate so we normalize the FFT values
+
                 sample_rate =  sample_rate,
                 original_sample_rate = original_sample_rate,
             )
@@ -210,13 +225,20 @@ class AudioProcessing:
                     )
                 )
 
-                # Add repeated bars or just one
+                # Add repeated bars or just one, this is a hacky workaround since we
+                # add a small fraction on the target freq, it shouldn't really overlap
                 for i in range(N):
                     processed[nearest[1] + (i/10)] = value
-                
+        
+        # FIXME: inefficient
+
+        # # Convert a dictionary of FFTs to a list of values:frequencies
+        # We can use a array with shape (N, 2) but I'm lazy to change that
+
         linear_processed_fft = []
         frequencies = []
 
+        # For each pair in the dictionary, append to each list
         for frequency, value in processed.items():
             frequencies.append(frequency)
             linear_processed_fft.append(value)

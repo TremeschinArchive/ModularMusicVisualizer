@@ -28,23 +28,26 @@ mgl.render_config(
     fps = FRAMERATE,
 )
 
-mgl.construct_shader()
+# mgl.construct_shader()
 
 mgl.construct_shader(fragment_shader = f"""\
-#pragma map tex=image:{THIS_DIR}/___image.png:1920x1080
-#pragma map otherglsl=shader:/{THIS_DIR}/__otherglsl.glsl:1920x1080;
-
+#pragma map otherglsl=shader:{THIS_DIR}/test_otherglsl.glsl:1920x1080;
 void main() {{
-    float screen_ratio_x = mmv_resolution.x / mmv_resolution.y;
-    vec2 uv_transformed = uv;
-    uv_transformed.x *= screen_ratio_x;
 
-    // fragColor = vec4(uv.x, uv.y, 0.0, 0.0);
-    vec2 flipped_uv = uv;
-    // flipped_uv.y *= -1;
-    fragColor = texture(otherglsl, flipped_uv);
-    // fragColor = texture(tex, uv);
-    // fragColor = vec4(uv.x, uv.y, abs(sin(mmv_time/180.0)), 1.0);
+    // The ratio relative to the Y coordinate, we expand on X
+    float resratio = (mmv_resolution.y / mmv_resolution.x);
+
+    // OpenGL and Shadertoy UV coordinates, GL goes from -1 to 1 on every corner
+    // and Shadertoy uses bottom left = (0, 0) and top right = (1, 1).
+    // glub and stuv are normalized relative to the height of the screen, they are
+    // respective the Opengl UV and Shadertoy UV you can use
+    vec2 gluv = opengl_uv;
+    vec2 stuv = shadertoy_uv;
+
+    vec4 col = vec4( smoothstep(0.99, 1.0, stuv.x), abs(sin(2.343*mmv_time)), gluv.y, 1.0);
+    vec4 otherglsl_color = texture(otherglsl, shadertoy_uv);
+
+    fragColor = mix(col, otherglsl_color, stuv.y);
 }}""")
 
 
@@ -111,14 +114,20 @@ import time
 start = time.time()
 n = -1
 
-while True:
-    mgl.next()
-    n += 1
-    
-    # img = Image.frombytes('RGB', mgl.fbo.size, mgl.read())
-    # img.save('output.jpg')
-    # exit()
+try:
+    while True:
+        mgl.next()
+        n += 1
+        
+        # img = Image.frombytes('RGB', mgl.fbo.size, mgl.read())
+        # img.save('output.jpg')
+        # exit()
 
-    video_pipe.write_to_pipe(n, mgl.read())
+        video_pipe.write_to_pipe(n, mgl.read())
 
-    print(n / (time.time() - start))
+
+        # print(n / (time.time() - start))
+except KeyboardInterrupt:
+    video_pipe.subprocess.kill()
+except BrokenPipeError:
+    video_pipe.subprocess.kill()

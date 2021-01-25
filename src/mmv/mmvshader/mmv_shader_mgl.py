@@ -8,7 +8,8 @@ Copyright (c) 2020 - 2021,
 
 ===============================================================================
 
-Purpose: 
+Purpose: Render shaders to video files or preview them realtime, map images,
+videos and even other shaders as textures into a main one
 
 ===============================================================================
 
@@ -45,15 +46,23 @@ import os
 DEFAULT_VERTEX_SHADER = """\
 #version 330
 
-// Input / output of coordinates
+// Input and Output of coordinates
 in vec2 in_pos;
-in vec2 in_uv;
-out vec2 uv;
+in vec2 in_opengl_uv;
+in vec2 in_shadertoy_uv;
+
+// Raw UV coordinates outputs
+out vec2 opengl_uv;
+out vec2 shadertoy_uv;
 
 // Main function, only assign the position to itself and set the uv coordinate
 void main() {
+    // Position of the vertex on the screen
     gl_Position = vec4(in_pos, 0.0, 1.0);
-    uv = in_uv;
+    
+    // The raw uv from opengl and shadertoy coordinate mappings
+    opengl_uv = in_opengl_uv;
+    shadertoy_uv = in_shadertoy_uv;
 }"""
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -64,16 +73,20 @@ void main() {
 FRAGMENT_SHADER_MMV_SPECIFICATION_PREFIX = """\
 #version 330
 
-// Input and Output of colors
-out vec4 fragColor;
-in vec2 uv;
+// // Input and Output of coordinates, colors
 
-// MMV Specification
+// Raw UV coordinates inputs
+in vec2 opengl_uv;
+in vec2 shadertoy_uv;
+
+// Color output 
+out vec4 fragColor;
+
+// // MMV Specification
+
 uniform int mmv_frame;
 uniform float mmv_time;
 uniform vec2 mmv_resolution;
-
-uniform int do_flip;
 
 ///add_uniform"""
 
@@ -81,7 +94,11 @@ uniform int do_flip;
 # Hello world of the fragment shaders
 DEFAULT_FRAGMENT_SHADER = """\
 void main() {
-    fragColor = vec4(uv.x, uv.y, abs(sin(mmv_time/180.0)), 1.0);
+    // Initialize black and transparent output
+    fragColor = vec4(0.0);
+
+    // // Your code now
+
 }"""
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -94,36 +111,53 @@ class FakeUniform:
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 class MMVShaderMGL:
-    def __init__(self):
-        debug_prefix = "[MMVShaderMGL.__init__]"
 
-        # Create a headless OpenGL context  TODO: support for window mode (performance)?
-        self.gl_context = moderngl.create_context(standalone = True)
+    # Create a headless OpenGL context  TODO: support for window mode (performance)?
+    gl_context = moderngl.create_context(standalone = True)
+
+    def __init__(self, flip = True):
+        debug_prefix = "[MMVShaderMGL.__init__]"
+        self.flip = flip
 
         # The buffer that represents the 4 points of the screen and their
         # respective uv coordinate. GL center is the coordinate (0, 0) and each
         # edge is either 1 or -1 relative to its axis. We keep that because central rotation
-        self.fullscreen_buffer = self.gl_context.buffer(array('f',
-            [
-            #  (   X,    Y   ) || (   U,    V   )
-                -1.0,  1.0,         0.0,  0.0,
-                -1.0, -1.0,         0.0,  1.0,
-                 1.0,  1.0,         1.0,  0.0,
-                 1.0, -1.0,         1.0,  1.0,
-            ]
-            # [
-            # #  (   X,    Y   ) || (   U,    V   )
-            #     -1.0,  1.0,        -1.0,  1.0,
-            #     -1.0, -1.0,        -1.0, -1.0,
-            #      1.0,  1.0,         1.0,  1.0,
-            #      1.0, -1.0,         1.0, -1.0,
-            # ]
-        ))
+        
+        # gl_bluv{x,y} -> "OpenGL" bottom left uv {x,y}
+        gl_bluvx = -1.0  # Bottom Left X
+        gl_bluvy = -1.0  # Bottom Left Y
+
+        # gl_truv{x,y} -> "OpenGL" top right uv {x,y}
+        gl_truvx =  1.0  # Top Right X
+        gl_truvy =  1.0  # Top Right Y
+
+        # What coordinate we swap the Y values to / for on Shadertoy and OpenGL coordinates?
+        st_flip = [1, 0] if self.flip else [0, 1]
+        gl_flip = -1 if self.flip else 1
+
+        # Coordinates of the OpenGL Vertex positions on screen, the target UV for 
+        # the OpenGL standard [(0, 0) center, edges are from -1 to 1] or Shadertoy ones
+        # [(0, 0) bottom left, edges goes from 0 to 1]
+        coordinates = [
+            # OpenGL pos (X, Y)   OpenGL UV (U, V)                Shadertoy UV (U, V)
+            gl_bluvx, gl_truvy,   gl_bluvx, gl_truvy * gl_flip,   0, st_flip[1],  # Top Left      [^ <]
+            gl_bluvx, gl_bluvy,   gl_bluvx, gl_bluvy * gl_flip,   0, st_flip[0],  # Bottom Left   [v <]
+            gl_truvx, gl_truvy,   gl_truvx, gl_truvy * gl_flip,   1, st_flip[1],  # Top Right     [^ >]
+            gl_truvx, gl_bluvy,   gl_truvx, gl_bluvy * gl_flip,   1, st_flip[0],  # Bottom Right  [v >]
+        ]
+
+        # Build the buffer we send when making the VAO
+        self.fullscreen_buffer = MMVShaderMGL.gl_context.buffer(array('f', coordinates))
 
         # Info we send to the shaders read only (uniforms)
         self.pipeline = {
+            # - mmv_time (float) -> time elapsed based on the frame rate of the shader in seconds
             "mmv_time": 0,
+            
+            # - mmv_frame (int) -> current frame number of the shader
             "mmv_frame": 0,
+            
+            # - mmv_resolution (vec2(int width, int height)) -> target output resolution
             "mmv_resolution": [0, 0],
         }
 
@@ -166,12 +200,12 @@ class MMVShaderMGL:
         logging.info(f"{debug_prefix} Constructing an FBO attached to an Texture with [width={self.width}] [height=[{self.height}]")
 
         # Create a RGBA texture of this class's configured resolution
-        texture = self.gl_context.texture((self.width, self.height), 4)
+        texture = MMVShaderMGL.gl_context.texture((self.width, self.height), 4)
 
         # Create an FBO which is attached to that previous texture, whenever we render something
         # to this FBO after fbo.use()-ing it, the contents will be written directly on that texture
         # which we can bind to some location in other shader. This process is recursive
-        fbo = self.gl_context.framebuffer(color_attachments = [texture])
+        fbo = MMVShaderMGL.gl_context.framebuffer(color_attachments = [texture])
 
         # Return the two created objects
         return [texture, fbo]
@@ -194,8 +228,10 @@ class MMVShaderMGL:
 
         # Regular expression to match #pragma map name=loader:/path/value;512x512
         # the ;512x512 is required for the image, video and shader loaders
-        regex = r"#pragma map ([\w]+)=([\w]+):([\w/. -]+):?([0-9]+)?x?([0-9]+)?"
-        found = re.findall(regex, fragment_shader)
+        regex = r"^#pragma map ([\w]+)=([\w]+):([\w/. -]+):?([0-9]+)?x?([0-9]+)?"
+        found = re.findall(regex, fragment_shader, re.MULTILINE)
+
+        logging.info(f"{debug_prefix} Regex findall says: {found}")
 
         # The static uniforms we'll assign the values to (eg. image, video, shader resolutions)
         assign_static_uniforms = []
@@ -230,7 +266,7 @@ class MMVShaderMGL:
 
                     # Convert image to bytes and upload the texture to the GPU
                     logging.info(f"{debug_prefix} Uploading texture to the GPU")
-                    texture = self.gl_context.texture((width, height), 4, img.tobytes())
+                    texture = MMVShaderMGL.gl_context.texture((width, height), 4, img.tobytes())
 
                     # Assign the name, type and texture to the textures dictionary
                     self.textures[len(self.textures.keys()) + 1] = [name, "texture", texture]
@@ -243,7 +279,7 @@ class MMVShaderMGL:
                         loader_frag_shader = f.read()
 
                     # Create one instance of this very own class
-                    shader_as_texture = MMVShaderMGL()
+                    shader_as_texture = MMVShaderMGL(flip = not self.flip)
 
                     # Set the render configuration on the #pragma map for width, height. We don't need fps
                     # as that one will receive the main class's pipeline
@@ -264,11 +300,12 @@ class MMVShaderMGL:
 
                 # Video loader
                 elif loader == "video":
+
                     # Get one VideoCapture
                     video = cv2.VideoCapture(value)
 
                     # Create a RGB texture for the video
-                    texture = self.gl_context.texture((width, height), 3)
+                    texture = MMVShaderMGL.gl_context.texture((width, height), 3)
 
                     # Assign the name, type and texture to the textures dictionary
                     self.textures[len(self.textures.keys()) + 1] = [name, "video", texture, video]
@@ -291,8 +328,8 @@ class MMVShaderMGL:
         # Get #pragma includes
 
         # Simple regex and get every match with findall
-        regex = r"#pragma include ([\w/. -]+)"
-        found = re.findall(regex, fragment_shader)
+        regex = r"^#pragma include ([\w/. -]+)"
+        found = re.findall(regex, fragment_shader, re.MULTILINE)
 
         # For each #pragma include we found
         for include in found:
@@ -313,21 +350,6 @@ class MMVShaderMGL:
         # We parsed the body and added to the prefix stuff that was defined so merge everything together
         fragment_shader = f"{fragment_shader_prefix}\n{fragment_shader}"
 
-        # # Construct the shader
-
-        # Create a program and return it
-        self.program = self.gl_context.program(fragment_shader = fragment_shader, vertex_shader = vertex_shader)
-        self.vao = self.gl_context.vertex_array(self.program, [(self.fullscreen_buffer, '2f 2f', 'in_pos', 'in_uv')])
-        self.texture, self.fbo = self.construct_texture_fbo()
- 
-        # Assign the VAO
-        self.vao = self.gl_context.vertex_array(self.program, [(self.fullscreen_buffer, '2f 2f', 'in_pos', 'in_uv')])
-
-        # Assign the uniforms to blank value
-        for name, value in assign_static_uniforms:
-            uniform = self.program.get(name, FakeUniform())
-            uniform.value = value
-
         # Pretty print / log
         s = "-" * shutil.get_terminal_size()[0]
         print(s)
@@ -335,6 +357,32 @@ class MMVShaderMGL:
         print(s)
         logging.info(f"{debug_prefix} Vertex shader is:\n{vertex_shader}")
         print(s)
+
+        # # Construct the shader
+
+        # Create a program with the fragment and vertex shader
+        self.program = MMVShaderMGL.gl_context.program(fragment_shader = fragment_shader, vertex_shader = vertex_shader)
+
+        # Get a texture bound to the FBO
+        self.texture, self.fbo = self.construct_texture_fbo()
+ 
+        # Assign the VAO
+        self.vao = MMVShaderMGL.gl_context.vertex_array(
+            self.program, [(
+                self.fullscreen_buffer,
+                "2f 2f 2f",
+                "in_pos", "in_opengl_uv", "in_shadertoy_uv"
+            )],
+
+            # Ignore unused vars, like, when we don't ever touch one uv coordinate system just 
+            # keep going and don't blame the user we're not binding to an used attribute
+            skip_errors = True
+        )
+
+        # Assign the uniforms to blank value
+        for name, value in assign_static_uniforms:
+            uniform = self.program.get(name, FakeUniform())
+            uniform.value = value
 
     # Pipe a pipeline to a target that have a program attribute
     def pipe_pipeline(self, pipeline, target):
@@ -346,15 +394,13 @@ class MMVShaderMGL:
             uniform.value = value
             
     # Render this shader to the FBO recursively
-    def render(self, pipeline, do_flip = True):
+    def render(self, pipeline):
         debug_prefix = "[MMVShaderMGL.render]"
-
-        pipeline["do_flip"] = -1 if do_flip else 1
 
         # Render every shader as texture recursively
         for shader_as_texture in self.shaders_as_textures:
             self.pipe_pipeline(pipeline = pipeline, target = shader_as_texture)
-            shader_as_texture.render(pipeline = pipeline, do_flip = not do_flip)
+            shader_as_texture.render(pipeline = pipeline)
 
         # Pipe the pipeline to self
         self.pipe_pipeline(pipeline = pipeline, target = self)
@@ -416,6 +462,7 @@ class MMVShaderMGL:
 
         # Assign user custom pipelines
         for key, value in custom_pipeline.items():
+            assert (key not in self.pipeline.keys()), f"Key [{key}] already in internal pipeline!!"
             self.pipeline[key] = value
 
         # print(self.pipeline)

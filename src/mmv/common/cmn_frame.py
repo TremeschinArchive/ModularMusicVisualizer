@@ -96,9 +96,8 @@ class Frame:
     def load_from_path(self, path: str, convert_to_png: bool=False) -> None:
         debug_prefix = "[Frame.load_from_path]"
 
-        tries = 0
-
         # Keep trying to read it
+        tries = 0
         while True:
             tries += 1
             if tries > 10:
@@ -109,7 +108,7 @@ class Frame:
                 break # the while loop
             except Exception as e:
                 print(e)
-            time.sleep(0.1)
+            time.sleep(0.5)
         
         # Warn the use rwe're not stuck anymore        
         if tries > 10:
