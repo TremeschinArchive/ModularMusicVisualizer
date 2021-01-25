@@ -1,7 +1,14 @@
 """
 ===============================================================================
+                                GPL v3 License                                
+===============================================================================
 
-Purpose: Check requirements.txt dependencies, downloads required ones if any
+Copyright (c) 2020 - 2021,
+  - Tremeschin < https://tremeschin.gitlab.io > 
+
+===============================================================================
+
+Purpose: Utilities for not cluttering base_video.py with processing stuff
 
 ===============================================================================
 
