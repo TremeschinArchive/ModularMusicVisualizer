@@ -52,9 +52,8 @@ class MMVPackageInterface:
     def greeter_message(self) -> None:
         debug_prefix = "[MMVPackageInterface.greeter_message]"
 
-
+        # Get a bias for printing the message centered
         self.terminal_width = shutil.get_terminal_size()[0]
-
         bias = " "*(math.floor(self.terminal_width/2) - 14)
 
         message = \
@@ -71,15 +70,14 @@ f"""{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
 """
         logging.info(message)
 
+    # Thanks message with some official links, warnings
     def thanks_message(self):
         debug_prefix = "[MMVPackageInterface.thanks_message]"
 
-
-        # # Print thanks message :)
-
+        # Get a bias for printing the message centered
         self.terminal_width = shutil.get_terminal_size()[0]
-
         bias = " "*(math.floor(self.terminal_width/2) - 45)
+
         message = \
 f"""{debug_prefix} Show thanks message
 \n{"-"*self.terminal_width}\n
@@ -113,23 +111,18 @@ f"""{debug_prefix} Show thanks message
     # and modules as well!!
     def get_skia_interface(self, **kwargs):
         debug_prefix = "[MMVPackageInterface.get_skia_interface]"
-
         from mmv.mmvskia import MMVSkiaInterface
-
         logging.info(f"{debug_prefix} Get and return MMVSkiaInterface, kwargs: {kwargs}")
-        
         return MMVSkiaInterface(top_level_interace = self, **kwargs)
     
-    # MMVShader works with GLSL shaders through MPV. Currently most
-    # applicable concept is post processing which bumps MMV quality
-    # by a lot
+    # MMVShader for some post processing or visualization generation
     def get_shader_interface(self):
         debug_prefix = "[MMVPackageInterface.get_shader_interface]"
         from mmv.mmvshader import MMVShaderInterface
         logging.info(f"{debug_prefix} Return MMVShaderInterface")
         return MMVShaderInterface(top_level_interace = self)
 
-    # Return one (usually required) setting up encoder
+    # Return one (usually required) setting up encoder unless using preview window
     def get_ffmpeg_wrapper(self):
         debug_prefix = "[MMVPackageInterface.get_ffmpeg_wrapper]"
         from mmv.common.wrappers.wrap_ffmpeg import FFmpegWrapper
@@ -160,8 +153,7 @@ f"""{debug_prefix} Show thanks message
             "See issue [https://github.com/kyamagu/skia-python/issues/21]"
         )
 
-        # # Get this file's path
-
+        # Shortcut for / on posix and \ on nt
         sep = os.path.sep
 
         # Where this file is located, please refer using this on the whole package
@@ -182,7 +174,6 @@ f"""{debug_prefix} Show thanks message
         
         # Build the path the prelude file should be located at
         prelude_file = f"{self.MMV_PACKAGE_ROOT}{sep}prelude.toml"
-
         print(f"{debug_prefix} Attempting to load prelude file located at [{prelude_file}], we cannot continue if this is wrong..")
 
         # Load the prelude file
@@ -283,7 +274,6 @@ f"""{debug_prefix} Show thanks message
         else:
             # Warn Python 3.9 is a bit unstable, even the developer had issues making it work
             logging.warn(f"{debug_prefix} Python 3.9 is acting a bit weird regarding some dependencies on some systems, while it should be possible to run, take it with some grain of salt and report back into the discussions troubles or workarounds you found?")
-            input("\n [ Press enter to continue.. ]: ")
 
         # # The operating system we're on, one of "linux", "windows", "macos"
 
@@ -346,18 +336,21 @@ f"""{debug_prefix} Show thanks message
 
         # Externals directory for Linux
         self.externals_dir_linux = f"{self.MMV_PACKAGE_ROOT}{sep}externals{sep}linux"
-        logging.info(f"{debug_prefix} Externals directory for Linux OS is [{self.externals_dir_linux}]")
-        self.utils.mkdir_dne(path = self.externals_dir_linux, silent = True)
+        if self.os == "linux":
+            logging.info(f"{debug_prefix} Externals directory for Linux OS is [{self.externals_dir_linux}]")
+            self.utils.mkdir_dne(path = self.externals_dir_linux, silent = True)
 
         # Externals directory for Windows
         self.externals_dir_windows = f"{self.MMV_PACKAGE_ROOT}{sep}externals{sep}windows"
-        logging.info(f"{debug_prefix} Externals directory for Windows OS is [{self.externals_dir_windows}]")
-        self.utils.mkdir_dne(path = self.externals_dir_windows, silent = True)
+        if self.os == "windows":
+            logging.info(f"{debug_prefix} Externals directory for Windows OS is [{self.externals_dir_windows}]")
+            self.utils.mkdir_dne(path = self.externals_dir_windows, silent = True)
 
         # Externals directory for macOS
         self.externals_dir_macos = f"{self.MMV_PACKAGE_ROOT}{sep}externals{sep}macos"
-        logging.info(f"{debug_prefix} Externals directory for Darwin OS (macOS) is [{self.externals_dir_macos}]")
-        self.utils.mkdir_dne(path = self.externals_dir_macos, silent = True)
+        if self.os == "macos":
+            logging.info(f"{debug_prefix} Externals directory for Darwin OS (macOS) is [{self.externals_dir_macos}]")
+            self.utils.mkdir_dne(path = self.externals_dir_macos, silent = True)
 
         # # This native platform externals dir
         self.externals_dir_this_platform = self.__get_platform_external_dir(self.os)
@@ -382,15 +375,16 @@ f"""{debug_prefix} Show thanks message
             "macos": self.externals_dir_macos,
         }.get(platform)
 
+        # mkdir dne just in case cause we asked for this?
+        self.utils.mkdir_dne(path = externals_dir, silent = True)
+
         # log action
         logging.info(f"{debug_prefix} Return external dir for platform [{platform}] -> [{externals_dir}]")
-
         return externals_dir
 
     # Update the self.EXTERNALS_SEARCH_PATH to every recursive subdirectory on the platform's externals dir
     def update_externals_search_path(self):
         debug_prefix = "[MMVPackageInterface.update_externals_search_path]"
-
 
         # The subdirectories on this platform externals folder
         externals_subdirs = self.utils.get_recursively_all_subdirectories(self.externals_dir_this_platform)
@@ -408,7 +402,6 @@ f"""{debug_prefix} Show thanks message
     # Don't append the extra .exe because Linux, macOS doesn't have these, returns False if no binary was found
     def find_binary(self, binary):
         debug_prefix = "[MMVPackageInterface.find_binary]"
-
         logging.info(STEP_SEPARATOR)
 
         # Append .exe for Windows
@@ -417,7 +410,6 @@ f"""{debug_prefix} Show thanks message
 
         # Log action
         logging.info(f"{debug_prefix} Finding binary in PATH and EXTERNALS directories: [{binary}]")
-
         return self.utils.get_executable_with_name(binary, extra_paths = self.EXTERNALS_SEARCH_PATH)
 
     # Make sure we have some target Externals, downloads latest release for them.
@@ -430,7 +422,6 @@ f"""{debug_prefix} Show thanks message
     #
     def check_download_externals(self, target_externals = [], platform = None):
         debug_prefix = "[MMVPackageInterface.check_download_externals]"
-
 
         # Overwrite os if user set to a specific one
         if platform is None:
@@ -485,7 +476,6 @@ f"""{debug_prefix} Show thanks message
 
                     # The assets (downloadable stuff)
                     assets = ffmpeg_release["assets"]
-
                     logging.info(f"{debug_prefix} Available assets to download (checking for non shared, gpl, non vulkan release):")
 
                     # Parsing the version we target and want
@@ -513,6 +503,7 @@ f"""{debug_prefix} Show thanks message
                             download_url = item["browser_download_url"]
                             break
 
+                    # Where we'll download from
                     logging.info(f"{debug_prefix} Download URL: [{download_url}]")
 
                     # Where we'll save the compressed zip of FFmpeg
@@ -527,7 +518,7 @@ f"""{debug_prefix} Show thanks message
                 else:  # Already have the binary
                     logging.info(f"{debug_prefix} Already have [ffmpeg] binary in externals / system path!!")
 
-            # # MPV
+            # # MPV FIXME: deprecate future version
 
             if external == "mpv":
                 debug_prefix = f"[MMVPackageInterface.check_download_externals({external})]"
@@ -561,7 +552,7 @@ f"""{debug_prefix} Show thanks message
                 else:  # Already have the binary
                     logging.info(f"{debug_prefix} Already have [mpv] binary in externals / system path!!")
 
-            # # MPV
+            # # Musescore
 
             if external == "musescore":
                 debug_prefix = f"[MMVPackageInterface.check_download_externals({external})]"
@@ -574,6 +565,7 @@ f"""{debug_prefix} Show thanks message
                 # If we don't have musescore binary on externals dir or system's path
                 if not self.find_binary("musescore"):
 
+                    # Version we want
                     musescore_version = "v3.5.2/MuseScorePortable-3.5.2.311459983-x86.paf.exe"
 
                     # Download musescore
@@ -604,5 +596,6 @@ f"""{debug_prefix} Show thanks message
             if help_fix is not None:
                 logging.error(f"{debug_prefix} {help_fix}")
 
+            # Exit with non zero error code
             sys.exit(-1)
     

@@ -8,7 +8,8 @@ Copyright (c) 2020 - 2021,
 
 ===============================================================================
 
-Purpose: Basic usage example of MMV
+Purpose: Basic usage example of MMV, quite big of a file but oh well what
+can we do to even start simplifying this?
 
 ===============================================================================
 

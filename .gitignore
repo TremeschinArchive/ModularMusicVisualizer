@@ -1,6 +1,3 @@
-
-# # # Tremx
-
 # # Global
 
 # Extensions
@@ -8,7 +5,7 @@
 *.flac
 *.mkv
 *.mp4
-*ffmpeg.exe
+*.exe
 .vscode
 
 # Dolphin, nautilus

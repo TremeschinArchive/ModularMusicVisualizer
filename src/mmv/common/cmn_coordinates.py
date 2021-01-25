@@ -53,24 +53,26 @@ y/x = tan(theta)
 
 I use this because it's easier to generate the visualization bars
 with polar coordinates as you just have to set a angle according to the
-frequency position on the ditionary and the size of the point is just the r
+frequency position on the dictionary and the size of the point is just the r
 which is controlled by the FFT magnitude at that point
 """
 class PolarCoordinates:
-
     def __init__(self) -> None:
         # Start at the point (0, 0)
         self.r = 0
         self.theta = 0
         self.round = 2
 
+    # Load r and theta values from r and theta
     def from_r_theta(self, r: float, theta: float) -> None:
         self.r = r
         self.theta = theta
     
+    # Load r and theta values from x and y, make the conversion
     def from_rectangular(self, x: float, y: float) -> None:
         self.r, self.theta = self.rectangular_to_polar(x, y)
 
+    # Convert a polar r, theta to a polar coordinate
     def polar_to_rectangular(self, r: float, theta: float) -> list:
         # x = r.cos(theta)
         # y = r.sin(theta)
@@ -78,6 +80,7 @@ class PolarCoordinates:
         y = r * math.sin(theta)
         return [round(x, self.round), round(y, self.round)]
 
+    # Convert a x, y value to a r, theta one
     def rectangular_to_polar(self, x: float, y: float) -> list:
         # x = r.cos(theta) -> theta = cos-1 (x/r)
         # y = r.sin(theta) -> theta = sin-1 (y/r)
@@ -86,5 +89,6 @@ class PolarCoordinates:
         theta = math.acos(x/r)
         return [round(r, self.round), round(theta, self.round)]
     
+    # Get the current values to a rectangular coordinate
     def get_rectangular_coordinates(self) -> list:
         return self.polar_to_rectangular(self.r, self.theta)
