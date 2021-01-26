@@ -118,7 +118,7 @@ class MMVSkiaMain:
             sys.exit(-1)
         
         # Say thanks message
-        self.mmvskia_interface.top_level_interace.thanks_message()
+        self.mmvskia_interface.mmv_package_interface.thanks_message()
 
         # Wait for FFmpeg pipe to stop
         while not self.pipe_video_to.stop_piping:

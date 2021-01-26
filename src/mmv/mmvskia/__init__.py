@@ -63,11 +63,11 @@ class MMVSkiaInterface:
     # self.mmv_skia_main.mmvskia_interface.top_level_interface, since this interface here is just the MMVSkia 
     # interface for the mmvskia package while the top level one manages both MMVSkia and MMVShader
     #
-    def __init__(self, top_level_interace, **kwargs):
+    def __init__(self, mmv_package_interface, **kwargs):
         debug_prefix = "[MMVSkiaInterface.__init__]"
 
-        self.top_level_interace = top_level_interace
-        self.os = self.top_level_interace.os
+        self.mmv_package_interface = mmv_package_interface
+        self.os = self.mmv_package_interface.os
 
         # Where this file is located, please refer using this on the whole package
         # Refer to it as self.mmv_skia_main.mmvskia_interface.MMV_SKIA_ROOT at any depth in the code

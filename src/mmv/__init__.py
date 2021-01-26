@@ -113,14 +113,14 @@ f"""{debug_prefix} Show thanks message
         debug_prefix = "[MMVPackageInterface.get_skia_interface]"
         from mmv.mmvskia import MMVSkiaInterface
         logging.info(f"{debug_prefix} Get and return MMVSkiaInterface, kwargs: {kwargs}")
-        return MMVSkiaInterface(top_level_interace = self, **kwargs)
+        return MMVSkiaInterface(mmv_package_interface = self, **kwargs)
     
     # MMVShader for some post processing or visualization generation
     def get_shader_interface(self):
         debug_prefix = "[MMVPackageInterface.get_shader_interface]"
         from mmv.mmvshader import MMVShaderInterface
         logging.info(f"{debug_prefix} Return MMVShaderInterface")
-        return MMVShaderInterface(top_level_interace = self)
+        return MMVShaderInterface(mmv_package_interface = self)
 
     # Return one (usually required) setting up encoder unless using preview window
     def get_ffmpeg_wrapper(self):

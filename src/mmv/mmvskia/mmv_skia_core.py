@@ -58,7 +58,7 @@ class MMVSkiaCore:
 
         # # Save info so we can utilize on post processing or somewhere else
 
-        last_session_info_file = self.mmvskia_main.mmvskia_interface.top_level_interace.last_session_info_file
+        last_session_info_file = self.mmvskia_main.mmvskia_interface.mmv_package_interface.last_session_info_file
         logging.info(f"{debug_prefix} Saving partial session info to last_session_info file at [{last_session_info_file}]")
 
         # Quit if code flow says so
