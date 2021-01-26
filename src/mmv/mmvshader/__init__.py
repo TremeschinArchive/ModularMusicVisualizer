@@ -37,13 +37,15 @@ import os
 # Main wrapper class for the end user, facilitates MMV in a whole
 class MMVShaderInterface:
 
+    # Get a moderngl wrapper / interface for rendering fragment shaders, getting their
+    # contents, map images, videos and even other shaders into textures
     def get_mgl_interface(self):
         return MMVShaderMGL()
 
-    def __init__(self, top_level_interace, **kwargs):
+    def __init__(self, mmv_package_interface, **kwargs):
         debug_prefix = "[MMVShaderInterface.__init__]"
 
-        self.top_level_interace = top_level_interace
+        self.mmv_package_interface = mmv_package_interface
   
         # Where this file is located, please refer using this on the whole package
         # Refer to it as self.mmv_skia_main.interface.MMV_SHADER_ROOT at any depth in the code

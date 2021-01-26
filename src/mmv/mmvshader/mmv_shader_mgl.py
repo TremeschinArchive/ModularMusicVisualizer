@@ -34,6 +34,7 @@ import subprocess
 import moderngl
 import logging
 import shutil
+import time
 import cv2
 import sys
 import re
@@ -89,17 +90,6 @@ uniform float mmv_time;
 uniform vec2 mmv_resolution;
 
 ///add_uniform"""
-
-
-# Hello world of the fragment shaders
-DEFAULT_FRAGMENT_SHADER = """\
-void main() {
-    // Initialize black and transparent output
-    fragColor = vec4(0.0);
-
-    // // Your code now
-
-}"""
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -178,7 +168,37 @@ class MMVShaderMGL:
         self.shaders_as_textures = []
 
         # Initialize None values
-        (self.width, self.height, self.fps) = [None]*3
+        (self.width, self.height, self.fps) = [None] * 3
+
+        # When we use [#pragma include name/path] we have the option to put a directory or a name in there, 
+        # we search for these paths for a file that is named [name.glsl] so we don't have to pass the full
+        # path and make this act kinda like a (lazy | compact) method of including other shaders.
+        #
+        # The included files dir is for files we already included so we don't include twice and cause
+        # redefinition errors
+        self.include_directories = []
+        self.included_files = []
+    
+    # Add a directory to the list of directories to include, note that this will recursively add this
+    # include dir to the shaders as textures mapped
+    def include_dir(self, path):
+        debug_prefix = "[MMVShaderMGL.include_dir]"
+        
+        # Log action
+        logging.info(f"{debug_prefix} Add path to include directories [{path}]")
+
+        # If the path was already included then don't do anything
+        if path in self.include_directories:
+            logging.info(f"{debug_prefix} Path was already included in the include directories")
+        else:
+            self.include_directories.append(path)
+
+        # Recursively adding this path to child shaders
+        logging.info(f"{debug_prefix} Path was already included in the include directories")
+
+        # Add recursively the paths as well
+        for shader_as_texture in self.shaders_as_textures:
+            shader_as_texture.add_include_dir(path = path)
 
     # Configurate how we'll output the shader
     def render_config(self, width, height, fps):
@@ -209,12 +229,49 @@ class MMVShaderMGL:
 
         # Return the two created objects
         return [texture, fbo]
+    
+    # Loads one shader from the disk, optionally also a custom vertex shader rather than the screen filling default one
+    def load_shader_from_path(self, fragment_shader_path, vertex_shader_path = DEFAULT_VERTEX_SHADER):
+        debug_prefix = "[MMVShaderMGL.load_shader_from_path]"
+
+        # # Fragment shader
+
+        #  Log action and error assertion, path must be valid
+        logging.info(f"{debug_prefix} Loading fragment shader from path [{fragment_shader_path}]")
+        assert (os.path.exists(fragment_shader_path)), f"Fragment shader path must be valid: [{fragment_shader_path}]"
+
+        # Load the fragment shader file
+        with open(fragment_shader_path, "r") as frag_shader:
+            frag_data = frag_shader.read()
+
+        # # Vertex shader
+        
+        # Vertex shader is optional so we load it later on if it was given a different input
+        if vertex_shader_path != DEFAULT_VERTEX_SHADER:
+
+            # Log action and error assertion, path must be valid
+            logging.info(f"{debug_prefix} Loading fragment shader from path [{vertex_shader_path}]")
+            assert (os.path.exists(vertex_shader_path)), f"Vertex shader path must be valid: [{vertex_shader_path}]"
+
+            # Load the fragment shader file
+            with open(vertex_shader_path, "r") as vertex_shader:
+                vertex_data = vertex_shader.read()
+
+        else: # Otherwise the vertex data is the default screen filling one
+            vertex_data = DEFAULT_VERTEX_SHADER
+        
+        # # Construct the shader
+        
+        self.construct_shader(
+            fragment_shader = frag_data,
+            vertex_shader = vertex_data,
+        )
 
     # Create one context's program out of a frag and vertex shader, those are used together
     # with VAOs so we render to some FBO. 
     # Parses for #pragma map name=loader:value:WxH and creates the corresponding texture, binds to it
     # Also copies #pragma include <path.glsl> to this fragment shader
-    def construct_shader(self, fragment_shader = DEFAULT_FRAGMENT_SHADER, vertex_shader = DEFAULT_VERTEX_SHADER):
+    def construct_shader(self, fragment_shader, vertex_shader = DEFAULT_VERTEX_SHADER):
         debug_prefix = "[MMVShaderMGL.construct_shader]"
 
         # The raw specification prefix, sets uniforms every one should have
@@ -228,7 +285,7 @@ class MMVShaderMGL:
 
         # Regular expression to match #pragma map name=loader:/path/value;512x512
         # the ;512x512 is required for the image, video and shader loaders
-        regex = r"^#pragma map ([\w]+)=([\w]+):([\w/. -]+):?([0-9]+)?x?([0-9]+)?"
+        regex = r"([ ]+)?#pragma map ([\w]+)=([\w]+):([\w/. -]+):?([0-9]+)?x?([0-9]+)?"
         found = re.findall(regex, fragment_shader, re.MULTILINE)
 
         logging.info(f"{debug_prefix} Regex findall says: {found}")
@@ -238,8 +295,9 @@ class MMVShaderMGL:
 
         # For each mapping
         for mapping in found:
+
             # Get the values we matched
-            name, loader, value, width, height = mapping
+            identation, name, loader, value, width, height = mapping
             logging.info(f"{debug_prefix} Matched mapping [name={name}] [loader={loader}] [width={width}] [height={height}]")
 
             # Error assertion, valid loader and path
@@ -252,11 +310,10 @@ class MMVShaderMGL:
             if loader in ["image", "shader", "video"]:
 
                 # We need an target render size
-                assert (width != '') and (height != ''), "Width or height shouldn't be null, set WxH on pragma map with ;512x512"
+                assert (width != '') and (height != ''), "Width or height shouldn't be null, set WxH on pragma map with :512x512"
 
                 # Convert to int the width and height
-                width = int(width)
-                height = int(height)
+                width, height = int(width), int(height)
 
                 # Image loader
                 if loader == "image":
@@ -325,18 +382,71 @@ class MMVShaderMGL:
                     [f"{name}_resolution", (int(width), int(height))],
                 ]
 
-        # Get #pragma includes
+        # # Get #pragma includes
 
+        logging.info(f"{debug_prefix} Parsing the fragment shader for every #pragma include")
+        
         # Simple regex and get every match with findall
-        regex = r"^#pragma include ([\w/. -]+)"
+        regex = r"([ ]+)?#pragma include ([\w/. -]+)"
         found = re.findall(regex, fragment_shader, re.MULTILINE)
 
+        logging.info(f"{debug_prefix} Regex findall says: {found}")
+ 
         # For each #pragma include we found
-        for include in found:
+        for mapping in found:
+            identation, include = mapping
+
+            # If this include was already made then no need to do it again.
+            if include in self.included_files:
+                logging.info(f"{debug_prefix} File / path already included [{include}]")
+                continue
+            
+            # Mark that this was already included
+            self.included_files.append(include)
 
             # This will replace this line (we build back)
-            replaces = f"#pragma include {include}"
-            
+            replaces = f"{identation}#pragma include {include}"    
+
+            # # Attempt to find the file on the included directories
+
+            look_for_in_included_directories = f"{include}.glsl"
+            logging.info(f"{debug_prefix} Checking on include directories for [{look_for_in_included_directories}]")
+            include_found = False
+
+            # Check for the include dirs files with the include value dot glsl
+            # break the loops if we ever get a match
+            for directory in self.include_directories:
+                if include_found: break
+                # For each file
+                for file in os.listdir(directory):
+                    if include_found: break
+
+                    # If the file name takes the included name and ends with .glsl
+                    if file == look_for_in_included_directories:
+                        include_found = True
+
+                        # The full path of the included shader path
+                        include_shader_path = os.path.join(directory, file)                        
+                        logging.info(f"{debug_prefix} Found a match at [{include_shader_path}]")
+
+                        # Open the file
+                        with open(include_shader_path, "r") as glsl:
+
+                            # Add the identation of the match
+                            include_other_glsl_data = []
+                            for line in glsl:
+                                include_other_glsl_data.append(f"{identation}{line}")
+
+                            # Join the value this #pragma include replaces with the idented data of the other glsl
+                            include_other_glsl_data = ''.join(include_other_glsl_data)
+                            fragment_shader = fragment_shader.replace(replaces, include_other_glsl_data, 1)  # Replace ONCE
+
+            # Continue to the next mapping, don't break this outer for loop but call it done here
+            # since one file on the include directories was found
+            if include_found: continue
+
+            # # No file found on include directories, assuming user sent a path
+
             # Error assertion, the path must exist
             assert os.path.exists(include), f"Value of #pragma include is not a valid path [{include}]"
 
@@ -345,7 +455,7 @@ class MMVShaderMGL:
                 include_other_glsl_data = f.read()
 
             # Replace the line on this fragment shader with the included other one
-            fragment_shader = fragment_shader.replace(replaces, include_other_glsl_data)
+            fragment_shader = fragment_shader.replace(replaces, include_other_glsl_data, 1)  # Replace ONCE
 
         # We parsed the body and added to the prefix stuff that was defined so merge everything together
         fragment_shader = f"{fragment_shader_prefix}\n{fragment_shader}"
@@ -366,11 +476,16 @@ class MMVShaderMGL:
         # Get a texture bound to the FBO
         self.texture, self.fbo = self.construct_texture_fbo()
  
-        # Assign the VAO
+        # Create one VAO on the program with the coordinate info
         self.vao = MMVShaderMGL.gl_context.vertex_array(
             self.program, [(
+                # Fill the whole screen
                 self.fullscreen_buffer,
+
+                # Expect three pairs of floats
                 "2f 2f 2f",
+
+                # What the floats means
                 "in_pos", "in_opengl_uv", "in_shadertoy_uv"
             )],
 
@@ -384,7 +499,9 @@ class MMVShaderMGL:
             uniform = self.program.get(name, FakeUniform())
             uniform.value = value
 
-    # Pipe a pipeline to a target that have a program attribute
+    # # Loop functions, routines
+
+    # Pipe a pipeline to a target that have a program attribute (this self class or shader as texture)
     def pipe_pipeline(self, pipeline, target):
         debug_prefix = "[MMVShaderMGL.pipe_pipeline]"
 
@@ -411,26 +528,21 @@ class MMVShaderMGL:
 
         # The location is the dict index, the texture info is [name, loader, object]
         for location, texture_info in self.textures.items():
-            name = texture_info[0]
-            loader = texture_info[1]
-            tex_obj = texture_info[2]
+            # Unpack
+            name, loader, tex_obj = texture_info
 
             try:
-                import time
                 # Read the next frame of the video
                 if loader == "video":
 
                     # We'll only have a fourth element that is video if loader is video
                     video = texture_info[3]
-                    
                     ok, frame = video.read()
 
                     # Can't read, probably out of frames?
-                    if not ok: 
-
+                    if not ok:  # cry
                         # Reset to frame 0
                         video.set(cv2.CAP_PROP_POS_FRAMES, 0)
-
                         # Read again
                         ok, frame = video.read()
                     
@@ -460,14 +572,20 @@ class MMVShaderMGL:
         self.pipeline["mmv_time"] = round((self.pipeline["mmv_frame"] / self.fps), 3)
         self.pipeline["mmv_resolution"] = (self.width, self.height)
 
-        # Assign user custom pipelines
+        # Assign user custom pipelines.
+        # NOTE: Don't forget to write (uniform (type) name;) on the GLSL file
+        # and also be sure that the name is unique, we don't check this here due Python performance
         for key, value in custom_pipeline.items():
-            assert (key not in self.pipeline.keys()), f"Key [{key}] already in internal pipeline!!"
             self.pipeline[key] = value
 
         # print(self.pipeline)
         self.render(pipeline = self.pipeline)
             
-    # Read from the current FBO
+    # Read from the current FBO, return the bytes
     def read(self):
         return self.fbo.read()
+    
+    # Write directly into a subprocess (FFmpeg, FFplay)
+    # Use this for speeds preferably
+    def read_into_subprocess_stdin(self, target_stdin):
+        target_stdin.write(self.fbo.read())
