@@ -152,7 +152,7 @@ I'll mainly list the main name and where to find more info, it's just impossible
 
 - [ModernGL Python package](https://github.com/moderngl/moderngl) for making it simple to render fragment shaders at insane speeds under Python.
   
-  - Also the ModernGL main developer [einarf](https://github.com/einarf) for helping me an substantial amount with some good practices and how to do's
+  - Also the ModernGL (current?) main developer [einarf](https://github.com/einarf) for helping me an substantial amount with some good practices and how to do's
   
 - [FFmpeg, FFplay](https://ffmpeg.org), _"A complete, cross-platform solution to record, convert and stream audio and video."_ - and they are not lying!!
 
