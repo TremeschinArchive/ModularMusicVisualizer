@@ -89,7 +89,7 @@ elif mode == "view":
     source.configure(
         batch_size = 2048 * 2,
         sample_rate = SAMPLERATE,
-        recorder_numframes = SAMPLERATE // (FRAMERATE / 2)  # Safety: expect half of fps
+        recorder_numframes = int(SAMPLERATE / (FRAMERATE / 2))  # Safety: expect half of fps
     )
     source.audio_processing.config = {
         0: {
@@ -206,7 +206,7 @@ while True:
 
         # Interpolation
         for index, value in enumerate(pipeline_info["fft"]):
-            prevfft[index] = prevfft[index] + (value - prevfft[index]) * 0.35
+            prevfft[index] = prevfft[index] + (value*3.0 - prevfft[index]) * 0.35
 
         # Write the FFT
         mgl.write_texture_pipeline(texture_name = "fft", data = prevfft.astype(np.float32))
