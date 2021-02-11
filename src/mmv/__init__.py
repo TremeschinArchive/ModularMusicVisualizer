@@ -135,6 +135,11 @@ f"""{debug_prefix} Show thanks message
         from mmv.common.wrappers.wrap_ffplay import FFplayWrapper
         logging.info(f"{debug_prefix} Return FFplayWrapper")
         return FFplayWrapper()
+    
+    def get_audio_source_realtime(self):
+        debug_prefix = "[MMVPackageInterface.get_audio_source_realtime]"
+        from mmv.common.cmn_audio import AudioSourceRealtime
+        return AudioSourceRealtime()
 
     # Main interface class, mainly sets up root dirs, get config, distributes classes
     # Send platform = "windows", "macos", "linux" for forcing a specific one

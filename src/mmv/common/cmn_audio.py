@@ -32,13 +32,134 @@ from mmv.common.cmn_fourier import Fourier
 import mmv.common.cmn_any_logger
 import audio2numpy
 import numpy as np
-import subprocess
 import samplerate
-import soundfile
+import subprocess
 import audioread
+import soundcard
+import soundfile
+import threading
 import logging
 import math
+import time
 import os
+
+
+class AudioSourceRealtime:
+    def __init__(self):
+        self.audio_processing = AudioProcessing()
+
+    def init(self, recorder_device = None, search_for_loopback = False):
+        debug_prefix = "[AudioSourceRealtime.init]"
+
+        # Search for the first loopback device (monitor of the current audio output)
+        # Probably will fail on Linux if not using PulseAudio but oh well
+        if (search_for_loopback) and (recorder_device is None):
+            logging.info(f"{debug_prefix} Attempting to find the first loopback device for recording")
+
+            # Iterate on every "microphone", or recorder-capable devices to be more precise
+            for device in soundcard.all_microphones(include_loopback = True):
+
+                # If it's marked as loopback then we'll use it
+                if device.isloopback:
+                    self.recorder = device
+                    logging.info(f"{debug_prefix} Found loopback device: [{device}]")
+                    break            
+
+            # If we didn't match anyone then recorder_device will be None and we'll error out soon
+        else:
+            # Assign the recorder given by the user since 
+            self.recorder = recorder_device
+
+        # Recorder device should not be none
+        assert (self.recorder is not None), "Auto search is off and didn't give a target recorder device"
+
+    # Set the target batch size and sample rate.
+    def configure(self, batch_size, sample_rate, recorder_numframes = None):
+        debug_prefix = "[AudioSourceRealtime.configure]"
+        self.batch_size = batch_size
+        self.sample_rate = sample_rate
+        self.recorder_numframes = recorder_numframes
+
+    # Start the main routines since we configured everything
+    def start_async(self):
+        debug_prefix = "[AudioSourceRealtime.start_async]"
+    
+        logging.info(f"{debug_prefix} Starting the main capture and processing thread..")
+
+        # Start the thread we capture and process the audio
+        self.capture_process_thread = threading.Thread(target = self.capture_and_process_loop, daemon = True)
+        self.capture_process_thread.start()
+
+        # Wait until we have some info so we don't accidentally crash with None type has no attribute blabla
+        self.info = {}
+        while not self.info:
+            time.sleep(0.016)
+    
+    # Stop the main thread
+    def stop(self):
+        self.__should_stop = True
+
+    # This is the thread we capture the audio and process it, it's a bit more complicated than a 
+    # class that reads from a file because we don't have guaranteed slices we read and also to 
+    # synchronize the processing part and the frames we're rendering so it's better to just do
+    # stuff as fast as possible here and get whatever next numframes we have to read 
+    def capture_and_process_loop(self):
+
+        # A float32 zeros to store the current audio to process
+        self.current_batch = np.zeros((2, self.batch_size), dtype = np.float32)
+
+        self.__should_stop = False
+        self.info = {}
+
+        # Open a recorder microphone otherwise we open and close the stream on each loop
+        with self.recorder.recorder(samplerate = self.sample_rate, channels = 2) as source:
+
+            # Until the user don't run the function stop
+            while not self.__should_stop:
+
+                # The array with new stereo data to process, we get whatever there is ready that was
+                # buffered (numframes = None) so we don't have to sync with the video or block the code
+                # (though we're supposed to be multithreaded here so it won't matter but we lose the
+                # ability to have big batch sizes in a "progressive" processing mode).
+                # We also transpose the result so we get a [channels, samples] array shape
+                new_audio_data = source.record(numframes = self.recorder_numframes).T
+    
+                # The number of new samples we got
+                new_audio_data_len = new_audio_data.shape[1]
+
+                # Offset the Left and Right arrays on the current batch itself by the length of the
+                # new data, this is so we always use the index 0 as the next new and unread value
+                # relative to when we keep adding and wrapping around
+                self.current_batch = np.roll(self.current_batch, - new_audio_data_len, axis = -1)
+
+                # Assign the new data to the current batch arrays
+                for channel_number in [0, 1]:
+
+                    # Fade old values on each cycle (multiply by 0.8 should be enough?)
+                    self.current_batch[channel_number] = self.current_batch[channel_number] * 0.95
+
+                    # We simply np.put the new data on the current batch array with its entirety
+                    # of the length (0, batch_size) on the mode to wrap the values around
+                    np.put(
+                        self.current_batch[channel_number], # Target array
+                        range(0, self.batch_size),          # Where on target array to put the data
+                        new_audio_data[channel_number],     # Input data
+                        mode = "wrap"                       # Mode (wrap)
+                    )
+                
+                # This yields information as it was calculated so we assign the key (index 0) to the value (index 1)
+                for info in self.audio_processing.get_info_on_audio_slice(self.current_batch, original_sample_rate = self.sample_rate):
+                    self.info[info[0]] = info[1]
+
+        self.__should_stop = False
+
+    # Do nothing, we're threaded processing the audio
+    def next(self):
+        pass
+    
+    # We just return the current info
+    def get_info(self):
+        return self.info
 
 
 class AudioFile:
@@ -99,6 +220,133 @@ class AudioProcessing:
         self.piano_keys_frequencies = [round(self.get_frequency_of_key(x), 2) for x in range(-50, 68)]
         logging.info(f"{debug_prefix} Whole notes frequencies we'll care: [{self.piano_keys_frequencies}]")
 
+    # # New Methods
+
+    def get_info_on_audio_slice(self, audio_slice: np.ndarray, original_sample_rate) -> dict:
+
+        # Calculate MONO
+        mono = (audio_slice[0] + audio_slice[1]) / 2
+
+        # # Average audio amplitude
+
+        # L, R, Mono respectively
+        average_amplitudes = []
+
+        # Iterate, calculate the median of the absolute values
+        for channel_number in [0, 1]:
+            average_amplitudes.append(np.median(np.abs(audio_slice[channel_number])))
+        
+        # Append mono average amplitude
+        average_amplitudes.append(sum(average_amplitudes) / 2)
+
+        # Yield average amplitudes info
+        yield ["average_amplitudes", tuple([round(value, 8) for value in average_amplitudes])]
+
+        # # Standard deviations
+
+        yield ["standard_deviations", tuple([
+            np.std(audio_slice[0]),
+            np.std(audio_slice[1]),
+            np.std(mono)
+        ])]
+
+        # # FFT shenanigans
+
+        processed = []
+
+        # For each channel
+        for data in audio_slice:
+
+            # Iterate on config
+            for _, value in self.config.items():
+
+                # Get info on config
+                sample_rate = value.get("sample_rate")
+                start_freq = value.get("start_freq")
+                end_freq = value.get("end_freq")
+
+                # Get the frequencies we want and will return in the end
+                wanted_freqs = self.datautils.list_items_in_between(
+                    self.piano_keys_frequencies,
+                    start_freq, end_freq,
+                )
+
+                # Resample our data to the one specified on the config
+                resampled = self.resample(
+                    data = data,
+                    original_sample_rate = original_sample_rate,
+                    new_sample_rate = sample_rate,
+                )
+
+                # Calculate the binned FFT, we get N vectors of [freq, value] of this FFT
+                binned_fft = self.fourier.binned_fft(
+                    data = resampled,
+
+                    # # Target (re?)sample rate so we normalize the FFT values
+                    sample_rate =  sample_rate,
+                    original_sample_rate = original_sample_rate,
+                )
+
+                # Get the nearest freq and add to processed            
+                for freq in wanted_freqs:
+
+                    # Get the nearest and FFT value
+                    nearest = self.find_nearest(binned_fft[0], freq)
+                    value = binned_fft[1][nearest[0]]
+
+                    # TODO: make configurable
+                    flatten_scalar = self.functions.value_on_line_of_two_points(
+                        Xa = 20,
+                        Ya = 0.2,
+                        Xb = 20000,
+                        Yb = 62,
+                        get_x = nearest[0]
+                    )
+
+                    # Append on the wanted FFT values
+                    processed.append(abs(value) * flatten_scalar * 6)
+
+        # Yield FFT data
+        yield ["fft", np.array(processed).astype(np.float32)]
+
+    # # Common Methods
+
+    # Resample an audio slice (raw array) to some other frequency, this is useful when calculating
+    # FFTs because a lower sample rate means we get more info on the bass freqs
+    def resample(self,
+            data: np.ndarray,
+            original_sample_rate: int,
+            new_sample_rate: int
+    ) -> np.ndarray:
+
+        # If the ratio is 1 then we don't do anything cause new/old = 1, just return the input data
+        if new_sample_rate == original_sample_rate:
+            return data
+        else:
+            # Use libsamplerate for resampling the audio otherwise
+            return samplerate.resample(data, ratio = (new_sample_rate / original_sample_rate), converter_type = 'sinc_best')
+
+    # Get N semitones above / below A4 key, 440 Hz
+    #
+    # get_frequency_of_key(-12) = 220 Hz
+    # get_frequency_of_key(  0) = 440 Hz
+    # get_frequency_of_key( 12) = 880 Hz
+    #
+    def get_frequency_of_key(self, n, A4 = 440):
+        return A4 * (2**(n/12))
+
+    # https://stackoverflow.com/a/2566508
+    # Find nearest value inside one array from a given target value
+    # I could make my own but this one is more efficient because it uses numpy
+    # Returns: index of the match and its value
+    def find_nearest(self, array, value):
+        index = (np.abs(array - value)).argmin()
+        return index, array[index]
+    
+
+    # # Old methods [compatibility]
+
+
     # Slice a mono and stereo audio data TODO: make this a generator and also accept "real time input?"
     def slice_audio(self,
             stereo_data: np.ndarray,
@@ -134,41 +382,6 @@ class AudioProcessing:
             mono_data[start_cut:end_cut]
         )))
 
-    # Resample an audio slice (raw array) to some other frequency, this is useful when calculating
-    # FFTs because a lower sample rate means we get more info on the bass freqs
-    def resample(self,
-            data: np.ndarray,
-            original_sample_rate: int,
-            new_sample_rate: int
-        ) -> None:
-
-        # The exact ratio to resample
-        ratio = new_sample_rate / original_sample_rate
-
-        # If the ratio is 1 then we don't do anything cause new/old = 1, just return the input data
-        if ratio == 1:
-            return data
-        else:
-            # Use libsamplerate for resampling the audio otherwise
-            return samplerate.resample(data, ratio, 'sinc_best')
-
-    # Get N semitones above / below A4 key, 440 Hz
-    #
-    # get_frequency_of_key(-12) = 220 Hz
-    # get_frequency_of_key(  0) = 440 Hz
-    # get_frequency_of_key( 12) = 880 Hz
-    #
-    def get_frequency_of_key(self, n):
-        return 440 * (2**(n/12))
-
-    # https://stackoverflow.com/a/2566508
-    # Find nearest value inside one array from a given target value
-    # I could make my own but this one is more efficient because it uses numpy
-    # Returns: index of the match and its value
-    def find_nearest(self, array, value):
-        index = (np.abs(array - value)).argmin()
-        return index, array[index]
-    
     # Calculate the FFT of this data, get only wanted frequencies based on the musical notes
     def process(self,
             data: np.ndarray,

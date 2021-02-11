@@ -31,18 +31,16 @@ from scipy.fftpack import fft
 import numpy as np
 import math
 
-
 class Fourier:
 
     # Calculate an Fast Fourier Transform, doesn't return DC bias (first bin)
     # and cuts up to the middle where the useful info ends
     def fft(self, data: np.ndarray) -> np.ndarray:
-
         # 1. Calculate the fft fft(data)
         # 2. Only need half the list of fft and don't need the DC bias (first item)
         #    - [1 : int(len(N) / 2)] = [1 : len(N) // 2]
-        return fft(data)[1:len(data) // 2]
-    
+        return np.fft.fft(data)[1 : data.shape[0] // 2]
+
     # For more information, https://stackoverflow.com/questions/4364823
     #
     # This function accepts a data input, its samplerate and the "original sample rate" before
@@ -53,7 +51,7 @@ class Fourier:
     #
     # Where each index of the FFT freq correspond to the other array's index FFT value
     #
-    def binned_fft(self, data: np.ndarray, sample_rate: int, original_sample_rate: int = 48000) -> list:
+    def binned_fft(self, data: np.ndarray, sample_rate: int, original_sample_rate: int = 48000) -> np.ndarray:
 
         # # Get the "normalized" FFT based on the sample rates
 
@@ -61,35 +59,12 @@ class Fourier:
         # and hence half the width of each frequency bin, you'll double the amplitude of the FFT result."
         # >> https://wiki.analytica.com/FFT
         #
-        # sample_rate * 2^n = original_sample_rate
-        # 2^n = original_sample_rate / sample_rate
-        # n log(2) = log(sample_rate / original_sample_rate)
-        # n = log(sample_rate / original_sample_rate) / log(2)
-        # where sample_rate / original_sample_rate = ratio
+        # 2^(new_sample_rate/original_sample_rate) = power gain
+        # Divide by that but offset by 1 since if new fs = old fs we multiply by 1/2^0 = 1
         #
-        # We use log10 cause it's faster than ln, on my pc:
-        # 
-        #   >>> s = time.time(); b = [math.log(x) for x in range(1, 10000000)]; time.time() - s
-        #   2.073245048522949
-        #   >>> s = time.time(); b = [math.log10(x) for x in range(1, 10000000)]; time.time() - s
-        #   1.3057165145874023
-        #
-        # The expression would be the following:
-        #
-        fft = self.fft(data) * (math.log10(original_sample_rate / sample_rate) / math.log10(2))
-        # 
-        # We could use the following log law to simplify it:
-        #
-        # $$ \log_b (a) = \frac{\log_{10} (a)}{\log_{10} (b)} $$
-        #
-        # So we end up calculating the log_2 (ratio)
-        #
-        # fft = self.fft(data) * (math.log(original_sample_rate / sample_rate, 2))
-        #
-        # .. But Python math's module is more optimized for finding the log10 and
-        # calculating 2 logs then dividing ends up faster than a custom base log.
-        # The log2 above is about the intuition of it I guess..
-        #
+        # raw_fft = self.fft(data) * (1 / (2 ** ((sample_rate / original_sample_rate))))
+        # TODO: wont work for old fs and new fs equal
+        raw_fft = self.fft(data) * (math.log10(original_sample_rate / sample_rate) / math.log10(2))
 
         # # Get the frequencies that FFT represent based on the sample rate
 
@@ -100,4 +75,4 @@ class Fourier:
         fftf = fftf[1 : len(fftf) // 2]
 
         # # Return pairs of [[freq], [fft]] array
-        return np.array([fftf, fft])
+        return np.array([fftf, raw_fft])

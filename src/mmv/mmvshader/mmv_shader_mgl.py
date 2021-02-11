@@ -28,7 +28,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmv.common.cmn_constants import STEP_SEPARATOR
+from moderngl_window.conf import settings
 from array import array
+import moderngl_window
 from PIL import Image
 import subprocess
 import moderngl
@@ -100,14 +102,81 @@ class FakeUniform:
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class MMVShaderMGL:
+class MMVShaderMGL():
 
-    # Create a headless OpenGL context  TODO: support for window mode (performance)?
-    gl_context = moderngl.create_context(standalone = True)
+    # # Window management, contexts
 
-    def __init__(self, flip = True):
+    # Configurate how we'll output the shader
+    def target_render_settings(self, width, height, fps):
+        debug_prefix = "[MMVShaderMGL.target_render_settings]"
+        (self.width, self.height, self.fps) = (width, height, fps)
+        logging.info(f"{debug_prefix} Render configuration is [width={self.width}] [height=[{self.height}] [fps=[{self.fps}]")
+        
+    def mode(self, window_class, msaa = 1, vsync = True, strict = False, icon = None):
+        debug_prefix = "[MMVShaderMGL.mode]"
+
+        # Get function arguments
+        self.msaa = msaa
+        self.vsync = vsync
+        self.strict = strict
+        self.headless = window_class == "headless"
+
+        # Headless we disable vsync because we're rendering only..?
+        # And also force aspect ratio just in case (strict option)
+        if self.headless:
+            self.strict = True
+            self.vsync = False
+
+        # Assign the function arguments
+        settings.WINDOW["class"] = f"moderngl_window.context.{window_class}.Window"
+        settings.WINDOW["size"] = (self.width, self.height)
+        settings.WINDOW["aspect_ratio"] = self.width / self.height
+        settings.WINDOW["vsync"] = self.vsync
+        settings.WINDOW["title"] = "MMVShaderMGL Window"
+
+        # Create the window
+        self.window = moderngl_window.create_window_from_settings()
+
+        # Make sure we render strictly into the resolution we asked
+        if strict:
+            self.window.set_default_viewport()
+            # self.window.fbo.viewport = (0, 0, self.width, self.height)
+
+        # Set the icon
+        if icon is not None:
+            self.window.set_icon(icon)
+        
+        # The context we'll use is the one from the window
+        self.gl_context = self.window.ctx
+
+        # Functions of the window if not headless
+        if not self.headless:
+            self.window.resize_func = self.window_resize
+
+    # [NOT HEADLESS] Window was resized, update the width and height so we render with the new config
+    def window_resize(self, width, height):
+        self.window.use()
+        self.window.clear()
+        self.window.fbo.viewport = (0, 0, width, height)
+        self.width = width
+        self.height = height
+
+    # Swap the window buffers, be careful if vsync is False and you have a heavy
+    # shader, it will consume all of your GPU computation and will most likely freeze
+    # the video
+    def update_window(self):
+        self.window.swap_buffers()
+
+    # # Generic methods
+
+    def __init__(self, flip = False, master_shader = False, gl_context = None):
         debug_prefix = "[MMVShaderMGL.__init__]"
+        self.master_shader = master_shader
         self.flip = flip
+
+        # We're a child shader so we inherit the parent (master shader) OpenGL context
+        if gl_context is not None:
+            self.gl_context = gl_context
 
         # The buffer that represents the 4 points of the screen and their
         # respective uv coordinate. GL center is the coordinate (0, 0) and each
@@ -122,13 +191,14 @@ class MMVShaderMGL:
         gl_truvy =  1.0  # Top Right Y
 
         # What coordinate we swap the Y values to / for on Shadertoy and OpenGL coordinates?
+        # ShaderToy flip we swap 1 to zero and opengl we swap -1 with 1 (multiply Y by 1 or -1)
         st_flip = [1, 0] if self.flip else [0, 1]
         gl_flip = -1 if self.flip else 1
 
         # Coordinates of the OpenGL Vertex positions on screen, the target UV for 
         # the OpenGL standard [(0, 0) center, edges are from -1 to 1] or Shadertoy ones
         # [(0, 0) bottom left, edges goes from 0 to 1]
-        coordinates = [
+        self.coordinates = [
             # OpenGL pos (X, Y)   OpenGL UV (U, V)                Shadertoy UV (U, V)
             gl_bluvx, gl_truvy,   gl_bluvx, gl_truvy * gl_flip,   0, st_flip[1],  # Top Left      [^ <]
             gl_bluvx, gl_bluvy,   gl_bluvx, gl_bluvy * gl_flip,   0, st_flip[0],  # Bottom Left   [v <]
@@ -136,10 +206,7 @@ class MMVShaderMGL:
             gl_truvx, gl_bluvy,   gl_truvx, gl_bluvy * gl_flip,   1, st_flip[0],  # Bottom Right  [v >]
         ]
 
-        # Build the buffer we send when making the VAO
-        self.fullscreen_buffer = MMVShaderMGL.gl_context.buffer(array('f', coordinates))
-
-        # Info we send to the shaders read only (uniforms)
+        # Info we send to the shaders read only (uniforms) that can and are generated on the main render loop
         self.pipeline = {
             # - mmv_time (float) -> time elapsed based on the frame rate of the shader in seconds
             "mmv_time": 0,
@@ -166,6 +233,11 @@ class MMVShaderMGL:
         # they are shaders the user mapped and we render them separately to a FBO
         # so we can use that as a texture <here> on this main class's shader
         self.shaders_as_textures = []
+
+        # Dictionary to hold name: indexes on self.textures dictionary for writing to textures
+        # used for communicating big data arrays between Python and the GPU
+        # One example usage is for writing FFT values
+        self.writable_textures = {}
 
         # Initialize None values
         (self.width, self.height, self.fps) = [None] * 3
@@ -198,13 +270,8 @@ class MMVShaderMGL:
 
         # Add recursively the paths as well
         for shader_as_texture in self.shaders_as_textures:
-            shader_as_texture.add_include_dir(path = path)
+            shader_as_texture.include_dir(path = path)
 
-    # Configurate how we'll output the shader
-    def render_config(self, width, height, fps):
-        debug_prefix = "[MMVShaderMGL.config]"
-        (self.width, self.height, self.fps) = (width, height, fps)
-        
     # Create one FBO which is a texture under the hood so we can utilize it in some other shader
     # Returns [texture, fbo], which the texture is attached to the fbo with the previously
     # configured width, height
@@ -220,18 +287,19 @@ class MMVShaderMGL:
         logging.info(f"{debug_prefix} Constructing an FBO attached to an Texture with [width={self.width}] [height=[{self.height}]")
 
         # Create a RGBA texture of this class's configured resolution
-        texture = MMVShaderMGL.gl_context.texture((self.width, self.height), 4)
+        texture = self.gl_context.texture((self.width, self.height), 4)
 
         # Create an FBO which is attached to that previous texture, whenever we render something
         # to this FBO after fbo.use()-ing it, the contents will be written directly on that texture
         # which we can bind to some location in other shader. This process is recursive
-        fbo = MMVShaderMGL.gl_context.framebuffer(color_attachments = [texture])
+        render_buffer = self.gl_context.renderbuffer((self.width, self.height))
+        fbo = self.gl_context.framebuffer(color_attachments = [texture, render_buffer])
 
         # Return the two created objects
-        return [texture, fbo]
+        return [texture, fbo, render_buffer]
     
     # Loads one shader from the disk, optionally also a custom vertex shader rather than the screen filling default one
-    def load_shader_from_path(self, fragment_shader_path, vertex_shader_path = DEFAULT_VERTEX_SHADER):
+    def load_shader_from_path(self, fragment_shader_path, replaces = {}, vertex_shader_path = DEFAULT_VERTEX_SHADER):
         debug_prefix = "[MMVShaderMGL.load_shader_from_path]"
 
         # # Fragment shader
@@ -264,6 +332,7 @@ class MMVShaderMGL:
         
         self.construct_shader(
             fragment_shader = frag_data,
+            replaces = replaces,
             vertex_shader = vertex_data,
         )
 
@@ -271,7 +340,7 @@ class MMVShaderMGL:
     # with VAOs so we render to some FBO. 
     # Parses for #pragma map name=loader:value:WxH and creates the corresponding texture, binds to it
     # Also copies #pragma include <path.glsl> to this fragment shader
-    def construct_shader(self, fragment_shader, vertex_shader = DEFAULT_VERTEX_SHADER):
+    def construct_shader(self, fragment_shader, replaces = {}, vertex_shader = DEFAULT_VERTEX_SHADER):
         debug_prefix = "[MMVShaderMGL.construct_shader]"
 
         # The raw specification prefix, sets uniforms every one should have
@@ -279,13 +348,31 @@ class MMVShaderMGL:
         # and we have to account for that before compiling the shader
         fragment_shader_prefix = FRAGMENT_SHADER_MMV_SPECIFICATION_PREFIX
 
+        # # Join prefix and shader, replace values
+
+        # Join the prefix and the fragment shader
+        fragment_shader = f"{fragment_shader_prefix}\n{fragment_shader}"
+
+        # Iterate on items
+        for key, value in replaces.items():
+
+            # We surround the one we replace with {} for visibility on the GLSL
+            key = f"{{{key}}}"
+            
+            # How many is there to replace?
+            found = fragment_shader.count(key)
+            logging.info(f"{debug_prefix} Replacing [N={found}] on shader [{key}] -> [{value}]")
+
+            # Actually replace
+            fragment_shader = fragment_shader.replace(str(key), str(value))
+
         # # Parse the shader
 
         logging.info(f"{debug_prefix} Parsing the fragment shader for every #pragma map")
 
         # Regular expression to match #pragma map name=loader:/path/value;512x512
         # the ;512x512 is required for the image, video and shader loaders
-        regex = r"([ ]+)?#pragma map ([\w]+)=([\w]+):([\w/. -]+):?([0-9]+)?x?([0-9]+)?"
+        regex = r"([ ]+)?#pragma map ([\w]+)=([\w]+):([\w/. -]+)?:?([0-9]+)?x?([0-9]+)?"
         found = re.findall(regex, fragment_shader, re.MULTILINE)
 
         logging.info(f"{debug_prefix} Regex findall says: {found}")
@@ -301,13 +388,16 @@ class MMVShaderMGL:
             logging.info(f"{debug_prefix} Matched mapping [name={name}] [loader={loader}] [width={width}] [height={height}]")
 
             # Error assertion, valid loader and path
-            loaders = ["image", "video", "shader", "include"]
+            loaders = ["image", "video", "shader", "pipeline_texture", "include"]
             assert loader in loaders, f"Loader not implemented in loaders {loaders}"
-            assert os.path.exists(value), f"Value of loader [{value}] is not a valid path"
+
+            # All but pipeline texture must be valid paths
+            if not loader in ["pipeline_texture"]:
+                assert os.path.exists(value), f"Value of loader [{value}] is not a valid path"
 
             # We'll map one texture to this shader, either a static image, another shader or a video
             # we do create and store the shader and video objects so we render or get the next image later on before using
-            if loader in ["image", "shader", "video"]:
+            if loader in ["image", "shader", "video", "pipeline_texture"]:
 
                 # We need an target render size
                 assert (width != '') and (height != ''), "Width or height shouldn't be null, set WxH on pragma map with :512x512"
@@ -315,7 +405,7 @@ class MMVShaderMGL:
                 # Convert to int the width and height
                 width, height = int(width), int(height)
 
-                # Image loader
+                # Image loader, load image, convert to RGBA, create texture with target resolution, assign texture
                 if loader == "image":
                     # Load the image, get width and height for the texture size
                     img = Image.open(value).convert("RGBA")
@@ -323,11 +413,27 @@ class MMVShaderMGL:
 
                     # Convert image to bytes and upload the texture to the GPU
                     logging.info(f"{debug_prefix} Uploading texture to the GPU")
-                    texture = MMVShaderMGL.gl_context.texture((width, height), 4, img.tobytes())
+                    texture = self.gl_context.texture((width, height), 4, img.tobytes())
 
                     # Assign the name, type and texture to the textures dictionary
                     self.textures[len(self.textures.keys()) + 1] = [name, "texture", texture]
+                
+                # We create a black texture that some other pipeline is supposed to write on, this is mostly used
+                # when we need to communicate big arrays that we keep changing. Totally destroys performance if
+                # you keep writing into a big texture
+                elif loader == "pipeline_texture":
+                    logging.info(f"{debug_prefix} Creating black pipeline texture object")
                     
+                    # Create a blank texture..
+                    texture = self.gl_context.texture((width, height), 1, dtype = "f4")
+
+                    # Assign the name, type and texture to the textures dictionary
+                    writable_texture_index = len(self.textures.keys()) + 1
+                    self.textures[writable_texture_index] = [name, "texture", texture]
+
+                    # Put into the writable textures dictionary
+                    self.writable_textures[name] = writable_texture_index
+                
                 # Add shader as texture element
                 elif loader == "shader":
 
@@ -336,15 +442,19 @@ class MMVShaderMGL:
                         loader_frag_shader = f.read()
 
                     # Create one instance of this very own class
-                    shader_as_texture = MMVShaderMGL(flip = not self.flip)
+                    shader_as_texture = MMVShaderMGL(flip = self.flip, gl_context = self.gl_context)
+
+                    # Add included dirs
+                    for directory in self.include_directories:
+                        shader_as_texture.include_dir(directory)
 
                     # Set the render configuration on the #pragma map for width, height. We don't need fps
                     # as that one will receive the main class's pipeline
-                    shader_as_texture.render_config(width = int(width), height = int(height), fps = None)
+                    shader_as_texture.target_render_settings(width = int(width), height = int(height), fps = None)
 
                     # Create a texture and fbo for this mapped shader, here is where we render to the fbo
                     # which is attached to the texture, and we use that texture in this main class
-                    texture, fbo = shader_as_texture.construct_texture_fbo()
+                    texture, fbo, _ = shader_as_texture.construct_texture_fbo()
 
                     # Construct the shader we loaded
                     shader_as_texture.construct_shader(fragment_shader = loader_frag_shader)
@@ -362,18 +472,18 @@ class MMVShaderMGL:
                     video = cv2.VideoCapture(value)
 
                     # Create a RGB texture for the video
-                    texture = MMVShaderMGL.gl_context.texture((width, height), 3)
+                    texture = self.gl_context.texture((width, height), 3)
 
                     # Assign the name, type and texture to the textures dictionary
                     self.textures[len(self.textures.keys()) + 1] = [name, "video", texture, video]
                     
                 # Add the texture uniform values
                 marker = "///add_uniform"
-                fragment_shader_prefix = fragment_shader_prefix.replace(f"{marker}", f"\n// Texture\n{marker}")
-                fragment_shader_prefix = fragment_shader_prefix.replace(f"{marker}", f"uniform sampler2D {name};\n{marker}")
-                fragment_shader_prefix = fragment_shader_prefix.replace(f"{marker}", f"uniform int {name}_width;\n{marker}")
-                fragment_shader_prefix = fragment_shader_prefix.replace(f"{marker}", f"uniform int {name}_height;\n{marker}\n")
-                fragment_shader_prefix = fragment_shader_prefix.replace(f"{marker}", f"uniform vec2 {name}_resolution;\n{marker}\n")
+                fragment_shader = fragment_shader.replace(f"{marker}", f"\n// Texture\n{marker}")
+                fragment_shader = fragment_shader.replace(f"{marker}", f"uniform sampler2D {name};\n{marker}")
+                fragment_shader = fragment_shader.replace(f"{marker}", f"uniform int {name}_width;\n{marker}")
+                fragment_shader = fragment_shader.replace(f"{marker}", f"uniform int {name}_height;\n{marker}\n")
+                fragment_shader = fragment_shader.replace(f"{marker}", f"uniform vec2 {name}_resolution;\n{marker}\n")
     
                 # The attributes we'll put into the previous values
                 assign_static_uniforms += [
@@ -410,7 +520,7 @@ class MMVShaderMGL:
             # # Attempt to find the file on the included directories
 
             look_for_in_included_directories = f"{include}.glsl"
-            logging.info(f"{debug_prefix} Checking on include directories for [{look_for_in_included_directories}]")
+            logging.info(f"{debug_prefix} Checking on include directories [{self.include_directories}] for [{look_for_in_included_directories}]")
             include_found = False
 
             # Check for the include dirs files with the include value dot glsl
@@ -457,35 +567,36 @@ class MMVShaderMGL:
             # Replace the line on this fragment shader with the included other one
             fragment_shader = fragment_shader.replace(replaces, include_other_glsl_data, 1)  # Replace ONCE
 
-        # We parsed the body and added to the prefix stuff that was defined so merge everything together
-        fragment_shader = f"{fragment_shader_prefix}\n{fragment_shader}"
-
         # Pretty print / log
         s = "-" * shutil.get_terminal_size()[0]
+        frag_shader_prettyprint = '\n'.join([f"[{str(lineno).ljust(5)}] | {line}" for lineno, line in enumerate(fragment_shader.split("\n"))])
+        vert_shader_prettyprint = '\n'.join([f"[{str(lineno).ljust(5)}] | {line}" for lineno, line in enumerate(vertex_shader.split("\n"))])
         print(s)
-        logging.info(f"{debug_prefix} Fragment shader is:\n{fragment_shader}")
+        logging.info(f"{debug_prefix} Fragment shader is:\n{frag_shader_prettyprint}")
         print(s)
-        logging.info(f"{debug_prefix} Vertex shader is:\n{vertex_shader}")
+        logging.info(f"{debug_prefix} Vertex shader is:\n{vert_shader_prettyprint}")
         print(s)
 
         # # Construct the shader
 
         # Create a program with the fragment and vertex shader
-        self.program = MMVShaderMGL.gl_context.program(fragment_shader = fragment_shader, vertex_shader = vertex_shader)
+        self.program = self.gl_context.program(fragment_shader = fragment_shader, vertex_shader = vertex_shader)
 
         # Get a texture bound to the FBO
-        self.texture, self.fbo = self.construct_texture_fbo()
- 
+        if not self.master_shader:
+            self.texture, self.fbo, self.render_buffer = self.construct_texture_fbo()
+
+        # Build the buffer we send when making the VAO
+        self.fullscreen_buffer = self.gl_context.buffer(array('f', self.coordinates))
+
         # Create one VAO on the program with the coordinate info
-        self.vao = MMVShaderMGL.gl_context.vertex_array(
+        self.vao = self.gl_context.vertex_array(
             self.program, [(
                 # Fill the whole screen
                 self.fullscreen_buffer,
 
-                # Expect three pairs of floats
+                # Expect three pairs of floats and what they mean
                 "2f 2f 2f",
-
-                # What the floats means
                 "in_pos", "in_opengl_uv", "in_shadertoy_uv"
             )],
 
@@ -500,6 +611,20 @@ class MMVShaderMGL:
             uniform.value = value
 
     # # Loop functions, routines
+
+    # Write a certain data to a texture pipeline by its name on #pragma map-ed
+    def write_texture_pipeline(self, texture_name, data):
+        
+        # The index on the writable textures dictionary
+        target_index = self.writable_textures.get(texture_name, None)
+
+        # If it even does exist then we write to its respective texture
+        if target_index is not None:
+            self.textures[target_index][2].write(data)
+
+        # Write recursively with same arguments
+        for shader_as_texture in self.shaders_as_textures:
+            shader_as_texture.write_texture_pipeline(texture_name = texture_name, data = data)
 
     # Pipe a pipeline to a target that have a program attribute (this self class or shader as texture)
     def pipe_pipeline(self, pipeline, target):
@@ -523,8 +648,12 @@ class MMVShaderMGL:
         self.pipe_pipeline(pipeline = pipeline, target = self)
 
         # Render to the FBO using this VAO
-        self.fbo.use()
-        self.fbo.clear()
+        if self.master_shader:
+            self.window.use()
+            self.window.clear()
+        else:
+            self.fbo.use()
+            self.fbo.clear()
 
         # The location is the dict index, the texture info is [name, loader, object]
         for location, texture_info in self.textures.items():
@@ -583,9 +712,10 @@ class MMVShaderMGL:
             
     # Read from the current FBO, return the bytes
     def read(self):
-        return self.fbo.read()
+        return self.window.read()
     
     # Write directly into a subprocess (FFmpeg, FFplay)
     # Use this for speeds preferably
     def read_into_subprocess_stdin(self, target_stdin):
-        target_stdin.write(self.fbo.read())
+        # target_stdin.write(self.window.fbo.read(viewport = self.window.viewport))
+        target_stdin.write(self.window.fbo.read())
