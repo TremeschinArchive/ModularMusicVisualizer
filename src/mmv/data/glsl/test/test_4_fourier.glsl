@@ -1,9 +1,7 @@
+
 // ===============================================================================
-//                                 GPL v3 License                                
-// Copyright (c) 2020 - 2021,
-//   - Tremeschin < https://tremeschin.gitlab.io > 
-// See LICENSE.md, this is compact header for not cluttering final shaders
-// ===============================================================================
+
+#pragma map name fourier_glsl_test
 
 #pragma include mmv_specification;
 #pragma map fft=pipeline_texture::{MMV_FFTSIZE}x1;
@@ -21,8 +19,8 @@ void main() {
     int which = int({MMV_FFTSIZE} * shadertoy_uv.x);
     float fft_val = texelFetch(fft, ivec2(which, 0), 0).r;
         
-    if (stuv.y * 90.0 < fft_val) {
-        col = vec4(0.8, stuv.y * fft_val/20.0, 1.0 - standard_deviations[2] - stuv.y*4.0, 1.0);
+    if (stuv.y < sqrt(fft_val/9000)) {
+        col = vec4(shadertoy_uv.x, stuv.y * fft_val/20.0, 1.0 - standard_deviations[2] - stuv.y*4.0, 1.0);
     } else {
         col = vec4(smooth_audio_amplitude/4.0);
     }
