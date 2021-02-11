@@ -322,6 +322,12 @@ f"""{debug_prefix} Show thanks message
         logging.info(f"{debug_prefix} Data dir is [{self.data_dir}]")
         self.utils.mkdir_dne(path = self.data_dir, silent = True)
 
+        # Runtime dir
+        self.runtime_dir = f"{self.MMV_PACKAGE_ROOT}{sep}runtime"
+        logging.info(f"{debug_prefix} Runtime dir is [{self.data_dir}], deleting..")
+        self.utils.rmdir(self.runtime_dir)
+        self.utils.mkdir_dne(path = self.runtime_dir, silent = True)
+
         # Windoe juuuust in case
         if self.os == "windows":
             logging.info(f"{debug_prefix} Appending the Externals directory to system path juuuust in case...")

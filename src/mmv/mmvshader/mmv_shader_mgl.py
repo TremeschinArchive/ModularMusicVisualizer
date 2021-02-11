@@ -27,6 +27,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from moderngl_window.integrations.imgui import ModernglWindowRenderer
 from mmv.common.cmn_constants import STEP_SEPARATOR
 from moderngl_window.conf import settings
 from array import array
@@ -36,7 +37,9 @@ import subprocess
 import moderngl
 import logging
 import shutil
+import imgui
 import time
+import uuid
 import cv2
 import sys
 import re
@@ -102,7 +105,7 @@ class FakeUniform:
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class MMVShaderMGL():
+class MMVShaderMGL:
 
     # # Window management, contexts
 
@@ -111,7 +114,8 @@ class MMVShaderMGL():
         debug_prefix = "[MMVShaderMGL.target_render_settings]"
         (self.width, self.height, self.fps) = (width, height, fps)
         logging.info(f"{debug_prefix} Render configuration is [width={self.width}] [height=[{self.height}] [fps=[{self.fps}]")
-        
+    
+    # Which "mode" to render, window loader class, msaa, vsync, force res?
     def mode(self, window_class, msaa = 1, vsync = True, strict = False, icon = None):
         debug_prefix = "[MMVShaderMGL.mode]"
 
@@ -148,24 +152,70 @@ class MMVShaderMGL():
         
         # The context we'll use is the one from the window
         self.gl_context = self.window.ctx
+        self.window_should_close = False
 
         # Functions of the window if not headless
         if not self.headless:
             self.window.resize_func = self.window_resize
+            self.window.key_event_func = self.key_event
+            self.window.mouse_position_event_func = self.mouse_position_event
+            self.window.mouse_drag_event_func = self.mouse_drag_event
+            self.window.mouse_scroll_event_func = self.mouse_scroll_event
+            self.window.mouse_press_event_func = self.mouse_press_event
+            self.window.mouse_release_event_func = self.mouse_release_event
+            self.window.unicode_char_entered_func = self.unicode_char_entered
+            self.window.close_func = self.close
+            imgui.create_context()
+            self.imgui = ModernglWindowRenderer(self.window)
 
     # [NOT HEADLESS] Window was resized, update the width and height so we render with the new config
     def window_resize(self, width, height):
-        self.window.use()
-        self.window.clear()
+        if not self.headless:
+            self.imgui.resize(width, height)
         self.window.fbo.viewport = (0, 0, width, height)
         self.width = width
         self.height = height
+
+    # Close the window
+    def close(self, *args, **kwargs):
+        self.window_should_close = True
 
     # Swap the window buffers, be careful if vsync is False and you have a heavy
     # shader, it will consume all of your GPU computation and will most likely freeze
     # the video
     def update_window(self):
         self.window.swap_buffers()
+
+    # # Imgui functions
+
+    def key_event(self, key, action, modifiers):
+        self.imgui.key_event(key, action, modifiers)
+    def mouse_position_event(self, x, y, dx, dy):
+        self.imgui.mouse_position_event(x, y, dx, dy)
+    def mouse_drag_event(self, x, y, dx, dy):
+        self.imgui.mouse_drag_event(x, y, dx, dy)
+    def mouse_scroll_event(self, x_offset, y_offset):
+        self.imgui.mouse_scroll_event(x_offset, y_offset)
+    def mouse_press_event(self, x, y, button):
+        self.imgui.mouse_press_event(x, y, button)
+    def mouse_release_event(self, x: int, y: int, button: int):
+        self.imgui.mouse_release_event(x, y, button)
+    def unicode_char_entered(self, char):
+        self.imgui.unicode_char_entered(char)
+    
+    # Render the user interface
+    def render_ui(self):
+
+        # Test window
+        imgui.new_frame()
+        imgui.begin("Custom window", True)
+        imgui.text("Bar")
+        imgui.text_colored("Eggs", 0.2, 1., 0.)
+        imgui.end()
+
+        # Render
+        imgui.render()
+        self.imgui.render(imgui.get_draw_data())
 
     # # Generic methods
 
@@ -299,7 +349,7 @@ class MMVShaderMGL():
         return [texture, fbo, render_buffer]
     
     # Loads one shader from the disk, optionally also a custom vertex shader rather than the screen filling default one
-    def load_shader_from_path(self, fragment_shader_path, replaces = {}, vertex_shader_path = DEFAULT_VERTEX_SHADER):
+    def load_shader_from_path(self, fragment_shader_path, replaces = {}, vertex_shader_path = DEFAULT_VERTEX_SHADER, save_shaders_path = None):
         debug_prefix = "[MMVShaderMGL.load_shader_from_path]"
 
         # # Fragment shader
@@ -334,13 +384,18 @@ class MMVShaderMGL():
             fragment_shader = frag_data,
             replaces = replaces,
             vertex_shader = vertex_data,
+            save_shaders_path = save_shaders_path,
         )
 
     # Create one context's program out of a frag and vertex shader, those are used together
     # with VAOs so we render to some FBO. 
     # Parses for #pragma map name=loader:value:WxH and creates the corresponding texture, binds to it
     # Also copies #pragma include <path.glsl> to this fragment shader
-    def construct_shader(self, fragment_shader, replaces = {}, vertex_shader = DEFAULT_VERTEX_SHADER):
+    def construct_shader(self,
+        fragment_shader, replaces = {},
+        vertex_shader = DEFAULT_VERTEX_SHADER,
+        save_shaders_path: str = None,  # Path we save the final fragment and vertex shader based on its name
+    ):
         debug_prefix = "[MMVShaderMGL.construct_shader]"
 
         # The raw specification prefix, sets uniforms every one should have
@@ -370,11 +425,24 @@ class MMVShaderMGL():
 
         logging.info(f"{debug_prefix} Parsing the fragment shader for every #pragma map")
 
+        # # Name
+
+        self.name = str(uuid.uuid4())
+        regex = r"([ ]+)?#pragma map name ([\w]+)"
+        found = re.findall(regex, fragment_shader, re.MULTILINE)
+
+        # Try find the name of the shader
+        for mapping in found:
+            identation, name = mapping
+            self.name = name
+
+        # # Loaders
+
         # Regular expression to match #pragma map name=loader:/path/value;512x512
         # the ;512x512 is required for the image, video and shader loaders
         regex = r"([ ]+)?#pragma map ([\w]+)=([\w]+):([\w/. -]+)?:?([0-9]+)?x?([0-9]+)?"
         found = re.findall(regex, fragment_shader, re.MULTILINE)
-
+    
         logging.info(f"{debug_prefix} Regex findall says: {found}")
 
         # The static uniforms we'll assign the values to (eg. image, video, shader resolutions)
@@ -386,6 +454,8 @@ class MMVShaderMGL():
             # Get the values we matched
             identation, name, loader, value, width, height = mapping
             logging.info(f"{debug_prefix} Matched mapping [name={name}] [loader={loader}] [width={width}] [height={height}]")
+
+            fragment_shader = fragment_shader.replace(f"\n{identation}#pragma map {name}={loader}:{value}:{width}x{height};", "")
 
             # Error assertion, valid loader and path
             loaders = ["image", "video", "shader", "pipeline_texture", "include"]
@@ -457,7 +527,7 @@ class MMVShaderMGL():
                     texture, fbo, _ = shader_as_texture.construct_texture_fbo()
 
                     # Construct the shader we loaded
-                    shader_as_texture.construct_shader(fragment_shader = loader_frag_shader)
+                    shader_as_texture.construct_shader(fragment_shader = loader_frag_shader, save_shaders_path = save_shaders_path)
 
                     # Append to the shaders as textures. We only do this for passing a pipeline to the mapped shader
                     self.shaders_as_textures.append(shader_as_texture)
@@ -577,6 +647,12 @@ class MMVShaderMGL():
         logging.info(f"{debug_prefix} Vertex shader is:\n{vert_shader_prettyprint}")
         print(s)
 
+        # Do save the shaders to some path?
+        if save_shaders_path is not None:
+            base = f"{save_shaders_path}{os.path.sep}{self.name}"
+            with open(f"{base}-frag.glsl", "w") as f:
+                f.write(fragment_shader)
+
         # # Construct the shader
 
         # Create a program with the fragment and vertex shader
@@ -692,6 +768,9 @@ class MMVShaderMGL():
 
         # Render to this class FBO
         self.vao.render(mode = moderngl.TRIANGLE_STRIP)
+        
+        # if not self.headless:
+            # self.render_ui()
 
     # Iterate through this class instance as a generator for getting the 
     def next(self, custom_pipeline = {}):
