@@ -122,7 +122,7 @@ class AudioSourceRealtime:
                 # (though we're supposed to be multithreaded here so it won't matter but we lose the
                 # ability to have big batch sizes in a "progressive" processing mode).
                 # We also transpose the result so we get a [channels, samples] array shape
-                new_audio_data = source.record(numframes = self.recorder_numframes).T
+                new_audio_data = source.record(numframes = int(self.recorder_numframes)).T
     
                 # The number of new samples we got
                 new_audio_data_len = new_audio_data.shape[1]
