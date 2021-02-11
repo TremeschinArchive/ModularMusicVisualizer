@@ -44,6 +44,9 @@ sys.path.append(
     THIS_DIR + "/../"
 )
 
+# Prefix
+debug_prefix = "[test_mgl.py]"
+
 # Import mmv, get interface
 import mmv
 interface = mmv.MMVPackageInterface()
@@ -54,6 +57,7 @@ WIDTH = 1920
 HEIGHT = 1080
 FRAMERATE = 60
 SAMPLERATE = 48000
+CALCULATE_FFT = True
 MSAA = 8
 
 # Set up target render configuration
@@ -79,6 +83,7 @@ elif mode == "view":
         window_class = "glfw",
         vsync = False,
         msaa = MSAA,
+        strict = False,
     )
 
     # # Realtime Audio
@@ -87,26 +92,34 @@ elif mode == "view":
     source = interface.get_audio_source_realtime()
     source.init(search_for_loopback = True)
     source.configure(
-        batch_size = 2048 * 2,
+        batch_size = 2048 * 4 * 2,
         sample_rate = SAMPLERATE,
-        recorder_numframes = int(SAMPLERATE / (FRAMERATE / 2))  # Safety: expect half of fps
+        recorder_numframes = int(SAMPLERATE / (FRAMERATE / 2)),  # Safety: expect half of fps
+        calculate_fft = CALCULATE_FFT
     )
-    source.audio_processing.config = {
-        0: {
-            "sample_rate": 1000,
-            "start_freq": 20,
-            "end_freq": 500,
-        },
+    source.audio_processing.configure(config_dict = {
+        # 0: {
+        #     "sample_rate": 1000,
+        #     "start_freq": 20,
+        #     "end_freq": 500,
+        # },
+        # 1: {
+        #     "sample_rate": 40000,
+        #     "start_freq": 500,
+        #     "end_freq": 20000,
+        # }
+
         1: {
-            "sample_rate": 40000,
-            "start_freq": 500,
-            "end_freq": 18000,
+            "sample_rate": 48000,
+            "start_freq": 30,
+            "end_freq": 20000,
         }
-    }
+    })
+    MMV_FFTSIZE = source.audio_processing.FFT_length
+    print(f"{debug_prefix} FFT Size on AudioProcessing is [{MMV_FFTSIZE}]")
+    
     # source.capture_and_process_loop()
     source.start_async()
-
-    MMV_FFTSIZE = 230  # TODO: dynamically calculate
 
 # Directories
 sep = os.path.sep
@@ -131,7 +144,8 @@ mgl.load_shader_from_path(
     fragment_shader_path = cfg["frag"],
     replaces = {
         "MMV_FFTSIZE": MMV_FFTSIZE,
-    }    
+    },
+    save_shaders_path = interface.runtime_dir
 )
 
 # Get a video encoder
@@ -179,7 +193,10 @@ times = [time.time() + i/FRAMERATE for i in range(fps_last_n)]
 # # Temporary pipeline calculations TODO: proper class
 
 smooth_audio_amplitude = 0
-prevfft = np.array([0.0 for _ in range(230)], dtype = np.float32)
+prevfft = np.array([0.0 for _ in range(MMV_FFTSIZE)], dtype = np.float32)
+
+# Increase this value to get more aggressiveness or just turn up the computer volume
+multiplier = 6
 
 # Main test routine
 while True:
@@ -198,15 +215,18 @@ while True:
     pipeline_info = source.info
 
     # # Temporary stuff
-    smooth_audio_amplitude = smooth_audio_amplitude + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude) * 0.154
-    pipeline_info["smooth_audio_amplitude"] = smooth_audio_amplitude * 2
+
+    # Amplitudes
+    if "average_amplitudes" in pipeline_info.keys():
+        smooth_audio_amplitude = smooth_audio_amplitude + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude) * 0.154
+        pipeline_info["smooth_audio_amplitude"] = smooth_audio_amplitude * multiplier
 
     # If we have an fft key
     if "fft" in pipeline_info.keys():
 
         # Interpolation
         for index, value in enumerate(pipeline_info["fft"]):
-            prevfft[index] = prevfft[index] + (value*3.0 - prevfft[index]) * 0.35
+            prevfft[index] = prevfft[index] + (value*multiplier - prevfft[index]) * 0.35
 
         # Write the FFT
         mgl.write_texture_pipeline(texture_name = "fft", data = prevfft.astype(np.float32))
@@ -222,6 +242,11 @@ while True:
     # If we'll be rendering, write to the video encoder
     if mode == "render":
         mgl.read_into_subprocess_stdin(video_pipe.subprocess.stdin)
+
+    elif mode == "view":
+        # The window received close command
+        if mgl.window_should_close:
+            break
 
     # Print FPS, well, kinda, the average of the last fps_last_n frames
     times[n % fps_last_n] = time.time()

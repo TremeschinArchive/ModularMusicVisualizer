@@ -74,11 +74,12 @@ class AudioSourceRealtime:
         assert (self.recorder is not None), "Auto search is off and didn't give a target recorder device"
 
     # Set the target batch size and sample rate.
-    def configure(self, batch_size, sample_rate, recorder_numframes = None):
+    def configure(self, batch_size, sample_rate, recorder_numframes = None, calculate_fft = True):
         debug_prefix = "[AudioSourceRealtime.configure]"
         self.batch_size = batch_size
         self.sample_rate = sample_rate
         self.recorder_numframes = recorder_numframes
+        self.calculate_fft = calculate_fft
 
     # Start the main routines since we configured everything
     def start_async(self):
@@ -92,7 +93,7 @@ class AudioSourceRealtime:
 
         # Wait until we have some info so we don't accidentally crash with None type has no attribute blabla
         self.info = {}
-        while not self.info:
+        while not self.info == {}:
             time.sleep(0.016)
     
     # Stop the main thread
@@ -107,12 +108,11 @@ class AudioSourceRealtime:
 
         # A float32 zeros to store the current audio to process
         self.current_batch = np.zeros((2, self.batch_size), dtype = np.float32)
-
         self.__should_stop = False
         self.info = {}
 
         # Open a recorder microphone otherwise we open and close the stream on each loop
-        with self.recorder.recorder(samplerate = self.sample_rate, channels = 2) as source:
+        with self.recorder.recorder(samplerate = self.sample_rate, channels = 2, blocksize = 2048) as source:
 
             # Until the user don't run the function stop
             while not self.__should_stop:
@@ -122,7 +122,7 @@ class AudioSourceRealtime:
                 # (though we're supposed to be multithreaded here so it won't matter but we lose the
                 # ability to have big batch sizes in a "progressive" processing mode).
                 # We also transpose the result so we get a [channels, samples] array shape
-                new_audio_data = source.record(numframes = int(self.recorder_numframes)).T
+                new_audio_data = source.record(numframes = self.recorder_numframes).T
     
                 # The number of new samples we got
                 new_audio_data_len = new_audio_data.shape[1]
@@ -146,9 +146,13 @@ class AudioSourceRealtime:
                         new_audio_data[channel_number],     # Input data
                         mode = "wrap"                       # Mode (wrap)
                     )
-                
+
                 # This yields information as it was calculated so we assign the key (index 0) to the value (index 1)
-                for info in self.audio_processing.get_info_on_audio_slice(self.current_batch, original_sample_rate = self.sample_rate):
+                for info in self.audio_processing.get_info_on_audio_slice(
+                        audio_slice = self.current_batch,
+                        original_sample_rate = self.sample_rate,
+                        calculate_fft = self.calculate_fft,
+                ):
                     self.info[info[0]] = info[1]
 
         self.__should_stop = False
@@ -220,9 +224,50 @@ class AudioProcessing:
         self.piano_keys_frequencies = [round(self.get_frequency_of_key(x), 2) for x in range(-50, 68)]
         logging.info(f"{debug_prefix} Whole notes frequencies we'll care: [{self.piano_keys_frequencies}]")
 
+    # Set up a configuration dict, They can look like this:
+    """
+    {
+        0: {
+            "sample_rate": 1000,
+            "start_freq": 20,
+            "end_freq": 500,
+        },
+        1: {
+            "sample_rate": 40000,
+            "start_freq": 500,
+            "end_freq": 20000,
+        }
+    }
+    """
+    def configure(self, config_dict):
+        # Assign
+        self.config = config_dict
+        self.FFT_length = []
+
+        # # Calculate how many outputs we'll have
+        for _, value in self.config.items():
+
+            # Get config
+            start_freq = value.get("start_freq")
+            end_freq = value.get("end_freq")
+
+            # Get the frequencies we want and will return in the end
+            wanted_freqs = self.datautils.list_items_in_between(
+                self.piano_keys_frequencies,
+                start_freq, end_freq,
+            )
+
+            # Add target freq if it's not on the list
+            for freq in wanted_freqs:
+                if not freq in self.FFT_length:
+                    self.FFT_length.append(freq)
+        
+        # The size will be the length of the list, times 2 because left and rigth channel
+        self.FFT_length = len(self.FFT_length) * 2
+
     # # New Methods
 
-    def get_info_on_audio_slice(self, audio_slice: np.ndarray, original_sample_rate) -> dict:
+    def get_info_on_audio_slice(self, audio_slice: np.ndarray, original_sample_rate, calculate_fft = True) -> dict:
 
         # Calculate MONO
         mono = (audio_slice[0] + audio_slice[1]) / 2
@@ -252,62 +297,63 @@ class AudioProcessing:
 
         # # FFT shenanigans
 
-        processed = []
+        if calculate_fft:
+            processed = []
 
-        # For each channel
-        for data in audio_slice:
+            # For each channel
+            for data in audio_slice:
 
-            # Iterate on config
-            for _, value in self.config.items():
+                # Iterate on config
+                for _, value in self.config.items():
 
-                # Get info on config
-                sample_rate = value.get("sample_rate")
-                start_freq = value.get("start_freq")
-                end_freq = value.get("end_freq")
+                    # Get info on config
+                    sample_rate = value.get("sample_rate")
+                    start_freq = value.get("start_freq")
+                    end_freq = value.get("end_freq")
 
-                # Get the frequencies we want and will return in the end
-                wanted_freqs = self.datautils.list_items_in_between(
-                    self.piano_keys_frequencies,
-                    start_freq, end_freq,
-                )
-
-                # Resample our data to the one specified on the config
-                resampled = self.resample(
-                    data = data,
-                    original_sample_rate = original_sample_rate,
-                    new_sample_rate = sample_rate,
-                )
-
-                # Calculate the binned FFT, we get N vectors of [freq, value] of this FFT
-                binned_fft = self.fourier.binned_fft(
-                    data = resampled,
-
-                    # # Target (re?)sample rate so we normalize the FFT values
-                    sample_rate =  sample_rate,
-                    original_sample_rate = original_sample_rate,
-                )
-
-                # Get the nearest freq and add to processed            
-                for freq in wanted_freqs:
-
-                    # Get the nearest and FFT value
-                    nearest = self.find_nearest(binned_fft[0], freq)
-                    value = binned_fft[1][nearest[0]]
-
-                    # TODO: make configurable
-                    flatten_scalar = self.functions.value_on_line_of_two_points(
-                        Xa = 20,
-                        Ya = 0.2,
-                        Xb = 20000,
-                        Yb = 62,
-                        get_x = nearest[0]
+                    # Get the frequencies we want and will return in the end
+                    wanted_freqs = self.datautils.list_items_in_between(
+                        self.piano_keys_frequencies,
+                        start_freq, end_freq,
                     )
 
-                    # Append on the wanted FFT values
-                    processed.append(abs(value) * flatten_scalar * 6)
+                    # Resample our data to the one specified on the config
+                    resampled = self.resample(
+                        data = data,
+                        original_sample_rate = original_sample_rate,
+                        new_sample_rate = sample_rate,
+                    )
 
-        # Yield FFT data
-        yield ["fft", np.array(processed).astype(np.float32)]
+                    # Calculate the binned FFT, we get N vectors of [freq, value] of this FFT
+                    binned_fft = self.fourier.binned_fft(
+                        data = resampled,
+
+                        # # Target (re?)sample rate so we normalize the FFT values
+                        sample_rate =  sample_rate,
+                        original_sample_rate = original_sample_rate,
+                    )
+
+                    # Get the nearest freq and add to processed            
+                    for freq in wanted_freqs:
+
+                        # Get the nearest and FFT value
+                        nearest = self.find_nearest(binned_fft[0], freq)
+                        value = binned_fft[1][nearest[0]]
+
+                        # TODO: make configurable
+                        flatten_scalar = self.functions.value_on_line_of_two_points(
+                            Xa = 20,
+                            Ya = 0.8,
+                            Xb = 20000,
+                            Yb = 62,
+                            get_x = nearest[0]
+                        )
+
+                        # Append on the wanted FFT values
+                        processed.append(abs(value) * flatten_scalar)
+
+            # Yield FFT data
+            yield ["fft", np.array(processed).astype(np.float32)]
 
     # # Common Methods
 
@@ -322,9 +368,42 @@ class AudioProcessing:
         # If the ratio is 1 then we don't do anything cause new/old = 1, just return the input data
         if new_sample_rate == original_sample_rate:
             return data
-        else:
-            # Use libsamplerate for resampling the audio otherwise
-            return samplerate.resample(data, ratio = (new_sample_rate / original_sample_rate), converter_type = 'sinc_best')
+
+        # Use libsamplerate for resampling the audio otherwise
+        return samplerate.resample(data, ratio = (new_sample_rate / original_sample_rate), converter_type = 'sinc_best')
+
+    # Resample the data with nearest index approach
+    # Doesn't really work, experimental, maybe I understand resampling wrong
+    def resample_nearest(self,
+            data: np.ndarray,
+            original_sample_rate: int,
+            new_sample_rate: int
+    ) -> np.ndarray:
+
+        # Nothing to do, target sample rate is the same as old one
+        if (new_sample_rate == original_sample_rate):
+            return data
+            
+        # The ratio we'll resample
+        ratio = (original_sample_rate / new_sample_rate)
+
+        # Length of the data
+        N = data.shape[0]
+
+        # Target new array length
+        T = N * ratio
+
+        # Array of original indexes
+        indexes = np.arange(T)
+
+        # (indexes / T) is the normalized to max at 1, we multiply
+        # by the length of the original data so we expand the indexes
+        # we just shaved by N * ratio, then use integer numbers and 
+        # offset by 1
+        indexes = ((indexes / T) * N).astype(np.int32) - 1
+
+        # Return the original data with selected indexes
+        return data[indexes] 
 
     # Get N semitones above / below A4 key, 440 Hz
     #

@@ -27,7 +27,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from scipy.fftpack import fft
+from scipy.fft import rfft, rfftfreq
 import numpy as np
 import math
 
@@ -39,7 +39,7 @@ class Fourier:
         # 1. Calculate the fft fft(data)
         # 2. Only need half the list of fft and don't need the DC bias (first item)
         #    - [1 : int(len(N) / 2)] = [1 : len(N) // 2]
-        return np.fft.fft(data)[1 : data.shape[0] // 2]
+        return rfft(data)
 
     # For more information, https://stackoverflow.com/questions/4364823
     #
@@ -64,15 +64,15 @@ class Fourier:
         #
         # raw_fft = self.fft(data) * (1 / (2 ** ((sample_rate / original_sample_rate))))
         # TODO: wont work for old fs and new fs equal
-        raw_fft = self.fft(data) * (math.log10(original_sample_rate / sample_rate) / math.log10(2))
+        raw_fft = self.fft(data)
+
+        if original_sample_rate != sample_rate:
+            raw_fft *= (math.log10(original_sample_rate / sample_rate) / math.log10(2))
 
         # # Get the frequencies that FFT represent based on the sample rate
 
         # Get the frequencies that the indexes determine
-        fftf = np.fft.fftfreq(len(data), 1 / sample_rate)
-
-        # Only need the first half of frequencies cause imaginary mirroring
-        fftf = fftf[1 : len(fftf) // 2]
+        fftf = rfftfreq(len(data), 1 / sample_rate)
 
         # # Return pairs of [[freq], [fft]] array
         return np.array([fftf, raw_fft])
