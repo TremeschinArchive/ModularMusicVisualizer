@@ -440,7 +440,7 @@ class MMVShaderMGL:
 
         # Regular expression to match #pragma map name=loader:/path/value;512x512
         # the ;512x512 is required for the image, video and shader loaders
-        regex = r"([ ]+)?#pragma map ([\w]+)=([\w]+):([\w/. -]+)?:?([0-9]+)?x?([0-9]+)?"
+        regex = r"([ ]+)?#pragma map ([\w]+)=([\w]+);([\w/. -]+)?;?([0-9]+)?x?([0-9]+)?"
         found = re.findall(regex, fragment_shader, re.MULTILINE)
     
         logging.info(f"{debug_prefix} Regex findall says: {found}")
