@@ -63,11 +63,11 @@ class Fourier:
         # Divide by that but offset by 1 since if new fs = old fs we multiply by 1/2^0 = 1
         #
         # raw_fft = self.fft(data) * (1 / (2 ** ((sample_rate / original_sample_rate))))
-        # TODO: wont work for old fs and new fs equal
         raw_fft = self.fft(data)
 
-        if original_sample_rate != sample_rate:
-            raw_fft *= (math.log10(original_sample_rate / sample_rate) / math.log10(2))
+        # TODO: wont work for old fs and new fs equal
+        # if original_sample_rate != sample_rate:
+        #     raw_fft *= (math.log10(original_sample_rate / sample_rate) / math.log10(2))
 
         # # Get the frequencies that FFT represent based on the sample rate
 
@@ -75,4 +75,4 @@ class Fourier:
         fftf = rfftfreq(len(data), 1 / sample_rate)
 
         # # Return pairs of [[freq], [fft]] array
-        return np.array([fftf, raw_fft])
+        return np.vstack((fftf, raw_fft))

@@ -112,7 +112,7 @@ class AudioSourceRealtime:
         self.info = {}
 
         # Open a recorder microphone otherwise we open and close the stream on each loop
-        with self.recorder.recorder(samplerate = self.sample_rate, channels = 2, blocksize = 2048) as source:
+        with self.recorder.recorder(samplerate = self.sample_rate, channels = 2, blocksize = 128) as source:
 
             # Until the user don't run the function stop
             while not self.__should_stop:
@@ -135,9 +135,6 @@ class AudioSourceRealtime:
                 # Assign the new data to the current batch arrays
                 for channel_number in [0, 1]:
 
-                    # Fade old values on each cycle (multiply by 0.8 should be enough?)
-                    self.current_batch[channel_number] = self.current_batch[channel_number] * 0.95
-
                     # We simply np.put the new data on the current batch array with its entirety
                     # of the length (0, batch_size) on the mode to wrap the values around
                     np.put(
@@ -146,12 +143,12 @@ class AudioSourceRealtime:
                         new_audio_data[channel_number],     # Input data
                         mode = "wrap"                       # Mode (wrap)
                     )
-
+                
                 # This yields information as it was calculated so we assign the key (index 0) to the value (index 1)
                 for info in self.audio_processing.get_info_on_audio_slice(
-                        audio_slice = self.current_batch,
-                        original_sample_rate = self.sample_rate,
-                        calculate_fft = self.calculate_fft,
+                    audio_slice = self.current_batch,
+                    original_sample_rate = self.sample_rate,
+                    calculate_fft = self.calculate_fft,
                 ):
                     self.info[info[0]] = info[1]
 
@@ -216,51 +213,59 @@ class AudioProcessing:
 
         # MMV specific, where we return repeated frequencies from the
         # function process
-        self.where_decay_less_than_one = 440
-        self.value_at_zero = 5
+       
+    
+    # Set up a configuration dict, They can look like this:
+    """
+    {
+        "start_freq": 20,
+        "end_freq": 18000,
+    },
+    """
+    def configure(self, config_dict, where_decay_less_than_one = 440, value_at_zero = 5):
+        debug_prefix = "[AudioProcessing.configure]"
+
+        # Assign
+        self.config = config_dict
+        self.FFT_length = []
+        self.where_decay_less_than_one = where_decay_less_than_one
+        self.value_at_zero = value_at_zero
 
         # List of full frequencies of notes
         # - 50 to 68 yields freqs of 24.4 Hz up to 
         self.piano_keys_frequencies = [round(self.get_frequency_of_key(x), 2) for x in range(-50, 68)]
         logging.info(f"{debug_prefix} Whole notes frequencies we'll care: [{self.piano_keys_frequencies}]")
 
-    # Set up a configuration dict, They can look like this:
-    """
-    {
-        0: {
-            "sample_rate": 1000,
-            "start_freq": 20,
-            "end_freq": 500,
-        },
-        1: {
-            "sample_rate": 40000,
-            "start_freq": 500,
-            "end_freq": 20000,
-        }
-    }
-    """
-    def configure(self, config_dict):
-        # Assign
-        self.config = config_dict
-        self.FFT_length = []
+        # Get the frequencies we want and will return in the end
+        self.wanted_freqs = []
 
-        # # Calculate how many outputs we'll have
-        for _, value in self.config.items():
+        # Get config
+        start_freq = self.config["start_freq"]
+        end_freq = self.config["end_freq"]
 
-            # Get config
-            start_freq = value.get("start_freq")
-            end_freq = value.get("end_freq")
+        # Get the frequencies we want and will return in the end
+        self.wanted_freqs = self.datautils.list_items_in_between(
+            self.piano_keys_frequencies,
+            start_freq, end_freq,
+        )
 
-            # Get the frequencies we want and will return in the end
-            wanted_freqs = self.datautils.list_items_in_between(
-                self.piano_keys_frequencies,
-                start_freq, end_freq,
+        logging.info(f"{debug_prefix} Wanted frequencies: [{self.wanted_freqs}]")
+
+        # Add target freq if it's not on the list
+        for freq in self.wanted_freqs:
+
+            # How much bars we'll render duped at this freq, see
+            # this function on the Functions class for more detail
+            N = math.ceil(
+                self.functions.how_much_bars_on_this_frequency(
+                    x = freq,
+                    where_decay_less_than_one = self.where_decay_less_than_one,
+                    value_at_zero = self.value_at_zero,
+                )
             )
 
-            # Add target freq if it's not on the list
-            for freq in wanted_freqs:
-                if not freq in self.FFT_length:
-                    self.FFT_length.append(freq)
+            for duped in range(N):
+                self.FFT_length.append(freq)
         
         # The size will be the length of the list, times 2 because left and rigth channel
         self.FFT_length = len(self.FFT_length) * 2
@@ -298,62 +303,53 @@ class AudioProcessing:
         # # FFT shenanigans
 
         if calculate_fft:
-            processed = []
+            processed = np.zeros(self.FFT_length, dtype = np.float32)
+            counter = 0
 
             # For each channel
-            for data in audio_slice:
+            for channel_index, data in enumerate(audio_slice):
 
-                # Iterate on config
-                for _, value in self.config.items():
+                # Symmetry
+                if channel_index == 1:
+                    wanted_freqs = reversed(self.wanted_freqs)
+                else:
+                    wanted_freqs = self.wanted_freqs
 
-                    # Get info on config
-                    sample_rate = value.get("sample_rate")
-                    start_freq = value.get("start_freq")
-                    end_freq = value.get("end_freq")
+                # FFT with window size 1 Hz
+                fft = self.fourier.fft(data = data)
 
-                    # Get the frequencies we want and will return in the end
-                    wanted_freqs = self.datautils.list_items_in_between(
-                        self.piano_keys_frequencies,
-                        start_freq, end_freq,
+                # Get the nearest freq and add to processed            
+                for freq in self.wanted_freqs:
+
+                    # TODO: make configurable
+                    flatten_scalar = self.functions.value_on_line_of_two_points(
+                        Xa = 20,
+                        Ya = 0.8,
+                        Xb = 20000,
+                        Yb = 62,
+                        get_x = freq
                     )
 
-                    # Resample our data to the one specified on the config
-                    resampled = self.resample(
-                        data = data,
-                        original_sample_rate = original_sample_rate,
-                        new_sample_rate = sample_rate,
-                    )
-
-                    # Calculate the binned FFT, we get N vectors of [freq, value] of this FFT
-                    binned_fft = self.fourier.binned_fft(
-                        data = resampled,
-
-                        # # Target (re?)sample rate so we normalize the FFT values
-                        sample_rate =  sample_rate,
-                        original_sample_rate = original_sample_rate,
-                    )
-
-                    # Get the nearest freq and add to processed            
-                    for freq in wanted_freqs:
-
-                        # Get the nearest and FFT value
-                        nearest = self.find_nearest(binned_fft[0], freq)
-                        value = binned_fft[1][nearest[0]]
-
-                        # TODO: make configurable
-                        flatten_scalar = self.functions.value_on_line_of_two_points(
-                            Xa = 20,
-                            Ya = 0.8,
-                            Xb = 20000,
-                            Yb = 62,
-                            get_x = nearest[0]
+                    # ABS of fft
+                    value = abs(fft[int(freq)]) * flatten_scalar
+                    
+                    # How much bars we'll render duped at this freq, see
+                    # this function on the Functions class for more detail
+                    N = math.ceil(
+                        self.functions.how_much_bars_on_this_frequency(
+                            x = freq,
+                            where_decay_less_than_one = self.where_decay_less_than_one,
+                            value_at_zero = self.value_at_zero,
                         )
+                    )
 
-                        # Append on the wanted FFT values
-                        processed.append(abs(value) * flatten_scalar)
+                    # Append on the wanted FFT values
+                    for _ in range(N):
+                        processed[counter] = value
+                        counter += 1
 
             # Yield FFT data
-            yield ["fft", np.array(processed).astype(np.float32)]
+            yield ["fft", processed]
 
     # # Common Methods
 

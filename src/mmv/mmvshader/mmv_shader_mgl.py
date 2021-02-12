@@ -219,7 +219,7 @@ class MMVShaderMGL:
 
     # # Generic methods
 
-    def __init__(self, flip = False, master_shader = False, gl_context = None):
+    def __init__(self, flip = True, master_shader = False, gl_context = None):
         debug_prefix = "[MMVShaderMGL.__init__]"
         self.master_shader = master_shader
         self.flip = flip
@@ -412,14 +412,14 @@ class MMVShaderMGL:
         for key, value in replaces.items():
 
             # We surround the one we replace with {} for visibility on the GLSL
-            key = f"{{{key}}}"
+            key = "{" + str(key) + "}"
             
             # How many is there to replace?
             found = fragment_shader.count(key)
             logging.info(f"{debug_prefix} Replacing [N={found}] on shader [{key}] -> [{value}]")
 
             # Actually replace
-            fragment_shader = fragment_shader.replace(str(key), str(value))
+            fragment_shader = fragment_shader.replace(key, str(value))
 
         # # Parse the shader
 
@@ -453,7 +453,7 @@ class MMVShaderMGL:
 
             # Get the values we matched
             identation, name, loader, value, width, height = mapping
-            logging.info(f"{debug_prefix} Matched mapping [name={name}] [loader={loader}] [width={width}] [height={height}]")
+            logging.info(f"{debug_prefix} Matched mapping [name={name}] [loader={loader}] [value={value}] [width={width}] [height={height}]")
 
             fragment_shader = fragment_shader.replace(f"\n{identation}#pragma map {name}={loader}:{value}:{width}x{height};", "")
 
@@ -477,6 +477,7 @@ class MMVShaderMGL:
 
                 # Image loader, load image, convert to RGBA, create texture with target resolution, assign texture
                 if loader == "image":
+
                     # Load the image, get width and height for the texture size
                     img = Image.open(value).convert("RGBA")
                     width, height = img.size
@@ -512,7 +513,7 @@ class MMVShaderMGL:
                         loader_frag_shader = f.read()
 
                     # Create one instance of this very own class
-                    shader_as_texture = MMVShaderMGL(flip = self.flip, gl_context = self.gl_context)
+                    shader_as_texture = MMVShaderMGL(flip = not self.flip, gl_context = self.gl_context)
 
                     # Add included dirs
                     for directory in self.include_directories:
@@ -527,7 +528,10 @@ class MMVShaderMGL:
                     texture, fbo, _ = shader_as_texture.construct_texture_fbo()
 
                     # Construct the shader we loaded
-                    shader_as_texture.construct_shader(fragment_shader = loader_frag_shader, save_shaders_path = save_shaders_path)
+                    shader_as_texture.construct_shader(
+                        fragment_shader = loader_frag_shader, replaces = replaces,
+                        save_shaders_path = save_shaders_path
+                    )
 
                     # Append to the shaders as textures. We only do this for passing a pipeline to the mapped shader
                     self.shaders_as_textures.append(shader_as_texture)
@@ -567,25 +571,27 @@ class MMVShaderMGL:
         logging.info(f"{debug_prefix} Parsing the fragment shader for every #pragma include")
         
         # Simple regex and get every match with findall
-        regex = r"([ ]+)?#pragma include ([\w/. -]+)"
+        regex = r"([ ]+)?#pragma include ([\w/. -]+) ([\w]+)?"
         found = re.findall(regex, fragment_shader, re.MULTILINE)
 
         logging.info(f"{debug_prefix} Regex findall says: {found}")
  
         # For each #pragma include we found
         for mapping in found:
-            identation, include = mapping
+            identation, include, mode = mapping
 
             # If this include was already made then no need to do it again.
-            if include in self.included_files:
-                logging.info(f"{debug_prefix} File / path already included [{include}]")
-                continue
+            # mode "multiple" bypasses this
+            if mode == "once":
+                if include in self.included_files:
+                    logging.info(f"{debug_prefix} File / path already included [{include}]")
+                    continue
             
             # Mark that this was already included
             self.included_files.append(include)
 
             # This will replace this line (we build back)
-            replaces = f"{identation}#pragma include {include}"    
+            replaces = f"{identation}#pragma include {include} {mode};"
 
             # # Attempt to find the file on the included directories
 

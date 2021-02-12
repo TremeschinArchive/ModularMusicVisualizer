@@ -92,28 +92,15 @@ elif mode == "view":
     source = interface.get_audio_source_realtime()
     source.init(search_for_loopback = True)
     source.configure(
-        batch_size = 2048 * 4 * 2,
+        batch_size = SAMPLERATE,
         sample_rate = SAMPLERATE,
-        recorder_numframes = int(SAMPLERATE / (FRAMERATE / 2)),  # Safety: expect half of fps
+        recorder_numframes =     None, #int(SAMPLERATE / (FRAMERATE / 2)),  # Safety: expect half of fps
         calculate_fft = CALCULATE_FFT
     )
     source.audio_processing.configure(config_dict = {
-        # 0: {
-        #     "sample_rate": 1000,
-        #     "start_freq": 20,
-        #     "end_freq": 500,
-        # },
-        # 1: {
-        #     "sample_rate": 40000,
-        #     "start_freq": 500,
-        #     "end_freq": 20000,
-        # }
-
-        1: {
-            "sample_rate": 48000,
-            "start_freq": 30,
-            "end_freq": 20000,
-        }
+        "sample_rate": 48000,
+        "start_freq": 100,
+        "end_freq": 6000,
     })
     MMV_FFTSIZE = source.audio_processing.FFT_length
     print(f"{debug_prefix} FFT Size on AudioProcessing is [{MMV_FFTSIZE}]")
@@ -130,21 +117,45 @@ GLSL_INCLUDE_FOLDER = f"{GLSL_FOLDER}{sep}include"
 mgl.include_dir(GLSL_INCLUDE_FOLDER)
 
 # Which test to run?
-test_number = 4
+test_number = 5
 tests = {
     1: {"frag": f"{GLSL_FOLDER}{sep}test{sep}test_1_simple_shader.glsl"},
     2: {"frag": f"{GLSL_FOLDER}{sep}test{sep}___test_2_post_fx_png.glsl"},
     3: {"frag": f"{GLSL_FOLDER}{sep}test{sep}test_3_rt_audio.glsl"},
     4: {"frag": f"{GLSL_FOLDER}{sep}test{sep}test_4_fourier.glsl"},
+    5: {
+        "frag": f"{GLSL_FOLDER}{sep}test{sep}test_5_circle_fourier_bg_layer2.glsl",
+        "replaces": {
+            "LAYER1": f"{GLSL_FOLDER}{sep}test{sep}test_5_circle_fourier_bg_layer1.glsl",
+            "BACKGROUND": f"{interface.MMV_PACKAGE_ROOT}{sep}..{sep}assets{sep}free_assets{sep}glsl_default_background.jpg",
+            "LOGO": f"{interface.MMV_PACKAGE_ROOT}{sep}..{sep}assets{sep}free_assets{sep}mmv_logo.png",
+        }
+    }
 }
 
 # Load the shader from the path
 cfg = tests[test_number]
+sep = os.path.sep
+
+# Default stuff we replace
+default_replaces = {
+    "MMV_FFTSIZE": MMV_FFTSIZE,
+    "WIDTH": WIDTH,
+    "HEIGHT": HEIGHT
+}
+
+# Merge the two dicts
+replaces = default_replaces
+if "replaces" in cfg.keys():
+    for key in cfg["replaces"].keys():
+        replaces[key] = cfg["replaces"][key]
+
+print(f"{debug_prefix} Replaces dictionary: {replaces}")
+
+# Load the shader
 mgl.load_shader_from_path(
     fragment_shader_path = cfg["frag"],
-    replaces = {
-        "MMV_FFTSIZE": MMV_FFTSIZE,
-    },
+    replaces = replaces,
     save_shaders_path = interface.runtime_dir
 )
 
@@ -193,10 +204,11 @@ times = [time.time() + i/FRAMERATE for i in range(fps_last_n)]
 # # Temporary pipeline calculations TODO: proper class
 
 smooth_audio_amplitude = 0
+smooth_audio_amplitude2 = 0
 prevfft = np.array([0.0 for _ in range(MMV_FFTSIZE)], dtype = np.float32)
 
 # Increase this value to get more aggressiveness or just turn up the computer volume
-multiplier = 6
+multiplier = 16
 
 # Main test routine
 while True:
@@ -218,15 +230,18 @@ while True:
 
     # Amplitudes
     if "average_amplitudes" in pipeline_info.keys():
-        smooth_audio_amplitude = smooth_audio_amplitude + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude) * 0.154
+        smooth_audio_amplitude = smooth_audio_amplitude + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude) * 0.054
         pipeline_info["smooth_audio_amplitude"] = smooth_audio_amplitude * multiplier
+
+        smooth_audio_amplitude2 = smooth_audio_amplitude2 + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude2) * 0.3
+        pipeline_info["smooth_audio_amplitude2"] = smooth_audio_amplitude2 * multiplier * 1.5
 
     # If we have an fft key
     if "fft" in pipeline_info.keys():
 
         # Interpolation
         for index, value in enumerate(pipeline_info["fft"]):
-            prevfft[index] = prevfft[index] + (value*multiplier - prevfft[index]) * 0.35
+            prevfft[index] = prevfft[index] + (value*multiplier - prevfft[index]) * 0.25
 
         # Write the FFT
         mgl.write_texture_pipeline(texture_name = "fft", data = prevfft.astype(np.float32))
