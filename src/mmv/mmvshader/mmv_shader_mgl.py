@@ -455,7 +455,7 @@ class MMVShaderMGL:
             identation, name, loader, value, width, height = mapping
             logging.info(f"{debug_prefix} Matched mapping [name={name}] [loader={loader}] [value={value}] [width={width}] [height={height}]")
 
-            fragment_shader = fragment_shader.replace(f"\n{identation}#pragma map {name}={loader}:{value}:{width}x{height};", "")
+            fragment_shader = fragment_shader.replace(f"\n{identation}#pragma map {name}={loader};{value};{width}x{height}", "")
 
             # Error assertion, valid loader and path
             loaders = ["image", "video", "shader", "pipeline_texture", "include"]
