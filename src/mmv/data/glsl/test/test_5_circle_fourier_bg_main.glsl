@@ -3,8 +3,8 @@
 
 #pragma map name fourier_glsl_test
 
-#pragma map layer1=shader:{LAYER1}:{WIDTH}x{HEIGHT}
-#pragma map layer2=shader:{LAYER2PFX}:{WIDTH}x{HEIGHT}
+#pragma map layer1=shader;{LAYER1};{WIDTH}x{HEIGHT}
+#pragma map layer2=shader;{LAYER2PFX};{WIDTH}x{HEIGHT}
 
 uniform float smooth_audio_amplitude;
 

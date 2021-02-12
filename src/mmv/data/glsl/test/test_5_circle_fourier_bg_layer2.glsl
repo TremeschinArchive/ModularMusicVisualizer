@@ -5,8 +5,8 @@
 #pragma map name fourier_glsl_test
 
 #pragma include mmv_specification once;
-#pragma map fft=pipeline_texture::{MMV_FFTSIZE}x1;
-#pragma map logo=image:{LOGO}:1000x1000
+#pragma map fft=pipeline_texture;;{MMV_FFTSIZE}x1;
+#pragma map logo=image;{LOGO};1000x1000
 
 uniform float smooth_audio_amplitude;
 uniform float smooth_audio_amplitude2;

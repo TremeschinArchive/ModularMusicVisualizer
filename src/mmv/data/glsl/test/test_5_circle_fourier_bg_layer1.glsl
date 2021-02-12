@@ -5,7 +5,7 @@
 
 #pragma include mmv_specification once
 
-#pragma map background=image:{BACKGROUND}:1920x1080
+#pragma map background=image;{BACKGROUND};1920x1080
 
 uniform float smooth_audio_amplitude;
 uniform vec3 standard_deviations;
