@@ -147,7 +147,7 @@ f"""{debug_prefix} Show thanks message
         debug_prefix = "[MMVPackageInterface.__init__]"
 
         # Versioning
-        self.version = "2.6"
+        self.version = "3.0-shaders-dev"
 
         # Can only run on Python 64 bits, this expression returns 32 if 32 bit installation
         # and 64 if 64 bit installation, we assert that (assume it's true, quit if it isn't)
