@@ -44,126 +44,17 @@ import time
 import os
 
 
-class AudioSourceRealtime:
-    def __init__(self):
-        self.audio_processing = AudioProcessing()
-
-    def init(self, recorder_device = None, search_for_loopback = False):
-        debug_prefix = "[AudioSourceRealtime.init]"
-
-        # Search for the first loopback device (monitor of the current audio output)
-        # Probably will fail on Linux if not using PulseAudio but oh well
-        if (search_for_loopback) and (recorder_device is None):
-            logging.info(f"{debug_prefix} Attempting to find the first loopback device for recording")
-
-            # Iterate on every "microphone", or recorder-capable devices to be more precise
-            for device in soundcard.all_microphones(include_loopback = True):
-
-                # If it's marked as loopback then we'll use it
-                if device.isloopback:
-                    self.recorder = device
-                    logging.info(f"{debug_prefix} Found loopback device: [{device}]")
-                    break            
-
-            # If we didn't match anyone then recorder_device will be None and we'll error out soon
-        else:
-            # Assign the recorder given by the user since 
-            self.recorder = recorder_device
-
-        # Recorder device should not be none
-        assert (self.recorder is not None), "Auto search is off and didn't give a target recorder device"
-
+class GenericAudioSource:
     # Set the target batch size and sample rate.
-    def configure(self, batch_size, sample_rate, recorder_numframes = None, calculate_fft = True):
+    def configure(self, batch_size, sample_rate, recorder_numframes = None, do_calculate_fft = True):
         debug_prefix = "[AudioSourceRealtime.configure]"
         self.batch_size = batch_size
         self.sample_rate = sample_rate
         self.recorder_numframes = recorder_numframes
-        self.calculate_fft = calculate_fft
-
-    # Start the main routines since we configured everything
-    def start_async(self):
-        debug_prefix = "[AudioSourceRealtime.start_async]"
-    
-        logging.info(f"{debug_prefix} Starting the main capture and processing thread..")
-
-        # Start the thread we capture and process the audio
-        self.capture_process_thread = threading.Thread(target = self.capture_and_process_loop, daemon = True)
-        self.capture_process_thread.start()
-
-        # Wait until we have some info so we don't accidentally crash with None type has no attribute blabla
-        self.info = {}
-        while not self.info == {}:
-            time.sleep(0.016)
-    
-    # Stop the main thread
-    def stop(self):
-        self.__should_stop = True
-
-    # This is the thread we capture the audio and process it, it's a bit more complicated than a 
-    # class that reads from a file because we don't have guaranteed slices we read and also to 
-    # synchronize the processing part and the frames we're rendering so it's better to just do
-    # stuff as fast as possible here and get whatever next numframes we have to read 
-    def capture_and_process_loop(self):
-
-        # A float32 zeros to store the current audio to process
-        self.current_batch = np.zeros((2, self.batch_size), dtype = np.float32)
-        self.__should_stop = False
-        self.info = {}
-
-        # Open a recorder microphone otherwise we open and close the stream on each loop
-        with self.recorder.recorder(samplerate = self.sample_rate, channels = 2, blocksize = 128) as source:
-
-            # Until the user don't run the function stop
-            while not self.__should_stop:
-
-                # The array with new stereo data to process, we get whatever there is ready that was
-                # buffered (numframes = None) so we don't have to sync with the video or block the code
-                # (though we're supposed to be multithreaded here so it won't matter but we lose the
-                # ability to have big batch sizes in a "progressive" processing mode).
-                # We also transpose the result so we get a [channels, samples] array shape
-                new_audio_data = source.record(numframes = self.recorder_numframes).T
-    
-                # The number of new samples we got
-                new_audio_data_len = new_audio_data.shape[1]
-
-                # Offset the Left and Right arrays on the current batch itself by the length of the
-                # new data, this is so we always use the index 0 as the next new and unread value
-                # relative to when we keep adding and wrapping around
-                self.current_batch = np.roll(self.current_batch, - new_audio_data_len, axis = -1)
-
-                # Assign the new data to the current batch arrays
-                for channel_number in [0, 1]:
-
-                    # We simply np.put the new data on the current batch array with its entirety
-                    # of the length (0, batch_size) on the mode to wrap the values around
-                    np.put(
-                        self.current_batch[channel_number], # Target array
-                        range(0, self.batch_size),          # Where on target array to put the data
-                        new_audio_data[channel_number],     # Input data
-                        mode = "wrap"                       # Mode (wrap)
-                    )
-                
-                # This yields information as it was calculated so we assign the key (index 0) to the value (index 1)
-                for info in self.audio_processing.get_info_on_audio_slice(
-                    audio_slice = self.current_batch,
-                    original_sample_rate = self.sample_rate,
-                    calculate_fft = self.calculate_fft,
-                ):
-                    self.info[info[0]] = info[1]
-
-        self.__should_stop = False
-
-    # Do nothing, we're threaded processing the audio
-    def next(self):
-        pass
-    
-    # We just return the current info
-    def get_info(self):
-        return self.info
+        self.do_calculate_fft = do_calculate_fft
 
 
-class AudioFile:
+class AudioSourceFile(GenericAudioSource):
 
     # Read a .wav file from disk and gets the values on a list
     def read(self, path: str) -> None:
@@ -199,6 +90,129 @@ class AudioFile:
 
         # Just make sure the mono data is right..
         logging.info(f"{debug_prefix} Mono data shape:             [{self.mono_data.shape}]")
+
+
+class AudioSourceRealtime(GenericAudioSource):
+    def __init__(self):
+        self.audio_processing = AudioProcessing()
+
+    def init(self, recorder_device = None, search_for_loopback = False):
+        debug_prefix = "[AudioSourceRealtime.init]"
+
+        # Search for the first loopback device (monitor of the current audio output)
+        # Probably will fail on Linux if not using PulseAudio but oh well
+        if (search_for_loopback) and (recorder_device is None):
+            logging.info(f"{debug_prefix} Attempting to find the first loopback device for recording")
+
+            # Iterate on every "microphone", or recorder-capable devices to be more precise
+            for device in soundcard.all_microphones(include_loopback = True):
+
+                # If it's marked as loopback then we'll use it
+                if device.isloopback:
+                    self.recorder = device
+                    logging.info(f"{debug_prefix} Found loopback device: [{device}]")
+                    break            
+
+            # If we didn't match anyone then recorder_device will be None and we'll error out soon
+        else:
+            # Assign the recorder given by the user since 
+            self.recorder = recorder_device
+
+        # Recorder device should not be none
+        assert (self.recorder is not None), "Auto search is off and didn't give a target recorder device"
+
+    # Start the main routines since we configured everything
+    def start_async(self):
+        debug_prefix = "[AudioSourceRealtime.start_async]"
+    
+        logging.info(f"{debug_prefix} Starting the main capture and processing thread..")
+
+        # Start the thread we capture and process the audio
+        self.capture_process_thread = threading.Thread(target = self.capture_and_process_loop, daemon = True)
+        self.capture_process_thread.start()
+
+        # Wait until we have some info so we don't accidentally crash with None type has no attribute blabla
+        self.info = {}
+        while not self.info == {}:
+            time.sleep(0.016)
+    
+    # Stop the main thread
+    def stop(self):
+        self.__should_stop = True
+        self.__capture_threadshould_stop = True
+
+    def __capture_thread_func(self):
+        
+        # Open a recorder microphone otherwise we open and close the stream on each loop
+        with self.recorder.recorder(samplerate = self.sample_rate, channels = 2) as source:
+            while not self.__capture_threadshould_stop:
+
+                # The array with new stereo data to process, we get whatever there is ready that was
+                # buffered (numframes = None) so we don't have to sync with the video or block the code
+                # (though we're supposed to be multithreaded here so it won't matter but we lose the
+                # ability to have big batch sizes in a "progressive" processing mode).
+                # We also transpose the result so we get a [channels, samples] array shape
+                new_audio_data = source.record(numframes = self.recorder_numframes).T
+
+                # The number of new samples we got
+                new_audio_data_len = new_audio_data.shape[1]
+
+                # Offset the Left and Right arrays on the current batch itself by the length of the
+                # new data, this is so we always use the index 0 as the next new and unread value
+                # relative to when we keep adding and wrapping around
+                self.current_batch = np.roll(self.current_batch, - new_audio_data_len, axis = -1)
+
+                # Assign the new data to the current batch arrays
+                for channel_number in [0, 1]:
+
+                    # We simply np.put the new data on the current batch array with its entirety
+                    # of the length (0, batch_size) on the mode to wrap the values around
+                    np.put(
+                        self.current_batch[channel_number], # Target array
+                        range(0, self.batch_size),          # Where on target array to put the data
+                        new_audio_data[channel_number],     # Input data
+                        mode = "wrap"                       # Mode (wrap)
+                    )
+
+            self.__capture_threadshould_stop = False
+
+    # This is the thread we capture the audio and process it, it's a bit more complicated than a 
+    # class that reads from a file because we don't have guaranteed slices we read and also to 
+    # synchronize the processing part and the frames we're rendering so it's better to just do
+    # stuff as fast as possible here and get whatever next numframes we have to read 
+    def capture_and_process_loop(self):
+
+        # Thread and code flow control
+        self.__capture_threadshould_stop = False
+        self.__should_stop = False
+
+        # A float32 zeros to store the current audio to process
+        self.current_batch = np.zeros((2, self.batch_size), dtype = np.float32)
+        self.info = {}
+
+        self.__capture_thread = threading.Thread(target = self.__capture_thread_func, daemon = True)
+        self.__capture_thread.start()
+
+        # Until the user don't run the function stop
+        while not self.__should_stop:
+            
+            # This yields information as it was calculated so we assign the key (index 0) to the value (index 1)
+            for info in self.audio_processing.get_info_on_audio_slice(
+                audio_slice = self.current_batch,
+                original_sample_rate = self.sample_rate,
+                do_calculate_fft = self.do_calculate_fft,
+            ):
+                self.info[info[0]] = info[1]
+              
+        self.__should_stop = False
+
+    # Do nothing, we're threaded processing the audio
+    def next(self):
+        pass
+    
+    # We just return the current info
+    def get_info(self):
+        return self.info
 
 
 class AudioProcessing:
@@ -272,7 +286,7 @@ class AudioProcessing:
 
     # # New Methods
 
-    def get_info_on_audio_slice(self, audio_slice: np.ndarray, original_sample_rate, calculate_fft = True) -> dict:
+    def get_info_on_audio_slice(self, audio_slice: np.ndarray, original_sample_rate, do_calculate_fft = True) -> dict:
 
         # Calculate MONO
         mono = (audio_slice[0] + audio_slice[1]) / 2
@@ -302,7 +316,7 @@ class AudioProcessing:
 
         # # FFT shenanigans
 
-        if calculate_fft:
+        if do_calculate_fft:
             processed = np.zeros(self.FFT_length, dtype = np.float32)
             counter = 0
 

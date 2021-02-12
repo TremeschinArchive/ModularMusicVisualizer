@@ -1,4 +1,5 @@
 
+
 // ===============================================================================
 
 #pragma map name fourier_glsl_test
@@ -6,8 +7,6 @@
 #pragma include mmv_specification once;
 #pragma map fft=pipeline_texture::{MMV_FFTSIZE}x1;
 #pragma map logo=image:{LOGO}:1000x1000
-
-#pragma map layer1=shader:{LAYER1}:{WIDTH}x{HEIGHT}
 
 uniform float smooth_audio_amplitude;
 uniform float smooth_audio_amplitude2;
@@ -23,14 +22,14 @@ float proportion(float a, float b, float c) {
 
 float atan2(in float y, in float x)
 {
-    #pragma include math_constants multiple;
+    #pragma include math_constants multiple
     bool s = (abs(x) > abs(y));
     return mix(PI/2.0 - atan(x,y), atan(y,x), s);
 }
 
 void main() {
-    #pragma include coordinates_normalization multiple;
-    #pragma include math_constants multiple;
+    #pragma include coordinates_normalization multiple
+    #pragma include math_constants multiple
 
     vec4 col = vec4(0.0);
 
@@ -72,9 +71,6 @@ void main() {
     // } else {
     //     col = vec4(vec3(smooth_audio_amplitude/4.0), 0.0);
     // }
-
-    vec4 layer1_col = texture(layer1, shadertoy_uv);
-    col = mix(col, layer1_col, 1.0 - col.a);
 
     fragColor = col;
 }

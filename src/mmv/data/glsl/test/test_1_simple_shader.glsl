@@ -7,15 +7,15 @@
 
 // Test safe against multiple includes on the same file, should only replace the
 // first one and ignore the second one
-#pragma include mmv_specification;
-#pragma include mmv_specification;
+#pragma include mmv_specification once;
+#pragma include mmv_specification once;
 
 void main() {
 
     // Test include for usage stuv and gluv normalized according to the aspect ratio
     // UV coordinates, one from ShaderToy (ST UV) and other from OpenGL UV (GL UV)
     // Shadertoy bottom left is (0, 0) and OpenGL all corners max out ad 1 or -1
-    #pragma include coordinates_normalization;
+    #pragma include coordinates_normalization multiple;
 
     // "Random" colors testing, we should see mirrored red on the left and right
     // part of the screen since that is using abs(gluv.x), blue should increase
