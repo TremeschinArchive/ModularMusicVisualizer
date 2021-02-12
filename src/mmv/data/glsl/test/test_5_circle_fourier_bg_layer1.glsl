@@ -3,7 +3,7 @@
 
 #pragma map name fourier_layer_background
 
-#pragma include mmv_specification once;
+#pragma include mmv_specification once
 
 #pragma map background=image:{BACKGROUND}:1920x1080
 
@@ -12,7 +12,7 @@ uniform vec3 standard_deviations;
 uniform vec3 average_amplitudes;
 
 void main() {
-    #pragma include coordinates_normalization multiple;
+    #pragma include coordinates_normalization multiple
     
     vec4 col = vec4(0.0);
 

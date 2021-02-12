@@ -219,7 +219,7 @@ class MMVShaderMGL:
 
     # # Generic methods
 
-    def __init__(self, flip = True, master_shader = False, gl_context = None):
+    def __init__(self, flip = False, master_shader = False, gl_context = None):
         debug_prefix = "[MMVShaderMGL.__init__]"
         self.master_shader = master_shader
         self.flip = flip
@@ -513,7 +513,11 @@ class MMVShaderMGL:
                         loader_frag_shader = f.read()
 
                     # Create one instance of this very own class
-                    shader_as_texture = MMVShaderMGL(flip = not self.flip, gl_context = self.gl_context)
+                    if self.master_shader:
+                        f = self.flip
+                    else:
+                        f = not self.flip
+                    shader_as_texture = MMVShaderMGL(flip = f, gl_context = self.gl_context)
 
                     # Add included dirs
                     for directory in self.include_directories:
@@ -547,6 +551,7 @@ class MMVShaderMGL:
 
                     # Create a RGB texture for the video
                     texture = self.gl_context.texture((width, height), 3)
+                    texture.swizzle = 'BGR'
 
                     # Assign the name, type and texture to the textures dictionary
                     self.textures[len(self.textures.keys()) + 1] = [name, "video", texture, video]
@@ -591,7 +596,7 @@ class MMVShaderMGL:
             self.included_files.append(include)
 
             # This will replace this line (we build back)
-            replaces = f"{identation}#pragma include {include} {mode};"
+            replaces = f"{identation}#pragma include {include} {mode}"
 
             # # Attempt to find the file on the included directories
 
@@ -739,8 +744,11 @@ class MMVShaderMGL:
 
         # The location is the dict index, the texture info is [name, loader, object]
         for location, texture_info in self.textures.items():
-            # Unpack
-            name, loader, tex_obj = texture_info
+
+            # Unpack guaranteed generic items
+            name = texture_info[0]
+            loader = texture_info[1]
+            tex_obj = texture_info[2]
 
             try:
                 # Read the next frame of the video
@@ -759,7 +767,7 @@ class MMVShaderMGL:
                     
                     # Flip the image TODO: flip in GLSL by inverting uv? Also interpret BGR as RGB?
                     frame = cv2.flip(frame, 0)
-                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                     tex_obj.write(frame)
 
                 # Set the location we'll expect this texture
