@@ -5,7 +5,7 @@
 
 #pragma include mmv_specification once
 
-#pragma map layer2=shader:{LAYER2}:{WIDTH}x{HEIGHT}
+#pragma map layer2=shader;{LAYER2};{WIDTH}x{HEIGHT}
 
 uniform float smooth_audio_amplitude;
 uniform vec3 standard_deviations;

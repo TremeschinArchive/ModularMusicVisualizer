@@ -3,8 +3,8 @@
 
 #pragma map name fourier_glsl_test
 
-#pragma include mmv_specification once;
-#pragma map fft=pipeline_texture::{MMV_FFTSIZE}x1;
+#pragma include mmv_specification once
+#pragma map fft=pipeline_texture;;{MMV_FFTSIZE}x1
 
 uniform float smooth_audio_amplitude;
 uniform vec3 standard_deviations;
