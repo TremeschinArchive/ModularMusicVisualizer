@@ -26,15 +26,15 @@ vec4 mmv_blit_image(
     {
     
     // Image ratios
-    float image_ratio_y = image_resolution.y / image_resolution.x;
-    float image_ratio_x = image_resolution.x / image_resolution.y;
+    float image_ratioY = image_resolution.y / image_resolution.x;
+    float image_ratioX = image_resolution.x / image_resolution.y;
 
     // Scale according to X's proportion (increase rotation matrix ellipse)
-    scale *= image_ratio_x;
+    scale *= image_ratioX;
     
     // Scale matrix
     mat2 scale_matrix = mat2(
-        (1.0 / scale) * image_ratio_x, 0,
+        (1.0 / scale) * image_ratioX, 0,
         0, (1.0 / scale)
     );
 
@@ -42,8 +42,8 @@ vec4 mmv_blit_image(
     float c = cos(angle);
     float s = sin(angle);
     mat2 rotation_matrix = mat2(
-         c / image_ratio_x, s,
-        -s, c / image_ratio_y
+         c / image_ratioX, s,
+        -s, c / image_ratioY
     );
 
     // The rotated, scaled and anchored, flipped and shifted UV coordinate to get this sampler2D texture
