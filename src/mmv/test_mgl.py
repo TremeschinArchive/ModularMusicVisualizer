@@ -94,8 +94,8 @@ elif mode == "view":
     source.configure(
         batch_size = SAMPLERATE,
         sample_rate = SAMPLERATE,
-        recorder_numframes =     None, #int(SAMPLERATE / (FRAMERATE / 2)),  # Safety: expect half of fps
-        calculate_fft = CALCULATE_FFT
+        recorder_numframes =  None, #int(SAMPLERATE / (FRAMERATE / 2)),  # Safety: expect half of fps
+        do_calculate_fft = CALCULATE_FFT
     )
     source.audio_processing.configure(config_dict = {
         "sample_rate": 48000,
@@ -124,9 +124,11 @@ tests = {
     3: {"frag": f"{GLSL_FOLDER}{sep}test{sep}test_3_rt_audio.glsl"},
     4: {"frag": f"{GLSL_FOLDER}{sep}test{sep}test_4_fourier.glsl"},
     5: {
-        "frag": f"{GLSL_FOLDER}{sep}test{sep}test_5_circle_fourier_bg_layer2.glsl",
+        "frag": f"{GLSL_FOLDER}{sep}test{sep}test_5_circle_fourier_bg_main.glsl",
         "replaces": {
             "LAYER1": f"{GLSL_FOLDER}{sep}test{sep}test_5_circle_fourier_bg_layer1.glsl",
+            "LAYER2": f"{GLSL_FOLDER}{sep}test{sep}test_5_circle_fourier_bg_layer2.glsl",
+            "LAYER2PFX": f"{GLSL_FOLDER}{sep}test{sep}test_5_circle_fourier_bg_layer2_pfx.glsl",
             "BACKGROUND": f"{interface.MMV_PACKAGE_ROOT}{sep}..{sep}assets{sep}free_assets{sep}glsl_default_background.jpg",
             "LOGO": f"{interface.MMV_PACKAGE_ROOT}{sep}..{sep}assets{sep}free_assets{sep}mmv_logo.png",
         }
@@ -210,69 +212,76 @@ prevfft = np.array([0.0 for _ in range(MMV_FFTSIZE)], dtype = np.float32)
 # Increase this value to get more aggressiveness or just turn up the computer volume
 multiplier = 16
 
-# Main test routine
-while True:
+try:
+    # Main test routine
+    while True:
 
-    # The time this loop is starting
-    startcycle = time.time()
+        # The time this loop is starting
+        startcycle = time.time()
 
-    # Calculate the fps
-    fps = round(fps_last_n / (max(times) - min(times)), 1)
+        # Calculate the fps
+        fps = round(fps_last_n / (max(times) - min(times)), 1)
+        
+        # Info we pass to the shader, this is WIP and hacky rn
+        pipeline_info = {}
+
+        # We have:
+        # - average_amplitudes: vec3 array, L, R and Mono
+        pipeline_info = source.info
+
+        # # Temporary stuff
+
+        # Amplitudes
+        if "average_amplitudes" in pipeline_info.keys():
+            smooth_audio_amplitude = smooth_audio_amplitude + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude) * 0.054
+            pipeline_info["smooth_audio_amplitude"] = smooth_audio_amplitude * multiplier
+
+            smooth_audio_amplitude2 = smooth_audio_amplitude2 + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude2) * 0.3
+            pipeline_info["smooth_audio_amplitude2"] = smooth_audio_amplitude2 * multiplier * 1.5
+
+        # If we have an fft key
+        if "fft" in pipeline_info.keys():
+
+            # Interpolation
+            for index, value in enumerate(pipeline_info["fft"]):
+                prevfft[index] = prevfft[index] + (value*multiplier - prevfft[index]) * 0.25
+
+            # Write the FFT
+            mgl.write_texture_pipeline(texture_name = "fft", data = prevfft.astype(np.float32))
+            del pipeline_info["fft"]
+
+        # DEBUG: print pipeline
+        # print(pipeline_info)
+
+        # Next iteration
+        mgl.next(custom_pipeline = pipeline_info)
+        mgl.update_window()
+
+        # If we'll be rendering, write to the video encoder
+        if mode == "render":
+            mgl.read_into_subprocess_stdin(video_pipe.subprocess.stdin)
+
+        elif mode == "view":
+            # The window received close command
+            if mgl.window_should_close:
+                break
+
+        # Print FPS, well, kinda, the average of the last fps_last_n frames
+        times[n % fps_last_n] = time.time()
+        # print(f":: Average FPS last ({fps_last_n} frames): [{fps}] \r", end = "", flush = True)
+        n += 1
+
+        # Vsync (yea we really need this)
+        if not mgl.vsync:
+            while time.time() - startcycle < 1 / FRAMERATE:
+                time.sleep(1 / (FRAMERATE * 100))
     
-    # Info we pass to the shader, this is WIP and hacky rn
-    pipeline_info = {}
+except KeyboardInterrupt:
+    pass
 
-    # We have:
-    # - average_amplitudes: vec3 array, L, R and Mono
-    pipeline_info = source.info
+if mode == "view":
+    source.stop()
 
-    # # Temporary stuff
-
-    # Amplitudes
-    if "average_amplitudes" in pipeline_info.keys():
-        smooth_audio_amplitude = smooth_audio_amplitude + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude) * 0.054
-        pipeline_info["smooth_audio_amplitude"] = smooth_audio_amplitude * multiplier
-
-        smooth_audio_amplitude2 = smooth_audio_amplitude2 + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude2) * 0.3
-        pipeline_info["smooth_audio_amplitude2"] = smooth_audio_amplitude2 * multiplier * 1.5
-
-    # If we have an fft key
-    if "fft" in pipeline_info.keys():
-
-        # Interpolation
-        for index, value in enumerate(pipeline_info["fft"]):
-            prevfft[index] = prevfft[index] + (value*multiplier - prevfft[index]) * 0.25
-
-        # Write the FFT
-        mgl.write_texture_pipeline(texture_name = "fft", data = prevfft.astype(np.float32))
-        del pipeline_info["fft"]
-
-    # DEBUG: print pipeline
-    # print(pipeline_info)
-
-    # Next iteration
-    mgl.next(custom_pipeline = pipeline_info)
-    mgl.update_window()
-
-    # If we'll be rendering, write to the video encoder
-    if mode == "render":
-        mgl.read_into_subprocess_stdin(video_pipe.subprocess.stdin)
-
-    elif mode == "view":
-        # The window received close command
-        if mgl.window_should_close:
-            break
-
-    # Print FPS, well, kinda, the average of the last fps_last_n frames
-    times[n % fps_last_n] = time.time()
-    print(f":: Average FPS last ({fps_last_n} frames): [{fps}] \r", end = "", flush = True)
-    n += 1
-
-    # Vsync (yea we really need this)
-    if not mgl.vsync:
-        while time.time() - startcycle < 1 / FRAMERATE:
-            time.sleep(1 / (FRAMERATE * 100))
-    
 # # Save first frame from the shader and quit
 
 # if False:
