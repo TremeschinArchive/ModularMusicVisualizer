@@ -10,6 +10,7 @@
 
 uniform float smooth_audio_amplitude;
 uniform float smooth_audio_amplitude2;
+uniform float progressive_amplitude;
 uniform vec3 standard_deviations;
 uniform vec3 average_amplitudes;
 
@@ -40,9 +41,12 @@ void main() {
     vec2 offset = vec2(sin(5.0 * mmv_time * speed) * amplitude, cos(8.0 * mmv_time * speed) * amplitude);
     vec2 gluv_offsetted = gluv - offset;
     vec2 get_visualizer_angle = gluv_offsetted * get_rotation_mat2(PI / 2.0);
-    float angle = 
-        atan(get_visualizer_angle.y, get_visualizer_angle.x)
-        * sign(get_visualizer_angle.y);
+    float angle = atan(get_visualizer_angle.y, get_visualizer_angle.x) * sign(get_visualizer_angle.y);
+
+    // atan symmetries
+    if (get_visualizer_angle.y < 0) {
+        angle += PI;
+    }
 
     // Which index
     int which = int({MMV_FFTSIZE} * proportion(2 * PI, 1, angle));
@@ -50,6 +54,8 @@ void main() {
 
     if (length(gluv_offsetted) < fft_val/5024.0 + (0.2) + smooth_audio_amplitude2*0.02) {
         col = vec4(vec3(
+            1.0 - fft_val / 5000,
+            1.0,
             1.0
         ), 1.0);
     }
@@ -61,7 +67,7 @@ void main() {
         vec2(0.0, 0.0), // anchor
         vec2(0.5, 0.5), // shift
         1.0 + smooth_audio_amplitude2 * 0.1,  //scale
-        0.0, //angle
+        sin(mmv_time*2.3 + progressive_amplitude/4.0) / 8.0, //angle
         false
     );
     col = mix(col, logo_pixel, logo_pixel.a);
