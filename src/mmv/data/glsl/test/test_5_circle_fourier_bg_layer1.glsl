@@ -22,8 +22,8 @@ void main() {
         gluv / 2.0,
         vec2(0.0, 0.0), // anchor
         vec2(0.5, 0.5), // shift
-        1.0 + smooth_audio_amplitude/6.5,  //scale
-        sin(standard_deviations.b * 500.0)/600.0, //angle
+        1.0 + smooth_audio_amplitude/15.5,  //scale
+        sin(standard_deviations.b * 300.0)/300.0, //angle
         true
     );
 

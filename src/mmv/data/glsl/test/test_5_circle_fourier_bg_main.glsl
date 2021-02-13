@@ -9,37 +9,123 @@
 uniform float smooth_audio_amplitude;
 uniform float progressive_amplitude;
 
+vec4 bloom(sampler2D tex, vec2 uv, vec2 resolution) {
+    vec4 original = texture(tex, uv);
+
+    if (original.a == 1.0) {
+        return original;
+    }
+
+    vec4 blur = vec4(0.0);
+    ivec2 get_image = ivec2(uv * resolution);
+    int size = 8;
+
+    if (
+        texelFetch(tex, get_image + ivec2(-size,  0), 0).a == 0 &&
+        texelFetch(tex, get_image + ivec2( size,  0), 0).a == 0 &&
+        texelFetch(tex, get_image + ivec2( 0, -size), 0).a == 0 &&
+        texelFetch(tex, get_image + ivec2( 0,  size), 0).a == 0
+    ) {
+        return original;
+    }
+
+    for (int x = -size; x < size; x++) {
+        for (int y = -size; y < size; y++) {
+            blur += texelFetch(tex, get_image + ivec2(x, y), 0);
+        }
+    }
+
+    blur /= size * size;
+
+    return blur / 3.0;
+}
+
 void main() {
     #pragma include coordinates_normalization multiple
+    #pragma include math_constants multiple
+
+    float scale = (atan(mmv_time * 2.0) / PI) * 2;
+    vec2 shadertoy_uv_scaled = shadertoy_uv;
+    vec2 opengl_uv_scaled = opengl_uv;
+
+    if(scale < 0.99) {
+        stuv *= scale;
+        gluv *= scale;
+        
+        shadertoy_uv_scaled *= scale;
+        shadertoy_uv_scaled += (vec2(0.5, 0.5) * (1.0 - scale));
+        opengl_uv_scaled *= scale;
+    }
 
     vec4 col = vec4(0.0);
     vec4 layer = vec4(0.0);
-
-    layer = texture(layer1, shadertoy_uv);
-    col = mix(layer, col, 1.0 - layer.a);
-
+    
     bool chromatic_aberration = true;
+    bool do_bloom = true;
+
+    // // 
+
+    chromatic_aberration = true;
 
     if (chromatic_aberration) {
-        float amount = ((1 / mmv_resolution.x) * smooth_audio_amplitude) * 0.7;
+        float amount = ((1 / mmv_resolution.x) * smooth_audio_amplitude) * 0.9;
         float pa = progressive_amplitude/2.0;
-        vec2 get_r = shadertoy_uv + vec2(sin(smooth_audio_amplitude + pa), cos(smooth_audio_amplitude + pa)) * amount;
-        vec2 get_g = shadertoy_uv + vec2(cos(smooth_audio_amplitude/3.3243 + pa), sin(smooth_audio_amplitude*1.2312 + pa)) * amount;
-        vec2 get_b = shadertoy_uv + vec2(sin(smooth_audio_amplitude/2.0  + pa) * amount);
-        vec2 get_a = shadertoy_uv;
-        
+        vec2 get_r = shadertoy_uv_scaled + vec2(sin(smooth_audio_amplitude + pa), cos(smooth_audio_amplitude + pa)) * amount;
+        vec2 get_g = shadertoy_uv_scaled + vec2(cos(smooth_audio_amplitude/3.3243 + pa), sin(smooth_audio_amplitude*1.2312 + pa)) * amount;
+        vec2 get_b = shadertoy_uv_scaled + vec2(sin(smooth_audio_amplitude/2.0  + pa) * amount);
+        vec2 get_a = shadertoy_uv_scaled;
+
         layer = vec4(
-            texture(layer2, get_r).r,
-            texture(layer2, get_g).g,
-            texture(layer2, get_b).b,
-            texture(layer2, get_a).a
+            texture(layer1, get_r).r,
+            texture(layer1, get_g).g,
+            texture(layer1, get_b).b,
+            texture(layer1, get_a).a
         );
+    } else {
+        layer = texture(layer1, shadertoy_uv_scaled);
+    }
+    col = mix(layer, col, 1.0 - layer.a);
+    
+
+
+    chromatic_aberration = true;
+    do_bloom = true;
+
+    if (chromatic_aberration) {
+        float amount = ((1 / mmv_resolution.x) * smooth_audio_amplitude) * 0.9;
+        float pa = progressive_amplitude/2.0;
+        vec2 get_r = shadertoy_uv_scaled + vec2(sin(smooth_audio_amplitude + pa), cos(smooth_audio_amplitude + pa)) * amount;
+        vec2 get_g = shadertoy_uv_scaled + vec2(cos(smooth_audio_amplitude/3.3243 + pa), sin(smooth_audio_amplitude*1.2312 + pa)) * amount;
+        vec2 get_b = shadertoy_uv_scaled + vec2(sin(smooth_audio_amplitude/2.0  + pa) * amount);
+        vec2 get_a = shadertoy_uv_scaled;
+
+        if (do_bloom) {
+            vec4 br = bloom(layer2, get_r, layer2_resolution);
+            vec4 bg = bloom(layer2, get_g, layer2_resolution);
+            vec4 bb = bloom(layer2, get_b, layer2_resolution);
+            float tr = 0.96;
+            layer = vec4(
+                br.r, bg.g, bb.b,
+                ((br.a + bg.a + bb.a) * tr) / 3.0
+            );
+        } else {
+            layer = vec4(
+                texture(layer2, get_r).r,
+                texture(layer2, get_g).g,
+                texture(layer2, get_b).b,
+                texture(layer2, get_a).a
+            );
+        }
 
         col = mix(layer, col, 1.0 - layer.a);
 
     } else {
-        layer = texture(layer2, shadertoy_uv);
+        layer = texture(layer2, shadertoy_uv_scaled);
         col = mix(layer, col, 1.0 - layer.a);
+    }
+
+    if (do_bloom && ! chromatic_aberration) {
+        layer = bloom(layer2, shadertoy_uv_scaled, layer2_resolution);
     }
 
     vec4 vignetting = vec4(vec3(0.0), smooth_audio_amplitude * length(gluv) / 30.0);

@@ -43,6 +43,7 @@ void main() {
     vec2 get_visualizer_angle = gluv_offsetted * get_rotation_mat2(PI / 2.0);
     float angle = atan(get_visualizer_angle.y, get_visualizer_angle.x) * sign(get_visualizer_angle.y);
 
+
     // atan symmetries
     if (get_visualizer_angle.y < 0) {
         angle += PI;
@@ -52,7 +53,9 @@ void main() {
     int which = int({MMV_FFTSIZE} * proportion(2 * PI, 1, angle));
     float fft_val = texelFetch(fft, ivec2(which, 0), 0).r;
 
-    if (length(gluv_offsetted) < fft_val/5024.0 + (0.2) + smooth_audio_amplitude2*0.02) {
+    float size = (0.18) + smooth_audio_amplitude2 * 0.01;
+
+    if (length(gluv_offsetted) < (size + (fft_val/5024.0)) ) {
         col = vec4(vec3(
             1.0 - fft_val / 5000,
             1.0,
@@ -63,10 +66,10 @@ void main() {
     vec4 logo_pixel = mmv_blit_image(
         col, logo,
         logo_resolution,
-        gluv_offsetted*2.5,
+        gluv_offsetted,
         vec2(0.0, 0.0), // anchor
         vec2(0.5, 0.5), // shift
-        1.0 + smooth_audio_amplitude2 * 0.1,  //scale
+        size * 2.0,  //scale
         sin(mmv_time*2.3 + progressive_amplitude/4.0) / 8.0, //angle
         false
     );
