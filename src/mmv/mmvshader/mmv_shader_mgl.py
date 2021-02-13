@@ -455,7 +455,10 @@ class MMVShaderMGL:
             identation, name, loader, value, width, height = mapping
             logging.info(f"{debug_prefix} Matched mapping [name={name}] [loader={loader}] [value={value}] [width={width}] [height={height}]")
 
-            fragment_shader = fragment_shader.replace(f"\n{identation}#pragma map {name}={loader};{value};{width}x{height}", "")
+            # Remove the original #pragma map, seems like NVIDIA cards specific problem
+            full_pragma_map = f"\n{identation}#pragma map {name}={loader};{value};{width}x{height}"
+            logging.info(f"{debug_prefix} Removing original [{full_pragma_map}]")
+            fragment_shader = fragment_shader.replace(full_pragma_map, "")
 
             # Error assertion, valid loader and path
             loaders = ["image", "video", "shader", "pipeline_texture", "include"]
@@ -649,14 +652,15 @@ class MMVShaderMGL:
             fragment_shader = fragment_shader.replace(replaces, include_other_glsl_data, 1)  # Replace ONCE
 
         # Pretty print / log
-        s = "-" * shutil.get_terminal_size()[0]
-        frag_shader_prettyprint = '\n'.join([f"[{str(lineno).ljust(5)}] | {line}" for lineno, line in enumerate(fragment_shader.split("\n"))])
-        vert_shader_prettyprint = '\n'.join([f"[{str(lineno).ljust(5)}] | {line}" for lineno, line in enumerate(vertex_shader.split("\n"))])
-        print(s)
-        logging.info(f"{debug_prefix} Fragment shader is:\n{frag_shader_prettyprint}")
-        print(s)
-        logging.info(f"{debug_prefix} Vertex shader is:\n{vert_shader_prettyprint}")
-        print(s)
+        if False:
+            s = "-" * shutil.get_terminal_size()[0]
+            frag_shader_prettyprint = '\n'.join([f"[{str(lineno).ljust(5)}] | {line}" for lineno, line in enumerate(fragment_shader.split("\n"))])
+            vert_shader_prettyprint = '\n'.join([f"[{str(lineno).ljust(5)}] | {line}" for lineno, line in enumerate(vertex_shader.split("\n"))])
+            print(s)
+            logging.info(f"{debug_prefix} Fragment shader is:\n{frag_shader_prettyprint}")
+            print(s)
+            logging.info(f"{debug_prefix} Vertex shader is:\n{vert_shader_prettyprint}")
+            print(s)
 
         # Do save the shaders to some path?
         if save_shaders_path is not None:
