@@ -30,7 +30,6 @@ from mmv.common.cmn_functions import Functions
 from mmv.common.cmn_utils import DataUtils
 from mmv.common.cmn_fourier import Fourier
 import mmv.common.cmn_any_logger
-import matplotlib.pyplot as plt
 import audio2numpy
 import numpy as np
 import samplerate
@@ -147,6 +146,7 @@ class AudioSourceRealtime(GenericAudioSource):
         # Hard debug
         self.plot_audio = False
         if self.plot_audio:
+            import matplotlib.pyplot as plt
             plt.ion()
             fig = plt.figure()
             ax = fig.add_subplot(111)
