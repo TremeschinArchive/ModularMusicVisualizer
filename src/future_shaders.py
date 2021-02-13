@@ -53,6 +53,8 @@ interface = mmv.MMVPackageInterface()
 shader_interface = interface.get_shader_interface()
 mgl = shader_interface.get_mgl_interface(master_shader = True)
 
+# # Configuration
+
 WIDTH = 1920
 HEIGHT = 1080
 FRAMERATE = 60
@@ -60,12 +62,41 @@ SAMPLERATE = 48000
 CALCULATE_FFT = True
 MSAA = 8
 
+# Directories
+sep = os.path.sep
+GLSL_DIR = f"{interface.data_dir}{sep}glsl"
+GLSL_INCLUDE_FOLDER = f"{GLSL_DIR}{sep}include"
+
+ASSETS_DIR = f"{interface.assets_dir}{sep}"
+
 # Set up target render configuration
 mgl.target_render_settings(
     width = WIDTH,
     height = HEIGHT,
     fps = FRAMERATE,
 )
+
+# Add directories for including #pragma include
+mgl.include_dir(GLSL_INCLUDE_FOLDER)
+
+# Which test to run?
+test_number = 5
+tests = {
+    1: {"frag": f"{GLSL_DIR}{sep}test{sep}test_1_simple_shader.glsl"},
+    2: {"frag": f"{GLSL_DIR}{sep}test{sep}___test_2_post_fx_png.glsl"},
+    3: {"frag": f"{GLSL_DIR}{sep}test{sep}test_3_rt_audio.glsl"},
+    4: {"frag": f"{GLSL_DIR}{sep}test{sep}test_4_fourier.glsl"},
+    5: {
+        "frag": f"{GLSL_DIR}{sep}test{sep}test_5_circle_fourier_bg_main.glsl",
+        "replaces": {
+            "LAYER1": f"{GLSL_DIR}{sep}test{sep}test_5_circle_fourier_bg_layer1.glsl",
+            "LAYER2": f"{GLSL_DIR}{sep}test{sep}test_5_circle_fourier_bg_layer2.glsl",
+            "LAYER2PFX": f"{GLSL_DIR}{sep}test{sep}test_5_circle_fourier_bg_layer2_pfx.glsl",
+            "BACKGROUND": f"{ASSETS_DIR}{sep}free_assets{sep}glsl_default_background.jpg",
+            "LOGO": f"{ASSETS_DIR}{sep}free_assets{sep}mmv_logo.png",
+        }
+    }
+}
 
 # Render to video or view real time?
 # mode = "render"
@@ -83,6 +114,7 @@ elif mode == "view":
         window_class = "glfw",
         vsync = False,
         msaa = MSAA,
+        # icon = f"{ASSETS_DIR}{sep}mmv_logo.ico",
         strict = False,
     )
 
@@ -97,7 +129,6 @@ elif mode == "view":
         recorder_numframes =  None, #int(SAMPLERATE / (FRAMERATE / 2)),  # Safety: expect half of fps
         do_calculate_fft = CALCULATE_FFT
     )
-
     source.audio_processing.configure(config = [
         {
             "original_sample_rate": 48000,
@@ -118,32 +149,7 @@ elif mode == "view":
     # source.capture_and_process_loop()
     source.start_async()
 
-# Directories
-sep = os.path.sep
-GLSL_FOLDER = f"{interface.data_dir}{sep}glsl"
-GLSL_INCLUDE_FOLDER = f"{GLSL_FOLDER}{sep}include"
-
-# Add directories for including #pragma include
-mgl.include_dir(GLSL_INCLUDE_FOLDER)
-
-# Which test to run?
-test_number = 5
-tests = {
-    1: {"frag": f"{GLSL_FOLDER}{sep}test{sep}test_1_simple_shader.glsl"},
-    2: {"frag": f"{GLSL_FOLDER}{sep}test{sep}___test_2_post_fx_png.glsl"},
-    3: {"frag": f"{GLSL_FOLDER}{sep}test{sep}test_3_rt_audio.glsl"},
-    4: {"frag": f"{GLSL_FOLDER}{sep}test{sep}test_4_fourier.glsl"},
-    5: {
-        "frag": f"{GLSL_FOLDER}{sep}test{sep}test_5_circle_fourier_bg_main.glsl",
-        "replaces": {
-            "LAYER1": f"{GLSL_FOLDER}{sep}test{sep}test_5_circle_fourier_bg_layer1.glsl",
-            "LAYER2": f"{GLSL_FOLDER}{sep}test{sep}test_5_circle_fourier_bg_layer2.glsl",
-            "LAYER2PFX": f"{GLSL_FOLDER}{sep}test{sep}test_5_circle_fourier_bg_layer2_pfx.glsl",
-            "BACKGROUND": f"{interface.MMV_PACKAGE_ROOT}{sep}..{sep}assets{sep}free_assets{sep}glsl_default_background.jpg",
-            "LOGO": f"{interface.MMV_PACKAGE_ROOT}{sep}..{sep}assets{sep}free_assets{sep}mmv_logo.png",
-        }
-    }
-}
+# # Load, bootstrap
 
 # Load the shader from the path
 cfg = tests[test_number]
@@ -173,8 +179,6 @@ mgl.load_shader_from_path(
 
 # Get a video encoder
 if mode == "render":
-    raise NotImplementedError
-
     video_pipe = interface.get_ffmpeg_wrapper()
     video_pipe.configure_encoding(
         ffmpeg_binary_path = interface.find_binary("ffmpeg"),
@@ -222,7 +226,7 @@ prevfft = np.array([0.0 for _ in range(MMV_FFTSIZE)], dtype = np.float32)
 target_fft = np.array([0.0 for _ in range(MMV_FFTSIZE)], dtype = np.float32)
 
 # Increase this value to get more aggressiveness or just turn up the computer volume
-multiplier = 32
+multiplier = 40
 
 try:
     # Main test routine
@@ -237,6 +241,9 @@ try:
         # Info we pass to the shader, this is WIP and hacky rn
         pipeline_info = {}
 
+        # Next iteraion of some audio reader
+        source.next()
+
         # We have:
         # - average_amplitudes: vec3 array, L, R and Mono
         pipeline_info = source.info.copy()
@@ -246,9 +253,9 @@ try:
         # Amplitudes
         if "average_amplitudes" in pipeline_info.keys():
             smooth_audio_amplitude = smooth_audio_amplitude + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude) * 0.054
-            pipeline_info["smooth_audio_amplitude"] = smooth_audio_amplitude * multiplier
+            pipeline_info["smooth_audio_amplitude"] = smooth_audio_amplitude * multiplier 
 
-            smooth_audio_amplitude2 = smooth_audio_amplitude2 + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude2) * 0.2
+            smooth_audio_amplitude2 = smooth_audio_amplitude2 + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude2) * 0.08
             pipeline_info["smooth_audio_amplitude2"] = smooth_audio_amplitude2 * multiplier * 1.5
 
             progressive_amplitude += pipeline_info["average_amplitudes"][2]

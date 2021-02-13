@@ -148,7 +148,7 @@ class MMVShaderMGL:
 
         # Set the icon
         if icon is not None:
-            self.window.set_icon(icon)
+            self.window.set_icon(icon_path = icon)
         
         # The context we'll use is the one from the window
         self.gl_context = self.window.ctx
@@ -517,9 +517,11 @@ class MMVShaderMGL:
 
                     # Create one instance of this very own class
                     if self.master_shader:
-                        f = self.flip
+                        f = not self.flip
                     else:
                         f = not self.flip
+
+                    # Construct a class of this same type of the master shader, use the same context
                     shader_as_texture = MMVShaderMGL(flip = f, gl_context = self.gl_context)
 
                     # Add included dirs

@@ -20,9 +20,9 @@ venvs
 # # MMV Skia
 
 # Assets, externals, release
-src/assets/user_assets
-src/assets/generated
-!src/assets/free_assets/*
+src/mmv/assets/user_assets
+src/mmv/assets/generated
+!src/mmv/assets/free_assets/*
 
 src/mmv/externals
 src/mmv/release
@@ -35,7 +35,7 @@ src/mmv/mmvshader/glsl/st
 src/mmv/data/last_session_info.toml
 
 # # Tremx logos Yeah this is my identity, you should use yours here :)
-src/mmvskia/assets/tremx_assets
+src/mmv/assets/tremx_assets
 tremx*
 ___*
 
