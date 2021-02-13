@@ -55,6 +55,7 @@ THIS_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Create the wrapper class
 interface = mmv.MMVPackageInterface()
+ASSETS_DIR = interface.assets_dir
 
 # # Get MMVSkia interface
 mmv_skia_interface = interface.get_skia_interface()
@@ -146,7 +147,7 @@ interface.check_download_externals(target_externals = ["ffmpeg"])
 def generate_some_background_image():
 
     # Background we save by default
-    GENERATED_BACKGROUND_DIRECTORY = THIS_FILE_DIR + "/assets/generated/background"
+    GENERATED_BACKGROUND_DIRECTORY = ASSETS_DIR + "/generated/background"
 
     # Reset from previous ones
     mmv_skia_interface.delete_directory(GENERATED_BACKGROUND_DIRECTORY)
@@ -190,7 +191,7 @@ if "mode" in args.kflags:
 # Configure your modes files
 if MODE == "music":
 
-    INPUT_AUDIO = THIS_FILE_DIR + "/assets/free_assets/kawaii_bass.ogg"
+    INPUT_AUDIO = ASSETS_DIR + "/free_assets/kawaii_bass.ogg"
 
     # "image" or "video"
     BACKGROUND_TYPE = "image"  
@@ -206,7 +207,7 @@ if MODE == "music":
 
         # User set background
         if BACKGROUND_MODE == "user": 
-            BACKGROUND_IMAGE = THIS_FILE_DIR + "/assets/some/background.jpg"
+            BACKGROUND_IMAGE = ASSETS_DIR + "/some/background.jpg"
             # BACKGROUND_IMAGE = "/home/tremeschin/some/background.jpg"
             # BACKGROUND_IMAGE = "~/some/background.jpg"
 
@@ -216,10 +217,10 @@ if MODE == "music":
 
     # Video background
     elif BACKGROUND_TYPE == "video":
-        BACKGROUND_VIDEO = THIS_FILE_DIR + "/assets/video.mp4"  # TODO: NO DEMO VIDEO
+        BACKGROUND_VIDEO = ASSETS_DIR + "/video.mp4"  # TODO: NO DEMO VIDEO
 
     # Logo
-    LOGO_IMAGE = THIS_FILE_DIR + "/assets/free_assets/mmv_logo.png"
+    LOGO_IMAGE = ASSETS_DIR + "/free_assets/mmv_logo.png"
 
     # Enable / disable features
     VISUALIZER = True
@@ -231,7 +232,7 @@ if MODE == "music":
 # Piano Roll general configuration
 elif MODE == "piano":
 
-    INPUT_MIDI  = THIS_FILE_DIR + "/assets/free_assets/piano_roll/contingency_times.mid"
+    INPUT_MIDI  = ASSETS_DIR + "/free_assets/piano_roll/contingency_times.mid"
 
     # "auto" or "manual"
     #   auto: Downloads and uses musescore for converting midi -> audio
@@ -246,7 +247,7 @@ elif MODE == "piano":
 
     # Manual config
     if AUDIO_OF_MIDI == "manual":
-        INPUT_AUDIO = THIS_FILE_DIR + "/assets/free_assets/piano_roll/contingency_times.ogg"
+        INPUT_AUDIO = ASSETS_DIR + "/free_assets/piano_roll/contingency_times.ogg"
 
     # Automatic conversion, NOT IMPLEMENTED FOR WINDOWS
     elif AUDIO_OF_MIDI == "auto":
@@ -520,7 +521,7 @@ Y increases downwards
 
 # Generate random particles
 if PARTICLES:
-    PARTICLES_DIRECTORY = THIS_FILE_DIR + "/assets/generated/particles"
+    PARTICLES_DIRECTORY = ASSETS_DIR + "/generated/particles"
     mmv_skia_interface.delete_directory(PARTICLES_DIRECTORY)
     mmv_skia_interface.make_directory_if_doesnt_exist(PARTICLES_DIRECTORY)
 
@@ -549,7 +550,20 @@ if PARTICLES:
 
 # The way we process and get the frequencies from the audio, highly
 # influences the frequencies bars on the visualizer itself
-mmv_skia_interface.audio_processing.preset_balanced()
+mmv_skia_interface.mmv_skia_main.audio_processing.configure(config = [
+    {
+        "original_sample_rate": 48000,
+        "target_sample_rate": 1000,
+        "start_freq": 60,
+        "end_freq": 500,
+    },
+    {
+        "original_sample_rate": 48000,
+        "target_sample_rate": 48000,
+        "start_freq": 500,
+        "end_freq": 20000,
+    }
+])
 
 # I/O options, input a audio, output a video
 mmv_skia_interface.input_audio(INPUT_AUDIO)
@@ -716,7 +730,7 @@ if ((MODE == "music") and LOGO) and (TREMX_LOGO):
     # # # Black disk logo
 
     black_disk_logo = mmv_skia_interface.image_object()
-    black_disk_logo.configure.load_image(THIS_FILE_DIR + "/assets/tremx_assets/logo/black-disk.png")
+    black_disk_logo.configure.load_image(ASSETS_DIR + "/tremx_assets/logo/black-disk.png")
     black_disk_logo.configure.resize_image_to_resolution(
         width = logo_size,
         height = logo_size,
@@ -738,7 +752,7 @@ if ((MODE == "music") and LOGO) and (TREMX_LOGO):
     # # # Sawtooth logo
 
     sawtooth_logo = mmv_skia_interface.image_object()
-    sawtooth_logo.configure.load_image(THIS_FILE_DIR + "/assets/tremx_assets/logo/sawtooth.png")
+    sawtooth_logo.configure.load_image(ASSETS_DIR + "/tremx_assets/logo/sawtooth.png")
     sawtooth_logo.configure.resize_image_to_resolution(
         width = logo_size,
         height = logo_size,
@@ -766,7 +780,7 @@ if ((MODE == "music") and LOGO) and (TREMX_LOGO):
     # # # Sine Wave logo
 
     sawtooth_logo = mmv_skia_interface.image_object()
-    sawtooth_logo.configure.load_image(THIS_FILE_DIR + "/assets/tremx_assets/logo/sine.png")
+    sawtooth_logo.configure.load_image(ASSETS_DIR + "/tremx_assets/logo/sine.png")
     sawtooth_logo.configure.resize_image_to_resolution(
         width = logo_size,
         height = logo_size,

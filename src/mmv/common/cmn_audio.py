@@ -55,7 +55,7 @@ class GenericAudioSource:
         self.do_calculate_fft = do_calculate_fft
 
 
-class AudioSourceFile(GenericAudioSource):
+class AudioFile(GenericAudioSource):
 
     # Read a .wav file from disk and gets the values on a list
     def read(self, path: str) -> None:
@@ -242,9 +242,11 @@ class AudioProcessing:
         self.functions = Functions()
         self.config = None
 
-        # MMV specific, where we return repeated frequencies from the
-        # function process
-    
+        # List of full frequencies of notes
+        # - 50 to 68 yields freqs of 24.4 Hz up to 
+        self.piano_keys_frequencies = [round(self.get_frequency_of_key(x), 2) for x in range(-50, 68)]
+        logging.info(f"{debug_prefix} Whole notes frequencies we'll care: [{self.piano_keys_frequencies}]")
+
     # Get specs on config dictionary
     def _get_config_stuff(self, config_dict):
 
@@ -317,11 +319,6 @@ class AudioProcessing:
 
         # The configurations on sample rate, frequencies to expect
         self.process_layer_configs = []
-
-        # List of full frequencies of notes
-        # - 50 to 68 yields freqs of 24.4 Hz up to 
-        self.piano_keys_frequencies = [round(self.get_frequency_of_key(x), 2) for x in range(-50, 68)]
-        logging.info(f"{debug_prefix} Whole notes frequencies we'll care: [{self.piano_keys_frequencies}]")
 
         # For every config dict on the config
         for layers in self.config:
@@ -547,10 +544,12 @@ class AudioProcessing:
         processed = {}
 
         # Iterate on config
-        for _, value in self.config.items():
+        for layer in self.config:
+            value = self._get_config_stuff(layer)
 
             # Get info on config
-            sample_rate = value.get("sample_rate")
+            original_sample_rate = value.get("original_sample_rate")
+            target_sample_rate = value.get("target_sample_rate")
             start_freq = value.get("start_freq")
             end_freq = value.get("end_freq")
 
@@ -567,12 +566,12 @@ class AudioProcessing:
                 data = self.resample(
                     data = data,
                     original_sample_rate = original_sample_rate,
-                    target_sample_rate = sample_rate,
+                    target_sample_rate = target_sample_rate,
                 ),
 
                 # # Target (re?)sample rate so we normalize the FFT values
 
-                target_sample_rate =  sample_rate,
+                target_sample_rate =  target_sample_rate,
                 original_sample_rate = original_sample_rate,
             )
 
@@ -581,7 +580,7 @@ class AudioProcessing:
 
                 # Get the nearest and FFT value
                 nearest = self.find_nearest(binned_fft[0], freq)
-                value = binned_fft[1][nearest[0]]
+                value = binned_fft[1][nearest[0]] * 0.2
      
                 # How much bars we'll render duped at this freq, see
                 # this function on the Functions class for more detail
