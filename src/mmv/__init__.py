@@ -322,6 +322,11 @@ f"""{debug_prefix} Show thanks message
         logging.info(f"{debug_prefix} Data dir is [{self.data_dir}]")
         self.utils.mkdir_dne(path = self.data_dir, silent = True)
 
+        # Assets dir
+        self.assets_dir = f"{self.MMV_PACKAGE_ROOT}{sep}assets"
+        logging.info(f"{debug_prefix} Assets dir is [{self.assets_dir}]")
+        self.utils.mkdir_dne(path = self.assets_dir, silent = True)
+
         # Runtime dir
         self.runtime_dir = f"{self.MMV_PACKAGE_ROOT}{sep}runtime"
         logging.info(f"{debug_prefix} Runtime dir is [{self.data_dir}], deleting..")

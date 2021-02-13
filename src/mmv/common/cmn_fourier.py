@@ -75,4 +75,4 @@ class Fourier:
         fftf = rfftfreq(raw_fft.shape[0], 1 / target_sample_rate)
 
         # # Return pairs of [[freq], [fft]] array
-        return np.array([fftf, raw_fft])
+        return np.array([fftf, raw_fft], dtype = object)

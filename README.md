@@ -86,6 +86,8 @@ I haven't yet made a decision on financial support, probably I'll have a donatio
 
 # Running
 
+**Important: The project is under some heavy rewiring and R&D, have yet to normalize instructions and documentation, I can't test everything after every commit so expect minor bugs.** Also there is technically two projects in the same repository ("old" MMVSkia and new MMVShader) sharing some common files, keeping compatibility while rewriting stuff is a bit tricky and is the main source of current problems.
+
 Please see the file [docs/RUNNING.md](docs/RUNNING.md) for instructions on all platforms
 
 <hr>
