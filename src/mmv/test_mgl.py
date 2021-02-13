@@ -92,16 +92,26 @@ elif mode == "view":
     source = interface.get_audio_source_realtime()
     source.init(search_for_loopback = True)
     source.configure(
-        batch_size = SAMPLERATE,
+        batch_size = 2048*4, #SAMPLERATE,
         sample_rate = SAMPLERATE,
         recorder_numframes =  None, #int(SAMPLERATE / (FRAMERATE / 2)),  # Safety: expect half of fps
         do_calculate_fft = CALCULATE_FFT
     )
-    source.audio_processing.configure(config_dict = {
-        "sample_rate": 48000,
-        "start_freq": 100,
-        "end_freq": 6000,
-    })
+
+    source.audio_processing.configure(config = [
+        {
+            "original_sample_rate": 48000,
+            "target_sample_rate": 1000,
+            "start_freq": 60,
+            "end_freq": 500,
+        },
+        {
+            "original_sample_rate": 48000,
+            "target_sample_rate": 48000,
+            "start_freq": 500,
+            "end_freq": 20000,
+        }
+    ])
     MMV_FFTSIZE = source.audio_processing.FFT_length
     print(f"{debug_prefix} FFT Size on AudioProcessing is [{MMV_FFTSIZE}]")
     
@@ -207,10 +217,12 @@ times = [time.time() + i/FRAMERATE for i in range(fps_last_n)]
 
 smooth_audio_amplitude = 0
 smooth_audio_amplitude2 = 0
+progressive_amplitude = 0
 prevfft = np.array([0.0 for _ in range(MMV_FFTSIZE)], dtype = np.float32)
+target_fft = np.array([0.0 for _ in range(MMV_FFTSIZE)], dtype = np.float32)
 
 # Increase this value to get more aggressiveness or just turn up the computer volume
-multiplier = 16
+multiplier = 32
 
 try:
     # Main test routine
@@ -227,7 +239,7 @@ try:
 
         # We have:
         # - average_amplitudes: vec3 array, L, R and Mono
-        pipeline_info = source.info
+        pipeline_info = source.info.copy()
 
         # # Temporary stuff
 
@@ -236,19 +248,24 @@ try:
             smooth_audio_amplitude = smooth_audio_amplitude + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude) * 0.054
             pipeline_info["smooth_audio_amplitude"] = smooth_audio_amplitude * multiplier
 
-            smooth_audio_amplitude2 = smooth_audio_amplitude2 + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude2) * 0.3
+            smooth_audio_amplitude2 = smooth_audio_amplitude2 + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude2) * 0.2
             pipeline_info["smooth_audio_amplitude2"] = smooth_audio_amplitude2 * multiplier * 1.5
 
-        # If we have an fft key
+            progressive_amplitude += pipeline_info["average_amplitudes"][2]
+            pipeline_info["progressive_amplitude"] = progressive_amplitude
+
+        # If we have an fft key, set to the target and delete the one on the pipeline
+        # This is to avoid some possible race condition
         if "fft" in pipeline_info.keys():
-
-            # Interpolation
-            for index, value in enumerate(pipeline_info["fft"]):
-                prevfft[index] = prevfft[index] + (value*multiplier - prevfft[index]) * 0.25
-
-            # Write the FFT
-            mgl.write_texture_pipeline(texture_name = "fft", data = prevfft.astype(np.float32))
+            target_fft = pipeline_info["fft"]
             del pipeline_info["fft"]
+
+        # More temporary interpolation
+        for index, value in enumerate(target_fft):
+            prevfft[index] = prevfft[index] + (value*multiplier - prevfft[index]) * 0.25
+
+        # Write the FFT
+        mgl.write_texture_pipeline(texture_name = "fft", data = prevfft.astype(np.float32))
 
         # DEBUG: print pipeline
         # print(pipeline_info)

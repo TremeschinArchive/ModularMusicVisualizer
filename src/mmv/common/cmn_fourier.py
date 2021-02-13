@@ -51,7 +51,7 @@ class Fourier:
     #
     # Where each index of the FFT freq correspond to the other array's index FFT value
     #
-    def binned_fft(self, data: np.ndarray, sample_rate: int, original_sample_rate: int = 48000) -> np.ndarray:
+    def binned_fft(self, data: np.ndarray, target_sample_rate: int, original_sample_rate: int = 48000) -> np.ndarray:
 
         # # Get the "normalized" FFT based on the sample rates
 
@@ -62,17 +62,17 @@ class Fourier:
         # 2^(new_sample_rate/original_sample_rate) = power gain
         # Divide by that but offset by 1 since if new fs = old fs we multiply by 1/2^0 = 1
         #
-        # raw_fft = self.fft(data) * (1 / (2 ** ((sample_rate / original_sample_rate))))
-        raw_fft = self.fft(data)
+        raw_fft = self.fft(data) * (2 ** math.log2(original_sample_rate / target_sample_rate))
+        # raw_fft = self.fft(data)
 
-        # TODO: wont work for old fs and new fs equal
-        # if original_sample_rate != sample_rate:
-        #     raw_fft *= (math.log10(original_sample_rate / sample_rate) / math.log10(2))
+        # # TODO: wont work for old fs and new fs equal
+        # if original_sample_rate != target_sample_rate:
+        #     raw_fft *= (math.log10(original_sample_rate / target_sample_rate) / math.log10(2))
 
         # # Get the frequencies that FFT represent based on the sample rate
 
         # Get the frequencies that the indexes determine
-        fftf = rfftfreq(len(data), 1 / sample_rate)
+        fftf = rfftfreq(raw_fft.shape[0], 1 / target_sample_rate)
 
         # # Return pairs of [[freq], [fft]] array
-        return np.vstack((fftf, raw_fft))
+        return np.array([fftf, raw_fft])
