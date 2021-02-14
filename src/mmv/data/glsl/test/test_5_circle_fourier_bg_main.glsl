@@ -45,6 +45,13 @@ vec4 bloom(sampler2D tex, vec2 uv, vec2 resolution, int size, bool alpha_zero_do
     return blur / 3.0;
 }
 
+vec4 acomposite(vec4 new, vec4 old) {
+    return mix(old, new, new.a);
+
+    // float final_alpha = new.a + old.a * (1 - new.a);
+    // return vec4(((new.rgb * new.a) + (old.rgb * old.a * (1 - new.a))) / final_alpha, final_alpha);
+}
+
 void main() {
     #pragma include coordinates_normalization multiple
     #pragma include math_constants multiple
@@ -106,7 +113,7 @@ void main() {
     } else {
         layer = texture(layer1, shadertoy_uv_scaled);
     }
-    col = mix(layer, col, 1.0 - layer.a);
+    col = acomposite(layer, col);;
     
     if (do_bloom && ! chromatic_aberration) {
         layer = bloom(layer1, shadertoy_uv_scaled, layer1_resolution, bloom_amount, false);
@@ -115,7 +122,7 @@ void main() {
     // // Layer 2
 
     layer = texture(layer_particles, shadertoy_uv_scaled);
-    col = mix(layer, col, 1.0 - layer.a);
+    col = acomposite(layer, col);;
 
     // // Layer 3
 
@@ -156,7 +163,7 @@ void main() {
         layer = texture(layer2, shadertoy_uv_scaled);
     }
 
-    col = mix(layer, col, 1.0 - layer.a);
+    col = acomposite(layer, col);;
 
     if (do_bloom && ! chromatic_aberration) {
         layer = bloom(layer2, shadertoy_uv_scaled, layer2_resolution, bloom_amount, true);
