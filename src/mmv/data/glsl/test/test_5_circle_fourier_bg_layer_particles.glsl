@@ -14,8 +14,8 @@ void main() {
     #pragma include coordinates_normalization multiple
     #pragma include math_constants multiple
 
-    vec3 col = vec3(0.0);
-    int n = 90;
+    float alpha = 0.0;
+    int n = 40;
     
     float r_time = progressive_amplitude * 0.08;
 
@@ -31,9 +31,8 @@ void main() {
         
         float luminosity = (0.0022 * (1 / (length(gluv) + 0.3))) + (smooth_audio_amplitude * 0.0002);
 
-        col += (1.0 / length(gluv - vec2(r*cos(angle), r*sin(angle)))) * luminosity;
+        alpha += (1.0 / length(gluv - vec2(r*cos(angle), r*sin(angle)))) * luminosity;
     }
     
-    
-    fragColor = vec4(col, col.r);
+    fragColor = vec4(vec3(1.0), alpha);
 }
