@@ -92,8 +92,10 @@ tests = {
             "LAYER1": f"{GLSL_DIR}{sep}test{sep}test_5_circle_fourier_bg_layer1.glsl",
             "LAYER2": f"{GLSL_DIR}{sep}test{sep}test_5_circle_fourier_bg_layer2.glsl",
             "LAYER2PFX": f"{GLSL_DIR}{sep}test{sep}test_5_circle_fourier_bg_layer2_pfx.glsl",
+            "LAYER_PARTICLES": f"{GLSL_DIR}{sep}test{sep}test_5_circle_fourier_bg_layer_particles.glsl",
             "BACKGROUND": f"{ASSETS_DIR}{sep}free_assets{sep}glsl_default_background.jpg",
-            "LOGO": f"{ASSETS_DIR}{sep}free_assets{sep}mmv_logo.png",
+            # "LOGO": f"{ASSETS_DIR}{sep}free_assets{sep}mmv_logo.png",
+            "LOGO": f"{ASSETS_DIR}{sep}free_assets{sep}mmv_logo_alt_white.png",
         }
     }
 }
@@ -226,7 +228,7 @@ prevfft = np.array([0.0 for _ in range(MMV_FFTSIZE)], dtype = np.float32)
 target_fft = np.array([0.0 for _ in range(MMV_FFTSIZE)], dtype = np.float32)
 
 # Increase this value to get more aggressiveness or just turn up the computer volume
-multiplier = 40
+multiplier = 140
 
 try:
     # Main test routine

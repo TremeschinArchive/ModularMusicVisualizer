@@ -37,7 +37,7 @@ void main() {
     // Angle relative to the center
     float angle_offset = PI / 4;
     float speed = 0.3;
-    float amplitude = 0.01 * smooth_audio_amplitude;
+    float amplitude = 0.004 * smooth_audio_amplitude;
     vec2 offset = vec2(sin(5.0 * mmv_time * speed) * amplitude, cos(8.0 * mmv_time * speed) * amplitude);
     vec2 gluv_offsetted = gluv - offset;
     vec2 get_visualizer_angle = gluv_offsetted * get_rotation_mat2(PI / 2.0);
@@ -70,7 +70,7 @@ void main() {
         vec2(0.0, 0.0), // anchor
         vec2(0.5, 0.5), // shift
         size * 2.0,  //scale
-        sin(mmv_time*2.3 + progressive_amplitude/4.0) / 8.0, //angle
+        sin(mmv_time*2.3 + progressive_amplitude/8.0) / 8.0, //angle
         false
     );
     col = mix(col, logo_pixel, logo_pixel.a);
