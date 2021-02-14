@@ -83,6 +83,10 @@ void main() {
         vec2 get_b = shadertoy_uv_scaled + vec2(sin(smooth_audio_amplitude/2.0  + pa) * amount);
         vec2 get_a = shadertoy_uv_scaled;
 
+        get_r = clamp(get_r, 0.0, 1.0);
+        get_g = clamp(get_g, 0.0, 1.0);
+        get_b = clamp(get_b, 0.0, 1.0);
+
         if (do_bloom){
             vec4 br = bloom(layer1, get_r, layer1_resolution, bloom_amount, false);
             vec4 bg = bloom(layer1, get_g, layer1_resolution, bloom_amount, false);
@@ -126,6 +130,10 @@ void main() {
         vec2 get_g = shadertoy_uv_scaled + vec2(cos(smooth_audio_amplitude/3.3243 + pa), sin(smooth_audio_amplitude*1.2312 + pa)) * amount;
         vec2 get_b = shadertoy_uv_scaled + vec2(sin(smooth_audio_amplitude/2.0  + pa) * amount);
         vec2 get_a = shadertoy_uv_scaled;
+
+        get_r = clamp(get_r, 0.0, 1.0);
+        get_g = clamp(get_g, 0.0, 1.0);
+        get_b = clamp(get_b, 0.0, 1.0);
 
         if (do_bloom) {
             vec4 br = bloom(layer2, get_r, layer2_resolution, bloom_amount, true);
