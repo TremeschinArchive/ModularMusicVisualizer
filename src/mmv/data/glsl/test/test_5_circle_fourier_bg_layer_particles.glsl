@@ -8,9 +8,7 @@ uniform float progressive_amplitude;
 uniform vec3 standard_deviations;
 uniform vec3 average_amplitudes;
 
-float rand(float x) {
-    return fract(sin(x*22342.3759));
-}
+#pragma include mmv_specification once
 
 void main() {
     #pragma include coordinates_normalization multiple
@@ -22,13 +20,13 @@ void main() {
     float r_time = progressive_amplitude * 0.08;
 
     for (int index = 0; index < n; index ++) {
-        float r = tan(
-            mod(
-                r_time + mmv_time * (0.8 + 0.2 * rand(float(index))) + rand(float(index) + 0.022) * PI,
-                PI/2.0
-            )
-        );
-        float angle = fract(rand(float(index) + 0.58)) * 2.0 * PI + 0.08*sin(6.0 * mmv_time * (0.6 + 0.2*rand(float(index))));
+        float tanx =  r_time + mmv_time * (0.8 + 0.2 * rand(float(index))) + rand(float(index) + 0.022) * PI;
+        float r = tan(mod(tanx, PI/2.0));
+        float angle = 
+            fract(
+                rand(float(index) + 0.58 + 0.2*int(tanx / (PI/2.0)))
+            ) * 2.0 * PI
+            + 0.08 * sin(6.0 * mmv_time * (0.6 + 0.2*rand(float(index))));
         
         col += (1.0 / length(gluv - vec2(r*cos(angle), r*sin(angle)))) * 0.0022 * (1 / (length(gluv) + 0.3));
     }
