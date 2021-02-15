@@ -430,7 +430,7 @@ f"""{debug_prefix} Show thanks message
         logging.info(STEP_SEPARATOR)
 
         # Append .exe for Windows
-        if self.os == "windows":
+        if (self.os == "windows") and (not binary.endswith(".exe")):
             binary += ".exe"
 
         # Log action
@@ -492,7 +492,7 @@ f"""{debug_prefix} Show thanks message
                     continue
                 
                 # If we don't have FFmpeg binary on externals dir
-                if not self.find_binary("ffmpeg"):
+                if not self.find_binary("ffmpeg.exe"):
 
                     # Get the latest release number of ffmpeg
                     repo = "https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest"

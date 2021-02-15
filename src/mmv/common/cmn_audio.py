@@ -35,7 +35,6 @@ import numpy as np
 import samplerate
 import subprocess
 import audioread
-import soundcard
 import soundfile
 import threading
 import logging
@@ -53,10 +52,11 @@ class GenericAudioSource:
     # Set the target batch size and sample rate.
     def configure(self,
         # Common
-        batch_size, sample_rate,
+        batch_size = 2048, 
         do_calculate_fft = True,
 
         # RT
+        sample_rate = None,
         recorder_numframes = None,
 
         # From Audio
@@ -171,6 +171,7 @@ class AudioSourceFile(GenericAudioSource):
             
 class AudioSourceRealtime(GenericAudioSource):
     def init(self, recorder_device = None, search_for_loopback = False):
+        import soundcard
         debug_prefix = "[AudioSourceRealtime.init]"
 
         # Search for the first loopback device (monitor of the current audio output)

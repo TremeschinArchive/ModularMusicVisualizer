@@ -2,17 +2,11 @@
 
 // ===============================================================================
 
-#pragma map name fourier_glsl_test
+#pragma map name music_bars_radial
 
 #pragma include mmv_specification once;
 #pragma map fft=pipeline_texture;;{MMV_FFTSIZE}x1;
-#pragma map logo=image;{LOGO};1000x1000
-
-uniform float smooth_audio_amplitude;
-uniform float smooth_audio_amplitude2;
-uniform float progressive_amplitude;
-uniform vec3 standard_deviations;
-uniform vec3 average_amplitudes;
+#pragma map logo=image;{LOGO_IMAGE};1000x1000
 
 // A is proportional to B
 // C is proportional to what?

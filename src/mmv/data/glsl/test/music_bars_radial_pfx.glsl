@@ -1,15 +1,11 @@
 
 // ===============================================================================
 
-#pragma map name fourier_layer_background
+#pragma map name music_bars_radial_pfx
+
+#pragma map layer2=shader;{MUSIC_BARS_SHADER};{WIDTH}x{HEIGHT}
 
 #pragma include mmv_specification once
-
-#pragma map layer2=shader;{LAYER2};{WIDTH}x{HEIGHT}
-
-uniform float smooth_audio_amplitude;
-uniform vec3 standard_deviations;
-uniform vec3 average_amplitudes;
 
 void main() {
     #pragma include coordinates_normalization multiple

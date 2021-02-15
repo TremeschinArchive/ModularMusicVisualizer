@@ -10,8 +10,4 @@
 cd "$(dirname "$0")"/../mmv
 
 # Dump the stuff installed to a file
-pip-chill > ./requirements-dev.txt
-pip-chill > ./requirements.txt
-
-# Remove pip-chill dependency for end user
-sed -i '/^pip-chill/d' ./requirements.txt
+poetry export -f requirements.txt --output requirements.txt --without-hashes

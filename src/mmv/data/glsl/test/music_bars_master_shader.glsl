@@ -1,14 +1,11 @@
 
 // ===============================================================================
 
-#pragma map name fourier_glsl_test
+#pragma map name music_bars_master_shader
 
-#pragma map layer1=shader;{LAYER1};{WIDTH}x{HEIGHT}
-#pragma map layer2=shader;{LAYER2PFX};{WIDTH}x{HEIGHT}
-#pragma map layer_particles=shader;{LAYER_PARTICLES};{WIDTH}x{HEIGHT}
-
-uniform float smooth_audio_amplitude;
-uniform float progressive_amplitude;
+#pragma map background_shader=shader;{BACKGROUND_SHADER};{WIDTH}x{HEIGHT}
+#pragma map music_bars_pfx=shader;{MUSIC_BARS_SHADER_PFX};{WIDTH}x{HEIGHT}
+#pragma map particles_layer=shader;{PARTICLES_SHADER};{WIDTH}x{HEIGHT}
 
 vec4 bloom(sampler2D tex, vec2 uv, vec2 resolution, int size, bool alpha_zero_dont_calculate) {
     vec4 original = texture(tex, uv);
@@ -96,33 +93,33 @@ void main() {
         get_b = clamp(get_b, 0.0, 1.0);
 
         if (do_bloom){
-            vec4 br = bloom(layer1, get_r, layer1_resolution, bloom_amount, false);
-            vec4 bg = bloom(layer1, get_g, layer1_resolution, bloom_amount, false);
-            vec4 bb = bloom(layer1, get_b, layer1_resolution, bloom_amount, false);
+            vec4 br = bloom(background_shader, get_r, background_shader_resolution, bloom_amount, false);
+            vec4 bg = bloom(background_shader, get_g, background_shader_resolution, bloom_amount, false);
+            vec4 bb = bloom(background_shader, get_b, background_shader_resolution, bloom_amount, false);
             layer = vec4(
                 br.r, bg.g, bb.b,
                 (br.a + bg.a + bb.a) / 3.0
             );
         } else {
             layer = vec4(
-                texture(layer1, get_r).r,
-                texture(layer1, get_g).g,
-                texture(layer1, get_b).b,
-                texture(layer1, get_a).a
+                texture(background_shader, get_r).r,
+                texture(background_shader, get_g).g,
+                texture(background_shader, get_b).b,
+                texture(background_shader, get_a).a
             );
         }
     } else {
-        layer = texture(layer1, shadertoy_uv_scaled);
+        layer = texture(background_shader, shadertoy_uv_scaled);
     }
     col = acomposite(layer, col);;
     
     if (do_bloom && ! chromatic_aberration) {
-        layer = bloom(layer1, shadertoy_uv_scaled, layer1_resolution, bloom_amount, false);
+        layer = bloom(background_shader, shadertoy_uv_scaled, background_shader_resolution, bloom_amount, false);
     }
 
     // // Layer 2
 
-    layer = texture(layer_particles, shadertoy_uv_scaled);
+    layer = texture(particles_layer, shadertoy_uv_scaled);
     col = acomposite(layer, col);;
 
     // // Layer 3
@@ -144,9 +141,9 @@ void main() {
         get_b = clamp(get_b, 0.0, 1.0);
 
         if (do_bloom) {
-            vec4 br = bloom(layer2, get_r, layer2_resolution, bloom_amount, true);
-            vec4 bg = bloom(layer2, get_g, layer2_resolution, bloom_amount, true);
-            vec4 bb = bloom(layer2, get_b, layer2_resolution, bloom_amount, true);
+            vec4 br = bloom(music_bars_pfx, get_r, music_bars_pfx_resolution, bloom_amount, true);
+            vec4 bg = bloom(music_bars_pfx, get_g, music_bars_pfx_resolution, bloom_amount, true);
+            vec4 bb = bloom(music_bars_pfx, get_b, music_bars_pfx_resolution, bloom_amount, true);
             float tr = 0.94;
             layer = vec4(
                 br.r, bg.g, bb.b,
@@ -154,20 +151,20 @@ void main() {
             );
         } else {
             layer = vec4(
-                texture(layer2, get_r).r,
-                texture(layer2, get_g).g,
-                texture(layer2, get_b).b,
-                texture(layer2, get_a).a
+                texture(music_bars_pfx, get_r).r,
+                texture(music_bars_pfx, get_g).g,
+                texture(music_bars_pfx, get_b).b,
+                texture(music_bars_pfx, get_a).a
             );
         }
     } else {
-        layer = texture(layer2, shadertoy_uv_scaled);
+        layer = texture(music_bars_pfx, shadertoy_uv_scaled);
     }
 
     col = acomposite(layer, col);;
 
     if (do_bloom && ! chromatic_aberration) {
-        layer = bloom(layer2, shadertoy_uv_scaled, layer2_resolution, bloom_amount, true);
+        layer = bloom(music_bars_pfx, shadertoy_uv_scaled, music_bars_pfx_resolution, bloom_amount, true);
     }
 
     vec4 vignetting = vec4(vec3(0.0), smooth_audio_amplitude * length(gluv) / 60.0);
