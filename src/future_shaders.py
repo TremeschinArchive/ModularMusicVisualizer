@@ -27,10 +27,12 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from tqdm import tqdm
 from PIL import Image
 import numpy as np
 import threading
 import random
+import shutil
 import time
 import math
 import sys
@@ -57,7 +59,7 @@ mgl = shader_interface.get_mgl_interface(master_shader = True)
 WIDTH = 1920
 HEIGHT = 1080
 FRAMERATE = 60
-SAMPLERATE = 48000
+YOUR_COMPUTER_AUDIO_SAMPLERATE = 48000
 
 # Multi sampling, leave as 8?
 MSAA = 8
@@ -77,6 +79,16 @@ sep = os.path.sep
 GLSL_DIR = f"{interface.data_dir}{sep}glsl"
 GLSL_INCLUDE_FOLDER = f"{GLSL_DIR}{sep}include"
 ASSETS_DIR = f"{interface.assets_dir}{sep}"
+
+# Input audio source
+RENDER_MODE_AUDIO_FILE = f"{ASSETS_DIR}{sep}free_assets{sep}kawaii_bass.ogg"
+
+# There are variables called "multiplier" on each mode, change those to get more
+# aggressive or smoother animations
+
+# # Render to video or view real time?
+# mode = "render"
+mode = "view"
 
 # # Micro management
 
@@ -111,13 +123,6 @@ tests = {
     }
 }
 
-# # Render to video or view real time?
-# mode = "render"
-mode = "view"
-
-# Input audio source
-RENDER_MODE_AUDIO_FILE = f"{ASSETS_DIR}{sep}free_assets{sep}kawaii_bass.ogg"
-
 # Mode is to render, start the video encoder (FFmpeg) and headless window
 if mode == "render":
 
@@ -135,7 +140,8 @@ if mode == "render":
     # Configure with stuff
     source.configure(
         batch_size = BATCH_SIZE,
-        sample_rate = SAMPLERATE,
+        sample_rate = None,  # We'll figure out the sample rate in a few, it'll be read on source.init
+        target_fps = FRAMERATE,
         do_calculate_fft = CALCULATE_FFT
     )
 
@@ -144,6 +150,7 @@ if mode == "render":
 
     # Micro
     DURATION = source.duration
+    SAMPLERATE = source.sample_rate
  
     # # Video Encoder
 
@@ -179,13 +186,16 @@ if mode == "render":
         FRAMERATE, # fps
         DURATION * FRAMERATE, # frame count
         50 # max images on buffer to be piped
-    )).start()
+    ), daemon = True).start()
 
     # Increase this value to get more aggressiveness or just turn up the computer volume
-    multiplier = 180
+    multiplier = 90
+    progress_bar = tqdm(total = source.steps_per_loop)
+    progress_bar.set_description("Rendering video")
 
 # Mode is to view real time
 elif mode == "view":
+    SAMPLERATE = YOUR_COMPUTER_AUDIO_SAMPLERATE
 
     # Start mgl window
     mgl.mode(
@@ -279,8 +289,17 @@ smooth_audio_amplitude2 = 0
 progressive_amplitude = 0
 prevfft = np.array([0.0 for _ in range(MMV_FFTSIZE)], dtype = np.float32)
 target_fft = np.array([0.0 for _ in range(MMV_FFTSIZE)], dtype = np.float32)
-
 step = 0
+
+# Pretty print separator
+s = "-"*shutil.get_terminal_size()[0]; print(f"\n{s}\n")
+
+# # Stuff
+
+# If fps is different than the standard 60, we have to recalculate our ratios of interpolation
+# between frame (N - 1) and (N), which are the remaining distance times a ratio
+def ratio_on_other_fps_based_on_fps(ratio, new_fps, old_fps = 60):
+    return 1.0 - ((1.0 - ratio)**(old_fps / new_fps))
 
 try:
     # Main test routine
@@ -306,10 +325,12 @@ try:
 
         # Amplitudes
         if "average_amplitudes" in pipeline_info.keys():
-            smooth_audio_amplitude = smooth_audio_amplitude + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude) * 0.054
+            ratio = ratio_on_other_fps_based_on_fps(0.054, FRAMERATE)
+            smooth_audio_amplitude = smooth_audio_amplitude + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude) * ratio
             pipeline_info["smooth_audio_amplitude"] = smooth_audio_amplitude * multiplier 
 
-            smooth_audio_amplitude2 = smooth_audio_amplitude2 + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude2) * 0.08
+            ratio = ratio_on_other_fps_based_on_fps(0.08, FRAMERATE)
+            smooth_audio_amplitude2 = smooth_audio_amplitude2 + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude2) * ratio
             pipeline_info["smooth_audio_amplitude2"] = smooth_audio_amplitude2 * multiplier * 1.5
 
             progressive_amplitude += pipeline_info["average_amplitudes"][2]
@@ -323,7 +344,8 @@ try:
 
         # More temporary interpolation
         for index, value in enumerate(target_fft):
-            prevfft[index] = prevfft[index] + (value*multiplier - prevfft[index]) * 0.25
+            ratio = ratio_on_other_fps_based_on_fps(0.25, FRAMERATE)
+            prevfft[index] = prevfft[index] + (value*multiplier - prevfft[index]) * ratio
 
         # Write the FFT
         mgl.write_texture_pipeline(texture_name = "fft", data = prevfft.astype(np.float32))
@@ -336,8 +358,9 @@ try:
 
         # If we'll be rendering, write to the video encoder
         if mode == "render":
+            progress_bar.update(1)
             mgl.read_into_subprocess_stdin(video_pipe.subprocess.stdin)
-            print("Write", step, source.steps_per_loop)
+            # print("Write", step, source.steps_per_loop)
 
             # Looped the audio one time, exit
             if source.loops == 1:
@@ -360,12 +383,19 @@ try:
         if (not mgl.vsync) and (not mode == "render"):
             while time.time() - startcycle < 1 / FRAMERATE:
                 time.sleep(1 / (FRAMERATE * 100))
+
     
 except KeyboardInterrupt:
     pass
 
+# Stop stuff
 if mode == "view":
     source.stop()
+if mode == "render":
+    progress_bar.update(1)
+
+sys.exit(0)
+exit()
 
 # # Save first frame from the shader and quit
 

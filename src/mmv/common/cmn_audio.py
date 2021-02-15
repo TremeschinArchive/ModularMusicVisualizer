@@ -129,9 +129,9 @@ class AudioSourceFile(GenericAudioSource):
         logging.info(f"{debug_prefix} Mono data shape:             [{self.mono_data.shape}]")
 
         # The array we slice the audio and get info
+        self.steps_per_loop = int(self.duration * self.target_fps)
         self.current_batch = np.zeros([2, self.batch_size])
         self.info = {}
-        self.steps_per_loop = int(self.duration * self.target_fps)
 
         # # When end_cut is n_samples this is increased
         self.loops = 0
@@ -147,9 +147,10 @@ class AudioSourceFile(GenericAudioSource):
         end_cut = min(start_cut + self.batch_size, self.n_samples)
 
         # Check if we looped
-        if (end_cut == self.n_samples):
+        if (start_cut > self.n_samples):
             self.loops += 1
             self.steps_offset -= self.steps_per_loop
+            return
 
         # Insert new data
         for channel_number in [0, 1]:
