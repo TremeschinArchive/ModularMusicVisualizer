@@ -55,7 +55,7 @@ void main() {
             + sin(progressive_amplitude * 4.0) * 0.01
 
             // More audio lately = more general angle, yet other more organic movement
-            + 0.02 * sin(baserandom * mmv_time/4.0) * progressive_amplitude / 8.0;
+            + 0.02 * sin(baserandom * mmv_time/4.0) * smooth_audio_amplitude / 8.0;
         
         // Base luminosity on audio amplitude, also avoid division by zero and yes this can be
         // merged with the other one at the bottom where we calculate the alpha

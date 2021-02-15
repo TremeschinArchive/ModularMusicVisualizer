@@ -462,6 +462,7 @@ try:
 
         elif mode == "view":
             mgl.update_window()
+            print(f":: Average FPS last ({fps_last_n} frames): [{fps}] \r", end = "", flush = True)
 
             # The window received close command
             if mgl.window_should_close:
@@ -469,7 +470,6 @@ try:
 
         # Print FPS, well, kinda, the average of the last fps_last_n frames
         times[step % fps_last_n] = time.time()
-        # print(f":: Average FPS last ({fps_last_n} frames): [{fps}] \r", end = "", flush = True)
         step += 1
 
         # Vsync (yea we really need this)
