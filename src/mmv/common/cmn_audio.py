@@ -44,23 +44,57 @@ import time
 import os
 
 
+# Generic
 class GenericAudioSource:
+
+    def __init__(self):
+        self.audio_processing = AudioProcessing()
+
     # Set the target batch size and sample rate.
-    def configure(self, batch_size, sample_rate, recorder_numframes = None, do_calculate_fft = True):
+    def configure(self,
+        # Common
+        batch_size, sample_rate,
+        do_calculate_fft = True,
+
+        # RT
+        recorder_numframes = None,
+
+        # From Audio
+        target_fps = 60,
+        steps_offset = 0,
+    ):
         debug_prefix = "[AudioSourceRealtime.configure]"
+
+        # # Common
         self.batch_size = batch_size
         self.sample_rate = sample_rate
-        self.recorder_numframes = recorder_numframes
         self.do_calculate_fft = do_calculate_fft
 
+        # # From file
+        self.target_fps = target_fps
+        self.steps_offset = steps_offset
 
-class AudioFile(GenericAudioSource):
+        # # Real time
+        self.recorder_numframes = recorder_numframes
+
+    # Default behavior, "virtual" functions
+
+    def init(self):
+        raise NotImplementedError("Please implement .init() on your inherited class")
+    def next(self):
+        raise NotImplementedError("Please implement .next(step) on your inherited class")
+    def get_info(self):
+        raise NotImplementedError("Please implement .get_info() on your inherited class")
+
+
+# Read audio from a path
+class AudioSourceFile(GenericAudioSource):
 
     # Read a .wav file from disk and gets the values on a list
-    def read(self, path: str) -> None:
-        debug_prefix = "[AudioFile.read]"
-
+    def init(self, path: str) -> None:
+        debug_prefix = "[AudioSourceFile.init]"
         logging.info(f"{debug_prefix} Reading stereo audio in path [{path}], trying soundfile")
+        
         try:
             # Attempt to use soundfile for reading the audio
             self.stereo_data, self.sample_rate = soundfile.read(path)
@@ -88,14 +122,53 @@ class AudioFile(GenericAudioSource):
         logging.info(f"{debug_prefix} Calculating mono audio")
         self.mono_data = (self.stereo_data[0] + self.stereo_data[1]) / 2
 
+        # Total number of samples
+        self.n_samples = self.mono_data.shape[0]
+
         # Just make sure the mono data is right..
         logging.info(f"{debug_prefix} Mono data shape:             [{self.mono_data.shape}]")
 
+        # The array we slice the audio and get info
+        self.current_batch = np.zeros([2, self.batch_size])
+        self.info = {}
+        self.steps_per_loop = int(self.duration * self.target_fps)
 
+        # # When end_cut is n_samples this is increased
+        self.loops = 0
+
+    def next(self, step):
+        step += self.steps_offset
+
+        # Empty the slice array
+        self.current_batch.fill(0)
+
+        # Where we slice the audio
+        start_cut = step * int(self.sample_rate / self.target_fps)
+        end_cut = min(start_cut + self.batch_size, self.n_samples)
+
+        # Check if we looped
+        if (end_cut == self.n_samples):
+            self.loops += 1
+            self.steps_offset -= self.steps_per_loop
+
+        # Insert new data
+        for channel_number in [0, 1]:
+            np.put(
+                self.current_batch[channel_number],                   # Target array
+                range(0, end_cut - start_cut),                        # Where on target array to put the data
+                self.stereo_data[channel_number][start_cut:end_cut],  # Input data
+                mode = "wrap"                                         # Mode (wrap)
+            )
+
+        # This yields information as it was calculated so we assign the key (index 0) to the value (index 1)
+        for info in self.audio_processing.get_info_on_audio_slice(
+            audio_slice = self.current_batch,
+            original_sample_rate = self.sample_rate,
+            do_calculate_fft = self.do_calculate_fft,
+        ):
+            self.info[info[0]] = info[1]
+            
 class AudioSourceRealtime(GenericAudioSource):
-    def __init__(self):
-        self.audio_processing = AudioProcessing()
-
     def init(self, recorder_device = None, search_for_loopback = False):
         debug_prefix = "[AudioSourceRealtime.init]"
 
@@ -224,7 +297,7 @@ class AudioSourceRealtime(GenericAudioSource):
         self.__should_stop = False
 
     # Do nothing, we're threaded processing the audio
-    def next(self):
+    def next(self, step):
         pass
     
     # We just return the current info
@@ -407,7 +480,7 @@ class AudioProcessing:
                         # TODO: make configurable
                         flatten_scalar = self.functions.value_on_line_of_two_points(
                             Xa = 20, Ya = 0.2,
-                            Xb = 20000, Yb = 5,
+                            Xb = 20000, Yb = 3,
                             get_x = freq
                         )
 
