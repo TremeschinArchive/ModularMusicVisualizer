@@ -31,7 +31,7 @@ void main() {
     // Angle relative to the center
     float angle_offset = PI / 4;
     float speed = 0.3;
-    float amplitude = 0.004 * smooth_audio_amplitude;
+    float amplitude = 0.001 * smooth_audio_amplitude;
     vec2 offset = vec2(sin(5.0 * mmv_time * speed) * amplitude, cos(8.0 * mmv_time * speed) * amplitude);
     vec2 gluv_offsetted = gluv - offset;
     vec2 get_visualizer_angle = gluv_offsetted * get_rotation_mat2(PI / 2.0);
@@ -47,9 +47,10 @@ void main() {
     int which = int({MMV_FFTSIZE} * proportion(2 * PI, 1, angle));
     float fft_val = texelFetch(fft, ivec2(which, 0), 0).r;
 
-    float size = (0.18) + smooth_audio_amplitude2 * 0.01;
+    float size = (0.16) + smooth_audio_amplitude2 * 0.009;
+    float bar_size = 0.4;
 
-    if (length(gluv_offsetted) < (size + (fft_val/5024.0)) ) {
+    if (length(gluv_offsetted) < (size + (fft_val/5024.0) * bar_size)) {
         col = vec4(vec3(
             1.0 - fft_val / 5000,
             1.0,
@@ -64,7 +65,8 @@ void main() {
         vec2(0.0, 0.0), // anchor
         vec2(0.5, 0.5), // shift
         size * 2.0,  //scale
-        sin(mmv_time*2.3 + progressive_amplitude/8.0) / 8.0, //angle
+            sin(mmv_time*2.3 + progressive_amplitude/8.0) / 8.0
+            + sin(mmv_time*2.3 + progressive_amplitude/5.0) / 8.0, //angle
         false
     );
     col = mix(col, logo_pixel, logo_pixel.a);
