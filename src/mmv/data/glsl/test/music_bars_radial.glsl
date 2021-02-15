@@ -46,8 +46,9 @@ void main() {
     int which = int({MMV_FFTSIZE} * proportion(2 * PI, 1, angle));
     float fft_val = texelFetch(fft, ivec2(which, 0), 0).r;
 
-    float size = (0.16) + smooth_audio_amplitude2 * 0.009;
+    float size = (0.16) + smooth_audio_amplitude2 * 0.007;
     float bar_size = 0.4;
+    float logo_relative_to_bar_ratio = 1.0 - (0.1 * smoothstep(smooth_audio_amplitude, 0.0, 5.0));
 
     if (length(gluv_offsetted) < (size + (fft_val/5024.0) * bar_size)) {
         col = vec4(vec3(
@@ -63,7 +64,7 @@ void main() {
         gluv_offsetted,
         vec2(0.0, 0.0), // anchor
         vec2(0.5, 0.5), // shift
-        size * 2.0,  //scale
+        size * 2.0 * logo_relative_to_bar_ratio,  //scale
             sin(mmv_time*2.3 + progressive_amplitude/8.0) / 8.0
             + sin(mmv_time*2.3 + progressive_amplitude/5.0) / 8.0, //angle
         false
