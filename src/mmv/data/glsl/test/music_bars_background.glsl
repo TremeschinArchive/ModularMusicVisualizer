@@ -26,7 +26,7 @@ void main() {
         vec2(0.0, 0.0), // anchor
         vec2(0.5, 0.5), // shift
         1.0 + smooth_audio_amplitude/100.5,  //scale
-        sin(progressive_amplitude)/300.0, //angle
+        sin(progressive_amplitude)/200.0, //angle
         true
     );
 
