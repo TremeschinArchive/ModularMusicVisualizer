@@ -30,6 +30,7 @@ from mmv.common.cmn_functions import Functions
 from mmv.common.cmn_utils import DataUtils
 from mmv.common.cmn_fourier import Fourier
 import mmv.common.cmn_any_logger
+from tqdm import tqdm
 import audio2numpy
 import numpy as np
 import samplerate
@@ -48,6 +49,7 @@ class GenericAudioSource:
 
     def __init__(self):
         self.audio_processing = AudioProcessing()
+        self.tqdm_bar_message_max_length = None
 
     # Set the target batch size and sample rate.
     def configure(self,
@@ -62,6 +64,7 @@ class GenericAudioSource:
         # From Audio
         target_fps = 60,
         steps_offset = 0,
+        target_loops = 1,
     ):
         debug_prefix = "[AudioSourceRealtime.configure]"
 
@@ -73,6 +76,7 @@ class GenericAudioSource:
         # # From file
         self.target_fps = target_fps
         self.steps_offset = steps_offset
+        self.target_loops = target_loops
 
         # # Real time
         self.recorder_numframes = recorder_numframes
@@ -85,7 +89,8 @@ class GenericAudioSource:
         raise NotImplementedError("Please implement .next(step) on your inherited class")
     def get_info(self):
         raise NotImplementedError("Please implement .get_info() on your inherited class")
-
+    def start(self):
+        return
 
 # Read audio from a path
 class AudioSourceFile(GenericAudioSource):
@@ -136,38 +141,79 @@ class AudioSourceFile(GenericAudioSource):
         # # When end_cut is n_samples this is increased
         self.loops = 0
 
+        # Start thread to process audio
+        self.return_next_info_index = -1
+
+    # Start a thread to process the audio
+    def start(self):
+        self.slice_process_thread = threading.Thread(target = self.__slice_process, daemon = True)
+        self.slice_process_thread.start()
+
     def next(self, step):
-        step += self.steps_offset
+        while not step + 1 in self.info.keys():
+            time.sleep(0.01)
+        
+    def __slice_process(self):
+        assign_step_counter = 0
 
-        # Empty the slice array
-        self.current_batch.fill(0)
+        # Progress bar
+        progress_bar = tqdm(
+            total = self.steps_per_loop,
+            mininterval = 1/20,
+            unit = " slices",
+            dynamic_ncols = True,
+            colour = '#00ff00',
+            position = 1,
+            smoothing = 0.3
+        )
 
-        # Where we slice the audio
-        start_cut = step * int(self.sample_rate / self.target_fps)
-        end_cut = min(start_cut + self.batch_size, self.n_samples)
+        # Arrange message such that both tqdm message align
+        message = f"Processing Audio File"
+        if self.tqdm_bar_message_max_length is not None:
+            message += " " * (self.tqdm_bar_message_max_length - len(message))
 
-        # Check if we looped
-        if (start_cut > self.n_samples):
-            self.loops += 1
-            self.steps_offset -= self.steps_per_loop
-            return
+        # Set the description
+        progress_bar.set_description(message)
 
-        # Insert new data
-        for channel_number in [0, 1]:
-            np.put(
-                self.current_batch[channel_number],                   # Target array
-                range(0, end_cut - start_cut),                        # Where on target array to put the data
-                self.stereo_data[channel_number][start_cut:end_cut],  # Input data
-                mode = "wrap"                                         # Mode (wrap)
-            )
+        while self.loops < 1:
+            progress_bar.update(1)
 
-        # This yields information as it was calculated so we assign the key (index 0) to the value (index 1)
-        for info in self.audio_processing.get_info_on_audio_slice(
-            audio_slice = self.current_batch,
-            original_sample_rate = self.sample_rate,
-            do_calculate_fft = self.do_calculate_fft,
-        ):
-            self.info[info[0]] = info[1]
+            # Empty the slice array
+            self.current_batch.fill(0)
+            self.info[assign_step_counter] = {}
+
+            # Where we slice the audio
+            start_cut = (assign_step_counter + self.steps_offset) * int(self.sample_rate / self.target_fps)
+            end_cut = min(start_cut + self.batch_size, self.n_samples)
+
+            # Check if we looped
+            if (start_cut > self.n_samples):
+                self.loops += 1
+                self.steps_offset -= self.steps_per_loop
+                continue
+
+            # Insert new data
+            for channel_number in [0, 1]:
+                np.put(
+                    self.current_batch[channel_number],                   # Target array
+                    range(0, end_cut - start_cut),                        # Where on target array to put the data
+                    self.stereo_data[channel_number][start_cut:end_cut],  # Input data
+                    mode = "wrap"                                         # Mode (wrap)
+                )
+            
+            # This yields information as it was calculated so we assign the key (index 0) to the value (index 1)
+            for info in self.audio_processing.get_info_on_audio_slice(
+                audio_slice = self.current_batch,
+                original_sample_rate = self.sample_rate,
+                do_calculate_fft = self.do_calculate_fft,
+            ):
+                self.info[assign_step_counter][info[0]] = info[1]
+            
+            assign_step_counter += 1
+    
+    def get_info(self):
+        self.return_next_info_index += 1
+        return self.info[self.return_next_info_index]
             
 class AudioSourceRealtime(GenericAudioSource):
     def init(self, recorder_device = None, search_for_loopback = False):
@@ -304,7 +350,7 @@ class AudioSourceRealtime(GenericAudioSource):
     
     # We just return the current info
     def get_info(self):
-        return self.info
+        return self.info.copy()
 
 
 class AudioProcessing:
@@ -518,7 +564,7 @@ class AudioProcessing:
             return data
 
         # Use libsamplerate for resampling the audio otherwise
-        return samplerate.resample(data, ratio = (target_sample_rate / original_sample_rate), converter_type = 'sinc_best')
+        return samplerate.resample(data, ratio = (target_sample_rate / original_sample_rate), converter_type = 'sinc_fastest')
 
     # Resample the data with nearest index approach
     # Doesn't really work, experimental, maybe I understand resampling wrong

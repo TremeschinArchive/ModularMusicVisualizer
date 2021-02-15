@@ -144,7 +144,7 @@ void main() {
             vec4 br = bloom(music_bars_pfx, get_r, music_bars_pfx_resolution, bloom_amount, true);
             vec4 bg = bloom(music_bars_pfx, get_g, music_bars_pfx_resolution, bloom_amount, true);
             vec4 bb = bloom(music_bars_pfx, get_b, music_bars_pfx_resolution, bloom_amount, true);
-            float tr = 0.985 - (0.02 * clamp(smooth_audio_amplitude, 0.0, 4.0));
+            float tr = 0.985 - (0.01 * clamp(smooth_audio_amplitude, 0.0, 6.0));
             layer = vec4(
                 br.r, bg.g, bb.b,
                 ((br.a + bg.a + bb.a) * tr) / 3.0
