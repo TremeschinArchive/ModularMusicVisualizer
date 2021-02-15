@@ -53,10 +53,10 @@ void main() {
     #pragma include coordinates_normalization multiple
     #pragma include math_constants multiple
 
-    float scale = (atan(mmv_time * 2.0) / PI) * 2;
     vec2 shadertoy_uv_scaled = shadertoy_uv;
     vec2 opengl_uv_scaled = opengl_uv;
 
+    float scale = (atan(mmv_time * 2.0) / PI) * 2;
     if(scale < 0.99) {
         stuv *= scale;
         gluv *= scale;
@@ -126,7 +126,7 @@ void main() {
 
     chromatic_aberration = true;
     do_bloom = true;
-    bloom_amount = 8;
+    bloom_amount = 3;
     chromatic_aberration_amount = ((1 / mmv_resolution.x) * smooth_audio_amplitude) * 0.14;
 
     if (chromatic_aberration) {
@@ -144,7 +144,7 @@ void main() {
             vec4 br = bloom(music_bars_pfx, get_r, music_bars_pfx_resolution, bloom_amount, true);
             vec4 bg = bloom(music_bars_pfx, get_g, music_bars_pfx_resolution, bloom_amount, true);
             vec4 bb = bloom(music_bars_pfx, get_b, music_bars_pfx_resolution, bloom_amount, true);
-            float tr = 0.94;
+            float tr = 0.985 - (0.02 * clamp(smooth_audio_amplitude, 0.0, 4.0));
             layer = vec4(
                 br.r, bg.g, bb.b,
                 ((br.a + bg.a + bb.a) * tr) / 3.0
