@@ -34,9 +34,9 @@ from mmv.common.cmn_interpolation import Interpolation
 from mmv.mmvskia.mmv_skia_context import MMVContext
 from mmv.mmvskia.mmv_skia_image import MMVSkiaImage
 from mmv.mmvskia.mmv_skia_core import MMVSkiaCore
+from mmv.common.cmn_audio import AudioSourceFile
 from mmv.common.cmn_audio import AudioProcessing
 from mmv.common.cmn_functions import Functions
-from mmv.common.cmn_audio import AudioFile
 from mmv.common.cmn_fourier import Fourier
 from mmv.common.cmn_utils import Utils
 from PIL import Image
@@ -85,8 +85,8 @@ class MMVSkiaMain:
         # and code cleanup reasons.
         self.pipe_video_to = None
 
-        logging.info(f"{debug_prefix} Creating AudioFile() class")
-        self.audio = AudioFile()
+        logging.info(f"{debug_prefix} Creating AudioSourceFile() class")
+        self.audio = AudioSourceFile()
 
         logging.info(f"{debug_prefix} Creating AudioProcessing() class")
         self.audio_processing = AudioProcessing()

@@ -72,7 +72,8 @@ class MMVSkiaCore:
 
         # Read the audio and start pipe_video_to pipe
         logging.info(f"{debug_prefix} Read audio file")
-        self.mmvskia_main.audio.read(path = self.mmvskia_main.context.input_audio_file)
+        self.mmvskia_main.audio.configure()
+        self.mmvskia_main.audio.init(path = self.mmvskia_main.context.input_audio_file)
         
         # How many steps is the audio duration times the frames per second
         self.mmvskia_main.context.total_steps = int(self.mmvskia_main.audio.duration * self.mmvskia_main.context.fps)
