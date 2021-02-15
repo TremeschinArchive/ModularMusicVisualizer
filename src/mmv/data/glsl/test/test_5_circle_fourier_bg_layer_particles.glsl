@@ -15,13 +15,13 @@ void main() {
     #pragma include math_constants multiple
 
     float alpha = 0.0;
-    int n = 40;
+    int n = 80;
     
     float r_time = progressive_amplitude * 0.08;
 
     for (int index = 0; index < n; index ++) {
         float tanx = r_time + mmv_time * (0.3 + 1.5 * rand(float(index))) + rand(float(index) + 0.022) * PI;
-        float r = tan(mod(tanx, PI/2.0));
+        float r = pow(mod(tanx, PI/2.0), 3.0);
         float angle = 
             fract(
                 rand(float(index) + 0.58 + 0.2*int(tanx / (PI/2.0)))
@@ -30,8 +30,8 @@ void main() {
         );
         
         float luminosity = (0.0022 * (1 / (length(gluv) + 0.3))) + (smooth_audio_amplitude * 0.0002);
-
-        alpha += (1.0 / length(gluv - vec2(r*cos(angle), r*sin(angle)))) * luminosity;
+        float l = length(gluv - vec2(r*cos(angle), r*sin(angle)));
+        alpha = max((1.0 / (l)) * luminosity, alpha);
     }
     
     fragColor = vec4(vec3(1.0), alpha);

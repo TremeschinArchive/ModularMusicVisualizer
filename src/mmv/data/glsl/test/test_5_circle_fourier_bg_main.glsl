@@ -73,6 +73,7 @@ void main() {
     vec4 layer = vec4(0.0);
     
     bool chromatic_aberration = true;
+    float chromatic_aberration_amount = 0.0;
     bool do_bloom = true;
     int bloom_amount = 0;
 
@@ -81,13 +82,13 @@ void main() {
     chromatic_aberration = true;
     do_bloom = false;
     bloom_amount = int(smooth_audio_amplitude/6.0);
+    chromatic_aberration_amount = ((1 / mmv_resolution.x) * smooth_audio_amplitude) * 0.2;
 
     if (chromatic_aberration) {
-        float amount = ((1 / mmv_resolution.x) * smooth_audio_amplitude) * 0.9;
         float pa = progressive_amplitude/2.0;
-        vec2 get_r = shadertoy_uv_scaled + vec2(sin(smooth_audio_amplitude + pa), cos(smooth_audio_amplitude + pa)) * amount;
-        vec2 get_g = shadertoy_uv_scaled + vec2(cos(smooth_audio_amplitude/3.3243 + pa), sin(smooth_audio_amplitude*1.2312 + pa)) * amount;
-        vec2 get_b = shadertoy_uv_scaled + vec2(sin(smooth_audio_amplitude/2.0  + pa) * amount);
+        vec2 get_r = shadertoy_uv_scaled + vec2(sin(smooth_audio_amplitude + pa), cos(smooth_audio_amplitude + pa)) * chromatic_aberration_amount;
+        vec2 get_g = shadertoy_uv_scaled + vec2(cos(smooth_audio_amplitude/3.3243 + pa), sin(smooth_audio_amplitude*1.2312 + pa)) * chromatic_aberration_amount;
+        vec2 get_b = shadertoy_uv_scaled + vec2(sin(smooth_audio_amplitude/2.0  + pa) * chromatic_aberration_amount);
         vec2 get_a = shadertoy_uv_scaled;
 
         get_r = clamp(get_r, 0.0, 1.0);
@@ -129,13 +130,13 @@ void main() {
     chromatic_aberration = true;
     do_bloom = true;
     bloom_amount = 8;
+    chromatic_aberration_amount = ((1 / mmv_resolution.x) * smooth_audio_amplitude) * 0.3;
 
     if (chromatic_aberration) {
-        float amount = ((1 / mmv_resolution.x) * smooth_audio_amplitude) * 0.9;
         float pa = progressive_amplitude/2.0;
-        vec2 get_r = shadertoy_uv_scaled + vec2(sin(smooth_audio_amplitude + pa), cos(smooth_audio_amplitude + pa)) * amount;
-        vec2 get_g = shadertoy_uv_scaled + vec2(cos(smooth_audio_amplitude/3.3243 + pa), sin(smooth_audio_amplitude*1.2312 + pa)) * amount;
-        vec2 get_b = shadertoy_uv_scaled + vec2(sin(smooth_audio_amplitude/2.0  + pa) * amount);
+        vec2 get_r = shadertoy_uv_scaled + vec2(sin(smooth_audio_amplitude + pa), cos(smooth_audio_amplitude + pa)) * chromatic_aberration_amount;
+        vec2 get_g = shadertoy_uv_scaled + vec2(cos(smooth_audio_amplitude/3.3243 + pa), sin(smooth_audio_amplitude*1.2312 + pa)) * chromatic_aberration_amount;
+        vec2 get_b = shadertoy_uv_scaled + vec2(sin(smooth_audio_amplitude/2.0  + pa) * chromatic_aberration_amount);
         vec2 get_a = shadertoy_uv_scaled;
 
         get_r = clamp(get_r, 0.0, 1.0);
@@ -146,7 +147,7 @@ void main() {
             vec4 br = bloom(layer2, get_r, layer2_resolution, bloom_amount, true);
             vec4 bg = bloom(layer2, get_g, layer2_resolution, bloom_amount, true);
             vec4 bb = bloom(layer2, get_b, layer2_resolution, bloom_amount, true);
-            float tr = 0.96;
+            float tr = 0.94;
             layer = vec4(
                 br.r, bg.g, bb.b,
                 ((br.a + bg.a + bb.a) * tr) / 3.0
@@ -169,7 +170,7 @@ void main() {
         layer = bloom(layer2, shadertoy_uv_scaled, layer2_resolution, bloom_amount, true);
     }
 
-    vec4 vignetting = vec4(vec3(0.0), smooth_audio_amplitude * length(gluv) / 30.0);
+    vec4 vignetting = vec4(vec3(0.0), smooth_audio_amplitude * length(gluv) / 60.0);
     vec4 gray_scale = vec4(vec3((col.r + col.g + col.b) / 3.0), 1.0);
     col = mix(vignetting, col, 1.0 - vignetting.a);
     col = mix(
