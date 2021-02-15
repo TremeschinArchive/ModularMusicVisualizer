@@ -105,6 +105,14 @@ uniform vec3 average_amplitudes;
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+# Transparent, black shader, used for ignoring a certain layer quickly
+# Usage:
+# | #pragma map some_other_unwanted_shader=shader;MMVMGL_NULL_SHADER;WIDTHxHEIGHT
+# | ... GLSL code
+MMVMGL_NULL_SHADER = "void main() { fragColor = vec4(0.0); }"
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 # When an uniform is not used it doesn't get initialized on the program
 # so we .get(name, FakeUniform()) so we don't get errors here
 class FakeUniform:
@@ -472,7 +480,7 @@ class MMVShaderMGL:
             assert loader in loaders, f"Loader not implemented in loaders {loaders}"
 
             # All but pipeline texture must be valid paths
-            if not loader in ["pipeline_texture"]:
+            if (not loader in ["pipeline_texture"]) and (value != "MMVMGL_NULL_SHADER"):
                 assert os.path.exists(value), f"Value of loader [{value}] is not a valid path"
 
             # We'll map one texture to this shader, either a static image, another shader or a video
@@ -518,9 +526,14 @@ class MMVShaderMGL:
                 # Add shader as texture element
                 elif loader == "shader":
 
-                    # Read the shader we'll map
-                    with open(value, "r") as f:
-                        loader_frag_shader = f.read()
+                    # Null shader
+                    if value == "MMVMGL_NULL_SHADER":
+                        loader_frag_shader = MMVMGL_NULL_SHADER
+                    
+                    else:
+                        # Read the shader we'll map
+                        with open(value, "r") as f:
+                            loader_frag_shader = f.read()
 
                     # Create one instance of this very own class
                     if self.master_shader:
