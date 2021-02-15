@@ -29,14 +29,13 @@ void main() {
     vec4 col = vec4(0.0);
 
     // Angle relative to the center
-    float angle_offset = PI / 4;
+    float angle_offset = (PI / 4) * sin(progressive_amplitude/8.0)*0.16;
     float speed = 0.3;
-    float amplitude = 0.001 * smooth_audio_amplitude;
+    float amplitude = 0.004 * smooth_audio_amplitude;
     vec2 offset = vec2(sin(5.0 * mmv_time * speed) * amplitude, cos(8.0 * mmv_time * speed) * amplitude);
     vec2 gluv_offsetted = gluv - offset;
-    vec2 get_visualizer_angle = gluv_offsetted * get_rotation_mat2(PI / 2.0);
+    vec2 get_visualizer_angle = gluv_offsetted * get_rotation_mat2((PI / 2.0) + angle_offset);
     float angle = atan(get_visualizer_angle.y, get_visualizer_angle.x) * sign(get_visualizer_angle.y);
-
 
     // atan symmetries
     if (get_visualizer_angle.y < 0) {
