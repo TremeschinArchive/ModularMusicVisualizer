@@ -161,7 +161,6 @@ class FFmpegWrapper:
     def start(self, stdin = subprocess.PIPE, stdout = subprocess.PIPE):
         debug_prefix = "[FFmpegWrapper.start]"
 
-
         logging.info(f"{debug_prefix} Starting FFmpeg pipe subprocess with command {self.command}")
 
         # Create a subprocess in the background
@@ -169,6 +168,7 @@ class FFmpegWrapper:
             self.command,
             stdin  = stdin,
             stdout = stdout,
+            # bufsize = ((1920*1080) * 3)
         )
 
         print(debug_prefix, "Open one time pipe")
@@ -187,7 +187,7 @@ class FFmpegWrapper:
         del image
 
     # Thread save the images to the pipe, this way processing.py can do its job while we write the images
-    def pipe_writer_loop(self, duration_seconds: float, fps: float, frame_count: int, max_images_on_pipe_buffer: int):
+    def pipe_writer_loop(self, duration_seconds: float, fps: float, frame_count: int, max_images_on_pipe_buffer: int, show_status = True):
         debug_prefix = "[FFmpegWrapper.pipe_writer_loop]"
 
         self.max_images_on_pipe_buffer = max_images_on_pipe_buffer
@@ -216,24 +216,25 @@ class FFmpegWrapper:
                 
                 self.count += 1
 
-                # Stats
-                current_time = (self.count / fps)   # Current second we're processing
-                propfinished = ((current_time + (1/fps)) / duration_seconds) * 100  # Overhaul percentage completion
-                remaining = duration_seconds - current_time  # How much seconds left to produce
-                now = time.time()
-                took = now - start  # Total time took in this runtime
-                eta = (took * remaining) / current_time
+                if show_status:
+                    # Stats
+                    current_time = (self.count / fps)   # Current second we're processing
+                    propfinished = ((current_time + (1/fps)) / duration_seconds) * 100  # Overhaul percentage completion
+                    remaining = duration_seconds - current_time  # How much seconds left to produce
+                    now = time.time()
+                    took = now - start  # Total time took in this runtime
+                    eta = (took * remaining) / current_time
 
-                # Convert to minutes
-                took /= 60
-                eta /= 60
-                took_plus_eta = took + eta
+                    # Convert to minutes
+                    took /= 60
+                    eta /= 60
+                    took_plus_eta = took + eta
 
-                took_plus_eta = f"{int(took_plus_eta)}m:{(took_plus_eta - int(took_plus_eta))*60:.0f}s"
-                took = f"{int(took)}m:{(took - int(took))*60:.0f}s"
-                eta = f"{int(eta)}m:{(eta - int(eta))*60:.0f}s"
+                    took_plus_eta = f"{int(took_plus_eta)}m:{(took_plus_eta - int(took_plus_eta))*60:.0f}s"
+                    took = f"{int(took)}m:{(took - int(took))*60:.0f}s"
+                    eta = f"{int(eta)}m:{(eta - int(eta))*60:.0f}s"
 
-                print(f"\rProgress=[Frame: {self.count} - {current_time:.2f}s / {duration_seconds:.2f}s = {propfinished:0.2f}%] Took=[{took}] ETA=[{eta}] EST Total=[{took_plus_eta}]", end="")
+                    print(f"\rProgress=[Frame: {self.count} - {current_time:.2f}s / {duration_seconds:.2f}s = {propfinished:0.2f}%] Took=[{took}] ETA=[{eta}] EST Total=[{took_plus_eta}]", end="")
             else:
                 time.sleep(0.1)
         

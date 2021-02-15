@@ -1,11 +1,11 @@
 <p align="center">
-    <img src="repo/mmv-project-logo.png" alt="Modular Music Visualizer Project Logo" width="200" height="200">
+    <img src="repo/mmv_logo.png" alt="Modular Music Visualizer Project Logo" width="200" height="200">
 </p>
 <h3 align="center">Modular Music Visualizer</h3>
 <p align="center">
   High quality video music visualization tool for the music production community.
   <br><hr>
-  <i>Support for Music Bars and Piano Roll mode, Video as background, enable / disable whatever you want. Hack the code at your will. Custom GLSL shaders for post processing.</i>
+  <i>Support for Music Bars and Piano Roll mode, Video as background, enable / disable whatever you want. Hack the code at your will. Real Time mode for live DJing</i>
 </p>
 <hr>
 
@@ -29,16 +29,24 @@ Officially works on Linux with all features, most work on macOS and Windows
 
 ## Showcase
 
-![Demo image of MMV](repo/music-mode.jpg)
-![Demo image of MMV](repo/music-mode-2.jpg)
-
-[Link on YouTube](https://www.youtube.com/watch?v=5cUhRTab4Ks) (Music Bars Mode)
+![Demo image of MMV](repo/mmv-shader-1.png)
+_^ This runs real time 60 fps+ depending on your GPU, audio buffer size and CPU using GLSL shaders_
 
 <hr>
 
 ![Demo image of MMV Piano Roll](repo/piano-roll-4.jpg)
+_^ "Old code" which is currently used to draw the piano roll_
 
 [Link on YouTube](https://www.youtube.com/watch?v=NwP5LESrceY) (Piano Roll Mode)
+
+<hr>
+
+![Demo image of MMV](repo/music-mode-2.jpg)
+_^ Also "old code" with previous visuals before Shaders_
+
+[Link on YouTube](https://www.youtube.com/watch?v=5cUhRTab4Ks) (Music Bars Mode)
+
+
 
 <hr>
 
@@ -88,8 +96,117 @@ I haven't yet made a decision on financial support, probably I'll have a donatio
 
 **Important: The project is under some heavy rewiring and R&D, have yet to normalize instructions and documentation, I can't test everything after every commit so expect minor bugs.** Also there is technically two projects in the same repository ("old" MMVSkia and new MMVShader) sharing some common files, keeping compatibility while rewriting stuff is a bit tricky and is the main source of current problems.
 
-Please see the file [docs/RUNNING.md](docs/RUNNING.md) for instructions on all platforms
+## Python
 
+Please install Python 3.8 (hard requirements are _V >= 3.7_ potentailly), Python 3.9 should work™ but _can_ act weird. Give 3.9 a shot otherwise downgrade to 3.8 if you get weird dependency related stuff.
+
+**Only a 64 bits OS will work**, most of you should have it.
+
+The easiest way to run MMV is by using an alternative community Python "package manager" called [Poetry](https://github.com/python-poetry/poetry), it automatically will create environments (containers) for MMV's dependencies and install it for you.
+
+Alternatively you can chose not to use poetry but the regular `requirements.txt` of Python.
+
+First you have to install Python:
+
+<hr>
+
+### Installing Python
+
+_Linux and macOS have optional dependency `musescore` to convert midi files to audio when using Skia + Piano Roll mode_
+
+**Note**: On Windows use `python3.exe`, `python3.8.exe` (the one you have) on Python commands, Linux and macOS will use either `python38`, `python3.8` or simply `python`. I'd say with with only `python` on L/M and `python3.8.exe` on Windows.
+
+**Windows Note:** Windows uses ugly backslashes `\` rather than forward slashes `/` when referring to files and directories. Replace those to yours equivalent OS separator.
+
+<hr>
+
+- **Windows:** Head over to [Python dot org](https://www.python.org/downloads/windows/), download **Python 3.8.3 Windows x86-64 executable installer**, install it and make sure to **check the box "Add Python 3.8.6 to PATH**
+
+<hr>
+
+- **Linux:** Install Python from your package manager, for example:
+  - *Arch Linux, Manjaro, pacman-based:* `sudo pacman -Syu base-devel git ffmpeg python38 musescore python-poetry`
+  - *Ubuntu:* `sudo apt update && sudo apt upgrade && sudo apt install python3 python3-venv python3-dev python3-setuptools python3-pip ffmpeg git libglfw3 libglfw3-dev build-essential`
+  - *Fedora:* `sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm && sudo dnf upgrade && sudo dnf install python-devel ffmpeg git blas openblas lapack atlas libgfortran atlas-devel gcc-c++ gcc-gfortran subversion redhat-rpm-config python38 musescore`
+  - *OpenSUSE:* `sudo zypper install git ffmpeg musescore`
+
+<hr>
+
+- **macOS:** I don't have the hardware to test nor proper knowledge but should be something like:
+  - Install [Homebrew](https://brew.sh/)
+  - `brew install python@3.8 ffmpeg musescore git`
+
+<hr>
+
+_Note for Linux:_ Pacman based distros have `python-poetry`, I am unsure about the other ones but you can skip this next step of getting Poetry since you should have it.
+
+<hr>
+
+### (Poetry way) Installing Poetry
+
+Follow instructions on [Poetry's README](https://github.com/python-poetry/poetry#installation) or install from your package manager.
+
+### Getting the Source Code of MMV
+
+Either go to the main repository page at [GitHub](https://github.com/Tremeschin/modular-music-visualizer), click the green down arrow saying "Code", extract to somewhere
+
+Or just `git clone https://github.com/Tremeschin/modular-music-visualizer` if you have GIT CLI
+
+### Installing Dependencies
+
+Open a shell on the folder where you extracted MMV (shift + right click empty space on Windows, _"Open PowerShell here"_), Linux and macOS users should be able to change the working directory into the folder (basic shell navigation) or by right clicking your file manager (at least Nautilus, Dolphin with extension)
+
+#### Poetry
+
+Run:
+
+- `poetry install`
+
+_(might be `poetry.exe` on Windows)_
+
+#### Vanilla way (requirements.txt)
+
+Run:
+
+- `python -m venv mmv_env`
+  - Linux: `source ./mmv_env/bin/activate`
+  - Windows: `source .\mmv_env\bin\activate.bat`
+
+- `python -m ensurepip`
+- `python -m pip install wheel`
+- `python -m pip install -r ./requirements.txt`
+
+You'll need to activate the virtualenv (sourcing it) every time you run MMV.
+
+## Running
+
+Configure the files `/src/run_shaders.py` or `/src/run_skia.py` to your needs (images, audios) _[though there is a default configuration, if you want fast results skip this]_
+
+I highly recommend reading the basics of Python [here](https://learnxinyminutes.com/docs/python/), it doesn't take much to read and will avoid some beginner pitfalls.
+
+### Poetry:
+
+- `poetry run shaders`: View realtime
+- `poetry run shaders render`: Render target audio file to video
+- `poetry run skia` [same as] `poetry run skia mode=music`: Render target audio file to video
+- `poetry run skia mode=piano`: Render target audio file + midi to video
+
+These will only work if your shell working directory is on the root of the source code, alternatively run:
+
+- `poetry run python ./src/run_shaders.py`: View realtime
+- `poetry run python ./run_shaders.py`: View realtime
+- `poetry run python ./run_shaders.py render`: Render target audio file to video
+- ... depending where your working directory is
+
+### Vanilla Python:
+
+Good to change the directory to the `src` dir: `cd ./src`
+
+- `python run_shaders.py`: View realtime
+- `python run_shaders.py render`: Render target audio file to video
+- `python run_skia.py` [same as] `python run_skia.py mode=music`: Render target audio file to video
+- `python run_skia.py mode=music`: Render target audio + midi file to video
+  
 <hr>
 
 ## Hacking the code
@@ -100,9 +217,40 @@ Please read [HACKING.md](docs/HACKING.md) file :)
 
 Feel free DM me, I'd be happy to explain how MMV works.
 
+# Common problems, FAQ, tips
+
+## (Shaders) No audio responsiveness, wrong recording device
+
+By default MMV takes the first loopback device it finds, mostly in alphabetical order so if you have a VR headset plugged on, some weird audio setup with multiple audio interfaces it might get the wrong one.
+
+Fixing this is simple, run `poetry run shaders list` or `python run_shaders.py list`, it'll list the devices in your computer like:
+
+```log
+$ poetry run shaders list
+[test_mgl.py] Available devices to record audio:
+[test_mgl.py] > (0) [Jack source (PulseAudio JACK Source)]
+[test_mgl.py] > (1) [Monitor of Jack sink (PulseAudio JACK Sink)]
+```
+
+Then you just run it with the `capture flag`:
+
+- `poetry run shaders capture=1` or `python run_shaders.py capture=1`
+
+In my case, `capture=1` is the audio from the computer and `capture=0` is my microphone itself, so we can also have a IRL interactive mode of some sort.
+
+## (RT Shaders) Want more aggressiveness
+
+Pass argument `multiplier=N` to `poetry run shaders multiplier=160` or some other number to increase how harsh MMV will react to audio amplitudes and frequencies. Good for not hurting your hearing losses if you want more emotion at a lower volume.
+
+Also works for rendering mode.
+
+TODO: configure this on the real time window itself.
+
 # Goals, next idea
 
 Also see [CHANGELOG.md](CHANGELOG.md) file :)
+
+**Configuring the MMVShader is currently not possible, writing some MMVShaderMaker will take a while. Be patient. This is sorta main priority**
 
 - [ ] Progression bar (square, circle, pie graph?)
 
@@ -111,8 +259,6 @@ Also see [CHANGELOG.md](CHANGELOG.md) file :)
 - [ ] Load and configure MMV based on a YAML file, so distributing binaries will be theoretically possible
 
 - [ ] Generate rain droplets using shaders
-
-- [ ] Rectangle bars visualizer (only circle + linear or symmetric currently)
 
 - [ ] Make MMV Piano Roll interactive for learning, writing midi files?
 
@@ -135,6 +281,12 @@ Feel free to create issues on any of both platforms, PRs / Merge Requests I ask 
 Any information, images, file names you configure manually is considered (by me) user generated content (UGC) and I take no responsibility for any violations you make on copyrighted images, musics or logos.
 
 I give you a few "free assets" files, those, apart from the MMV logo I created myself on Inkscape, were generated with Python with some old code written by me, you can use them freely. Some are generated on the go if configured (they are on by default) on the running script of MMV.
+
+# License
+
+Currently all the files of this repository are licensed under the GPLv3 license, some functions are CC and I kept those attributed with the original creator, so check every file beforehand.
+
+I might MIT the GLSL shaders files in the future, depends on my will (I'm currently 35% favorable of this idea).
 
 # Acknowledgements, Thanks to
 
@@ -164,10 +316,7 @@ I'll mainly list the main name and where to find more info, it's just impossible
 
   - Also the [Python wrapper](https://pypi.org/project/glfw/) for the [GLFW](https://www.glfw.org/) library for setting up an GL canvas so Skia can draw on.
 
-- [MPV](https://mpv.io), the best video player of all, `mpv --list-options | wc -l -> 1097`, near 1100 command line flags and options.
-  
-  - Used for applying specific post processing on videos and encoding them.
-  - Might become deprecated code in the near future
+- [Poetry](https://github.com/python-poetry/poetry), easier to micro manage Python dependencies and generate builds.
 
 ### Python packages and others involved
 

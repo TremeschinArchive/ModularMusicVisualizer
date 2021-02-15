@@ -27,6 +27,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+debug_prefix = "[test_mgl.py]"
 from tqdm import tqdm
 from PIL import Image
 import numpy as np
@@ -38,20 +39,75 @@ import math
 import sys
 import os
 
+
+class ArgParser:
+    def __init__(self, argv):
+        # Empty list of flags and kflags
+        self.flags = []
+        self.kflags = {}
+
+        if argv is not None:
+
+            # Iterate in all args
+            for arg in argv[1:]:
+                
+                # Is a kwarg
+                if "=" in arg:
+                    arg = arg.split("=")
+                    self.kflags[arg[0]] = arg[1]
+
+                # Is a flag
+                else:
+                    self.flags.append(arg)
+
+# Parse shell arguments TODO: proper interface using typer?
+# Temporary file mostly?
+args = ArgParser(sys.argv)
+
+# List and override soundcard outputs
+if ("list" in args.flags):
+    import soundcard
+    print(f"{debug_prefix} Available devices to record audio:")
+    for index, device in enumerate(soundcard.all_microphones(include_loopback = True)):
+        print(f"{debug_prefix} > ({index}) [{device.name}]")
+    print(f"{debug_prefix} :: Run this script again with [capture=N] flag to override")
+    sys.exit(0)
+
+# Overriding capture stuff
+cap = args.kflags.get("capture", None)
+override_record_device = None
+
+if cap is not None:
+    import soundcard
+    recordable = soundcard.all_microphones(include_loopback = True)
+
+    # Erro assertion
+    if (len(recordable) < int(cap)) or (int(cap) < 0):
+        raise RuntimeError(f"Target capture device is out of bounds [{cap}] out of (0, {len(recordable)})")
+
+    # Get the device
+    for index, device in enumerate(recordable):
+        if index == int(cap):
+            override_record_device = device
+            break
+
 # Append previous folder to path, debug prefix
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-debug_prefix = "[test_mgl.py]"
 sys.path.append("..")
 sys.path.append(
     THIS_DIR + "/../"
 )
-
 
 # Import mmv, get interface
 import mmv
 interface = mmv.MMVPackageInterface()
 shader_interface = interface.get_shader_interface()
 mgl = shader_interface.get_mgl_interface(master_shader = True)
+
+# # Externals
+
+# Video encoder (will only auto download for Windows)
+interface.check_download_externals(target_externals = ["ffmpeg"])
 
 # # Configuration
 
@@ -90,6 +146,9 @@ RENDER_MODE_AUDIO_FILE = f"{ASSETS_DIR}{sep}free_assets{sep}kawaii_bass.ogg"
 # mode = "render"
 mode = "view"
 
+if "render" in sys.argv:
+    mode = "render"
+
 # # Micro management
 
 # Set up target render configuration
@@ -110,15 +169,15 @@ tests = {
     3: {"frag": f"{GLSL_DIR}{sep}test{sep}test_3_rt_audio.glsl"},
     4: {"frag": f"{GLSL_DIR}{sep}test{sep}test_4_fourier.glsl"},
     5: {
-        "frag": f"{GLSL_DIR}{sep}test{sep}test_5_circle_fourier_bg_main.glsl",
+        "frag": f"{GLSL_DIR}{sep}test{sep}music_bars_master_shader.glsl",
         "replaces": {
-            "LAYER1": f"{GLSL_DIR}{sep}test{sep}test_5_circle_fourier_bg_layer1.glsl",
-            "LAYER2": f"{GLSL_DIR}{sep}test{sep}test_5_circle_fourier_bg_layer2.glsl",
-            "LAYER2PFX": f"{GLSL_DIR}{sep}test{sep}test_5_circle_fourier_bg_layer2_pfx.glsl",
-            "LAYER_PARTICLES": f"{GLSL_DIR}{sep}test{sep}test_5_circle_fourier_bg_layer_particles.glsl",
-            "BACKGROUND": f"{ASSETS_DIR}{sep}free_assets{sep}glsl_default_background.jpg",
+            "BACKGROUND_SHADER": f"{GLSL_DIR}{sep}test{sep}music_bars_background.glsl",
+            "MUSIC_BARS_SHADER": f"{GLSL_DIR}{sep}test{sep}music_bars_radial.glsl",
+            "MUSIC_BARS_SHADER_PFX": f"{GLSL_DIR}{sep}test{sep}music_bars_radial_pfx.glsl",
+            "PARTICLES_SHADER": f"{GLSL_DIR}{sep}test{sep}music_bars_particle.glsl",
+            "BACKGROUND_IMAGE": f"{ASSETS_DIR}{sep}free_assets{sep}glsl_default_background.jpg",
             # "LOGO": f"{ASSETS_DIR}{sep}free_assets{sep}mmv_logo.png",
-            "LOGO": f"{ASSETS_DIR}{sep}free_assets{sep}mmv_logo_alt_white.png",
+            "LOGO_IMAGE": f"{THIS_DIR}{sep}..{sep}repo{sep}mmv_logo_alt_white.png",
         }
     }
 }
@@ -182,16 +241,31 @@ if mode == "render":
 
     # Start the thread to write the images
     threading.Thread(target = video_pipe.pipe_writer_loop, args = (
-        DURATION, # duration
-        FRAMERATE, # fps
-        DURATION * FRAMERATE, # frame count
-        50 # max images on buffer to be piped
+        DURATION,  # Duration
+        FRAMERATE,  # Fps
+        DURATION * FRAMERATE,  # Frame count
+        50,  # Max images on buffer to be piped
+        False,  # Show stats
     ), daemon = True).start()
 
     # Increase this value to get more aggressiveness or just turn up the computer volume
-    multiplier = 90
-    progress_bar = tqdm(total = source.steps_per_loop)
-    progress_bar.set_description("Rendering video")
+    multiplier = args.kflags.get("multiplier", None)
+    if multiplier is None:
+        multiplier = 90
+    else:
+        multiplier = int(multiplier)
+    
+    # Progress bar
+    progress_bar = tqdm(
+        total = source.steps_per_loop,
+        mininterval = 1/20,
+        unit = " frames",
+        dynamic_ncols = True,
+        colour = '#0000ff',
+        position = 0,
+        smoothing = 0.3
+    )
+    progress_bar.set_description(f"Rendering [{source.duration:.2f}s]({WIDTH}x{HEIGHT}:{FRAMERATE}) MMV video")
 
 # Mode is to view real time
 elif mode == "view":
@@ -221,13 +295,20 @@ elif mode == "view":
 
     # Search for a loopback device to get audio from
     # TODO: Proper CLI for better UX
-    source.init(search_for_loopback = True)
+    if (override_record_device is None):
+        source.init(search_for_loopback = True)
+    else:
+        source.init(recorder_device = override_record_device)
 
     # source.capture_and_process_loop()
     source.start_async()
 
     # Increase this value to get more aggressiveness or just turn up the computer volume
-    multiplier = 140
+    multiplier = args.kflags.get("multiplier", None)
+    if multiplier is None:
+        multiplier = 140
+    else:
+        multiplier = int(multiplier)
 
 # # Audio Processing
 
@@ -360,7 +441,7 @@ try:
         if mode == "render":
             progress_bar.update(1)
             mgl.read_into_subprocess_stdin(video_pipe.subprocess.stdin)
-            # print("Write", step, source.steps_per_loop)
+            # video_pipe.write_to_pipe(step, mgl.read())
 
             # Looped the audio one time, exit
             if source.loops == 1:
@@ -392,7 +473,7 @@ except KeyboardInterrupt:
 if mode == "view":
     source.stop()
 if mode == "render":
-    progress_bar.update(1)
+    progress_bar.close()
 
 sys.exit(0)
 exit()

@@ -94,6 +94,13 @@ uniform int mmv_frame;
 uniform float mmv_time;
 uniform vec2 mmv_resolution;
 
+// Audio values
+uniform float smooth_audio_amplitude;
+uniform float smooth_audio_amplitude2;
+uniform float progressive_amplitude;
+uniform vec3 standard_deviations;
+uniform vec3 average_amplitudes;
+
 ///add_uniform"""
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -811,7 +818,7 @@ class MMVShaderMGL:
             
     # Read from the current FBO, return the bytes
     def read(self):
-        return self.window.read()
+        return self.window.fbo.read()
     
     # Write directly into a subprocess (FFmpeg, FFplay)
     # Use this for speeds preferably

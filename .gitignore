@@ -28,6 +28,8 @@ src/mmv/externals
 src/mmv/release
 src/mmv/runtime
 
+src/unused
+
 # # MMV GLSL Shader
 
 src/mmv/mmvshader/glsl/st

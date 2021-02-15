@@ -1,15 +1,10 @@
 
 // ===============================================================================
 
-#pragma map name fourier_layer_background
+#pragma map name music_bars_background
 
 #pragma include mmv_specification once
-#pragma map background=image;{BACKGROUND};1920x1080
-
-uniform float smooth_audio_amplitude;
-uniform vec3 standard_deviations;
-uniform vec3 average_amplitudes;
-uniform float progressive_amplitude;
+#pragma map background=image;{BACKGROUND_IMAGE};1920x1080
 
 void main() {
     #pragma include coordinates_normalization multiple

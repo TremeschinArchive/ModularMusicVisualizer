@@ -1,0 +1,41 @@
+[tool.poetry]
+name = "mmv"
+version = "2.6.0"
+description = "High quality video music visualization tool for the music production community. Support for Music Bars and Piano Roll mode, Video as background, enable / disable whatever you want. Hack the code at your will. Real Time mode for live DJing"
+authors = ["Tremeschin <https://tremeschin.gitlab.io/>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+scipy = "^1.6.0"
+numpy = "^1.20.1"
+audioread = "^2.1.9"
+audio2numpy = "^0.1.2"
+skia-python = "^87.1"
+moderngl = "^5.6.3"
+moderngl-window = "^2.3.0"
+mido = "^1.2.9"
+toml = "^0.10.2"
+PyYAML = "^5.4.1"
+requests = "^2.25.1"
+wget = "^3.2"
+tqdm = "^4.56.2"
+Pillow = "^8.1.0"
+opencv-python-headless = "^4.5.1"
+SoundFile = "^0.10.3"
+SoundCard = "^0.4.0"
+wheel = "^0.36.2"
+pyunpack = "^0.2.2"
+imgui = "^1.3.0"
+glfw = "^2.0.0"
+PyOpenGL = "^3.1.5"
+samplerate = "^0.1.0"
+
+[tool.poetry.dev-dependencies]
+
+[tool.poetry.scripts]
+shaders = "src.run_shaders:_"
+skia = "src.run_video:_"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
