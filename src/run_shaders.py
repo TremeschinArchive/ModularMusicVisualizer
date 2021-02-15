@@ -149,6 +149,11 @@ mode = "view"
 if "render" in sys.argv:
     mode = "render"
 
+# # Render mode
+
+# How many loops to render the audio
+NLOOPS = 1
+
 # # Micro management
 
 # Set up target render configuration
@@ -182,6 +187,7 @@ tests = {
     }
 }
 
+
 # Mode is to render, start the video encoder (FFmpeg) and headless window
 if mode == "render":
 
@@ -201,7 +207,7 @@ if mode == "render":
         batch_size = BATCH_SIZE,
         sample_rate = None,  # We'll figure out the sample rate in a few, it'll be read on source.init
         target_fps = FRAMERATE,
-        do_calculate_fft = CALCULATE_FFT
+        do_calculate_fft = CALCULATE_FFT,
     )
 
     # Read source audio file
@@ -254,18 +260,22 @@ if mode == "render":
         multiplier = 90
     else:
         multiplier = int(multiplier)
+
+    TOTAL_STEPS = source.steps_per_loop * NLOOPS
     
     # Progress bar
     progress_bar = tqdm(
-        total = source.steps_per_loop,
+        total = TOTAL_STEPS,
         mininterval = 1/20,
         unit = " frames",
         dynamic_ncols = True,
-        colour = '#0000ff',
+        colour = '#38bed6',
         position = 0,
         smoothing = 0.3
     )
-    progress_bar.set_description(f"Rendering [{source.duration:.2f}s]({WIDTH}x{HEIGHT}:{FRAMERATE}) MMV video")
+    RENDERING_MESSAGE = f"Rendering [{source.duration:.2f}s]({WIDTH}x{HEIGHT}:{FRAMERATE}) MMV video"
+    progress_bar.set_description(RENDERING_MESSAGE)
+    source.tqdm_bar_message_max_length = len(RENDERING_MESSAGE)
 
 # Mode is to view real time
 elif mode == "view":
@@ -383,6 +393,8 @@ def ratio_on_other_fps_based_on_fps(ratio, new_fps, old_fps = 60):
     return 1.0 - ((1.0 - ratio)**(old_fps / new_fps))
 
 try:
+    source.start()
+
     # Main test routine
     while True:
 
@@ -400,7 +412,7 @@ try:
 
         # We have:
         # - average_amplitudes: vec3 array, L, R and Mono
-        pipeline_info = source.info.copy()
+        pipeline_info = source.get_info()
 
         # # Temporary stuff
 
@@ -444,7 +456,7 @@ try:
             # video_pipe.write_to_pipe(step, mgl.read())
 
             # Looped the audio one time, exit
-            if source.loops == 1:
+            if step == TOTAL_STEPS:
                 video_pipe.subprocess.stdin.close()
                 break
 
