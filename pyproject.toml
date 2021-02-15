@@ -5,7 +5,7 @@ description = "High quality video music visualization tool for the music product
 authors = ["Tremeschin <https://tremeschin.gitlab.io/>"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.7"
 scipy = "^1.6.0"
 numpy = "^1.20.1"
 audioread = "^2.1.9"
@@ -29,6 +29,7 @@ imgui = "^1.3.0"
 glfw = "^2.0.0"
 PyOpenGL = "^3.1.5"
 samplerate = "^0.1.0"
+colorama = "^0.4.4"
 
 [tool.poetry.dev-dependencies]
 

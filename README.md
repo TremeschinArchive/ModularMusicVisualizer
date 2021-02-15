@@ -30,7 +30,9 @@ Officially works on Linux with all features, most work on macOS and Windows
 ## Showcase
 
 ![Demo image of MMV](repo/mmv-shader-1.png)
-_^ This runs real time 60 fps+ depending on your GPU, audio buffer size and CPU using GLSL shaders_
+_^ This runs real time 60 fps+ depending on your GPU and CPU using GLSL shaders_
+
+More on performance later
 
 <hr>
 
@@ -72,10 +74,13 @@ I also invite you to read about the [Free Software Definition / Philosophy](http
 
    * [Community, Support, Help](#community-support-help)
    * [Running](#running)
+   * [Common problems, FAQ, tips](#common-problems-faq-tips)
    * [Hacking the Code](#hacking-the-code)
+   * [Performance](#performance)
    * [Goals, what is being developed](#goals-what-is-being-developed)
    * [Contributing](#contributing)
    * [User Generated Content, legal](#user-generated-content-copyrighted-material-legal)
+   * [License](#license)
    * [Acknowledgements | Thanks to](#acknowledgements-thanks-to)
 
 <hr>
@@ -114,7 +119,7 @@ First you have to install Python:
 
 _Linux and macOS have optional dependency `musescore` to convert midi files to audio when using Skia + Piano Roll mode_
 
-**Note**: On Windows use `python3.exe`, `python3.8.exe` (the one you have) on Python commands, Linux and macOS will use either `python38`, `python3.8` or simply `python`. I'd say with with only `python` on L/M and `python3.8.exe` on Windows.
+**Note**: On Windows use `python.exe`, `python3.exe` or `python3.8.exe` (the one you have) on Python commands, Linux and macOS will use either `python38`, `python3.8` or simply `python`. I'd say with with only `python` on L/M and `python.exe` on Windows if you have only one version of Python installed.
 
 **Windows Note:** Windows uses ugly backslashes `\` rather than forward slashes `/` when referring to files and directories. Replace those to yours equivalent OS separator.
 
@@ -148,6 +153,8 @@ _Note for Linux:_ Pacman based distros have `python-poetry`, I am unsure about t
 
 Follow instructions on [Poetry's README](https://github.com/python-poetry/poetry#installation) or install from your package manager.
 
+On **Windows** I think it's easier to run `python.exe -m pip install poetry --user` on PowerShell or Command Prompt rather than their curl script or cloning the repo, I had no issues running MMV there with this.
+
 ### Getting the Source Code of MMV
 
 Either go to the main repository page at [GitHub](https://github.com/Tremeschin/modular-music-visualizer), click the green down arrow saying "Code", extract to somewhere
@@ -164,7 +171,7 @@ Run:
 
 - `poetry install`
 
-_(might be `poetry.exe` on Windows)_
+_(Binary is `poetry.exe` on Windows if you're on PowerShell or just `poetry` if on old Command Prompt)_
 
 #### Vanilla way (requirements.txt)
 
@@ -180,7 +187,7 @@ Run:
 
 You'll need to activate the virtualenv (sourcing it) every time you run MMV.
 
-## Running
+## Actually Running
 
 Configure the files `/src/run_shaders.py` or `/src/run_skia.py` to your needs (images, audios) _[though there is a default configuration, if you want fast results skip this]_
 
@@ -210,14 +217,6 @@ Good to change the directory to the `src` dir: `cd ./src`
 - `python run_skia.py mode=music`: Render target audio + midi file to video
   
 <hr>
-
-## Hacking the code
-
-Want to understand how the code is structured so you can learn, modify, understand from it?
-
-Please read [HACKING.md](docs/HACKING.md) file :)
-
-Feel free DM me, I'd be happy to explain how MMV works.
 
 # Common problems, FAQ, tips
 
@@ -249,6 +248,27 @@ Of course you can just bump the volume up but it's no good because it hurts your
 Also works for rendering mode.
 
 TODO: configure this on the real time window itself.
+
+
+## Hacking the code
+
+Want to understand how the code is structured so you can learn, modify, understand from it?
+
+Please read [HACKING.md](docs/HACKING.md) file :)
+
+Feel free DM me, I'd be happy to explain how MMV works.
+
+# Performance
+
+I was able to sustain even 144 fps on my mid level hardware of 2019, running Jack Audio on Linux with 128, 256, 512 samples of audio buffer, though I'd recommend 256 or 512 just in case we miss some data.
+
+It highly depends on the settings you use like resolution, target fps and the audio processing's batch size, but it was more than enough for live DJing while having a full DAW playing audio in the background.
+
+I'm quite new to GLSL programming and my shaders can definitely be improved at least 4x more speeds and efficiency, but oh well GPUs are damm fast.
+
+Also my audio processing processes stuff with `BATCH_SIZE = 2048 * 4` at about 230 FPS on my CPU, so we're technically limited by this when rendering plus your GPUs raw compute power, memory bus transfer speeds.
+
+It definitely saturates my CPU with the video encoder, 100% constant usage.
 
 # Goals, next idea
 
