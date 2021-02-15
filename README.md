@@ -120,15 +120,17 @@ _Linux and macOS have optional dependency `musescore` to convert midi files to a
 
 <hr>
 
-- **Windows:** Head over to [Python dot org](https://www.python.org/downloads/windows/), download **Python 3.8.3 Windows x86-64 executable installer**, install it and make sure to **check the box "Add Python 3.8.6 to PATH**
+- **Windows:** Head over to [Python dot org](https://www.python.org/downloads/windows/), download **Python 3.8.3 Windows x86-64 executable installer**, install it and make sure to **check the box "Add Python 3.8.6 to PATH"**
 
 <hr>
 
-- **Linux:** Install Python from your package manager, for example:
+- **Linux:** Install Python and other deps from your package manager, for example:
   - *Arch Linux, Manjaro, pacman-based:* `sudo pacman -Syu base-devel git ffmpeg python38 musescore python-poetry`
   - *Ubuntu:* `sudo apt update && sudo apt upgrade && sudo apt install python3 python3-venv python3-dev python3-setuptools python3-pip ffmpeg git libglfw3 libglfw3-dev build-essential`
   - *Fedora:* `sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm && sudo dnf upgrade && sudo dnf install python-devel ffmpeg git blas openblas lapack atlas libgfortran atlas-devel gcc-c++ gcc-gfortran subversion redhat-rpm-config python38 musescore`
   - *OpenSUSE:* `sudo zypper install git ffmpeg musescore`
+
+Outside Python the other required dependency for rendering to video files on either part of MMV project is [FFmpeg](http://ffmpeg.org/).
 
 <hr>
 
@@ -227,9 +229,9 @@ Fixing this is simple, run `poetry run shaders list` or `python run_shaders.py l
 
 ```log
 $ poetry run shaders list
-[test_mgl.py] Available devices to record audio:
-[test_mgl.py] > (0) [Jack source (PulseAudio JACK Source)]
-[test_mgl.py] > (1) [Monitor of Jack sink (PulseAudio JACK Sink)]
+[run_shaders.py] Available devices to record audio:
+[run_shaders.py] > (0) [Jack source (PulseAudio JACK Source)]
+[run_shaders.py] > (1) [Monitor of Jack sink (PulseAudio JACK Sink)]
 ```
 
 Then you just run it with the `capture flag`:
@@ -240,7 +242,9 @@ In my case, `capture=1` is the audio from the computer and `capture=0` is my mic
 
 ## (RT Shaders) Want more aggressiveness
 
-Pass argument `multiplier=N` to `poetry run shaders multiplier=160` or some other number to increase how harsh MMV will react to audio amplitudes and frequencies. Good for not hurting your hearing losses if you want more emotion at a lower volume.
+Pass argument `multiplier=N` to `poetry run shaders multiplier=160` or some other number to increase how harsh MMV will react to audio amplitudes and frequencies. 
+
+Of course you can just bump the volume up but it's no good because it hurts your hearing, if you want more emotion at a lower volume.
 
 Also works for rendering mode.
 

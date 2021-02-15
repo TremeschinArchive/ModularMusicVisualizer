@@ -79,7 +79,7 @@ void main() {
     chromatic_aberration = true;
     do_bloom = false;
     bloom_amount = int(smooth_audio_amplitude/6.0);
-    chromatic_aberration_amount = ((1 / mmv_resolution.x) * smooth_audio_amplitude) * 0.2;
+    chromatic_aberration_amount = ((1 / mmv_resolution.x) * smooth_audio_amplitude) * 0.05;
 
     if (chromatic_aberration) {
         float pa = progressive_amplitude/2.0;
@@ -120,14 +120,14 @@ void main() {
     // // Layer 2
 
     layer = texture(particles_layer, shadertoy_uv_scaled);
-    col = acomposite(layer, col);;
+    col = acomposite(layer, col);
 
     // // Layer 3
 
     chromatic_aberration = true;
     do_bloom = true;
     bloom_amount = 8;
-    chromatic_aberration_amount = ((1 / mmv_resolution.x) * smooth_audio_amplitude) * 0.3;
+    chromatic_aberration_amount = ((1 / mmv_resolution.x) * smooth_audio_amplitude) * 0.14;
 
     if (chromatic_aberration) {
         float pa = progressive_amplitude/2.0;
@@ -167,7 +167,7 @@ void main() {
         layer = bloom(music_bars_pfx, shadertoy_uv_scaled, music_bars_pfx_resolution, bloom_amount, true);
     }
 
-    vec4 vignetting = vec4(vec3(0.0), smooth_audio_amplitude * length(gluv) / 60.0);
+    vec4 vignetting = vec4(vec3(0.0), smooth_audio_amplitude * length(gluv) / 75.0);
     vec4 gray_scale = vec4(vec3((col.r + col.g + col.b) / 3.0), 1.0);
     col = mix(vignetting, col, 1.0 - vignetting.a);
     col = mix(

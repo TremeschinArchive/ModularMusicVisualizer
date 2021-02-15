@@ -70,6 +70,7 @@ void main() {
 
         // Start transparent at center, grows to opaque
         alpha *= smoothstep(length(gluv), 0.0, 0.05);
+
         // parcol = vec3(baserandom, 1.0, 1.0 - baserandom);
         parcol = vec3(1.0);
     }

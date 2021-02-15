@@ -27,7 +27,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-debug_prefix = "[test_mgl.py]"
+debug_prefix = "[run_shaders.py]"
 from tqdm import tqdm
 from PIL import Image
 import numpy as np
