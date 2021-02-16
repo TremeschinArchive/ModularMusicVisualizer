@@ -3,9 +3,9 @@
 
 #pragma map name music_bars_master_shader
 
-#pragma map background_shader=shader;{BACKGROUND_SHADER};{WIDTH}x{HEIGHT}
-#pragma map music_bars_pfx=shader;{MUSIC_BARS_SHADER_PFX};{WIDTH}x{HEIGHT}
-#pragma map particles_layer=shader;{PARTICLES_SHADER};{WIDTH}x{HEIGHT}
+#pragma map background_shader=dynshader;{BACKGROUND_SHADER}
+#pragma map music_bars_pfx=dynshader;{MUSIC_BARS_SHADER_PFX}
+#pragma map particles_layer=dynshader;{PARTICLES_SHADER}
 
 vec4 bloom(sampler2D tex, vec2 uv, vec2 resolution, int size, bool alpha_zero_dont_calculate) {
     vec4 original = texture(tex, uv);
@@ -76,7 +76,7 @@ void main() {
 
     // // Layer 1
 
-    chromatic_aberration = true;
+    chromatic_aberration = false;
     do_bloom = false;
     bloom_amount = int(smooth_audio_amplitude/6.0);
     chromatic_aberration_amount = ((1 / mmv_resolution.x) * smooth_audio_amplitude) * 0.05;
@@ -93,9 +93,9 @@ void main() {
         get_b = clamp(get_b, 0.0, 1.0);
 
         if (do_bloom){
-            vec4 br = bloom(background_shader, get_r, background_shader_resolution, bloom_amount, false);
-            vec4 bg = bloom(background_shader, get_g, background_shader_resolution, bloom_amount, false);
-            vec4 bb = bloom(background_shader, get_b, background_shader_resolution, bloom_amount, false);
+            vec4 br = bloom(background_shader, get_r, mmv_resolution, bloom_amount, false);
+            vec4 bg = bloom(background_shader, get_g, mmv_resolution, bloom_amount, false);
+            vec4 bb = bloom(background_shader, get_b, mmv_resolution, bloom_amount, false);
             layer = vec4(
                 br.r, bg.g, bb.b,
                 (br.a + bg.a + bb.a) / 3.0
@@ -141,9 +141,9 @@ void main() {
         get_b = clamp(get_b, 0.0, 1.0);
 
         if (do_bloom) {
-            vec4 br = bloom(music_bars_pfx, get_r, music_bars_pfx_resolution, bloom_amount, true);
-            vec4 bg = bloom(music_bars_pfx, get_g, music_bars_pfx_resolution, bloom_amount, true);
-            vec4 bb = bloom(music_bars_pfx, get_b, music_bars_pfx_resolution, bloom_amount, true);
+            vec4 br = bloom(music_bars_pfx, get_r, mmv_resolution, bloom_amount, true);
+            vec4 bg = bloom(music_bars_pfx, get_g, mmv_resolution, bloom_amount, true);
+            vec4 bb = bloom(music_bars_pfx, get_b, mmv_resolution, bloom_amount, true);
             float tr = 0.985 - (0.01 * clamp(smooth_audio_amplitude, 0.0, 6.0));
             layer = vec4(
                 br.r, bg.g, bb.b,

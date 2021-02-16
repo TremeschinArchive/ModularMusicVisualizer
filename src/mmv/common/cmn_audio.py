@@ -213,7 +213,7 @@ class AudioSourceFile(GenericAudioSource):
     
     def get_info(self):
         self.return_next_info_index += 1
-        return self.info[self.return_next_info_index]
+        return self.info[self.return_next_info_index].copy()
             
 class AudioSourceRealtime(GenericAudioSource):
     def init(self, recorder_device = None, search_for_loopback = False):

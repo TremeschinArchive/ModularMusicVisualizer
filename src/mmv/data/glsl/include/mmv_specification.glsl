@@ -16,7 +16,7 @@ mat2 get_rotation_mat2(float angle){
 vec4 mmv_blit_image(
         in vec4 canvas,            // Return this if out of bounds and repeat = false
         in sampler2D image,        // The texture
-        in vec2 image_resolution,  // to keep aspect ratio
+        in vec2 image_resolution,  // to keep aspect ratio, see *1
         in vec2 uv,                // UV we're getting (usually the layer's uv)
         in vec2 anchor,            // Anchor the rotation on the screen in some point
         in vec2 shift,             // Shift the image (for example vec2(0.5, 0.5) will rotate around the center)
@@ -25,6 +25,10 @@ vec4 mmv_blit_image(
         in bool repeat)            // If out of bounds tile the image?
     {
     
+    // 1. PLEASE, IF YOU ARE USING DYNSHADER REAL TIME SEND MMV_RESOLUTION RATHER THAN THIS OBJECT'S RESOLUTION
+    // OTHERWISE IT'LL NOT SCALE ACCORDINGLY, LEAVING THIS OBJECT'S RESOLUTION WORKS FOR HEADLESS.
+    // I say this because it took me 3h of headache until I noticed the problem.
+
     // Image ratios
     float image_ratioY = image_resolution.y / image_resolution.x;
     float image_ratioX = image_resolution.x / image_resolution.y;

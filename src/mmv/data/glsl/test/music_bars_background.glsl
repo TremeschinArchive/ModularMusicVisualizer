@@ -21,7 +21,7 @@ void main() {
 
     col = mmv_blit_image(
         col, background,
-        background_resolution,
+        mmv_resolution,
         (gluv / 2.0) + shake,
         vec2(0.0, 0.0), // anchor
         vec2(0.5, 0.5), // shift
