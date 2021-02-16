@@ -111,6 +111,11 @@ interface.check_download_externals(target_externals = ["ffmpeg"])
 
 # # Configuration
 
+# # Render to video or view real time?
+# You can send mode=render flag, defaults to view
+mode = args.kflags.get("mode", "view")
+assert mode in ["render", "view"]
+
 # Resolution, fps, real time or audio file sample rate
 WIDTH = args.kflags.get("w", 1920)
 HEIGHT = args.kflags.get("h", 1080)
@@ -128,7 +133,8 @@ MSAA = args.kflags.get("msaa", 8)
 # Recommended 1.5 or 2.0 for final exports, maybe not for target output 4k
 # You can also pass ss=N flag to override this value, poetry run shaders render ss=1.5
 # This can also be run in reverse, render in lower res and upscale to a higher one (kinda useless)
-SUPERSAMPLING = float(args.kflags.get("ssaa", 1.2))
+default_ssaa = 1.15 if (mode == "view") else 1.3
+SUPERSAMPLING = float(args.kflags.get("ssaa", default_ssaa))
 
 # # Music bars
 
@@ -156,13 +162,6 @@ HAVE_SUPERSAMPLING = SUPERSAMPLING != 1
 SUPERSAMPLING_WIDTH = int(WIDTH * SUPERSAMPLING)
 SUPERSAMPLING_HEIGHT = int(HEIGHT * SUPERSAMPLING)
 
-# # Render to video or view real time?
-# mode = "render"
-mode = "view"
-
-if "render" in args.flags:
-    mode = "render"
-
 # # Render mode
 
 # How many loops to render the audio
@@ -172,8 +171,9 @@ NLOOPS = 1
 
 # Set up target render configuration
 mgl.target_render_settings(
-    width = WIDTH * SUPERSAMPLING,
-    height = HEIGHT * SUPERSAMPLING,
+    width = WIDTH,
+    height = HEIGHT,
+    ssaa = SUPERSAMPLING,
     fps = FRAMERATE,
 )
 
@@ -235,22 +235,11 @@ if mode == "render":
 
     video_pipe = interface.get_ffmpeg_wrapper()
 
-    # User has set some supersampling
-    if HAVE_SUPERSAMPLING:
-        height = SUPERSAMPLING_HEIGHT
-        width = SUPERSAMPLING_WIDTH
-        scale = f"{WIDTH}x{HEIGHT}"
-    else:
-        HAVE_SUPERSAMPLING = False
-        height = HEIGHT
-        width = WIDTH
-        scale = None
-
     # Settings, see /src/mmv/common/wrappers/wrap_ffmpeg.py for what those do
     video_pipe.configure_encoding(
         ffmpeg_binary_path = interface.find_binary("ffmpeg"),
-        width = width,
-        height = height,
+        width = WIDTH,
+        height = HEIGHT,
         input_audio_source = RENDER_MODE_AUDIO_FILE,
         input_video_source = "pipe",
         output_video = "rendered_shader.mkv",
@@ -265,7 +254,6 @@ if mode == "render":
         crf = 18,
         tune = "film",
         vflip = True,
-        scale = scale,
         vcodec = "libx264",
         override = True,
     )
