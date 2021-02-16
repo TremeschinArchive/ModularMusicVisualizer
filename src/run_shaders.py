@@ -432,7 +432,7 @@ try:
     source.start()
     if mode == "view":
         d = "="*w
-        print(d); print(); print()
+        print(d); print()
 
     # Main test routine
     while True:

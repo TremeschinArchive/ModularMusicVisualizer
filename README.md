@@ -275,7 +275,7 @@ A special case is running with SSA enabled:
   
 This internally renders the video at a 1.5 times higher resolution than the target output, then downscales to the desired resolution.
 
-This prevents jagged edges and makes the video more smooth at the cost of about (`SSAA^2`) times less performance, so `SSAA=2` is 4x more render time, `SSAA=4` is 8x, `SSAA=8` is 16x, `SSAA=1.5` is 2.25x.
+This prevents jagged edges and makes the video more smooth at the cost of about (`2^SSAA`) times less performance, so `SSAA=2` is 4x more render time, `SSAA=4` is 8x, `SSAA=8` is 16x, `SSAA=1.5` is 2.25x.
 
 Optimally use 2 for final exports (maybe not for target output 4k unless you have a beefy GPU)
 
