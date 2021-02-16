@@ -112,13 +112,23 @@ interface.check_download_externals(target_externals = ["ffmpeg"])
 # # Configuration
 
 # Resolution, fps, real time or audio file sample rate
-WIDTH = 1920
-HEIGHT = 1080
-FRAMERATE = 60
-YOUR_COMPUTER_AUDIO_SAMPLERATE = 48000
+WIDTH = args.kflags.get("w", 1920)
+HEIGHT = args.kflags.get("h", 1080)
+FRAMERATE = args.kflags.get("fps", 60)
+YOUR_COMPUTER_AUDIO_SAMPLERATE = args.kflags.get("sr", 48000)
 
 # Multi sampling, leave as 8?
-MSAA = 8
+MSAA = args.kflags.get("msaa", 8)
+
+# Render on a internal resolution this much bigger, render final video on original res
+# For example, target is 1080p and supersampling is 2, it'll internally render
+# in 1080p*2, 2160p (or 4k), then FFmpeg will downscale the image back to 1080p
+# This fixes a lot of aliasing and potentially makes file sizes much lower due edge aliasing
+# Doesn't currently work on real time mode, also stuff gets slow in higher resolutions.
+# Recommended 1.5 or 2.0 for final exports, maybe not for target output 4k
+# You can also pass ss=N flag to override this value, poetry run shaders render ss=1.5
+# This can also be run in reverse, render in lower res and upscale to a higher one (kinda useless)
+SUPERSAMPLING = float(args.kflags.get("ssaa", 1.2))
 
 # # Music bars
 
@@ -134,19 +144,23 @@ BATCH_SIZE = 2048 * 4
 sep = os.path.sep
 GLSL_DIR = f"{interface.data_dir}{sep}glsl"
 GLSL_INCLUDE_FOLDER = f"{GLSL_DIR}{sep}include"
-ASSETS_DIR = f"{interface.assets_dir}{sep}"
+ASSETS_DIR = f"{interface.assets_dir}"
 
 # Input audio source
 RENDER_MODE_AUDIO_FILE = f"{ASSETS_DIR}{sep}free_assets{sep}kawaii_bass.ogg"
-
 # There are variables called "multiplier" on each mode, change those to get more
 # aggressive or smoother animations
+
+# SS config
+HAVE_SUPERSAMPLING = SUPERSAMPLING != 1
+SUPERSAMPLING_WIDTH = int(WIDTH * SUPERSAMPLING)
+SUPERSAMPLING_HEIGHT = int(HEIGHT * SUPERSAMPLING)
 
 # # Render to video or view real time?
 # mode = "render"
 mode = "view"
 
-if "render" in sys.argv:
+if "render" in args.flags:
     mode = "render"
 
 # # Render mode
@@ -158,8 +172,8 @@ NLOOPS = 1
 
 # Set up target render configuration
 mgl.target_render_settings(
-    width = WIDTH,
-    height = HEIGHT,
+    width = WIDTH * SUPERSAMPLING,
+    height = HEIGHT * SUPERSAMPLING,
     fps = FRAMERATE,
 )
 
@@ -221,11 +235,22 @@ if mode == "render":
 
     video_pipe = interface.get_ffmpeg_wrapper()
 
+    # User has set some supersampling
+    if HAVE_SUPERSAMPLING:
+        height = SUPERSAMPLING_HEIGHT
+        width = SUPERSAMPLING_WIDTH
+        scale = f"{WIDTH}x{HEIGHT}"
+    else:
+        HAVE_SUPERSAMPLING = False
+        height = HEIGHT
+        width = WIDTH
+        scale = None
+
     # Settings, see /src/mmv/common/wrappers/wrap_ffmpeg.py for what those do
     video_pipe.configure_encoding(
         ffmpeg_binary_path = interface.find_binary("ffmpeg"),
-        width = WIDTH,
-        height = HEIGHT,
+        width = width,
+        height = height,
         input_audio_source = RENDER_MODE_AUDIO_FILE,
         input_video_source = "pipe",
         output_video = "rendered_shader.mkv",
@@ -237,9 +262,10 @@ if mode == "render":
         nostats = True,
         hide_banner = True,
         opencl = False,
-        crf = 23,
+        crf = 18,
         tune = "film",
         vflip = True,
+        scale = scale,
         vcodec = "libx264",
         override = True,
     )
@@ -261,6 +287,7 @@ if mode == "render":
     else:
         multiplier = int(multiplier)
 
+    # Total amount of steps
     TOTAL_STEPS = source.steps_per_loop * NLOOPS
     
     # Progress bar
@@ -273,7 +300,11 @@ if mode == "render":
         position = 0,
         smoothing = 0.3
     )
-    RENDERING_MESSAGE = f"Rendering [{source.duration:.2f}s]({WIDTH}x{HEIGHT}:{FRAMERATE}) MMV video"
+    if HAVE_SUPERSAMPLING:
+        RENDERING_MESSAGE = f"Rendering [SS={SUPERSAMPLING}]({SUPERSAMPLING_WIDTH}x{SUPERSAMPLING_HEIGHT})->({WIDTH}x{HEIGHT}:{FRAMERATE})[{source.duration:.2f}s] MMV video"
+    else:
+        RENDERING_MESSAGE = f"Rendering ({WIDTH}x{HEIGHT}:{FRAMERATE})[{source.duration:.2f}s] MMV video"
+    
     progress_bar.set_description(RENDERING_MESSAGE)
     source.tqdm_bar_message_max_length = len(RENDERING_MESSAGE)
 
@@ -383,7 +414,12 @@ target_fft = np.array([0.0 for _ in range(MMV_FFTSIZE)], dtype = np.float32)
 step = 0
 
 # Pretty print separator
-s = "-"*shutil.get_terminal_size()[0]; print(f"\n{s}\n")
+w = shutil.get_terminal_size()[0]
+s = "-" * w
+print(f"\n{s}")
+m = "Processing some initial audio data and starting render process"
+print(" " * math.ceil((w - len(m))/2) + m)
+print(f"{s}\n")
 
 # # Stuff
 
@@ -394,6 +430,9 @@ def ratio_on_other_fps_based_on_fps(ratio, new_fps, old_fps = 60):
 
 try:
     source.start()
+    if mode == "view":
+        d = "="*w
+        print(d); print(); print()
 
     # Main test routine
     while True:
@@ -462,7 +501,7 @@ try:
 
         elif mode == "view":
             mgl.update_window()
-            print(f":: Average FPS last ({fps_last_n} frames): [{fps}] \r", end = "", flush = True)
+            print(f":: Resolution: [{mgl.width}x{mgl.height}] Average FPS last ({fps_last_n} frames): [{fps}] \r", end = "", flush = True)
 
             # The window received close command
             if mgl.window_should_close:

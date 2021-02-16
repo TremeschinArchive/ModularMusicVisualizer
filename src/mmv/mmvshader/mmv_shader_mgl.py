@@ -125,10 +125,11 @@ class MMVShaderMGL:
     # # Window management, contexts
 
     # Configurate how we'll output the shader
-    def target_render_settings(self, width, height, fps):
+    def target_render_settings(self, width, height, fps, silent = False):
         debug_prefix = "[MMVShaderMGL.target_render_settings]"
         (self.width, self.height, self.fps) = (width, height, fps)
-        logging.info(f"{debug_prefix} Render configuration is [width={self.width}] [height=[{self.height}] [fps=[{self.fps}]")
+        if not silent:
+            logging.info(f"{debug_prefix} Render configuration is [width={self.width}] [height=[{self.height}] [fps=[{self.fps}]")
     
     # Which "mode" to render, window loader class, msaa, vsync, force res?
     def mode(self, window_class, msaa = 1, vsync = True, strict = False, icon = None):
@@ -148,18 +149,18 @@ class MMVShaderMGL:
 
         # Assign the function arguments
         settings.WINDOW["class"] = f"moderngl_window.context.{window_class}.Window"
-        settings.WINDOW["size"] = (self.width, self.height)
         settings.WINDOW["aspect_ratio"] = self.width / self.height
         settings.WINDOW["vsync"] = self.vsync
         settings.WINDOW["title"] = "MMVShaderMGL Window"
+        settings.WINDOW["size"] = (self.width, self.height)
 
         # Create the window
         self.window = moderngl_window.create_window_from_settings()
 
         # Make sure we render strictly into the resolution we asked
         if strict:
-            self.window.set_default_viewport()
-            # self.window.fbo.viewport = (0, 0, self.width, self.height)
+            # self.window.set_default_viewport()
+            self.window.fbo.viewport = (0, 0, self.width, self.height)
 
         # Set the icon
         if icon is not None:
@@ -185,11 +186,41 @@ class MMVShaderMGL:
 
     # [NOT HEADLESS] Window was resized, update the width and height so we render with the new config
     def window_resize(self, width, height):
-        if not self.headless:
-            self.imgui.resize(width, height)
-        self.window.fbo.viewport = (0, 0, width, height)
-        self.width = width
-        self.height = height
+
+        # Set width and height
+        self.width = int(width)
+        self.height = int(height)
+
+        # Recursively call this function on every shader on textures dicionary
+        for index in self.textures.keys():
+            if self.textures[index]["loader"] == "shader":
+                self.textures[index]["shader_as_texture"].window_resize(
+                    width = self.width, height = self.height
+                )
+
+        # Search for dynamic shaders and update them
+        for index in self.textures.keys():
+            if self.textures[index].get("dynamic", False):
+                # Release OpenGL stuff
+                self.textures[index]["shader_as_texture"].render_buffer.release()
+                self.textures[index]["shader_as_texture"].texture.release()
+                self.textures[index]["shader_as_texture"].fbo.release()
+                self.textures[index]["shader_as_texture"].vao.release()
+
+                # Create new ones in place
+                self.textures[index]["shader_as_texture"].create_vao()
+                self.textures[index]["shader_as_texture"].create_assing_texture_fbo_render_buffer(silent = True)
+
+                # Assign texture
+                self.textures[index]["texture"] = self.textures[index]["shader_as_texture"].texture
+
+        # Master shader has window and imgui
+        if self.master_shader:
+            if not self.headless:
+                self.imgui.resize(self.width, self.height)
+
+            # Window viewport
+            self.window.fbo.viewport = (0, 0, self.width, self.height)
 
     # Close the window
     def close(self, *args, **kwargs):
@@ -294,11 +325,6 @@ class MMVShaderMGL:
         # object if we need to do some action.
         self.textures = {}
 
-        # This next list holds instances of this very own class, MMVShaderMGL,
-        # they are shaders the user mapped and we render them separately to a FBO
-        # so we can use that as a texture <here> on this main class's shader
-        self.shaders_as_textures = []
-
         # Dictionary to hold name: indexes on self.textures dictionary for writing to textures
         # used for communicating big data arrays between Python and the GPU
         # One example usage is for writing FFT values
@@ -334,13 +360,14 @@ class MMVShaderMGL:
         logging.info(f"{debug_prefix} Path was already included in the include directories")
 
         # Add recursively the paths as well
-        for shader_as_texture in self.shaders_as_textures:
-            shader_as_texture.include_dir(path = path)
+        for index in self.textures:
+            if self.texture[index]["loader"] == "shader":
+                self.textures[index]["shader_as_texture"].include_dir(path = path)
 
     # Create one FBO which is a texture under the hood so we can utilize it in some other shader
     # Returns [texture, fbo], which the texture is attached to the fbo with the previously
     # configured width, height
-    def construct_texture_fbo(self):
+    def construct_texture_fbo(self, silent = False):
         debug_prefix = "[MMVShaderMGL.construct_texture_fbo]"
 
         # Error assertion, width height or fps is not set
@@ -349,7 +376,8 @@ class MMVShaderMGL:
         )
         
         # Log action
-        logging.info(f"{debug_prefix} Constructing an FBO attached to an Texture with [width={self.width}] [height=[{self.height}]")
+        if not silent:
+            logging.info(f"{debug_prefix} Constructing an FBO attached to an Texture with [width={self.width}] [height=[{self.height}]")
 
         # Create a RGBA texture of this class's configured resolution
         texture = self.gl_context.texture((self.width, self.height), 4)
@@ -476,7 +504,7 @@ class MMVShaderMGL:
             fragment_shader = fragment_shader.replace(full_pragma_map, "")
 
             # Error assertion, valid loader and path
-            loaders = ["image", "video", "shader", "pipeline_texture", "include"]
+            loaders = ["image", "video", "shader", "dynshader", "pipeline_texture", "include"]
             assert loader in loaders, f"Loader not implemented in loaders {loaders}"
 
             # All but pipeline texture must be valid paths
@@ -485,13 +513,17 @@ class MMVShaderMGL:
 
             # We'll map one texture to this shader, either a static image, another shader or a video
             # we do create and store the shader and video objects so we render or get the next image later on before using
-            if loader in ["image", "shader", "video", "pipeline_texture"]:
+            if loader in ["image", "shader", "dynshader", "video", "pipeline_texture"]:
 
-                # We need an target render size
-                assert (width != '') and (height != ''), "Width or height shouldn't be null, set WxH on pragma map with :512x512"
+                # We need an target render size if it's all but dynshader
+                if loader != "dynshader":
+                    assert (width != '') and (height != ''), "Width or height shouldn't be null, set WxH on pragma map with :512x512"
 
-                # Convert to int the width and height
-                width, height = int(width), int(height)
+                    # Convert to int the width and height
+                    width, height = int(width), int(height)
+                else:
+                    width = self.width
+                    height = self.height
 
                 # Image loader, load image, convert to RGBA, create texture with target resolution, assign texture
                 if loader == "image":
@@ -505,7 +537,11 @@ class MMVShaderMGL:
                     texture = self.gl_context.texture((width, height), 4, img.tobytes())
 
                     # Assign the name, type and texture to the textures dictionary
-                    self.textures[len(self.textures.keys()) + 1] = [name, "texture", texture]
+                    self.textures[len(self.textures.keys()) + 1] = {
+                        "name": name,
+                        "loader": "texture",
+                        "texture": texture
+                    }
                 
                 # We create a black texture that some other pipeline is supposed to write on, this is mostly used
                 # when we need to communicate big arrays that we keep changing. Totally destroys performance if
@@ -517,17 +553,25 @@ class MMVShaderMGL:
                     texture = self.gl_context.texture((width, height), 1, dtype = "f4")
 
                     # Assign the name, type and texture to the textures dictionary
-                    writable_texture_index = len(self.textures.keys()) + 1
-                    self.textures[writable_texture_index] = [name, "texture", texture]
+                    assign_index = len(self.textures.keys())
+                    
+                    self.textures[assign_index] = {
+                        "name": name, 
+                        "loader": "texture",
+                        "texture": texture
+                    }
 
                     # Put into the writable textures dictionary
-                    self.writable_textures[name] = writable_texture_index
+                    self.writable_textures[name] = assign_index
                 
                 # Add shader as texture element
-                elif loader == "shader":
+                # shader is strict resolution
+                # dynshader adapts to the viewport
+                elif (loader == "shader") or (loader == "dynshader"):
 
                     # Null shader
                     if value == "MMVMGL_NULL_SHADER":
+                        logging.info(f"{debug_prefix} Shader loader is MMVMGL_NULL_SHADER")
                         loader_frag_shader = MMVMGL_NULL_SHADER
                     
                     else:
@@ -562,11 +606,17 @@ class MMVShaderMGL:
                         save_shaders_path = save_shaders_path
                     )
 
-                    # Append to the shaders as textures. We only do this for passing a pipeline to the mapped shader
-                    self.shaders_as_textures.append(shader_as_texture)
+                    # Next available id
+                    assign_index = len(self.textures.keys())
 
                     # Assign the name, type and texture to the textures dictionary
-                    self.textures[len(self.textures.keys()) + 1] = [name, "shader", shader_as_texture.texture]
+                    self.textures[assign_index] = {
+                        "shader_as_texture": shader_as_texture,
+                        "texture": shader_as_texture.texture,
+                        "dynamic": loader == "dynshader",
+                        "loader": "shader",
+                        "name": name,
+                    }
 
                 # Video loader
                 elif loader == "video":
@@ -578,8 +628,16 @@ class MMVShaderMGL:
                     texture = self.gl_context.texture((width, height), 3)
                     texture.swizzle = 'BGR'
 
+                    # Next available id
+                    assign_index = len(self.textures.keys())
+
                     # Assign the name, type and texture to the textures dictionary
-                    self.textures[len(self.textures.keys()) + 1] = [name, "video", texture, video]
+                    self.textures[assign_index] = {
+                        "name": name,
+                        "loader": "video",
+                        "texture": texture,
+                        "capture": video,
+                    }
                     
                 # Add the texture uniform values
                 marker = "///add_uniform"
@@ -692,16 +750,40 @@ class MMVShaderMGL:
 
         # # Construct the shader
 
+        # We might need our frag shader or vertex shader later on when we 
+        # .__reconstruct_program() if the window gets rescaled
+        self.fragment_shader = fragment_shader
+        self.vertex_shader = vertex_shader
+
         # Create a program with the fragment and vertex shader
-        self.program = self.gl_context.program(fragment_shader = fragment_shader, vertex_shader = vertex_shader)
+        self.program = self.create_program(
+            fragment_shader = fragment_shader,
+            vertex_shader = vertex_shader,
+        )
 
         # Get a texture bound to the FBO
         if not self.master_shader:
-            self.texture, self.fbo, self.render_buffer = self.construct_texture_fbo()
+            self.create_assing_texture_fbo_render_buffer()
 
         # Build the buffer we send when making the VAO
         self.fullscreen_buffer = self.gl_context.buffer(array('f', self.coordinates))
+        self.create_vao()
 
+        # Assign the uniforms to blank value
+        for name, value in assign_static_uniforms:
+            uniform = self.program.get(name, FakeUniform())
+            uniform.value = value
+
+    # Truly construct a shader
+    def create_program(self, fragment_shader, vertex_shader):
+        return self.gl_context.program(fragment_shader = fragment_shader, vertex_shader = vertex_shader)
+
+    # Create FBO binded to a texture and render buffer
+    def create_assing_texture_fbo_render_buffer(self, silent = False):
+        self.texture, self.fbo, self.render_buffer = self.construct_texture_fbo(silent = silent)
+
+    # Create fullscreen VAO
+    def create_vao(self):
         # Create one VAO on the program with the coordinate info
         self.vao = self.gl_context.vertex_array(
             self.program, [(
@@ -718,10 +800,13 @@ class MMVShaderMGL:
             skip_errors = True
         )
 
-        # Assign the uniforms to blank value
-        for name, value in assign_static_uniforms:
-            uniform = self.program.get(name, FakeUniform())
-            uniform.value = value
+    # Drop current program, use some other fragment shader or vertex shader inserted from outside
+    # (current self.fragment_shader and self.vertex_shader)
+    def __reconstruct_program(self):
+        self.program.release()
+        self.program = self.create_program(
+            self.fragment_shader, self.vertex_shader
+        )
 
     # # Loop functions, routines
 
@@ -733,11 +818,12 @@ class MMVShaderMGL:
 
         # If it even does exist then we write to its respective texture
         if target_index is not None:
-            self.textures[target_index][2].write(data)
+            self.textures[target_index]["texture"].write(data)
 
         # Write recursively with same arguments
-        for shader_as_texture in self.shaders_as_textures:
-            shader_as_texture.write_texture_pipeline(texture_name = texture_name, data = data)
+        for index in self.textures.keys():
+            if self.textures[index]["loader"] == "shader":
+                self.textures[index]["shader_as_texture"].write_texture_pipeline(texture_name = texture_name, data = data)
 
     # Pipe a pipeline to a target that have a program attribute (this self class or shader as texture)
     def pipe_pipeline(self, pipeline, target):
@@ -747,15 +833,19 @@ class MMVShaderMGL:
         for key, value in pipeline.items():
             uniform = target.program.get(key, FakeUniform())
             uniform.value = value
-            
+    
     # Render this shader to the FBO recursively
     def render(self, pipeline):
         debug_prefix = "[MMVShaderMGL.render]"
 
         # Render every shader as texture recursively
-        for shader_as_texture in self.shaders_as_textures:
-            self.pipe_pipeline(pipeline = pipeline, target = shader_as_texture)
-            shader_as_texture.render(pipeline = pipeline)
+        for index in self.textures.keys():
+            if self.textures[index]["loader"] == "shader":
+                self.pipe_pipeline(
+                    pipeline = pipeline,
+                    target = self.textures[index]["shader_as_texture"]
+                )
+                self.textures[index]["shader_as_texture"].render(pipeline = pipeline)
 
         # Pipe the pipeline to self
         self.pipe_pipeline(pipeline = pipeline, target = self)
@@ -772,16 +862,16 @@ class MMVShaderMGL:
         for location, texture_info in self.textures.items():
 
             # Unpack guaranteed generic items
-            name = texture_info[0]
-            loader = texture_info[1]
-            tex_obj = texture_info[2]
+            name = texture_info["name"]
+            loader = texture_info["loader"]
+            texture_obj = texture_info["texture"]
 
             try:
                 # Read the next frame of the video
                 if loader == "video":
 
                     # We'll only have a fourth element that is video if loader is video
-                    video = texture_info[3]
+                    video = texture_info["capture"]
                     ok, frame = video.read()
 
                     # Can't read, probably out of frames?
@@ -794,13 +884,13 @@ class MMVShaderMGL:
                     # Flip the image TODO: flip in GLSL by inverting uv? Also interpret BGR as RGB?
                     # frame = cv2.flip(frame, 0)
                     # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    tex_obj.write(frame)
+                    texture_obj.write(frame)
 
                 # Set the location we'll expect this texture
                 self.program[name] = location
                 
                 # Use it
-                tex_obj.use(location = location)
+                texture_obj.use(location = location)
             
             # Texture wasn't used, should error out on self.program[name]
             except KeyError:
