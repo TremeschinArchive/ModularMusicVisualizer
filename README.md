@@ -231,7 +231,7 @@ I highly recommend reading the basics of Python [here](https://learnxinyminutes.
 ### Poetry:
 
 - `poetry run shaders`: View realtime
-- `poetry run shaders render`: Render target audio file to video
+- `poetry run shaders mode=render`: Render target audio file to video
 - `poetry run skia` [same as] `poetry run skia mode=music`: Render target audio file to video
 - `poetry run skia mode=piano`: Render target audio file + midi to video
 
@@ -239,7 +239,7 @@ These will only work if your shell working directory is on the root of the sourc
 
 - `poetry run python ./src/run_shaders.py`: View realtime
 - `poetry run python ./run_shaders.py`: View realtime
-- `poetry run python ./run_shaders.py render`: Render target audio file to video
+- `poetry run python ./run_shaders.py mode=render`: Render target audio file to video
 - ... depending where your working directory is
 
 Continue reading after vanilla Python for arguments
@@ -249,7 +249,7 @@ Continue reading after vanilla Python for arguments
 Good to change the directory to the `src` dir: `cd ./src`
 
 - `python run_shaders.py`: View realtime
-- `python run_shaders.py render`: Render target audio file to video
+- `python run_shaders.py mode=render`: Render target audio file to video
 - `python run_skia.py` [same as] `python run_skia.py mode=music`: Render target audio file to video
 - `python run_skia.py mode=music`: Render target audio + midi file to video
 
@@ -260,8 +260,8 @@ Good to change the directory to the `src` dir: `cd ./src`
 
 You can pass the following flags:
 
-- `poetry run shaders render w=1280 h=720 fps=60` (HD SD 60 Hz)
-- `poetry run shaders render w=2560 h=1080 fps=144` (Ultra wide 144 Hz)
+- `poetry run shaders mode=render w=1280 h=720 fps=60` (HD SD 60 Hz)
+- `poetry run shaders mode=render w=2560 h=1080 fps=144` (Ultra wide 144 Hz)
 - ...
 
 Default is 1080p60
@@ -271,7 +271,7 @@ Default is 1080p60
 
 A special case is running with SSA enabled:
 
-- `poetry run shaders render ssaa=1.5`
+- `poetry run shaders mode=render ssaa=1.5`
   
 This internally renders the video at a 1.5 times higher resolution than the target output, then downscales to the desired resolution.
 
@@ -279,12 +279,14 @@ This prevents jagged edges and makes the video more smooth at the cost of about 
 
 Optimally use 2 for final exports (maybe not for target output 4k unless you have a beefy GPU)
 
+Defaults to `1.15` on real time mode and `1.5` on render mode if not overridden.
+
 
 ### Multi Sampling Anti Aliasing
 
 Yet another technique to remove aliasing, default value is 8x for a better look. Possible values are `(1, 2, 4, 8)`.
 
-- `poetry run shaders render msaa=2`
+- `poetry run shaders mode=render msaa=2`
 
 
 ### (Real Time mode) Computer audio Sample Rate

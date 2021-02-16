@@ -125,21 +125,21 @@ class MMVShaderMGL:
     # # Window management, contexts
 
     # Configurate how we'll output the shader
-    def target_render_settings(self, width, height, fps, silent = False):
+    def target_render_settings(self, width, height, fps, ssaa = 1, silent = False):
         debug_prefix = "[MMVShaderMGL.target_render_settings]"
-        (self.width, self.height, self.fps) = (width, height, fps)
+        (self.width, self.height, self.fps, self.ssaa) = (width, height, fps, ssaa)
         if not silent:
-            logging.info(f"{debug_prefix} Render configuration is [width={self.width}] [height=[{self.height}] [fps=[{self.fps}]")
+            logging.info(f"{debug_prefix} Render configuration is [width={self.width}] [height=[{self.height}] [fps=[{self.fps}] [ssaa={self.ssaa}]")
     
-    # Which "mode" to render, window loader class, msaa, vsync, force res?
+    # Which "mode" to render, window loader class, msaa, ssaa, vsync, force res?
     def mode(self, window_class, msaa = 1, vsync = True, strict = False, icon = None):
         debug_prefix = "[MMVShaderMGL.mode]"
 
         # Get function arguments
-        self.msaa = msaa
-        self.vsync = vsync
-        self.strict = strict
         self.headless = window_class == "headless"
+        self.strict = strict
+        self.vsync = vsync
+        self.msaa = msaa
 
         # Headless we disable vsync because we're rendering only..?
         # And also force aspect ratio just in case (strict option)
@@ -269,6 +269,7 @@ class MMVShaderMGL:
         debug_prefix = "[MMVShaderMGL.__init__]"
         self.master_shader = master_shader
         self.flip = flip
+        self.ssaa = 1
 
         # We're a child shader so we inherit the parent (master shader) OpenGL context
         if gl_context is not None:
@@ -379,13 +380,22 @@ class MMVShaderMGL:
         if not silent:
             logging.info(f"{debug_prefix} Constructing an FBO attached to an Texture with [width={self.width}] [height=[{self.height}]")
 
-        # Create a RGBA texture of this class's configured resolution
-        texture = self.gl_context.texture((self.width, self.height), 4)
+        # Create a RGBA texture of this class's configured resolution, width and height can be supersampled AA
+        texture = self.gl_context.texture((
+            int(self.width * self.ssaa),
+            int(self.height * self.ssaa)
+        ), 4)
 
         # Create an FBO which is attached to that previous texture, whenever we render something
         # to this FBO after fbo.use()-ing it, the contents will be written directly on that texture
         # which we can bind to some location in other shader. This process is recursive
-        render_buffer = self.gl_context.renderbuffer((self.width, self.height))
+
+        # Create the Render Buffer
+        render_buffer = self.gl_context.renderbuffer((
+            int(self.width * self.ssaa), int(self.height * self.ssaa)
+        ))
+
+        # Create the FBO
         fbo = self.gl_context.framebuffer(color_attachments = [texture, render_buffer])
 
         # Return the two created objects
@@ -594,7 +604,7 @@ class MMVShaderMGL:
 
                     # Set the render configuration on the #pragma map for width, height. We don't need fps
                     # as that one will receive the main class's pipeline
-                    shader_as_texture.target_render_settings(width = int(width), height = int(height), fps = None)
+                    shader_as_texture.target_render_settings(width = int(width), height = int(height), ssaa = self.ssaa, fps = None)
 
                     # Create a texture and fbo for this mapped shader, here is where we render to the fbo
                     # which is attached to the texture, and we use that texture in this main class
@@ -908,7 +918,7 @@ class MMVShaderMGL:
         # Set the pipeline attributes
         self.pipeline["mmv_frame"] += 1
         self.pipeline["mmv_time"] = round((self.pipeline["mmv_frame"] / self.fps), 3)
-        self.pipeline["mmv_resolution"] = (self.width, self.height)
+        self.pipeline["mmv_resolution"] = (self.width * self.ssaa, self.height * self.ssaa)
 
         # Assign user custom pipelines.
         # NOTE: Don't forget to write (uniform (type) name;) on the GLSL file
