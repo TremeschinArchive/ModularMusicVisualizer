@@ -346,7 +346,7 @@ I'm quite new to GLSL programming and my shaders can definitely be improved at l
 
 Also my audio processing processes stuff with `BATCH_SIZE = 2048 * 4` at about 230 FPS on my CPU, so we're technically limited by this when rendering plus your GPUs raw compute power, memory bus transfer speeds.
 
-It definitely saturates my CPU with the video encoder, 100% constant usage.
+It definitely saturates my CPU with the video encoder (if I'm not SSAAing and have lots of movement on the screen), 100% constant usage.
 
 # Goals, next idea
 
@@ -433,8 +433,6 @@ I'll mainly list the main name and where to find more info, it's just impossible
 - [mido](https://pypi.org/project/mido/) for reading MIDI files, transforming ticks to seconds and other utilities for the piano roll visualization.
 
 - [OpenCV](https://opencv.org/) and [opencv-python](https://pypi.org/project/opencv-python/), for reading images of a video file without having to extract all of them in the start.
-
-- [pip-chill](https://pypi.org/project/pip-chill/) for simplifying the `requirements.txt`.
 
 - _Tom's Obvious, Minimal Language._: [Python interface](https://pypi.org/project/toml/), [main project](https://github.com/toml-lang/toml); _YAML Ain't Markup Language_: [Python interface](https://pypi.org/project/PyYAML/), [main project](https://yaml.org/): Both for reading / saving configuration files.
   
