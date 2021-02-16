@@ -70,10 +70,45 @@ I also invite you to read about the [Free Software Definition / Philosophy](http
 
 <hr>
 
+# How MMV Works
+
+In short, take a look at the diagram:
+
+![MMV Diagram](https://tremeschin.gitlab.io/mmv/how-mmv-works.png)
+
+<hr>
+
+_^(I used icons from the [Papirus Icon Theme](https://github.com/PapirusDevelopmentTeam/papirus-icon-theme), credits to their respective authors, we share the same license of code. I'm displaying a diagram (made with [Diagrams dot Net](https://app.diagrams.net/), [Repository](https://github.com/jgraph/drawio)) not a software though, have not modified their icons)_
+
+<hr>
+
+### 1. Inputs / Outputs, feature detection
+
+As you can see we **must have some audio source** let it be **real time playback** or an original audio file or **MIDI file** that [MuseScore](https://github.com/musescore/MuseScore) converted to audio.
+
+We then **slice the audio** into many **chunks** and calculate a series of features, one of them is the [Fourier Transform](https://www.youtube.com/watch?v=spUNpyF58BY) which gives us the **frequency spectrum of the audio**.
+
+<hr>
+
+### 2. Generating Video
+
+After that it's just a matter of implementation of Computer Generated Imagery **(CGI)** utilizing (in the _"new" code of dynamic bars_) the **OpenGL Shading Language (GLSL)** for instructions how and where to render stuff, sending the images to [FFmpeg](https://ffmpeg.org/) and generating a final video as fast as possible or simply render to the screen on the real time mode _(yields fastest performance)_.
+
+<hr>
+
+### 3. GPU, Shaders
+
+This GLSL part is a bit complicated since there is the `MMVShaderMGL` **wrapper I wrote for displaying shaders which includes a basic preprocessor for mapping images, videos and even other shaders as textures** (images on the GPU), recursively. This makes it possible to **separate into many layers** and apply **individual** effects and transformations on them.
+
+It uses the [ModernGL Python package](https://github.com/moderngl/moderngl) for communicating with GL, also **translating from ShaderToy to MMVShaderMGL is very straightforward** just by replacing some variable names and removing some parts.** This also will become a full featured wrapper in the near future™**
+
+<hr>
+
 # Table of contents
 
    * [Community, Support, Help](#community-support-help)
    * [Running](#running)
+   * [Configuration Flags](#configuration-flags)
    * [Common problems, FAQ, tips](#common-problems-faq-tips)
    * [Hacking the Code](#hacking-the-code)
    * [Performance](#performance)
@@ -207,6 +242,8 @@ These will only work if your shell working directory is on the root of the sourc
 - `poetry run python ./run_shaders.py render`: Render target audio file to video
 - ... depending where your working directory is
 
+Continue reading after vanilla Python for arguments
+
 ### Vanilla Python:
 
 Good to change the directory to the `src` dir: `cd ./src`
@@ -215,7 +252,48 @@ Good to change the directory to the `src` dir: `cd ./src`
 - `python run_shaders.py render`: Render target audio file to video
 - `python run_skia.py` [same as] `python run_skia.py mode=music`: Render target audio file to video
 - `python run_skia.py mode=music`: Render target audio + midi file to video
+
+# Configuration Flags
+
+
+### Width, height, fps
+
+You can pass the following flags:
+
+- `poetry run shaders render w=1280 h=720 fps=60` (HD SD 60 Hz)
+- `poetry run shaders render w=2560 h=1080 fps=144` (Ultra wide 144 Hz)
+- ...
+
+Default is 1080p60
+
+
+### Supersampling Anti Aliasing (SSAA)
+
+A special case is running with SSA enabled:
+
+- `poetry run shaders render ssaa=1.5`
   
+This internally renders the video at a 1.5 times higher resolution than the target output, then downscales to the desired resolution.
+
+This prevents jagged edges and makes the video more smooth at the cost of about (`SSAA^2`) times less performance, so `SSAA=2` is 4x more render time, `SSAA=4` is 8x, `SSAA=8` is 16x, `SSAA=1.5` is 2.25x.
+
+Optimally use 2 for final exports (maybe not for target output 4k unless you have a beefy GPU)
+
+
+### Multi Sampling Anti Aliasing
+
+Yet another technique to remove aliasing, default value is 8x for a better look. Possible values are `(1, 2, 4, 8)`.
+
+- `poetry run shaders render msaa=2`
+
+
+### (Real Time mode) Computer audio Sample Rate
+
+Highly depends on what platform you are, which audio system you use, try to find which samplerate you run at, you can override the default one (48 kHz I use) with, for example you're on 44.1 kHz:
+
+- `poetry run shaders render sr=44100`
+
+
 <hr>
 
 # Common problems, FAQ, tips
@@ -341,6 +419,8 @@ I'll mainly list the main name and where to find more info, it's just impossible
   - Also the [Python wrapper](https://pypi.org/project/glfw/) for the [GLFW](https://www.glfw.org/) library for setting up an GL canvas so Skia can draw on.
 
 - [Poetry](https://github.com/python-poetry/poetry), easier to micro manage Python dependencies and generate builds.
+
+- [MuseScore](https://github.com/musescore/MuseScore), a really good composition software with a very promising next major release, really good default soundfont and CLI for converting midi to audio files. 
 
 ### Python packages and others involved
 

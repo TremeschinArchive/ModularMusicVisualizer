@@ -2,9 +2,7 @@
 // ===============================================================================
 
 #pragma map name music_bars_radial_pfx
-
-#pragma map layer2=shader;{MUSIC_BARS_SHADER};{WIDTH}x{HEIGHT}
-
+#pragma map layer2=dynshader;{MUSIC_BARS_SHADER}
 #pragma include mmv_specification once
 
 void main() {

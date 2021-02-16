@@ -3,7 +3,6 @@
 // ===============================================================================
 
 #pragma map name music_bars_particle
-
 #pragma include mmv_specification once
 
 void main() {
