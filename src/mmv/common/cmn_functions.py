@@ -50,6 +50,7 @@ class Functions:
     
     # We have two points P1 = (Xa, Ya) and P2 = (Xb, Yb)
     # It forms a line and we get a value of that line at X=get_x
+    # Future Tremx: This is linear interpolation you dummy past me!!
     def value_on_line_of_two_points(self, Xa, Ya, Xb, Yb, get_x):
         # The slope is m = (Yb - Ya) / (Xb - Xa)
         # Starting from point Yb, we have Y - Yb = m(X - Xb)
@@ -57,6 +58,14 @@ class Functions:
         # And we want to isolate Y -->
         # Y = ((Yb - Ya) / (Xb - Xa))*(X - Xb) + Yb
         return ((Yb - Ya) / (Xb - Xa))*(get_x - Xb) + Yb
+
+    # Linear interpolation between two points
+    def lerp(self, p1, p2, x):
+        return self.value_on_line_of_two_points(
+            Xa = p1[0], Ya = p1[1],
+            Xb = p2[0], Yb = p2[1],
+            get_x = x
+        )
 
     # Smooth an array
     def smooth(self, array: np.ndarray, smooth: float):

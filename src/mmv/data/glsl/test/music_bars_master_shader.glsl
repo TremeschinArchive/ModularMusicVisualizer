@@ -111,7 +111,7 @@ void main() {
     } else {
         layer = texture(background_shader, shadertoy_uv_scaled);
     }
-    col = acomposite(layer, col);;
+    col = acomposite(layer, col);
     
     if (do_bloom && ! chromatic_aberration) {
         layer = bloom(background_shader, shadertoy_uv_scaled, background_shader_resolution, bloom_amount, false);
@@ -125,7 +125,7 @@ void main() {
     // // Layer 3
 
     chromatic_aberration = true;
-    do_bloom = true;
+    do_bloom = false;
     bloom_amount = 3;
     chromatic_aberration_amount = ((1 / mmv_resolution.x) * smooth_audio_amplitude) * 0.14;
 
@@ -160,14 +160,13 @@ void main() {
     } else {
         layer = texture(music_bars_pfx, shadertoy_uv_scaled);
     }
-
     col = acomposite(layer, col);;
 
     if (do_bloom && ! chromatic_aberration) {
         layer = bloom(music_bars_pfx, shadertoy_uv_scaled, music_bars_pfx_resolution, bloom_amount, true);
     }
 
-    vec4 vignetting = vec4(vec3(0.0), smooth_audio_amplitude * length(gluv) / 75.0);
+    vec4 vignetting = vec4(vec3(0.0), smooth_audio_amplitude * length(gluv) / 65.0);
     vec4 gray_scale = vec4(vec3((col.r + col.g + col.b) / 3.0), 1.0);
     col = mix(vignetting, col, 1.0 - vignetting.a);
     col = mix(

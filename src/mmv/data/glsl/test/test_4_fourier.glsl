@@ -6,10 +6,6 @@
 #pragma include mmv_specification once
 #pragma map fft=pipeline_texture;;{MMV_FFTSIZE}x1
 
-uniform float smooth_audio_amplitude;
-uniform vec3 standard_deviations;
-uniform vec3 average_amplitudes;
-
 void main() {
     #pragma include coordinates_normalization multiple;
 

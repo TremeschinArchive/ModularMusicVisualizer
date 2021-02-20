@@ -117,9 +117,9 @@ mode = args.kflags.get("mode", "view")
 assert mode in ["render", "view"]
 
 # Resolution, fps, real time or audio file sample rate
-WIDTH = args.kflags.get("w", 1920)
-HEIGHT = args.kflags.get("h", 1080)
-FRAMERATE = args.kflags.get("fps", 60)
+WIDTH = int(args.kflags.get("w", 1920))
+HEIGHT = int(args.kflags.get("h", 1080))
+FRAMERATE = float(args.kflags.get("fps", 60))
 YOUR_COMPUTER_AUDIO_SAMPLERATE = args.kflags.get("sr", 48000)
 
 # Multi sampling, leave as 8?
@@ -289,7 +289,7 @@ if mode == "render":
         smoothing = 0.3
     )
     if HAVE_SUPERSAMPLING:
-        RENDERING_MESSAGE = f"Rendering [SS={SUPERSAMPLING}]({SUPERSAMPLING_WIDTH}x{SUPERSAMPLING_HEIGHT})->({WIDTH}x{HEIGHT}:{FRAMERATE})[{source.duration:.2f}s] MMV video"
+        RENDERING_MESSAGE = f"Rendering [SSAA={SUPERSAMPLING}]({SUPERSAMPLING_WIDTH}x{SUPERSAMPLING_HEIGHT})->({WIDTH}x{HEIGHT}:{FRAMERATE})[{source.duration:.2f}s] MMV video"
     else:
         RENDERING_MESSAGE = f"Rendering ({WIDTH}x{HEIGHT}:{FRAMERATE})[{source.duration:.2f}s] MMV video"
     
@@ -368,6 +368,7 @@ sep = os.path.sep
 # Default stuff we replace
 default_replaces = {
     "MMV_FFTSIZE": MMV_FFTSIZE,
+    "AUDIO_BATCH_SIZE": BATCH_SIZE,
     "WIDTH": WIDTH,
     "HEIGHT": HEIGHT
 }
@@ -404,10 +405,12 @@ step = 0
 # Pretty print separator
 w = shutil.get_terminal_size()[0]
 s = "-" * w
-print(f"\n{s}")
-m = "Processing some initial audio data and starting render process"
-print(" " * math.ceil((w - len(m))/2) + m)
-print(f"{s}\n")
+
+if mode == "render":
+    print(f"\n{s}")
+    m = "Starting Multithreaded Render Process"
+    print(" " * math.ceil((w - len(m))/2) + m)
+    print(f"{s}\n")
 
 # # Stuff
 
@@ -438,22 +441,22 @@ try:
         source.next(step)
 
         # We have:
-        # - average_amplitudes: vec3 array, L, R and Mono
+        # - mmv_rms_lrm: vec3 array, L, R and Mono
         pipeline_info = source.get_info()
 
         # # Temporary stuff
 
         # Amplitudes
-        if "average_amplitudes" in pipeline_info.keys():
+        if "mmv_rms_lrm" in pipeline_info.keys():
             ratio = ratio_on_other_fps_based_on_fps(0.054, FRAMERATE)
-            smooth_audio_amplitude = smooth_audio_amplitude + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude) * ratio
-            pipeline_info["smooth_audio_amplitude"] = smooth_audio_amplitude * multiplier 
+            smooth_audio_amplitude = smooth_audio_amplitude + (pipeline_info["mmv_rms_lrm"][2] - smooth_audio_amplitude) * ratio
+            pipeline_info["smooth_audio_amplitude"] = smooth_audio_amplitude * multiplier + pipeline_info["standard_deviations"][2]
 
             ratio = ratio_on_other_fps_based_on_fps(0.08, FRAMERATE)
-            smooth_audio_amplitude2 = smooth_audio_amplitude2 + (pipeline_info["average_amplitudes"][2] - smooth_audio_amplitude2) * ratio
-            pipeline_info["smooth_audio_amplitude2"] = smooth_audio_amplitude2 * multiplier * 1.5
+            smooth_audio_amplitude2 = smooth_audio_amplitude2 + (pipeline_info["mmv_rms_lrm"][2] - smooth_audio_amplitude2) * ratio
+            pipeline_info["smooth_audio_amplitude2"] = smooth_audio_amplitude2 * multiplier * 1.5 + pipeline_info["standard_deviations"][2]
 
-            progressive_amplitude += pipeline_info["average_amplitudes"][2]
+            progressive_amplitude += pipeline_info["mmv_rms_lrm"][2]
             pipeline_info["progressive_amplitude"] = progressive_amplitude
 
         # If we have an fft key, set to the target and delete the one on the pipeline
@@ -489,8 +492,12 @@ try:
 
         elif mode == "view":
             mgl.update_window()
-            print(f":: Resolution: [{mgl.width}x{mgl.height}] Average FPS last ({fps_last_n} frames): [{fps}] \r", end = "", flush = True)
 
+            if HAVE_SUPERSAMPLING:
+                print(f":: Resolution: [SSAA={SUPERSAMPLING}]({SUPERSAMPLING_WIDTH}x{SUPERSAMPLING_HEIGHT})->({WIDTH}x{HEIGHT}) Average FPS last ({fps_last_n} frames): [{fps}] \r", end = "", flush = True)
+            else:
+                print(f":: Resolution: ({mgl.width}x{mgl.height}) Average FPS last ({fps_last_n} frames): [{fps}] \r", end = "", flush = True)
+            
             # The window received close command
             if mgl.window_should_close:
                 break
@@ -499,7 +506,7 @@ try:
         times[step % fps_last_n] = time.time()
         step += 1
 
-        # Vsync (yea we really need this)
+        # Manual vsync (yea we really need this)
         if (not mgl.vsync) and (not mode == "render"):
             while time.time() - startcycle < 1 / FRAMERATE:
                 time.sleep(1 / (FRAMERATE * 100))

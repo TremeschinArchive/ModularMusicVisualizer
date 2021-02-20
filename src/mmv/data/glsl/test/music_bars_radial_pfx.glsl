@@ -13,6 +13,8 @@ void main() {
 
     // Original pixel
     vec4 layer_1_raw = texture(layer2, shadertoy_uv);    
+    fragColor = layer_1_raw;
+    return;
 
     if (layer_1_raw.a >= 0.9) {
         fragColor = layer_1_raw;

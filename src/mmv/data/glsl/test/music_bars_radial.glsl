@@ -5,7 +5,7 @@
 #pragma map name music_bars_radial
 
 #pragma include mmv_specification once;
-#pragma map fft=pipeline_texture;;{MMV_FFTSIZE}x1;
+#pragma map fft=pipeline_texture;;{MMV_FFTSIZE}x1x1;
 #pragma map logo=image;{LOGO_IMAGE};1000x1000
 
 // A is proportional to B
@@ -46,7 +46,7 @@ void main() {
     int which = int({MMV_FFTSIZE} * proportion(2 * PI, 1, angle));
     float fft_val = texelFetch(fft, ivec2(which, 0), 0).r;
 
-    float size = (0.16) + smooth_audio_amplitude2 * 0.007;
+    float size = (0.16) + smooth_audio_amplitude2 * 0.003;
     float bar_size = 0.4;
     float logo_relative_to_bar_ratio = 1.0 - (0.05 * smoothstep(smooth_audio_amplitude, 0.0, 5.0));
 
