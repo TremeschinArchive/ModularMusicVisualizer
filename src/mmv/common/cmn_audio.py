@@ -208,14 +208,144 @@ class AudioSourceFile(GenericAudioSource):
                 do_calculate_fft = self.do_calculate_fft,
             ):
                 self.info[assign_step_counter][info[0]] = info[1]
-            
             assign_step_counter += 1
     
     def get_info(self):
         self.return_next_info_index += 1
         return self.info[self.return_next_info_index].copy()
-            
+
+
+class AudioSourceFileJumpCutter(AudioSourceFile):
+    def __init__(self):
+        self.audio_processing = AudioProcessing()
+        self.usable_up_to = 0
+        self.finished = False
+        self.usable = False
+        
+    # Start jumpcutter processing
+    def start(self, silent_speed, sounded_speed, silent_threshold):
+
+        # Assign config
+        self.silent_speed = silent_speed
+        self.sounded_speed = sounded_speed
+        self.silent_threshold = silent_threshold
+
+        # Info dict
+        self.info = {
+            "playback_audios" : {},
+            "deformation_points": {},
+        }
+
+        # Start processing thread
+        self.slice_process_thread = threading.Thread(target = self.__slice_process, daemon = True)
+        self.slice_process_thread.start()
+
+    # Main routines for generating data to the info dictionary
+    def __slice_process(self):
+        debug_prefix = "[AudioSourceFileJumpCutter.__slice_process]"
+        
+        # Create "zero" variables
+        self.total_steps = int(self.mono_data.shape[0] / self.batch_size)
+
+        logging.info(f"{debug_prefix} Calculating silent regions on Audio File, should take a while..")
+
+        # Progress bar
+        progress_bar = tqdm(
+            total = self.total_steps,
+            mininterval = 1/20,
+            unit = " slices",
+            dynamic_ncols = True,
+            colour = '#00ff00',
+            smoothing = 0.07
+        )
+        progress_bar.set_description("Processing JumpCutter Audio     ")
+
+        # Absolute time and how much samples we sliced so far
+        current_absolute_time_no_deforming = 0
+        total_sliced = 0
+
+        # Iterate
+        for step in range(self.total_steps):
+
+            # Where we'll slice
+            start_cut = int(self.batch_size * step)
+            end_cut = int( min(self.batch_size * (step + 1), self.mono_data.shape[0]) )
+
+            # Cut the mono slice and find min and max values
+            mono_audio_slice = np.array(self.mono_data[start_cut : end_cut])
+            min_max = [np.min(np.abs(mono_audio_slice)), np.max(np.abs(mono_audio_slice))]
+
+            # Cut the stereo audio
+            stereo_audio_slice = np.array([
+                self.stereo_data[0][start_cut : end_cut],
+                self.stereo_data[1][start_cut : end_cut],
+            ])
+
+            # Get target speed
+            if min_max[1] > self.silent_threshold:
+                this_speed = self.sounded_speed
+            else:
+                this_speed = self.silent_speed
+
+            # Either way we start with the raw cut as the pitch shifted one
+            pitch_shifted = stereo_audio_slice
+        
+            # Pitch shift accordingly
+            if (this_speed != 1):
+                pitch_shifted = self.pitch_shift_slice(stereo_audio_slice, - 12 * math.log2(this_speed))
+
+                size = pitch_shifted.shape[1] / this_speed
+
+                # Too short audio, send zeros
+                if size < 128:
+                    pitch_shifted = np.zeros((2, int(size)))
+
+                else:
+                    # Resample ("truncate" the audio)
+                    pitch_shifted = np.array([
+                        self.audio_processing.resample(pitch_shifted[0], self.sample_rate * this_speed, self.sample_rate),
+                        self.audio_processing.resample(pitch_shifted[1], self.sample_rate * this_speed, self.sample_rate),
+                    ])
+                
+            # "Riemann summation" with limit \neq 0
+            current_time = (total_sliced / self.sample_rate)
+            this_slice_N_samples = pitch_shifted.shape[1]
+            this_slice_duration = (this_slice_N_samples / self.sample_rate) * this_speed
+
+            # Assign information
+            self.info["playback_audios"][step] = {
+                "data": pitch_shifted,
+                "speed": this_speed,
+            }
+
+            # Add to the list of deformations on the timeline
+            self.info["deformation_points"][step] = [
+                current_time + this_slice_duration, current_absolute_time_no_deforming
+            ]
+
+            # Mark there is at least some data and up to what index we can work with
+            total_sliced += this_slice_N_samples
+            current_absolute_time_no_deforming += self.batch_size / self.sample_rate
+            self.usable_up_to += 1
+            self.usable = True
+            progress_bar.update(1)
+
+        # ned
+        progress_bar.close()
+        logging.info(f"{debug_prefix} Done")
+        self.finished = True
+
+    # Pitch shift some audio slice by a certain amount of Hertz
+    def pitch_shift_slice(self, audio_slice, ratio):
+        import librosa
+        return np.array([
+            librosa.effects.pitch_shift(audio_slice[0], self.sample_rate, n_steps = ratio),
+            librosa.effects.pitch_shift(audio_slice[1], self.sample_rate, n_steps = ratio)
+        ])
+
+
 class AudioSourceRealtime(GenericAudioSource):
+
     def init(self, recorder_device = None, search_for_loopback = False):
         import soundcard
         debug_prefix = "[AudioSourceRealtime.init]"
@@ -366,7 +496,6 @@ class AudioProcessing:
         # List of full frequencies of notes
         # - 50 to 68 yields freqs of 24.4 Hz up to 
         self.piano_keys_frequencies = [round(self.get_frequency_of_key(x), 2) for x in range(-50, 68)]
-        logging.info(f"{debug_prefix} Whole notes frequencies we'll care: [{self.piano_keys_frequencies}]")
 
     # Get specs on config dictionary
     def _get_config_stuff(self, config_dict):
@@ -432,6 +561,8 @@ class AudioProcessing:
     def configure(self, config, where_decay_less_than_one = 440, value_at_zero = 3):
         debug_prefix = "[AudioProcessing.configure]"
 
+        logging.info(f"{debug_prefix} Whole notes frequencies we'll care: [{self.piano_keys_frequencies}]")
+
         # Assign
         self.config = config
         self.FFT_length = 0
@@ -451,6 +582,12 @@ class AudioProcessing:
         # self.FFT_length *= 2
         print("BINNED FFT LENGTH", self.FFT_length)
 
+    # # Feature Extraction
+
+    # Calculate the Root Mean Square
+    def rms(self, values: np.ndarray) -> float:
+        return np.sqrt(np.mean(values ** 2))
+
     # # New Methods
 
     # Yield information on the audio slice
@@ -460,20 +597,21 @@ class AudioProcessing:
         # Calculate MONO
         mono = (audio_slice[0] + audio_slice[1]) / 2
 
-        # # Average audio amplitude
+        # # Average audio amplitude based on RMS
 
         # L, R, Mono respectively
-        average_amplitudes = []
+        RMS = []
 
         # Iterate, calculate the median of the absolute values
         for channel_number in [0, 1]:
-            average_amplitudes.append(np.median(np.abs(audio_slice[channel_number][0:N//120])))
+            RMS.append(np.sqrt(np.mean(audio_slice[channel_number][0:N] ** 2)))
+            # RMS.append(np.median(np.abs(audio_slice[channel_number][0:N//120])))
         
         # Append mono average amplitude
-        average_amplitudes.append(sum(average_amplitudes) / 2)
+        RMS.append(sum(RMS) / 2)
 
         # Yield average amplitudes info
-        yield ["average_amplitudes", tuple([round(value, 8) for value in average_amplitudes])]
+        yield ["mmv_rms_lrm", tuple([round(value, 8) for value in RMS])]
 
         # # Standard deviations
 
