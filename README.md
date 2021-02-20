@@ -5,7 +5,7 @@
 <p align="center">
   High quality video music visualization tool for the music production community.
   <br><hr>
-  <i>Support for Music Bars and Piano Roll mode, Video as background, enable / disable whatever you want. Hack the code at your will. Real Time mode for live DJing</i>
+  <i>Support for Music Bars and Piano Roll mode, Video as background, enable / disable whatever you want. Hack the code at your will. Real Time mode for live DJing and some extra modes</i>
 </p>
 <hr>
 
@@ -109,6 +109,7 @@ It uses the [ModernGL Python package](https://github.com/moderngl/moderngl) for 
    * [Community, Support, Help](#community-support-help)
    * [Running](#running)
    * [Configuration Flags](#configuration-flags)
+   * [Extra modes](#extra-modes)
    * [Common problems, FAQ, tips](#common-problems-faq-tips)
    * [Hacking the Code](#hacking-the-code)
    * [Performance](#performance)
@@ -138,7 +139,11 @@ I haven't yet made a decision on financial support, probably I'll have a donatio
 
 ## Python
 
-Please install Python 3.8 (hard requirements are _V >= 3.7_ potentailly), Python 3.9 should work™ but _can_ act weird. Give 3.9 a shot otherwise downgrade to 3.8 if you get weird dependency related stuff.
+Please install Python 3.8 (hard requirements are _V >= 3.7_ potentailly).
+
+Python 3.9 will be supported whenever Numba updates so we finally have `librosa` and its `llvmlite` dependency sorted out.
+
+You probably can run the code with Python 3.9 if you don't use the "JumpCutter" extra mode and install dependencies manually / scrap the weird ones with `poetry remove librosa numba llvmlite`.
 
 **Only a 64 bits OS will work**, most of you should have it.
 
@@ -297,6 +302,91 @@ Highly depends on what platform you are, which audio system you use, try to find
 
 
 <hr>
+
+
+
+
+
+# Extra Modes
+
+MMV, apart from music visualization, is capable of doing some other neat things still about audiovisual content processing.
+
+## JumpCutter mode
+
+Following [carykh's](https://github.com/carykh) original idea of the project [JumpCutter](https://github.com/carykh/jumpcutter) and given that it looks half abandoned with yet some remaining activity on some community around it, I decided to implement myself this code in MMV because most of required stuff were already there.
+
+This implementation have some advantages over the original one:
+
+- **1.** It does not write frames to disk, making disk usage virtually almost as low as we can get.
+- **2.** It renders pretty fast, I have processed 1h20m 720p24 content cut down to 55m in just about 12 minutes on my CPU.
+
+However for the time being it lacks some precision syncing, also real time mode is TODO, feels very doable.
+
+### Running JumpCutter mode
+
+Run with setting the input and outputs with:
+
+- `poetry run jumpcutter (inputs, flags)`
+
+For both modes you have some common flags:
+
+- `threshold=float` The threshold to silence in audio amplitude normalized from 0 to 1. Default value is `0.015`.
+- `sounded=float` The sounded speed, defaults to 1.
+- `silent=float` The silent speed, defaults to 10.
+- `o="path.extension"` What file to output the final result. Be careful to output videos to valid video formats and audio to valid formats.
+- `batch=int` In how many blocks of size N we cut the audio? Based on the sample rate, defaults to 4096. Don't use values too much low `<512`, not only it'll sound bad but take more time to process.
+
+JumpCutter will imply what to render based on what inputs you give, setting an automatic output format `ofmt`:
+
+- Only inputting video assumes `ofmt=video`, uses audio from the video.
+- Only inputting audio assumes `ofmt=audio`.
+- Inputting both video and audio will use the two combined on `ofmt=video`.
+
+Note: sending `ofmt={audio,video}` manually overrides the guessing of MMV's part.
+
+However, manually setting some video and audio as input with output format to audio will simply ignore the audio you send.
+
+There are two modes, one is to listen real time and other to render to file. It defaults to "render":
+
+- `mode=render`, `mode=view`. TODO: implement real time visualization for JumpCutter
+
+For `mode=view` you can pass `poetry run jumpcutter list` to see the list of outputs if it uses the wrong one.
+
+Most flags differ for the two modes for outputs:
+
+#### Video mode: (ofmt=video)
+  
+- `video="some video.mkv"` The target video to process.
+- `audio="some audio.ogg"` The target audio to process.
+- `w=1280 h=720` Sets the render resolution (scaled relative to original video).
+- `m=0.5` Multiplies the original resolution by this factor and overrides width and height (`w` and `h`).
+
+#### Audio mode: (ofmt=audio)
+
+You can also only process a given audio from a video or a file. Simply send:
+
+- `audio="path to audio"`
+
+Or alternatively
+
+- `video="some video" ofmt=audio`
+
+#### Example usage
+
+- `poetry run jumpcutter video="video.mkv" o="output.mkv"` _"Default mode"_
+- `poetry run jumpcutter video="video.mkv" m=0.5 o="output.mkv"` _"Fast mode, render half the resolution, degrates a lot in quality"_
+- `poetry run jumpcutter video="video.mkv" w=1280 h=720 o="output.mkv"` _"Render in 720p"_
+- `poetry run jumpcutter video="video.mkv" threshold=0.03 o="output.mkv"` _"Consider values up to 0.03 silent"_
+- `poetry run jumpcutter video="video.mkv" silent=200 sounded=1.3 o="output.mkv"` _"Faster than usual"_
+- `poetry run jumpcutter video="video.mkv" silent=1 sounded=200 o="output.mkv"` _"?????????"_
+- `poetry run jumpcutter audio="some audio.ogg" o="output.mp3"` _"Process only this audio"_
+- `poetry run jumpcutter video="video.mkv" ofmt=audio o="output.flac"` _"Process only the audio of the video"_
+
+<hr>
+
+
+
+
 
 # Common problems, FAQ, tips
 

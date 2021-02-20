@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "mmv"
-version = "2.6.0"
+version = "3.0.1"
 description = "High quality video music visualization tool for the music production community. Support for Music Bars and Piano Roll mode, Video as background, enable / disable whatever you want. Hack the code at your will. Real Time mode for live DJing"
 authors = ["Tremeschin <https://tremeschin.gitlab.io/>"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.7, < 3.9"
 scipy = "^1.6.0"
 numpy = "^1.20.1"
 audioread = "^2.1.9"
@@ -30,10 +30,12 @@ glfw = "^2.0.0"
 PyOpenGL = "^3.1.5"
 samplerate = "^0.1.0"
 colorama = "^0.4.4"
+librosa = "^0.8.0"
 
 [tool.poetry.dev-dependencies]
 
 [tool.poetry.scripts]
+jumpcutter = "src.run_jumpcutter:_"
 shaders = "src.run_shaders:_"
 skia = "src.run_video:_"
 

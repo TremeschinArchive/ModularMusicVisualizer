@@ -39,6 +39,33 @@ import cv2
 
 
 class FFmpegWrapper:
+
+    def raw_audio_to_file(self, ffmpeg_binary_path, sample_rate, output_file):
+        self.command = [
+            ffmpeg_binary_path, "-y",
+            "-f", f"f32le",
+            "-acodec", f"pcm_f32le", 
+            "-ar", str(sample_rate),
+            "-ac", "2",  # 2 channels
+            "-i", "-", "-vn",  # Input from pipe, don't expect video
+            "-b:a", "200k",
+            output_file
+        ]
+
+    def extract_audio_from_video(self, ffmpeg_binary_path, video, save_to):
+        self.command = [
+            ffmpeg_binary_path, "-y",
+            "-i", video,
+            "-b:a", "230k",
+            save_to
+        ]
+        return save_to
+
+    def run(self):
+        debug_prefix = "[FFmpegWrapper.run]"
+        logging.info(f"{debug_prefix} Run FFmpeg, blocking code with command {self.command}")
+        subprocess.run(self.command)
+
     # Create a FFmpeg writable pipe for generating a video
     # For more detailed info see [https://trac.ffmpeg.org/wiki/Encode/H.264]
     def configure_encoding(self, 
@@ -68,7 +95,6 @@ class FFmpegWrapper:
     ) -> None:
 
         debug_prefix = "[FFmpegWrapper.configure_encoding]"
-
 
         # Generate the command for piping images to
         self.command = [

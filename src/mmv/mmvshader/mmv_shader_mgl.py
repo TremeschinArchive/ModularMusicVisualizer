@@ -9,7 +9,10 @@ Copyright (c) 2020 - 2021,
 ===============================================================================
 
 Purpose: Render shaders to video files or preview them realtime, map images,
-videos and even other shaders as textures into a main one
+videos and even other shaders as textures into a main one, all recursively.
+Also a basic preprocessor for including contents of other shader.
+
+The shader interface you always needed.
 
 ===============================================================================
 
@@ -44,6 +47,201 @@ import cv2
 import sys
 import re
 import os
+
+# # # DOCUMENTATION
+
+"""
+# # # # # # Description
+
+    This (big) file is intended to interface with moderngl Python package and provide
+some bindings, utilities, a basic preprocessor, shortcuts for mapping images, videos,
+pipelines, uniform values, deals with creating textures, window, contexts, rendering,
+outputting etc. The main preprocessor is implemented here for those also.
+
+    This also automatically includes some MMV specification at the start of the file
+so some variable names are reserved or already defined. See below the prefixes
+
+# # # # # # Usage
+
+Within MMV the expected way is this:
+
+| import mmv
+| interface = mmv.MMVPackageInterface()
+| shader_interface = interface.get_shader_interface()
+| mgl = shader_interface.get_mgl_interface(master_shader = True)
+
+This is the same as importing MMVShaderMGL directly from this file.
+Also note that (master_shader = True) is expected to be given because that's the guy
+who deals with the window and outputting to the screen's resolution, etc.
+
+After that it is expected to be run:
+
+| mgl.target_render_settings(
+|     width = WIDTH,
+|     height = HEIGHT,
+|     ssaa = SUPERSAMPLING,
+|     fps = FRAMERATE,
+| )
+
+So we have information on how to render.
+
+Width and height will only be fixed size if rendering headless mode or strict mode.
+SSAA renders at a higher internal resolution and outputs to screen / renders to file
+at the target. Real time window mode width's and height's will be overridden when the
+window is resized if strict mode is False otherwise kept the same. More in a few.
+
+You probably want to specify some include directories for the preprocessor to find
+
+| mgl.include_dir(GLSL_INCLUDE_FOLDER)
+
+Where GLSL_INCLUDE_FOLDER is a path on the system, preferably use absolute pathing.
+
+Now we set the "mode" to render, this differs from "quality" which target_render_settings
+kind of deals with.
+
+| mgl.mode(
+|     window_class = "headless",
+|     strict = True,
+|     vsync = False,
+|     msaa = MSAA,
+| )
+
+- window_class: can be "glfw", "pyglet", "headless", etc, see moderngl_window docs.
+- strict: Strict mode means to not by any means change the target width and height, render
+    at fixed resolution
+- vsync: Wait for buffer swap of the window
+    NOTE: IMPORTANT: this heavily degrades MMV multithreaded code performance for some reason
+        please write your own vsync if displaying real time.
+    For render mode, vsync = False is preferred.
+- msaa: Number of multi sampling anti aliasing to use. Shouldn't take much impact on
+    performance since MMV doesn't yet works with many geometry
+
+After that you're supposed to loader some master shader from path that renders the final
+images only.
+
+| mgl.load_shader_from_path(
+|     fragment_shader_path,
+|     replaces,
+|     save_shaders_path
+| )
+
+TODO: NOTE: replaces dictionary replaces values matched in {NAME} on the file with the
+    value's string. This will be moved to the ShaderMaker interface.
+
+save_shaders_path saves the final preprocessed shaders so we can debug on what went wrong.
+Send None for not saving those.
+
+# # # # # # Preprocessor
+
+This is the heart of why this file is so big. The general syntax is:
+- #pragma function (options)
+
+The easiest and simplest one is:
+    - #pragma map name some_naming
+
+    This internally sets the name of the file we save to the save_shaders_path for debugging
+
+The next one is:
+    - #pragma include name mode
+
+    Name is the name (without the .glsl) of some file in the included directories.
+    For example, if your directory have like:
+    
+    | include
+    | | file1.glsl
+    | | file2.glsl
+
+    And you [#pragma include file1] it'll include the contents of the [file1.glsl]
+    based on a mode.
+
+    Mode can be one of the two:
+
+    - multiple: Allow re-including, examples are:
+        - [math_constants.glsl]
+        - [coordinates_normalization.glsl]
+
+    - once: Only ever include once this file in THIS loaded GLSL. Best example is
+        includeing [mmv_specification.glsl] on the beginning of the file.
+
+    This is for avoiding redefining values and functions, for that I advise also not
+    to shadow variables, and use stuff like [math_constants.glsl] on the beginning of
+    functions where you'll immediately use them.
+
+The main (and most complex) mapping is this one:
+    - #pragma map loader=name;value;[width]x[height]x[depth]
+
+    We load some loader with the value interpreted accordingly.
+    Width, height and depth not always will be used.
+
+    For all loaders it'll add these variables on the code:
+        - sampler2D with name [name], the texture to read from
+        - vec2 with name [name]_resolution storing the width and height
+        - int with name [name]_width storing the width
+        - int with name [name]_height storing the height
+
+    Here's the info on each loader:
+
+    - loader=image: (see *1. below)
+        This loads some raw contents of a image on the system given by its path
+        stored on the [value]
+
+    - loader=video: (see *1. below)
+        This gets one cv2.VideoCapture of a video on the system given by its path
+        stored on the [value]
+
+    - loader=shader: (see *1. below)
+        This recursively generates other MMVShaderMGL classes and loads the shader
+        on the system given by its path stored on the [value].
+        
+        This works by creating one FBO and Texture attached to one another so whatever
+        we render to the FBO can be accessed on that texture in this OpenGL context
+        and, since we share the context, we can use the contents of other shaders.
+        
+        The pipeline of information is also recursively sent from the master shader,
+        the one which is called for the final render, recursively.
+
+        Every other #pragma map on child shaders also works, mapping a video on shader1
+        to the screen, applying blur on some other shader1 which have some map like: 
+        #pragma map layer1=shader;shader1_path
+        then pass this intermediate shader2 which modifies shader1 to some other shader3
+        which deals with alpha compositing or something.
+
+    - loader=dynshader:
+        I called this "dynamic shader", it does not require width and height and its 
+        textures and target renderers will be dropped and recreated to always match
+        the window's or internal width and height resolution.
+
+    - loader=pipeline_texture:
+        This creates a empty texture with a certain width, height and depth you can
+        write to give by its name. We have this special function:
+        
+        - mgl.write_texture_pipeline(texture_name = "fft", data = FFT_DATA)
+        
+        Which finds this texture by name and write some data to it.
+        It is good to use this method for communicating big arrays of data between
+        Python and the OpenGL stuff.
+
+    (*1.) You are required to pass a width and height for the shape you want the image
+        it is not automatically got because we might want to stretch to some specific
+        proportion. Does not require depth argument, all are treated as RGBA (vec4)
+
+For getting images out of the window we have two functions:
+
+| mgl.read_into_subprocess_stdin(target)
+| mgl.read()
+
+The first one accepts a Python's subprocess.Popen stdin with subprocess.PIPE as a target
+and directly writes the value to the stdin (of FFmpeg generally speaking).
+
+The second one gets you the raw data of the window buffer (headless or not).
+
+They should output rgb24 values (RGB, 1 byte = 8 bits each) at the current target width
+and height, so please use headless for rendering and be sure to match the width, height,
+set FFmpeg's pixel format to rgb24 accepting from a pipe (-i -)
+
+For the MMV specification, what they do, default variables and pipelines keep reading
+this file.
+"""
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -99,7 +297,7 @@ uniform float smooth_audio_amplitude;
 uniform float smooth_audio_amplitude2;
 uniform float progressive_amplitude;
 uniform vec3 standard_deviations;
-uniform vec3 average_amplitudes;
+uniform vec3 mmv_rms_lrm;
 
 ///add_uniform"""
 
@@ -107,7 +305,7 @@ uniform vec3 average_amplitudes;
 
 # Transparent, black shader, used for ignoring a certain layer quickly
 # Usage:
-# | #pragma map some_other_unwanted_shader=shader;MMVMGL_NULL_SHADER;WIDTHxHEIGHT
+# | #pragma map some_other_unwanted_shader=dynshader;MMVMGL_NULL_SHADER
 # | ... GLSL code
 MMVMGL_NULL_SHADER = "void main() { fragColor = vec4(0.0); }"
 
@@ -186,6 +384,9 @@ class MMVShaderMGL:
 
     # [NOT HEADLESS] Window was resized, update the width and height so we render with the new config
     def window_resize(self, width, height):
+        if hasattr(self, "strict"):
+            if self.strict:
+                return
 
         # Set width and height
         self.width = int(width)
@@ -274,34 +475,9 @@ class MMVShaderMGL:
         # We're a child shader so we inherit the parent (master shader) OpenGL context
         if gl_context is not None:
             self.gl_context = gl_context
-
-        # The buffer that represents the 4 points of the screen and their
-        # respective uv coordinate. GL center is the coordinate (0, 0) and each
-        # edge is either 1 or -1 relative to its axis. We keep that because central rotation
         
-        # gl_bluv{x,y} -> "OpenGL" bottom left uv {x,y}
-        gl_bluvx = -1.0  # Bottom Left X
-        gl_bluvy = -1.0  # Bottom Left Y
-
-        # gl_truv{x,y} -> "OpenGL" top right uv {x,y}
-        gl_truvx =  1.0  # Top Right X
-        gl_truvy =  1.0  # Top Right Y
-
-        # What coordinate we swap the Y values to / for on Shadertoy and OpenGL coordinates?
-        # ShaderToy flip we swap 1 to zero and opengl we swap -1 with 1 (multiply Y by 1 or -1)
-        st_flip = [1, 0] if self.flip else [0, 1]
-        gl_flip = -1 if self.flip else 1
-
-        # Coordinates of the OpenGL Vertex positions on screen, the target UV for 
-        # the OpenGL standard [(0, 0) center, edges are from -1 to 1] or Shadertoy ones
-        # [(0, 0) bottom left, edges goes from 0 to 1]
-        self.coordinates = [
-            # OpenGL pos (X, Y)   OpenGL UV (U, V)                Shadertoy UV (U, V)
-            gl_bluvx, gl_truvy,   gl_bluvx, gl_truvy * gl_flip,   0, st_flip[1],  # Top Left      [^ <]
-            gl_bluvx, gl_bluvy,   gl_bluvx, gl_bluvy * gl_flip,   0, st_flip[0],  # Bottom Left   [v <]
-            gl_truvx, gl_truvy,   gl_truvx, gl_truvy * gl_flip,   1, st_flip[1],  # Top Right     [^ >]
-            gl_truvx, gl_bluvy,   gl_truvx, gl_bluvy * gl_flip,   1, st_flip[0],  # Bottom Right  [v >]
-        ]
+        # Build coordinates based on self.flip
+        self.__build_coordinates()
 
         # Info we send to the shaders read only (uniforms) that can and are generated on the main render loop
         self.pipeline = {
@@ -342,7 +518,38 @@ class MMVShaderMGL:
         # redefinition errors
         self.include_directories = []
         self.included_files = []
-    
+
+    # We might be asked to flip or not on a shader so we need to reconstruct those
+    def __build_coordinates(self):
+
+        # The buffer that represents the 4 points of the screen and their
+        # respective uv coordinate. GL center is the coordinate (0, 0) and each
+        # edge is either 1 or -1 relative to its axis. We keep that because central rotation
+        
+        # gl_bluv{x,y} -> "OpenGL" bottom left uv {x,y}
+        gl_bluvx = -1.0  # Bottom Left X
+        gl_bluvy = -1.0  # Bottom Left Y
+
+        # gl_truv{x,y} -> "OpenGL" top right uv {x,y}
+        gl_truvx =  1.0  # Top Right X
+        gl_truvy =  1.0  # Top Right Y
+
+        # What coordinate we swap the Y values to / for on Shadertoy and OpenGL coordinates?
+        # ShaderToy flip we swap 1 to zero and opengl we swap -1 with 1 (multiply Y by 1 or -1)
+        st_flip = [1, 0] if self.flip else [0, 1]
+        gl_flip = -1 if self.flip else 1
+
+        # Coordinates of the OpenGL Vertex positions on screen, the target UV for 
+        # the OpenGL standard [(0, 0) center, edges are from -1 to 1] or Shadertoy ones
+        # [(0, 0) bottom left, edges goes from 0 to 1]
+        self.coordinates = [
+            # OpenGL pos (X, Y)   OpenGL UV (U, V)                Shadertoy UV (U, V)
+            gl_bluvx, gl_truvy,   gl_bluvx, gl_truvy * gl_flip,   0, st_flip[1],  # Top Left      [^ <]
+            gl_bluvx, gl_bluvy,   gl_bluvx, gl_bluvy * gl_flip,   0, st_flip[0],  # Bottom Left   [v <]
+            gl_truvx, gl_truvy,   gl_truvx, gl_truvy * gl_flip,   1, st_flip[1],  # Top Right     [^ >]
+            gl_truvx, gl_bluvy,   gl_truvx, gl_bluvy * gl_flip,   1, st_flip[0],  # Bottom Right  [v >]
+        ]
+
     # Add a directory to the list of directories to include, note that this will recursively add this
     # include dir to the shaders as textures mapped
     def include_dir(self, path):
@@ -489,11 +696,22 @@ class MMVShaderMGL:
             identation, name = mapping
             self.name = name
 
+        # # Do flip?
+
+        logging.info(f"{debug_prefix} Parsing the fragment shader for any #pragma flip [true, false]")
+
+        regex = r"^#pragma flip ([\w]+)"
+        found = re.findall(regex, fragment_shader, re.MULTILINE)
+
+        for occurence in found:
+            self.flip = True if (occurence == "true") else False
+            self.__build_coordinates()
+
         # # Loaders
 
         # Regular expression to match #pragma map name=loader:/path/value;512x512
         # the ;512x512 is required for the image, video and shader loaders
-        regex = r"([ ]+)?#pragma map ([\w]+)=([\w]+);([\w/\\:. -]+)?;?([0-9]+)?x?([0-9]+)?"
+        regex = r"([ ]+)?#pragma map ([\w]+)=([\w]+);([\w/\\:. -]+)?;?([0-9]+)?x?([0-9]+)?x?([0-9]+)?"
         found = re.findall(regex, fragment_shader, re.MULTILINE)
     
         logging.info(f"{debug_prefix} Regex findall says: {found}")
@@ -504,22 +722,33 @@ class MMVShaderMGL:
         # For each mapping
         for mapping in found:
 
-            # Get the values we matched
-            identation, name, loader, value, width, height = mapping
-            logging.info(f"{debug_prefix} Matched mapping [name={name}] [loader={loader}] [value={value}] [width={width}] [height={height}]")
+            # Get the values we matched. Not all loaders accept width, height or depth
+            # See documentation at the top
+            identation, name, loader, value, width, height, depth = mapping
+            logging.info(f"{debug_prefix} Matched mapping [name={name}] [loader={loader}] [value={value}] [width={width}] [height={height}] [depth={depth}]")
 
             # Remove the original #pragma map, seems like NVIDIA cards specific problem
-            full_pragma_map = f"\n{identation}#pragma map {name}={loader};{value};{width}x{height}"
+            full_pragma_map = f"\n{identation}#pragma map {name}={loader};{value}"
+            
+            # Optional ones
+            if (width != "") and (height != ""):
+                full_pragma_map += f";{width}x{height}"
+            if (depth != ""):
+                full_pragma_map += f";{depth}"
+
+            # Remove pragma map
             logging.info(f"{debug_prefix} Removing original [{full_pragma_map}]")
-            fragment_shader = fragment_shader.replace(full_pragma_map, "")
+            fragment_shader = fragment_shader.replace(full_pragma_map,
+                f"// was pragma map [name={name}] [loader={loader}] [value={value}] [width={width}] [height=[{height}] [depth={depth}]"
+            )
 
             # Error assertion, valid loader and path
             loaders = ["image", "video", "shader", "dynshader", "pipeline_texture", "include"]
-            assert loader in loaders, f"Loader not implemented in loaders {loaders}"
+            assert loader in loaders, f"Loader not implemented in loaders {loaders} for [{full_pragma_map}] [{mapping}]"
 
             # All but pipeline texture must be valid paths
             if (not loader in ["pipeline_texture"]) and (value != "MMVMGL_NULL_SHADER"):
-                assert os.path.exists(value), f"Value of loader [{value}] is not a valid path"
+                assert os.path.exists(value), f"Value of loader [{value}] is not a valid path in [{full_pragma_map}] [{mapping}]"
 
             # We'll map one texture to this shader, either a static image, another shader or a video
             # we do create and store the shader and video objects so we render or get the next image later on before using
@@ -560,7 +789,7 @@ class MMVShaderMGL:
                     logging.info(f"{debug_prefix} Creating black pipeline texture object")
                     
                     # Create a blank texture..
-                    texture = self.gl_context.texture((width, height), 1, dtype = "f4")
+                    texture = self.gl_context.texture((width, height), int(depth), dtype = "f4")
 
                     # Assign the name, type and texture to the textures dictionary
                     assign_index = len(self.textures.keys())

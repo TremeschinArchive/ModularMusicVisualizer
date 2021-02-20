@@ -41,6 +41,10 @@ class Fourier:
         #    - [1 : int(len(N) / 2)] = [1 : len(N) // 2]
         return rfft(data)
 
+    # Return real fft frequencies
+    def rfftf(self, N, fs):
+        return rfftfreq(N, 1 / fs)
+
     # For more information, https://stackoverflow.com/questions/4364823
     #
     # This function accepts a data input, its samplerate and the "original sample rate" before

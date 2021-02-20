@@ -65,7 +65,7 @@ f"""{debug_prefix} Show greeter message\n{"-"*self.terminal_width}
 {bias}|_|  |_| |_|  |_|    \\_/   
 {bias}
 {bias} Modular Music Visualizer                      
-{bias[:-1]}{(21-len("Version")-len(self.version))*" "}Version {self.version}
+{(2 + int( (self.terminal_width/2) - (len("Version") + len(self.version)/2) ))*" "}Version {self.version}
 {"-"*self.terminal_width}
 """
         logging.info(message)
@@ -150,13 +150,19 @@ f"""{debug_prefix} Show thanks message
         from mmv.common.cmn_audio import AudioSourceFile
         return AudioSourceFile()
 
+    # Real time, reads from a loopback device
+    def get_audio_source_jumpcutter(self):
+        debug_prefix = "[MMVPackageInterface.get_audio_source_jumpcutter]"
+        from mmv.common.cmn_audio import AudioSourceFileJumpCutter
+        return AudioSourceFileJumpCutter()
+
     # Main interface class, mainly sets up root dirs, get config, distributes classes
     # Send platform = "windows", "macos", "linux" for forcing a specific one
     def __init__(self, platform = None, **kwargs) -> None:
         debug_prefix = "[MMVPackageInterface.__init__]"
 
         # Versioning
-        self.version = "3.0-shaders-dev"
+        self.version = "3.0.1-shaders-dev"
 
         # Can only run on Python 64 bits, this expression returns 32 if 32 bit installation
         # and 64 if 64 bit installation, we assert that (assume it's true, quit if it isn't)
@@ -348,9 +354,6 @@ f"""{debug_prefix} Show thanks message
             sys.path.append(self.externals_dir)
 
         # # Common files
-
-        self.last_session_info_file = f"{self.data_dir}{sep}last_session_info.toml"
-        logging.info(f"{debug_prefix} Last session info file is [{self.last_session_info_file}], resetting it..")
 
         # Code flow management
         if self.prelude["flow"]["stop_at_initialization"]:
@@ -611,7 +614,7 @@ f"""{debug_prefix} Show thanks message
     def __cant_micro_manage_external_for_you(self, binary, help_fix = None):
         debug_prefix = "[MMVPackageInterface.__cant_micro_manage_external_for_you]"
 
-        logging.info(f"{debug_prefix} You are using Linux or macOS, please make sure you have [{binary}] package binary installed on your distro or on homebrew, we'll just check for it nowm, can't continue if you don't have it..")
+        logging.warn(f"{debug_prefix} You are using Linux or macOS, please make sure you have [{binary}] package binary installed on your distro or on homebrew, we'll just check for it now, can't continue if you don't have it..")
         
         # Can't continue
         if not self.find_binary(binary):
