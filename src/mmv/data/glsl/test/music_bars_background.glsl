@@ -2,7 +2,6 @@
 // ===============================================================================
 
 #pragma map name music_bars_background
-
 #pragma include mmv_specification once
 #pragma map background=image;{BACKGROUND_IMAGE};1920x1080
 
