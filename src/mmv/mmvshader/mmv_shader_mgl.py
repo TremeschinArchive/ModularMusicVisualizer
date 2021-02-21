@@ -703,8 +703,9 @@ class MMVShaderMGL:
         regex = r"^#pragma flip ([\w]+)"
         found = re.findall(regex, fragment_shader, re.MULTILINE)
 
-        for occurence in found:
-            self.flip = True if (occurence == "true") else False
+        for occurrence in found:
+            self.flip = True if (occurrence == "true") else False
+            logging.info(f"{debug_prefix} Found orrurence [{occurrence}], [self.flip={self.slip}]")
             self.__build_coordinates()
 
         # # Loaders
@@ -728,17 +729,18 @@ class MMVShaderMGL:
             logging.info(f"{debug_prefix} Matched mapping [name={name}] [loader={loader}] [value={value}] [width={width}] [height={height}] [depth={depth}]")
 
             # Remove the original #pragma map, seems like NVIDIA cards specific problem
-            full_pragma_map = f"\n{identation}#pragma map {name}={loader};{value}"
+            full_pragma_map = f"{identation}#pragma map {name}={loader};{value}"
             
             # Optional ones
             if (width != "") and (height != ""):
                 full_pragma_map += f";{width}x{height}"
-            if (depth != ""):
-                full_pragma_map += f";{depth}"
+                if (depth != ""):
+                    full_pragma_map += f";{depth}"
 
             # Remove pragma map
             logging.info(f"{debug_prefix} Removing original [{full_pragma_map}]")
-            fragment_shader = fragment_shader.replace(full_pragma_map,
+            fragment_shader = fragment_shader.replace(
+                full_pragma_map,
                 f"// was pragma map [name={name}] [loader={loader}] [value={value}] [width={width}] [height=[{height}] [depth={depth}]"
             )
 
