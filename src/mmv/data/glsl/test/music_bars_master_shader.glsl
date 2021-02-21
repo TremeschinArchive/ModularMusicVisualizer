@@ -2,7 +2,6 @@
 // ===============================================================================
 
 #pragma map name music_bars_master_shader
-
 #pragma map background_shader=dynshader;{BACKGROUND_SHADER}
 #pragma map music_bars_pfx=dynshader;{MUSIC_BARS_SHADER_PFX}
 #pragma map particles_layer=dynshader;{PARTICLES_SHADER}
