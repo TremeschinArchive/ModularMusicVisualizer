@@ -49,6 +49,7 @@ class MMVShadersCLI:
 
         # MMV interface
         self.mmv_package_interface = mmv.MMVPackageInterface()
+        self.utils = self.mmv_package_interface.utils
         self.shaders_dir = self.mmv_package_interface.shaders_dir
 
         # Shaders interface and MGL
@@ -57,9 +58,6 @@ class MMVShadersCLI:
 
         # Interpolator
         self.interpolator = ValuesInterpolator()
-
-        # Include default directory
-        self.mgl.include_dir(f"{self.shaders_dir}{self.sep}include")
 
         # Advanced config
         self.advanced_config = self.mmv_package_interface.utils.load_yaml(
@@ -194,7 +192,19 @@ class MMVShadersCLI:
 
         # pylint: disable=E0602 # Disable undefined variables because this info must exist
         logging.info(f"{debug_prefix} Got info from preset file [{preset_file}]: {info}")
+
         self._preset_master_shader = info["master_shader"]
+
+        # Include directories
+        self.mgl.preprocessor.reset()
+        to_include = info.get("include_directories", ["default"])
+
+        # Add every directory or the default one, note first returned ones have higher priority
+        for directory in self.utils.force_list(to_include):
+            if directory == "default":
+                self.mgl.include_dir(f"{self.shaders_dir}{self.sep}include")
+            else:
+                self.mgl.include_dir(directory)
 
     # List capture devices by index
     def list_captures(self):
