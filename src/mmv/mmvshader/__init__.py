@@ -26,8 +26,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from mmv.mmvshader.mmv_shader_mgl import MMVShaderMGL
-from mmv.common.cmn_constants import STEP_SEPARATOR
 import logging
 import toml
 import sys
@@ -39,8 +37,14 @@ class MMVShaderInterface:
 
     # Get a moderngl wrapper / interface for rendering fragment shaders, getting their
     # contents, map images, videos and even other shaders into textures
-    def get_mgl_interface(self, **kwargs):
-        return MMVShaderMGL(**kwargs)
+    def get_mmv_shader_mgl(self, **kwargs):
+        from mmv.mmvshader.mmv_shader_mgl import MMVShaderMGL
+        return MMVShaderMGL
+
+    # Return shader maker interface
+    def get_mmv_shader_maker(self, **kwargs):
+        from mmv.mmvshader.mmv_shader_maker import MMVShaderMaker
+        return MMVShaderMaker
 
     def __init__(self, mmv_package_interface, **kwargs):
         debug_prefix = "[MMVShaderInterface.__init__]"

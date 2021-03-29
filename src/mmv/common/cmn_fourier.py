@@ -30,6 +30,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from scipy.fft import rfft, rfftfreq
 import numpy as np
 import math
+import sys
+
 
 class Fourier:
 
@@ -39,7 +41,9 @@ class Fourier:
         # 1. Calculate the fft fft(data)
         # 2. Only need half the list of fft and don't need the DC bias (first item)
         #    - [1 : int(len(N) / 2)] = [1 : len(N) // 2]
-        return rfft(data)
+        try:
+            return rfft(data)
+        except SystemError: sys.exit()
 
     # Return real fft frequencies
     def rfftf(self, N, fs):
@@ -66,7 +70,10 @@ class Fourier:
         # 2^(new_sample_rate/original_sample_rate) = power gain
         # Divide by that but offset by 1 since if new fs = old fs we multiply by 1/2^0 = 1
         #
-        raw_fft = self.fft(data) * (2 ** math.log2(original_sample_rate / target_sample_rate))
+        try:
+            raw_fft = self.fft(data) * (2 ** math.log2(original_sample_rate / target_sample_rate))
+        except TypeError as e: print(e); sys.exit()
+
         # raw_fft = self.fft(data)
 
         # # TODO: wont work for old fs and new fs equal
@@ -80,3 +87,4 @@ class Fourier:
 
         # # Return pairs of [[freq], [fft]] array
         return np.array([fftf, raw_fft], dtype = object)
+

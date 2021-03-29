@@ -1,7 +1,7 @@
 
 // ===============================================================================
 
-// // // // Coordinates normalization
+/// [Include] Coordinates normalization
 
 // The ratio relative to the Y coordinate, we expand on X
 float resratio = (mmv_resolution.x / mmv_resolution.y);
@@ -21,6 +21,24 @@ gluv.x *= resratio;
 vec2 stuv = shadertoy_uv;
 stuv.x *= resratio;
 
+// Zoomed uv coords
+vec2 gluv_zoom = gluv * (mmv_zoom * mmv_zoom);
+vec2 stuv_zoom = stuv * (mmv_zoom * mmv_zoom);
+
+// Mouse drag
+vec2 drag = (mmv_drag / mmv_resolution);
+drag.x *= - resratio;
+drag.y *= -1.0; 
+
+// GL and ST uv coordinates with drag
+vec2 gluv_drag = gluv + (drag * 2.0);
+vec2 stuv_drag = stuv + (drag * 2.0);
+
+// GL and ST uv coordinates with drag + zoom
+vec2 gluv_zoom_drag = gluv_zoom + (drag * 2.0);
+vec2 stuv_zoom_drag = stuv_zoom + (drag * 2.0);
+
+
 // [Normally you'd use the shadertoy_uv for reading textures to fullscreen]
 
 // // Max values [left X, right X, bottom Y, top Y]
@@ -32,4 +50,4 @@ vec4 stuv_boundaries = vec4( 0 * resratio, 1 * resratio,  0, 1);
 // and we keep the Y coordinates fixed on those points so we only deal with horizontal
 // stretching and don't care for the Y component
 
-// // // //
+// ===============================================================================
