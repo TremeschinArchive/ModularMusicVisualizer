@@ -145,37 +145,13 @@ if OFMT == None:
 
 # # Extract as needed
 
-ffmpeg = interface.get_ffmpeg_wrapper()
-temp_audio = f"{interface.runtime_dir}temp_jumpcutter_audio_from_video.mp3"
-
-# Exctract audio as needed, get audio from video if none was set on 
-# ofmt video or assign video file's audio as audio if ofmt audio.
-if OFMT == "video":
-    # No audio was given, use the video's one
-    if INPUT_AUDIO_FILE == None:
-        print(f"{debug_prefix} Extracting audio from original video")
-        INPUT_AUDIO_FILE = ffmpeg.extract_audio_from_video(
-            ffmpeg_binary_path = interface.find_binary("ffmpeg"),
-            video = INPUT_VIDEO_FILE,
-            save_to = temp_audio
-        )
-        ffmpeg.run()
-
-elif OFMT == "audio":
-    if INPUT_VIDEO_FILE != None:
-        print(f"{debug_prefix} Extracting audio from original video")
-        INPUT_AUDIO_FILE = ffmpeg.extract_audio_from_video(
-            ffmpeg_binary_path = interface.find_binary("ffmpeg"),
-            video = INPUT_VIDEO_FILE,
-            save_to = temp_audio
-        )
-        ffmpeg.run()
-
 # # Jumpcutter config
 SILENT_SPEED = float(args.kflags.get("silent", 10))
 SOUNDED_SPEED = float(args.kflags.get("sounded", 1))
 SILENT_THRESHOLD = float(args.kflags.get("threshold", 0.015))
 
+if (INPUT_AUDIO_FILE == None) and (INPUT_VIDEO_FILE != None):
+    INPUT_AUDIO_FILE = INPUT_VIDEO_FILE
 
 # # Video capture, resolution
 
@@ -194,33 +170,23 @@ else:
     FINAL_VIDEO_WIDTH = WIDTH * float(FINAL_VIDEO_RES_MULTIPLIER)
     FINAL_VIDEO_HEIGHT = HEIGHT * float(FINAL_VIDEO_RES_MULTIPLIER)
 
-
 # Frame rate, audio
 ORIGINAL_FRAMERATE = float(capture.get(cv2.CAP_PROP_FPS))
 RENDER_FRAMERATE = float(args.kflags.get("fps", ORIGINAL_FRAMERATE))
-AUDIO_BATCH_SIZE = int(args.kflags.get("batch", 4096))
-
+AUDIO_BATCH_SIZE = int(args.kflags.get("batch", 2048))
 
 # Jumpcutter
-jumpcutter = interface.get_audio_source_jumpcutter()
+jumpcutter = interface.get_jumpcutter()
 
 # Configure with stuff
 jumpcutter.configure(
     batch_size = AUDIO_BATCH_SIZE,
-    sample_rate = None,
+    sample_rate = 48000,
     target_fps = ORIGINAL_FRAMERATE,
 )
 
 # Read source audio file
-jumpcutter.init(path = INPUT_AUDIO_FILE)
-jumpcutter.start(
-    silent_speed = SILENT_SPEED,
-    sounded_speed = SOUNDED_SPEED,
-    silent_threshold = SILENT_THRESHOLD,
-)
-
-while not jumpcutter.usable:
-    time.sleep(0.01)
+jumpcutter.init(audio_path = INPUT_AUDIO_FILE)
 
 mode = args.kflags.get("mode", "render")
 
@@ -272,10 +238,6 @@ if mode == "render":
     # For encoding to audio file
     audio_encoder_raw_to_file = interface.get_ffmpeg_wrapper()
 
-    # Wait until audio processing finished
-    while not jumpcutter.finished:
-        time.sleep(0.01)
-
     if OFMT == "video":
         print(f"{debug_prefix} Merging to temporary audio then rendering video")
         FINAL_AUDIO_FILE = F"{interface.runtime_dir}{sep}temp_jumpcutter_audio.mp3"
@@ -283,73 +245,80 @@ if mode == "render":
         print(f"{debug_prefix} Merging to final audio")
         FINAL_AUDIO_FILE = FINAL_OUTPUT
 
-    # Configure audio encoder
-    audio_encoder_raw_to_file.raw_audio_to_file(
-        ffmpeg_binary_path = interface.find_binary("ffmpeg"),
-        sample_rate = jumpcutter.sample_rate,
-        output_file = FINAL_AUDIO_FILE
-    )
+    info_on_audio_file = {}
 
-    # Start audio encoder
-    audio_encoder_raw_to_file.start()
+    def thread_encode_to_audio():
+        global jumpcutter, info_on_audio_file
 
-    # Write to the audio encoder stdin the audio data
-    for key in jumpcutter.info["playback_audios"]:
-        value = jumpcutter.info["playback_audios"][key]["data"]
-        interweaved = np.empty((value.shape[1] * 2), dtype = np.float32)
-        interweaved[0::2] = value[0]
-        interweaved[1::2] = value[1]
-        audio_encoder_raw_to_file.subprocess.stdin.write(interweaved)
+        # Configure audio encoder
+        audio_encoder_raw_to_file.raw_audio_to_file(
+            sample_rate = jumpcutter.sample_rate,
+            output_file = FINAL_AUDIO_FILE
+        )
+
+        # Start audio encoder
+        audio_encoder_raw_to_file.start()
+
+        for index, info in enumerate(jumpcutter.start(
+            silent_speed = SILENT_SPEED,
+            sounded_speed = SOUNDED_SPEED,
+            silent_threshold = SILENT_THRESHOLD,
+        )):
+            if info["type"] == "deformation":
+                info_on_audio_file[len(info_on_audio_file)] = info.copy()
+                print(info["deformation_point"])
+
+            # Write to audio file
+            elif info["type"] == "raw_pcm":
+                value = info.pop("data")
+                audio_encoder_raw_to_file.subprocess.stdin.write(value.reshape(-1, order = "F"))
     
-    # Close the audio encoder
-    audio_encoder_raw_to_file.subprocess.stdin.close()
-    del jumpcutter.stereo_data
-    del jumpcutter.mono_data
+        # Close the audio encoder
+        audio_encoder_raw_to_file.subprocess.stdin.close()
+
+    audio_encode_thread = threading.Thread(target = thread_encode_to_audio, daemon = True)
+    audio_encode_thread.start()
+    audio_encode_thread.join()
 
     # Warn final audio is done
     if OFMT == "audio":
         print(f"{debug_prefix} Done!! Final audio only is rendered")
+        audio_encode_thread.join()
 
     # Only continue if to render video
     if OFMT == "video":
 
         # # Read images, pipe, update, render
 
+        PARTIAL_PIPE_VIDEO = f"[JumpCutter Video Only] {FINAL_OUTPUT}"
+
         # Video encoder
-        video_pipe = interface.get_ffmpeg_wrapper()
-        video_pipe.configure_encoding(
-            ffmpeg_binary_path = interface.find_binary("ffmpeg"),
+        ffmpeg = interface.get_ffmpeg_wrapper()
+        ffmpeg.configure_encoding(
             width = WIDTH, height = HEIGHT,
-            input_audio_source = FINAL_AUDIO_FILE,
+            input_audio_source = None,
             input_video_source = "pipe",
-            output_video = FINAL_OUTPUT,
+            output_video = PARTIAL_PIPE_VIDEO,
             pix_fmt = "bgr24",
             framerate = ORIGINAL_FRAMERATE,
             preset = "slow",
-            crf = 18,
+            crf = 23,
             hwaccel = "auto", loglevel = "panic", nostats = True, hide_banner = True, opencl = False,
-            tune = "film", vflip = False, vcodec = "libx264", override = True,
+            tune = "stillimage", vflip = False, vcodec = "libx264", override = True,
         )
-        video_pipe.start()
-
-        # Total frames of the video
-        total_steps = max(jumpcutter.info["deformation_points"].keys())
-        final_video_length = jumpcutter.info["deformation_points"][total_steps][0]
+        ffmpeg.start()
 
         # # Progress bar
         progress_bar = tqdm(
-            total = int(final_video_length * ORIGINAL_FRAMERATE),
-            mininterval = 1/20,
-            unit = " frames",
+            total = jumpcutter.total_steps,
+            unit = " deformations",
             dynamic_ncols = True,
             colour = '#38bed6',
-            smoothing = 0.1
+            position = 0,
+            smoothing = 0.1,
         )
         progress_bar.set_description("Rendering Final JumpCutter Video")
         ok, frame = capture.read()
-        video_pipe.subprocess.stdin.write(frame)
-        video_pipe.subprocess.stdin.write(frame)
-        video_pipe.subprocess.stdin.write(frame)
 
         # Output video timings
         seconds_per_frame = (1 / ORIGINAL_FRAMERATE)
@@ -357,17 +326,25 @@ if mode == "render":
         walked = 0
 
         # Iterate over all expected frames
-        for step in range(total_steps - 1):
+        for step in range(jumpcutter.total_steps - 1):
+            progress_bar.update(1)
+
+            # Update the total based on how many audio splits were concatenated
+            progress_bar.total = jumpcutter.total_steps - jumpcutter.not_flipped
+
+            # Check we ended since we concatenate speeded or sounded parts together
+            if (jumpcutter.finished) and (step == (jumpcutter.total_steps - 1 - jumpcutter.not_flipped)):
+                break
 
             # Wait until we have the next point info
-            while not step + 1 in jumpcutter.info["deformation_points"].keys():
+            while not (step + 1 in info_on_audio_file.keys()):
                 time.sleep(0.01)
 
             # Deformation points are points such that the values (x, y) represent
             # respectively the output video time (x) and where to get on the original
             # video time (y) this current frame.
-            this_deformation_point = jumpcutter.info["deformation_points"][step]
-            next_deformation_point = jumpcutter.info["deformation_points"][step + 1]
+            this_deformation_point = info_on_audio_file[step]["deformation_point"]
+            next_deformation_point = info_on_audio_file[step + 1]["deformation_point"]
 
             # Too short, the deformation points didn't catch up with the output video's expected
             # where to get a new frame in seconds
@@ -388,10 +365,19 @@ if mode == "render":
 
                 # Write to the final video, add to the expected frame
                 if ok:  # If we have a frame, write it (we can be on the video's end)           
-                    video_pipe.subprocess.stdin.write(frame)
+                    ffmpeg.subprocess.stdin.write(frame)
                 expect_new_frame += seconds_per_frame
+            
 
         #   #   # Progress bar stuff
-                progress_bar.update(1)
         progress_bar.close()
         #   #   #
+
+        # Wait until audio is ready and concatenate into final output video
+        audio_encode_thread.join()
+
+        # Concatenate both video and audio
+        ffmpeg.concatenate_video_and_audio(video = PARTIAL_PIPE_VIDEO, audio = FINAL_AUDIO_FILE, output = FINAL_OUTPUT)
+    
+        # Remove video only footage
+        interface.utils.rmfile(PARTIAL_PIPE_VIDEO)
