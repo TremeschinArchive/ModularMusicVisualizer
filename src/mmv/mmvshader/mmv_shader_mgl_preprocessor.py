@@ -29,6 +29,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 import mmv.mmvshader.mmv_shader_mgl as MMVShaderMGL
 from ast import literal_eval
 from PIL import Image
+import numpy as np
 import logging
 import cv2
 import os
@@ -257,6 +258,9 @@ class MMVShaderMGLPreprocessor:
                         
                         # Create a blank texture..
                         texture = self.mmv_shader_mgl.gl_context.texture((width, height), int(depth), dtype = "f4")
+
+                        # Write zeros to texture, there is no guarantee the buffer is clean
+                        texture.write(np.zeros((width, height, depth), dtype = np.float32))
 
                         # Assign the name, type and texture to the textures dictionary
                         assign_index = len(self.mmv_shader_mgl.textures.keys())

@@ -5,7 +5,7 @@
 <p align="center">
   High quality video music visualization tool for the music production community.
   <br><hr>
-  <i>Support for Music Bars and Piano Roll mode, Video as background, enable / disable whatever you want. Hack the code at your will. Real Time mode for live DJing and some extra modes</i>
+  <i>Real Time mode for live DJing, Support for Music Bars and Piano Roll mode, Video as background, enable / disable whatever you want. Hack the code at your will.</i>
 </p>
 <hr>
 
@@ -60,7 +60,7 @@ _^ Also "old code" with previous visuals before Shaders_
 
 I am a Free and Open Source music producer and code hobbyist, at some point I'd be releasing my tracks to the internet and create some project to make the music industry less harsh and more accessible, that was once my thought.
 
-The problem is, I don't want to release a music video on a platform with a static image or just recording the screen, nor pay for some software to generate an "music visualization" for me without "much control" of it, taking out all the fun on hacking the non open source code.
+The problem I faced was: I don't want to release a music video on a platform with a static image or just recording the screen, nor pay for some software to generate an "music visualization" for me without "much control" of it, taking out all the fun on hacking the non open source code.
 
 So I searched up for a free **(as in freedom and price)** tool that does exactly that, they do exist but aren't as good as they could be, most of the time a bit basic or random looking.
 
@@ -74,6 +74,8 @@ I also invite you to read about the [Free Software Definition / Philosophy](http
 
 <hr>
 
+
+
 # How MMV Works
 
 In short, take a look at the diagram:
@@ -82,9 +84,11 @@ In short, take a look at the diagram:
 
 <hr>
 
-_^(I used icons from the [Papirus Icon Theme](https://github.com/PapirusDevelopmentTeam/papirus-icon-theme), credits to their respective authors, we share the same license of code. I'm displaying a diagram (made with [Diagrams dot Net](https://app.diagrams.net/), [Repository](https://github.com/jgraph/drawio)) not a software though, have not modified their icons)_
+_^(I used icons from the [Papirus Icon Theme](https://github.com/PapirusDevelopmentTeam/papirus-icon-theme), credits to their respective authors, we share the same license of code. I'm displaying a diagram (made with [Diagrams dot Net](https://app.diagrams.net/), [Repository](https://github.com/jgraph/drawio)) not a software though, have not modified their icons, I should be fine here)_
 
 <hr>
+
+
 
 Here's some insights, technical difficulties I had to overcome:
 
@@ -96,21 +100,25 @@ We then **slice the audio** into many **chunks** and calculate a series of featu
 
 <hr>
 
+
+
 ### 2. Generating Video
 
-After that it's just a matter of implementation of Computer Generated Imagery **(CGI)** utilizing (in the _"new" code of dynamic bars_) the **OpenGL Shading Language (GLSL)** for instructions how and where to render stuff, sending the images to [FFmpeg](https://ffmpeg.org/) and generating a final video as fast as possible or simply render to the screen on the real time mode _(yields fastest performance)_.
+After that it's just a matter of implementation of Computer Generated Imagery **(CGI)** utilizing (in the _"new" code of dynamic bars_) the **OpenGL Shading Language (GLSL)** for instructions how and where to render stuff, sending the images to [FFmpeg](https://ffmpeg.org/) and generating a final video as fast as possible or simply render to the screen on the real time mode.
+
+
 
 <hr>
 
 ### 3. GPU, Shaders
 
-This GLSL part is a bit complicated since there is the `MMVShaderMGL` **wrapper I wrote for displaying shaders which includes a basic preprocessor for mapping images, videos and even other shaders as textures** (images on the GPU), recursively. This makes it possible to **separate into many layers** and apply **individual** effects and transformations on them.
+This GLSL part is a bit complicated since there is the `MMVShaderMGL`, **a wrapper / interface I wrote for displaying shaders which includes a set of utilities like a basic preprocessor for mapping images, videos and even other shaders as textures on the go**, recursively from a main file. This makes it possible to **separate into many layers** and apply **individual** effects and transformations on them.
 
-It uses the [ModernGL Python package](https://github.com/moderngl/moderngl) for communicating with GL, also **translating from ShaderToy to MMVShaderMGL is very straightforward** just by replacing some variable names and removing some parts. *This also will become a full featured wrapper in the near future™*
+It uses the [ModernGL Python package](https://github.com/moderngl/moderngl) for communicating with GL.
 
 **MMV Can also be described as a more robust alternative to ShaderToy with quite some extra flexibility and options, parameters to tinker with.**
 
-Just a quick disclaimer, I'm relatively new to coding Shaders and C-like languages, optimizations, don't expect good fps on a < budged system.
+
 
 ### 4. Memory usage
 
@@ -124,6 +132,8 @@ Since subprocesses have a limited buffer size determined by your OS, when this g
 
 In the end, MMV doesn't abuse the ram that much, though rendering in 1080p+ resolutions FFmpeg's x264 encoder will tend to use quite some juicy ram, so be careful. Also VRAM on resolutions higher than 4k can be spicy.
 
+
+
 <hr>
 
 # Community, Support, Help, Donations
@@ -136,9 +146,12 @@ I haven't yet made a decision on financial support, probably I'll have a donatio
 
 **Expect MMV to be forever Free (price and freedom).**
 
-Please be patient if you want features to be implemented, I work on MMV code in my spare time, college been quite exhausting lately.
+Please be patient if you want features to be implemented, I work on MMV code in my spare time, college been quite exhaustive and time consuming lately.
 
 <hr>
+
+
+
 
 # Running
 
@@ -146,9 +159,7 @@ Please be patient if you want features to be implemented, I work on MMV code in 
 
 ## Python
 
-Please install Python 64 bits (hard requirements are _V >= 3.7_).
-
-It is preferred to use Python 3.8 but it should work on later versions.
+Please install Python 64 bits (hard requirements are _V >= 3.7_). It is preferred to use Python 3.8 but it should work on later versions.
 
 **Python must be a 64 bits installation**, also **Only a 64 bits OS will work**. If you're on Windows you can just open a shell and type `python.exe`, see if you get win32 or not on the info, or just try running MMV code, it'll auto detect.
 
@@ -159,6 +170,8 @@ Alternatively you can chose not to use poetry but the regular `requirements.txt`
 First you have to install Python:
 
 <hr>
+
+
 
 ### Installing Python
 
@@ -186,6 +199,8 @@ Only FFmpeg is required for rendering.
 
 <hr>
 
+
+
 ### Installing Poetry
 
 Follow instructions on [Poetry's README](https://github.com/python-poetry/poetry#installation) or install from your package manager.
@@ -194,11 +209,15 @@ For Pacman you probably can run `sudo pacman -Syu python-poetry`
 
 On **Windows** I think it's easier to run `python.exe -m pip install poetry --user` on PowerShell or Command Prompt rather than their curl script or cloning the repo, I had no issues running MMV there with this.
 
+
+
 ### Getting the Source Code of MMV
 
 Either go to the main repository page at [GitHub](https://github.com/Tremeschin/modular-music-visualizer), click the green down arrow saying "Code", extract to somewhere
 
 Or just `git clone https://github.com/Tremeschin/modular-music-visualizer` if you have GIT command line interface.
+
+
 
 ### Installing Dependencies
 
@@ -212,6 +231,8 @@ Run:
 
 _(Binary is `poetry.exe` on Windows if you're on PowerShell or just `poetry` if on old Command Prompt)_
 
+
+
 ## Actually Running
 
 I highly recommend reading the basics of Python [here](https://learnxinyminutes.com/docs/python/), it doesn't take much to read and will avoid some beginner pitfalls.
@@ -219,6 +240,8 @@ I highly recommend reading the basics of Python [here](https://learnxinyminutes.
 For the "new" code (shaders), keep reading.
 
 For the "old" code, configure the file `/src/run_skia.py` to your needs (images, audios) _[though there is a default configuration, if you want fast results skip this]_ before continuing, though it have some defaults so you can get some out of the box experience
+
+
 
 ### Executing:
 
@@ -344,25 +367,30 @@ Example:
 
 
 
-## Hacking the code
 
-Want to understand how the code is structured so you can learn, modify, understand from it?
 
-Please read [HACKING.md](docs/HACKING.md) file :)
 
-Feel free DM me, I'd be happy to explain how MMV works.
+# FAQ, problems
 
-# Performance
+### Q: Can't install llvmlite or numba, doesn't find llvmlite.so
 
-I was able to sustain even 144 fps on my mid level hardware of 2019, running Jack Audio on Linux with 128, 256, 512 samples of audio buffer, though I'd recommend 256 or 512 just in case we miss some data.
+This probably will only happen in Linux _(and if you're not using Poetry?)_, but if you get this error there is high chance you have too recent version of LLVM (yea lol).
 
-It highly depends on the settings you use like resolution, target fps and the audio processing's batch size, but it was more than enough for live DJing while having a full DAW playing audio in the background.
+At least for ArchLinux the standard procedure is this:
 
-I'm quite new to GLSL programming and my shaders can definitely be improved at least 4x more speeds and efficiency, but oh well GPUs are damm fast.
+- `sudo pacman -Rs llvm lib32-llvm`
+- `yay -Syu llvm10`
+- (install Python deps, numba, llvmlite)
+- `sudo pacman -Rs llvm10`
+- `sudo pacman -Syu llvm lib32-llvm`
 
-Also my audio processing processes stuff with `BATCH_SIZE = 2048 * 4` at about 230 FPS on my CPU, so we're technically limited by this when rendering plus your GPUs raw compute power, memory bus transfer speeds.
+ie. Downgrade LLVM to version 10, install Python stuff and revert to mainstream LLVM.
 
-It definitely saturates my CPU with the video encoder (if I'm not SSAAing and have lots of movement on the screen), 100% constant usage.
+
+
+
+
+
 
 # Goals, next idea
 
@@ -374,29 +402,45 @@ It definitely saturates my CPU with the video encoder (if I'm not SSAAing and ha
 
 <hr>
 
+
 # Contributing
 
-This repository on GitHub is a mirror from the main development repository under [GitLab](https://gitlab.com/Tremeschin/modular-music-visualizer), I'm mostly experimenting with the other service.
+The main type of contribution I'm actively looking for are people that know coding in GLSL so we can build "community presets" for backgrounds, visualization bars, effects. It is no trivial doing those and doesn't really help I had to orchestrate some way to organize this all in MMV's Python code.
 
-I didn't set up bidirectional mirroring as that can cause troubles, GitLab automatically pushed every change I make to GitHub.
+The possibilities are truly infinite here but I lack a lot technical knowledge on CGI, and I'd say this will be the single most challenging part of the project after it (soon) settle down and it's about having diversity.
 
-Feel free to create issues on any of both platforms, PRs / Merge Requests I ask you to do under GitLab (as I'm not sure what would happen if I accept something here? perhaps some protected branches shenanigans to solve this?).
+So if you know some shaders hit me up!! feel free DM me, I'd be happy to guide you.
 
 <hr>
 
-# User Generated Content, copyrighted material, legal
 
-Any information, images, file names you configure manually is considered (by me) user generated content (UGC) and I take no responsibility for any violations you make on copyrighted images, musics or logos.
 
-I give you a few "free assets" files, those, apart from the MMV logo I created myself on Inkscape, were generated with Python with some old code written by me, you can use them freely. Some are generated on the go if configured (they are on by default) on the running script of MMV.
 
-# License
 
-Currently all the files of this repository are licensed under the GPLv3 license, some functions are CC and I kept those attributed with the original creator, so check every file beforehand.
+# Legal, User Generated Content, copyrighted material, warranty
 
-I might MIT the GLSL shaders files in the future, depends on my will (I'm currently 35% favorable of this idea).
+I'm no lawyer so this is general advise to protect myself and you, users:
 
-Don't advertise MMV's logo as "I made it"-content, I don't really feel like legally registering trademarks and whatnot since it's mostly an basic logo for the project so one can recognize it more easily.
+Any information, images, videos, file names you configure is considered user generated content (UGC) and I take no responsibility for any violations you make on copyrighted images, musics or logos. For example, if you generate some video with a copyrighted music using MMV and upload that, get some flag or strike I take absolutely no responsibility on your action.
+
+## License
+
+Currently all™ the (main) files of this repository are licensed under the GPLv3 license, some functions are Creative Commons (CC) and I kept those attributed with the original creator or where I learned core concepts from, so check every file beforehand.
+
+I might use the MIT license on GLSL shaders files in the future, depends on my will (I'm currently 35% favorable of this idea), though those are ultra specific to MMV's interface and processing so what's the point to MIT if it's about sharing knowledge and GPLv3 does that?
+
+### Trademark
+
+I don't really feel like legally registering trademarks for MMV's logo or name since it's mostly an basic image and name so one can recognize more easily the project, but I consider the MMV logo and the name "Modular Music Visualizer" to be project-related "trademarks".
+
+Since I, Tremeschin, am the original creator and current only main developer, I feel like having this governance on top of those two original ideas is totally understandable from the end user's point of view, keeping them on my control.
+
+This doesn't mean you can't use MMV logo on video releases, in fact I came up with it so at least you have something there in the middle, I just ask to reference the project if you're using that image.
+
+
+
+
+
 
 # Acknowledgements, Thanks to
 
@@ -464,7 +508,8 @@ The platforms MMV code is hosted on.
 
 The Open Source community.
 
-
+<hr>
+<hr>
 
 
 
