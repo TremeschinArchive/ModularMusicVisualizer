@@ -118,6 +118,22 @@ f"""{debug_prefix} Show thanks message
     # MMVShader for some post processing or visualization generation
     def get_shader_interface(self):
         debug_prefix = "[MMVPackageInterface.get_shader_interface]"
+        self.terminal_width = shutil.get_terminal_size()[0]
+        bias = " "*(math.floor(self.terminal_width/2) - 19)
+        message = \
+f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
+{bias} _____ _               _               
+{bias}/  ___| |             | |              
+{bias}\\ `--.| |__   __ _  __| | ___ _ __ ___ 
+{bias} `--. \\ '_ \\ / _` |/ _` |/ _ \\ '__/ __|
+{bias}/\\__/ / | | | (_| | (_| |  __/ |  \\__ \\
+{bias}\\____/|_| |_|\\__,_|\\__,_|\\___|_|  |___/
+{bias}                            
+{bias}
+{bias}             + MMV Mode +
+{"="*self.terminal_width}
+"""
+        logging.info(message)
         from mmv.mmvshader import MMVShaderInterface
         logging.info(f"{debug_prefix} Return MMVShaderInterface")
         return MMVShaderInterface(mmv_package_interface = self)
@@ -127,7 +143,7 @@ f"""{debug_prefix} Show thanks message
         debug_prefix = "[MMVPackageInterface.get_ffmpeg_wrapper]"
         from mmv.common.wrappers.wrap_ffmpeg import FFmpegWrapper
         logging.info(f"{debug_prefix} Return FFmpegWrapper")
-        return FFmpegWrapper()
+        return FFmpegWrapper(ffmpeg_binary_path = self.find_binary("ffmpeg"))
     
     # Return FFplay wrapper, rarely needed but just in case
     def get_ffplay_wrapper(self):
@@ -148,13 +164,30 @@ f"""{debug_prefix} Show thanks message
     def get_audio_source_file(self):
         debug_prefix = "[MMVPackageInterface.get_audio_source_file]"
         from mmv.common.cmn_audio import AudioSourceFile
-        return AudioSourceFile()
+        return AudioSourceFile(ffmpeg_wrapper = self.get_ffmpeg_wrapper())
 
     # Real time, reads from a loopback device
-    def get_audio_source_jumpcutter(self):
-        debug_prefix = "[MMVPackageInterface.get_audio_source_jumpcutter]"
-        from mmv.common.cmn_audio import AudioSourceFileJumpCutter
-        return AudioSourceFileJumpCutter()
+    def get_jumpcutter(self):
+        debug_prefix = "[MMVPackageInterface.get_jumpcutter]"
+        self.terminal_width = shutil.get_terminal_size()[0]
+        bias = " "*(math.floor(self.terminal_width/2) - 28)
+        message = \
+f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
+{bias}   ___                       _____       _   _            
+{bias}  |_  |                     /  __ \\     | | | |           
+{bias}    | |_   _ _ __ ___  _ __ | /  \\/_   _| |_| |_ ___ _ __ 
+{bias}    | | | | | '_ ` _ \\| '_ \\| |   | | | | __| __/ _ \\ '__|
+{bias}/\\__/ / |_| | | | | | | |_) | \\__/\\ |_| | |_| ||  __/ |   
+{bias}\\____/ \\__,_|_| |_| |_| .__/ \\____/\\__,_|\\__|\\__\\___|_|   
+{bias}                      | |                                 
+{bias}                      |_|                                
+{bias}
+{bias}                   + MMV Extension +
+{"="*self.terminal_width}
+"""
+        logging.info(message)
+        from mmv.extra.extra_jumpcutter import JumpCutter
+        return JumpCutter(ffmpeg_wrapper = self.get_ffmpeg_wrapper())
 
     # Main interface class, mainly sets up root dirs, get config, distributes classes
     # Send platform = "windows", "macos", "linux" for forcing a specific one
@@ -162,7 +195,7 @@ f"""{debug_prefix} Show thanks message
         debug_prefix = "[MMVPackageInterface.__init__]"
 
         # Versioning
-        self.version = "3.0.1-shaders-dev"
+        self.version = "3.1: rolling"
 
         # Can only run on Python 64 bits, this expression returns 32 if 32 bit installation
         # and 64 if 64 bit installation, we assert that (assume it's true, quit if it isn't)
@@ -341,6 +374,11 @@ f"""{debug_prefix} Show thanks message
         self.assets_dir = f"{self.MMV_PACKAGE_ROOT}{sep}assets"
         logging.info(f"{debug_prefix} Assets dir is [{self.assets_dir}]")
         self.utils.mkdir_dne(path = self.assets_dir, silent = True)
+
+        # Shaders dir
+        self.shaders_dir = f"{self.MMV_PACKAGE_ROOT}{sep}shaders"
+        logging.info(f"{debug_prefix} Shaders dir is [{self.shaders_dir}], deleting..")
+        self.utils.mkdir_dne(path = self.shaders_dir, silent = True)
 
         # Runtime dir
         self.runtime_dir = f"{self.MMV_PACKAGE_ROOT}{sep}runtime"

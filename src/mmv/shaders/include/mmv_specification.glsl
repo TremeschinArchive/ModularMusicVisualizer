@@ -1,15 +1,41 @@
 
 // ===============================================================================
 
-// // Useful function
+/// [Include] MMV Specification
+
+// // Not mine functions
 
 // https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
 float rand(float n){return fract(sin(n) * 43758.5453123);}
 
-mat2 get_rotation_mat2(float angle){
+// // Tremx functions
+
+mat2 get_rotation_mat2(float angle) {
     float c = cos(angle);
     float s = sin(angle);
     return mat2(c, s, -s, c);
+}
+
+// Noise
+
+float mmv_N21(vec2 coords) {
+   return fract(sin(dot(coords.xy, vec2(18.4835183, 59.583596))) * 39758.381532);
+}
+
+// A is proportional to B
+// C is proportional to what?
+// what = b*c / a for a \neq 0
+float mmv_proportion(float a, float b, float c) {
+    return (b * c) / a;
+}
+
+// Alpha composite new and old layers
+vec4 mmv_alpha_composite(vec4 new, vec4 old) {
+    return mix(old, new, new.a);
+}
+
+float atan2(in float y, in float x) {
+    return mix(3.14159265/2.0 - atan(x,y), atan(y,x), (abs(x) > abs(y)));
 }
 
 // Blit one image on the canvas, see function arguments
@@ -95,3 +121,5 @@ vec4 mmv_blit_image(
     // Return the texture
     return imagepixel;
 }
+
+// ===============================================================================

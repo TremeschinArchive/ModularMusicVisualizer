@@ -433,7 +433,6 @@ if mmv_skia_interface.mmv_skia_main.context.render_to_video:
 
     video_encoder = interface.get_ffmpeg_wrapper()
     video_encoder.configure_encoding(
-        ffmpeg_binary_path = interface.find_binary("ffmpeg"),
         width = mmv_skia_interface.width,
         height = mmv_skia_interface.height,
         input_audio_source = INPUT_AUDIO,
