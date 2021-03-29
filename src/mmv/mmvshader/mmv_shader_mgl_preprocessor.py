@@ -96,7 +96,7 @@ class MMVShaderMGLPreprocessor:
 
         # Add recursively the paths as well
         for index in self.mmv_shader_mgl.textures:
-            if self.mmv_shader_mgl.texture[index]["loader"] == "shader":
+            if self.mmv_shader_mgl.textures[index]["loader"] == "shader":
                 self.mmv_shader_mgl.textures[index]["shader_as_texture"].include_dir(path = path)
 
     # Parse a shader, load stuff on MMVShaderMGL main file
