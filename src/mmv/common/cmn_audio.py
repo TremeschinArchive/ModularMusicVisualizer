@@ -44,105 +44,43 @@ import time
 import os
 
 
-# Generic
-class GenericAudioSource:
-
-    def __init__(self):
+# Read audio from a path
+class AudioSourceFile:
+    def __init__(self, ffmpeg_wrapper):
+        self.ffmpeg_wrapper = ffmpeg_wrapper
+        self.return_next_info_index = 0
         self.audio_processing = AudioProcessing()
-        self.tqdm_bar_message_max_length = None
+        self.info = {}
 
-    # Set the target batch size and sample rate.
-    def configure(self,
-        # Common
-        batch_size = 2048, 
-        do_calculate_fft = True,
-
-        # RT
-        sample_rate = None,
-        recorder_numframes = None,
-
-        # From Audio
-        target_fps = 60,
-        steps_offset = 0,
-        target_loops = 1,
-    ):
-        debug_prefix = "[AudioSourceRealtime.configure]"
-
-        # # Common
-        self.batch_size = batch_size
+    def configure(self, target_fps = 60, process_batch_size = 8096, sample_rate = 48000, do_calculate_fft = True):
+        self.process_batch_size = process_batch_size
+        self.current_batch = np.zeros((2, process_batch_size), dtype = np.float32)
+        self.read_batch_size = int(sample_rate / target_fps)
         self.sample_rate = sample_rate
         self.do_calculate_fft = do_calculate_fft
 
-        # # From file
-        self.target_fps = target_fps
-        self.steps_offset = steps_offset
-        self.target_loops = target_loops
-
-        # # Real time
-        self.recorder_numframes = recorder_numframes
-
-    # Default behavior, "virtual" functions
-
-    def init(self):
-        raise NotImplementedError("Please implement .init() on your inherited class")
-    def next(self):
-        raise NotImplementedError("Please implement .next(step) on your inherited class")
-    def get_info(self):
-        raise NotImplementedError("Please implement .get_info() on your inherited class")
-    def start(self):
-        return
-
-# Read audio from a path
-class AudioSourceFile(GenericAudioSource):
-
     # Read a .wav file from disk and gets the values on a list
-    def init(self, path: str) -> None:
+    def init(self, audio_path: str) -> None:
         debug_prefix = "[AudioSourceFile.init]"
-        logging.info(f"{debug_prefix} Reading stereo audio in path [{path}], trying soundfile")
-        
-        try:
-            # Attempt to use soundfile for reading the audio
-            self.stereo_data, self.sample_rate = soundfile.read(path)
-            
-        except RuntimeError:
-            # Except it can't, try audio2numpy
-            logging.warn(f"{debug_prefix} Couldn't read file with soundfile, trying audio2numpy..")
-            self.stereo_data, self.sample_rate = audio2numpy.open_audio(path)
+        self.audio_path = audio_path
 
-        # We need to transpose to a (2, -1) array
-        logging.info(f"{debug_prefix} Transposing audio data")
-        self.stereo_data = self.stereo_data.T
+        logging.info(f"{debug_prefix} Reading total steps of audio in path [{audio_path}], can take a bit..")
 
-        # Calculate the duration and see how much channels this audio file have
-        self.duration = self.stereo_data.shape[1] / self.sample_rate
-        self.channels = self.stereo_data.shape[0]
-        
-        # Log few info on the audio file
-        logging.info(f"{debug_prefix} Duration of the audio file = [{self.duration:.2f}s]")
-        logging.info(f"{debug_prefix} Audio sample rate is         [{self.sample_rate}]")
-        logging.info(f"{debug_prefix} Audio data shape is          [{self.stereo_data.shape}]")
-        logging.info(f"{debug_prefix} Audio have                   [{self.channels}]")
+        # Calculate total steps
+        self.total_steps = 0
+        for _ in self.read_progressive():
+            self.total_steps += 1
+        logging.info(f"{debug_prefix} Total steps: [{self.total_steps}]")
 
-        # Get the mono data of the audio
-        logging.info(f"{debug_prefix} Calculating mono audio")
-        self.mono_data = (self.stereo_data[0] + self.stereo_data[1]) / 2
+        self.duration = (self.total_steps * self.read_batch_size) / self.sample_rate
+        logging.info(f"{debug_prefix} Duration: [{self.duration}]")
 
-        # Total number of samples
-        self.n_samples = self.mono_data.shape[0]
-
-        # Just make sure the mono data is right..
-        logging.info(f"{debug_prefix} Mono data shape:             [{self.mono_data.shape}]")
-
-        # The array we slice the audio and get info
-        self.steps_per_loop = int(self.duration * self.target_fps)
-        self.current_batch = np.zeros([2, self.batch_size])
-        self.info = {}
-
-        # # When end_cut is n_samples this is increased
-        self.loops = 0
-
-        # Start thread to process audio
-        self.return_next_info_index = -1
+    # Progressively read the audio file in chunks so we don't assassinate the computer's memory in large files
+    def read_progressive(self):
+        for batch in self.ffmpeg_wrapper.raw_audio_from_file(
+                input_file = self.audio_path, batch_size = self.read_batch_size,
+                sample_rate = self.sample_rate, channels = 2):
+            yield batch
 
     # Start a thread to process the audio
     def start(self):
@@ -153,14 +91,18 @@ class AudioSourceFile(GenericAudioSource):
         while not step + 1 in self.info.keys():
             time.sleep(0.01)
         
+    def get_info(self):
+        self.return_next_info_index += 1
+        return self.info[self.return_next_info_index].copy()
+
     def __slice_process(self):
         assign_step_counter = 0
 
         # Progress bar
         progress_bar = tqdm(
-            total = self.steps_per_loop,
-            mininterval = 1/20,
+            total = self.total_steps,
             unit = " slices",
+            # unit_scale = True,
             dynamic_ncols = True,
             colour = '#00ff00',
             position = 1,
@@ -169,38 +111,28 @@ class AudioSourceFile(GenericAudioSource):
 
         # Arrange message such that both tqdm message align
         message = f"Processing Audio File"
-        if self.tqdm_bar_message_max_length is not None:
-            message += " " * (self.tqdm_bar_message_max_length - len(message))
 
         # Set the description
         progress_bar.set_description(message)
 
-        while self.loops < 1:
+        for batch in self.read_progressive():
+            len_batch = batch.shape[1]
             progress_bar.update(1)
 
-            # Empty the slice array
-            self.current_batch.fill(0)
             self.info[assign_step_counter] = {}
-
-            # Where we slice the audio
-            start_cut = (assign_step_counter + self.steps_offset) * int(self.sample_rate / self.target_fps)
-            end_cut = min(start_cut + self.batch_size, self.n_samples)
-
-            # Check if we looped
-            if (start_cut > self.n_samples):
-                self.loops += 1
-                self.steps_offset -= self.steps_per_loop
-                continue
 
             # Insert new data
             for channel_number in [0, 1]:
+                self.current_batch[channel_number] = np.roll(self.current_batch[channel_number], - len_batch, axis = -1)
                 np.put(
-                    self.current_batch[channel_number],                   # Target array
-                    range(0, end_cut - start_cut),                        # Where on target array to put the data
-                    self.stereo_data[channel_number][start_cut:end_cut],  # Input data
-                    mode = "wrap"                                         # Mode (wrap)
+                    # Target array
+                    self.current_batch[channel_number], 
+
+                    # Where on target array to put the data and input data
+                    range(self.process_batch_size - len_batch, self.process_batch_size), batch[channel_number],         
+                    mode = "wrap"  # Mode (wrap)
                 )
-            
+
             # This yields information as it was calculated so we assign the key (index 0) to the value (index 1)
             for info in self.audio_processing.get_info_on_audio_slice(
                 audio_slice = self.current_batch,
@@ -210,141 +142,17 @@ class AudioSourceFile(GenericAudioSource):
                 self.info[assign_step_counter][info[0]] = info[1]
             assign_step_counter += 1
     
-    def get_info(self):
-        self.return_next_info_index += 1
-        return self.info[self.return_next_info_index].copy()
 
-
-class AudioSourceFileJumpCutter(AudioSourceFile):
+class AudioSourceRealtime:
     def __init__(self):
         self.audio_processing = AudioProcessing()
-        self.usable_up_to = 0
-        self.finished = False
-        self.usable = False
-        
-    # Start jumpcutter processing
-    def start(self, silent_speed, sounded_speed, silent_threshold):
 
-        # Assign config
-        self.silent_speed = silent_speed
-        self.sounded_speed = sounded_speed
-        self.silent_threshold = silent_threshold
-
-        # Info dict
-        self.info = {
-            "playback_audios" : {},
-            "deformation_points": {},
-        }
-
-        # Start processing thread
-        self.slice_process_thread = threading.Thread(target = self.__slice_process, daemon = True)
-        self.slice_process_thread.start()
-
-    # Main routines for generating data to the info dictionary
-    def __slice_process(self):
-        debug_prefix = "[AudioSourceFileJumpCutter.__slice_process]"
-        
-        # Create "zero" variables
-        self.total_steps = int(self.mono_data.shape[0] / self.batch_size)
-
-        logging.info(f"{debug_prefix} Calculating silent regions on Audio File, should take a while..")
-
-        # Progress bar
-        progress_bar = tqdm(
-            total = self.total_steps,
-            mininterval = 1/20,
-            unit = " slices",
-            dynamic_ncols = True,
-            colour = '#00ff00',
-            smoothing = 0.07
-        )
-        progress_bar.set_description("Processing JumpCutter Audio     ")
-
-        # Absolute time and how much samples we sliced so far
-        current_absolute_time_no_deforming = 0
-        total_sliced = 0
-
-        # Iterate
-        for step in range(self.total_steps):
-
-            # Where we'll slice
-            start_cut = int(self.batch_size * step)
-            end_cut = int( min(self.batch_size * (step + 1), self.mono_data.shape[0]) )
-
-            # Cut the mono slice and find min and max values
-            mono_audio_slice = np.array(self.mono_data[start_cut : end_cut])
-            min_max = [np.min(np.abs(mono_audio_slice)), np.max(np.abs(mono_audio_slice))]
-
-            # Cut the stereo audio
-            stereo_audio_slice = np.array([
-                self.stereo_data[0][start_cut : end_cut],
-                self.stereo_data[1][start_cut : end_cut],
-            ])
-
-            # Get target speed
-            if min_max[1] > self.silent_threshold:
-                this_speed = self.sounded_speed
-            else:
-                this_speed = self.silent_speed
-
-            # Either way we start with the raw cut as the pitch shifted one
-            pitch_shifted = stereo_audio_slice
-        
-            # Pitch shift accordingly
-            if (this_speed != 1):
-                pitch_shifted = self.pitch_shift_slice(stereo_audio_slice, - 12 * math.log2(this_speed))
-
-                size = pitch_shifted.shape[1] / this_speed
-
-                # Too short audio, send zeros
-                if size < 128:
-                    pitch_shifted = np.zeros((2, int(size)))
-
-                else:
-                    # Resample ("truncate" the audio)
-                    pitch_shifted = np.array([
-                        self.audio_processing.resample(pitch_shifted[0], self.sample_rate * this_speed, self.sample_rate),
-                        self.audio_processing.resample(pitch_shifted[1], self.sample_rate * this_speed, self.sample_rate),
-                    ])
-                
-            # "Riemann summation" with limit \neq 0
-            current_time = (total_sliced / self.sample_rate)
-            this_slice_N_samples = pitch_shifted.shape[1]
-            this_slice_duration = (this_slice_N_samples / self.sample_rate) * this_speed
-
-            # Assign information
-            self.info["playback_audios"][step] = {
-                "data": pitch_shifted,
-                "speed": this_speed,
-            }
-
-            # Add to the list of deformations on the timeline
-            self.info["deformation_points"][step] = [
-                current_time + this_slice_duration, current_absolute_time_no_deforming
-            ]
-
-            # Mark there is at least some data and up to what index we can work with
-            total_sliced += this_slice_N_samples
-            current_absolute_time_no_deforming += self.batch_size / self.sample_rate
-            self.usable_up_to += 1
-            self.usable = True
-            progress_bar.update(1)
-
-        # ned
-        progress_bar.close()
-        logging.info(f"{debug_prefix} Done")
-        self.finished = True
-
-    # Pitch shift some audio slice by a certain amount of Hertz
-    def pitch_shift_slice(self, audio_slice, ratio):
-        import librosa
-        return np.array([
-            librosa.effects.pitch_shift(audio_slice[0], self.sample_rate, n_steps = ratio),
-            librosa.effects.pitch_shift(audio_slice[1], self.sample_rate, n_steps = ratio)
-        ])
-
-
-class AudioSourceRealtime(GenericAudioSource):
+    def configure(self, batch_size = 8096, sample_rate = 48000, recorder_numframes = 256, do_calculate_fft = True):
+        self.batch_size = batch_size
+        self.current_batch = np.zeros((2, batch_size), dtype = np.float32)
+        self.sample_rate = sample_rate
+        self.recorder_numframes = recorder_numframes
+        self.do_calculate_fft = do_calculate_fft
 
     def init(self, recorder_device = None, search_for_loopback = False):
         import soundcard
@@ -371,6 +179,8 @@ class AudioSourceRealtime(GenericAudioSource):
 
         # Recorder device should not be none
         assert (self.recorder is not None), "Auto search is off and didn't give a target recorder device"
+
+    def start(self): pass
 
     # Start the main routines since we configured everything
     def start_async(self):
@@ -471,6 +281,7 @@ class AudioSourceRealtime(GenericAudioSource):
                 do_calculate_fft = self.do_calculate_fft,
             ):
                 self.info[info[0]] = info[1]
+                if self.__should_stop: break
               
         self.__should_stop = False
 
@@ -597,6 +408,9 @@ class AudioProcessing:
         # Calculate MONO
         mono = (audio_slice[0] + audio_slice[1]) / 2
 
+        yield ["mmv_raw_audio_left", audio_slice[0]]
+        yield ["mmv_raw_audio_right", audio_slice[1]]
+
         # # Average audio amplitude based on RMS
 
         # L, R, Mono respectively
@@ -611,11 +425,11 @@ class AudioProcessing:
         RMS.append(sum(RMS) / 2)
 
         # Yield average amplitudes info
-        yield ["mmv_rms_lrm", tuple([round(value, 8) for value in RMS])]
+        yield ["mmv_rms", tuple([round(value, 8) for value in RMS])]
 
         # # Standard deviations
 
-        yield ["standard_deviations", tuple([
+        yield ["mmv_std", tuple([
             np.std(audio_slice[0]),
             np.std(audio_slice[1]),
             np.std(mono)
@@ -654,18 +468,23 @@ class AudioProcessing:
                         original_sample_rate = original_sample_rate,
                         target_sample_rate = target_sample_rate,
                     )
+                    if binned_fft is None: return
 
                     # Information on the frequencies, the index 0 is the DC bias, or frequency 0 Hz
                     # and at every index it jumps the distance between any index N and N+1
                     fft_freqs = binned_fft[0]
                     jumps = abs(fft_freqs[1])
 
-                    # Get the nearest freq and add to processed            
+                    # Reverse the second channel frequencies for continuity
+                    if channel_index:
+                        expected_frequencies = reversed(expected_frequencies)
+
+                    # Get the nearest freq and add to processed         
                     for freq in expected_frequencies:
 
                         # TODO: make configurable
                         flatten_scalar = self.functions.value_on_line_of_two_points(
-                            Xa = 20, Ya = 0.2,
+                            Xa = 20, Ya = 0.1,
                             Xb = 20000, Yb = 3,
                             get_x = freq
                         )
@@ -685,7 +504,7 @@ class AudioProcessing:
                         counter += 1
 
             # Yield FFT data
-            yield ["fft", processed]
+            yield ["mmv_fft", processed]
 
     # # Common Methods
 
