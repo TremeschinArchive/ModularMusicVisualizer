@@ -39,10 +39,59 @@ import cv2
 
 
 class FFmpegWrapper:
+    def __init__(self, ffmpeg_binary_path):
+        self.ffmpeg_binary_path = ffmpeg_binary_path
 
-    def raw_audio_to_file(self, ffmpeg_binary_path, sample_rate, output_file):
+    # Generator for keeping outputting raw audio from some file in f32 format (normalized)
+    def raw_audio_from_file(self, input_file, batch_size = 2048, sample_rate = 48000, channels = 2):
+
+        # Output values ranging from 0 to 1, float 32
         self.command = [
-            ffmpeg_binary_path, "-y",
+            self.ffmpeg_binary_path,
+            "-loglevel", "panic", "-hide_banner",
+            "-i", input_file,
+            "-acodec", "pcm_f32le",
+            "-f", "f32le",
+            "-ac", f"{channels}",
+            "-ar", f"{sample_rate}",
+            "-"  # Output to stdout
+        ]
+
+        # Open subprocess
+        self.subprocess = subprocess.Popen(self.command, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
+
+        # Size to read (4 bytes (f32), times channel and target batch size)
+        read_batch_size = 4 * channels * batch_size
+
+        # Value we yield on the loop
+        to_yield = np.zeros((channels, batch_size), dtype = np.float32)
+        
+        while True:
+            # Try reading some data (or until it closes so we have partial data, keep this in mind)
+            data = self.subprocess.stdout.read(read_batch_size)
+
+            # If we have at least some data, else break
+            if data:
+
+                # Load into one numpy array, can be less sized than batch_size, transposed
+                data = np.fromstring(data, dtype = np.float32).reshape((channels, -1), order = "F")
+
+                # Zero fill the full array with the target batch size output
+                to_yield.fill(0.0)
+
+                # Insert new data into the zero filled array with length of data
+                for channel in range(channels):
+                    np.put(to_yield[channel], range(0, data.shape[1]), data[channel])
+
+                # Yield new data
+                yield to_yield
+            else:
+                break
+
+    def raw_audio_to_file(self, sample_rate, output_file):
+        self.command = [
+            self.ffmpeg_binary_path, "-y",
+            "-loglevel", "panic", "-hide_banner",
             "-f", f"f32le",
             "-acodec", f"pcm_f32le", 
             "-ar", str(sample_rate),
@@ -52,9 +101,22 @@ class FFmpegWrapper:
             output_file
         ]
 
-    def extract_audio_from_video(self, ffmpeg_binary_path, video, save_to):
+    def concatenate_video_and_audio(self, video, audio, output):
         self.command = [
-            ffmpeg_binary_path, "-y",
+            self.ffmpeg_binary_path, "-y",
+            "-loglevel", "panic", "-hide_banner",
+            "-i", video,
+            "-i", audio,
+            "-map", "0:v",
+            "-map", "1:a",
+            "-c", "copy",
+            output
+        ]
+        self.run()
+
+    def extract_audio_from_video(self, video, save_to):
+        self.command = [
+            self.ffmpeg_binary_path, "-y",
             "-i", video,
             "-b:a", "230k",
             save_to
@@ -69,7 +131,6 @@ class FFmpegWrapper:
     # Create a FFmpeg writable pipe for generating a video
     # For more detailed info see [https://trac.ffmpeg.org/wiki/Encode/H.264]
     def configure_encoding(self, 
-        ffmpeg_binary_path: str,  # Path to the ffmpeg binary
         width: int,
         height: int,
         input_audio_source: str,  # Path, None for disabling
@@ -98,7 +159,7 @@ class FFmpegWrapper:
 
         # Generate the command for piping images to
         self.command = [
-            ffmpeg_binary_path
+            self.ffmpeg_binary_path
         ]
 
         # Add hwaccel flag if it's set
@@ -184,24 +245,23 @@ class FFmpegWrapper:
         # Log the command for generating final video
         logging.info(f"{debug_prefix} FFmpeg command is: {self.command}")
       
-    def start(self, stdin = subprocess.PIPE, stdout = subprocess.PIPE):
-        debug_prefix = "[FFmpegWrapper.start]"
-
-        logging.info(f"{debug_prefix} Starting FFmpeg pipe subprocess with command {self.command}")
-
-        # Create a subprocess in the background
-        self.subprocess = subprocess.Popen(
-            self.command,
-            stdin  = stdin,
-            stdout = stdout,
-            # bufsize = ((1920*1080) * 3)
-        )
-
-        print(debug_prefix, "Open one time pipe")
-
         self.stop_piping = False
         self.lock_writing = False
         self.images_to_pipe = {}
+
+    def start(self, stdin = subprocess.PIPE, stdout = subprocess.PIPE):
+        debug_prefix = "[FFmpegWrapper.start]"
+        logging.info(f"{debug_prefix} Starting FFmpeg subprocess with command {self.command}")
+
+        # Create a subprocess in the background
+        self.subprocess = subprocess.Popen(self.command, stdin  = stdin, stdout = stdout)
+    
+    def run(self, stdin = subprocess.PIPE, stdout = subprocess.PIPE):
+        debug_prefix = "[FFmpegWrapper.run]"
+        logging.info(f"{debug_prefix} Run FFmpeg subprocess with command {self.command}")
+
+        # Run blocking code
+        subprocess.run(self.command, stdin = stdin, stdout = stdout)
 
     # Write images into pipe, run pipe_writer_loop first!!
     def write_to_pipe(self, index, image):

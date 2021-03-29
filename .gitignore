@@ -28,7 +28,7 @@ src/mmv/externals
 src/mmv/release
 src/mmv/runtime
 
-src/unused
+unused/*
 
 # # MMV GLSL Shader
 

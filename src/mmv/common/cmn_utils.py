@@ -189,13 +189,13 @@ class Utils:
     def rmdir(self, path, silent = False) -> None:
         debug_prefix = "[Utils.rmdir]"
 
+        # Log action
+        if not silent:
+            logging.info(f"{debug_prefix} Removing dir: [{path}]")
+
         # If the asked directory is even a path
         if os.path.isdir(path):
-
-            # Log action
-            if not silent:
-                logging.info(f"{debug_prefix} Removing dir: [{path}]")
-
+         
             # Try removing with ignoring errors first..?
             shutil.rmtree(path, ignore_errors = True)
 
@@ -219,7 +219,33 @@ class Utils:
         else:
             # Directory didn't exist at first, nothing to do here
             if not silent:
-                logging.debug(f"{debug_prefix} Directory doesn't exists, nothing to do here... [{path}]")
+                logging.debug(f"{debug_prefix} Directory didn't exists, nothing to do here... [{path}]")
+
+    # Remove some file
+    def rmfile(self, path, silent = False) -> None:
+        debug_prefix = "[Utils.rmfile]"
+
+        # Log action
+        if not silent:
+            logging.info(f"{debug_prefix} Removing file: [{path}]")
+
+        # Check if it's even a file
+        if os.path.isfile(path):
+            
+            # Remove file
+            os.remove(path)
+    
+            # Check if it still exists (efror if True)
+            if os.path.isfile(path):
+                logging.error(f"{debug_prefix} COULD NOT REMOVE FILE: [{path}]")
+                sys.exit(-1)
+
+            # Ok!
+            logging.debug(f"{debug_prefix} Removed directory successfully")
+        else:
+            # File didn't exist at first, nothing to do here
+            if not silent:
+                logging.debug(f"{debug_prefix} File didn't exists, nothing to do here... [{path}]")
 
     # Reset an file to empty contents
     def reset_file(self, path, silent = False) -> None:
@@ -654,6 +680,8 @@ class Utils:
 
         return unique_id
 
+    # "true" if True else "false"
+    def bool_to_string(self, value): return "true" if value else "false"
 
 # Utilities in processing dictionaries, lists
 class DataUtils:
