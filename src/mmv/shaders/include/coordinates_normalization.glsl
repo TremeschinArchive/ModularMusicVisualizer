@@ -50,4 +50,8 @@ vec4 stuv_boundaries = vec4( 0 * resratio, 1 * resratio,  0, 1);
 // and we keep the Y coordinates fixed on those points so we only deal with horizontal
 // stretching and don't care for the Y component
 
+// // Transformations, usually will be applied globally
+
+//#shadermaker transformations
+
 // ===============================================================================

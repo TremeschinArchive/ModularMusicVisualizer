@@ -94,12 +94,34 @@ master_shader.add_transformation(transformation = master_shader.transformations.
 # # Build shader, save 
 master_shader.build_final_shader()
 master_shader.save_shader_to_file(f"{interface.runtime_dir}{sep}{master_shader.name}-frag.glsl")
-
 master_shader_path = master_shader.get_path()
+
+
+# # Build custom include directories
+
+coordinate_normalizations = shadermaker.clone()
+coordinate_normalizations.set_name("coordinates_normalization")
+coordinate_normalizations.load_shader_from_path(
+    path = f"{interface.shaders_dir}{sep}include{sep}coordinates_normalization.glsl",
+)
+coordinate_normalizations.add_transformation(BlockOfCode(
+"""
+// Apply zoom in / out effect
+float scale = 0.5 + ((atan(mmv_time * 2.0) / 3.1415) * 2) * 0.5;
+if(scale < 0.99) {
+    stuv *= scale;
+    gluv *= scale;
+    gluv_zoom_drag *= scale;
+}
+"""
+))
+coordinate_normalizations.build_final_shader()
+coordinate_normalizations.save_shader_to_file(f"{interface.runtime_dir}{sep}{coordinate_normalizations.name}.glsl")
 
 
 # Return info to the run shaders interface
 global info
 info = {
     "master_shader": master_shader_path,
+    "include_directories": [interface.runtime_dir, "default"],
 }
