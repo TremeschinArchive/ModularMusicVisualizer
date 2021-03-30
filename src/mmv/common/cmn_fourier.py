@@ -45,6 +45,10 @@ class Fourier:
             return rfft(data)
         except SystemError: sys.exit()
 
+    # Return normalized FFT to amplitude and only absolute values (don't care the phase)
+    def rfft_abs_normalized(self, data: np.ndarray) -> np.ndarray:
+        return np.sqrt( np.abs(self.fft(data)[1:]) ) / data.shape[0]
+
     # Return real fft frequencies
     def rfftf(self, N, fs):
         return rfftfreq(N, 1 / fs)

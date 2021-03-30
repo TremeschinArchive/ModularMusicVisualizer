@@ -297,15 +297,20 @@ This prevents jagged edges and makes the video more smooth at the cost of about 
 Optimally use 2 for final exports (maybe not for target output 4k unless you have a beefy GPU)
 
 
-### Preset
+### Presets, load single file
 
-You can pass the `preset` command and set a target name:
+You can pass the `load` command and set a target something fo load:
 
-- `poetry run shaders preset --name "default"`
+- `poetry run shaders load --preset "default"`
+- `poetry run shaders load --file "some/shader.glsl"`
 
-It looks for files under `/src/mmv/shaders/presets/{NAME}.py` and executes them for generating the shaders and run them.
+Preset mode it looks for files under `/src/mmv/shaders/presets/{NAME}.py` and executes them for generating the shaders and run them.
 
 It's quite hard to explain with text how they work so check out the file itself so you can make your own or change some configuration.
+
+The argument `--file` loads that as a single shader to the screen.
+
+By default MMV will look for any file modification on disk and rebuild, reload the current scheme with the new code, you can turn that off by sending `--watchdog false` to the `load` command: `poetry run shaders load --watchdog false...`.
 
 You can press `r` key on live mode to reload them, no need to quit and come back, more on this later.
 
@@ -335,7 +340,8 @@ Example:
 - `poetry run shaders realtime`
 - `poetry run shaders realtime --cap N`
 - `poetry run shaders multiplier --value 2.0 realtime`
-- `poetry run shaders multiplier --value 2.0 preset --name "other_preset" realtime`
+- `poetry run shaders multiplier --value 2.0 load --preset "other_preset" realtime`
+- `poetry run shaders multiplier --value 2.0 load --file "some_shader.glsl" realtime`
 
 There are a couple hotkeys and interactions with the window:
 
