@@ -25,8 +25,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
-
-# Append previous folder to path
+from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
 import mmv.common.cmn_any_logger
 from tqdm import tqdm
 import numpy as np
@@ -39,6 +39,16 @@ import sys
 import mmv
 import os
 
+# Watchdog for changes, reload shaders
+class AnyModification(FileSystemEventHandler):
+    def __init__(self, controller):
+        self.controller = controller
+        self.reload = False
+
+    def on_modified(self, event):
+        debug_prefix = "[AnyModification.on_modified]"
+        logging.info(f"{debug_prefix} Some modification event [{event}], reloading shaders..")
+        self.reload = True
 
 class MMVShadersCLI:
     def __init__(self):
@@ -116,12 +126,28 @@ class MMVShadersCLI:
         self._ssaa = float(ssaa)
         self._msaa = int(msaa)
 
-    def preset(self, 
-        name: str = typer.Option("default", help = (
-            "Load some preset with this name under the folder /mmv/shaders/presets/{name}/pconfig_{name}.yaml"))
+    def load(self, 
+        preset: str = typer.Option("default", help = (
+            "Load some preset, executes the python file under /src/mmv/shaders/presets/{name}.py")),
+        file: str = typer.Option("", help = (
+            "Load a raw shader from disk."
+        )),
+        watchdog: bool = typer.Option(True, help = (
+            "Watch for main shader or Python preset file on disk file modifications, rebuilds and reloads shaders. Good for development of shaders."
+        ))
     ):
-        logging.info(f"[MMVShadersCLI.preset] Set [preset={name}]")
-        self._preset = name
+        debug_prefix = "[MMVShadersCLI.preset]"
+
+        self.watchdog = watchdog
+
+        # User sent some file to be the main shader so we 
+        if file:
+            logging.info(f"{debug_prefix} Load raw shader!! Set [preset master shader={file}]")
+            self._preset_name = None
+            self._preset_master_shader = file
+        else:
+            logging.info(f"{debug_prefix} Execute preset file!! Set [preset={preset}]")
+            self._preset_name = preset
 
     def multiplier(self, 
         value: float = typer.Option(3.0, help = (
@@ -166,45 +192,53 @@ class MMVShadersCLI:
     def __load_preset(self):
         debug_prefix = "[MMVShadersCLI.__load_preset]"
 
-        # Stuff to replace
-        replaces = {
-            "MMV_FFTSIZE": self.MMV_FFTSIZE,
-            "AUDIO_BATCH_SIZE": self._audio_batch_size,
-            "WIDTH": self._width,
-            "HEIGHT": self._height,
-        }
+        # # Will we load preset file or raw file shader? 
 
-        # Directory of this preset
-        preset_file = f"{self.shaders_dir}{self.sep}presets{self.sep}{self._preset_name}.py"
-        working_directory = self.mmv_package_interface.shaders_dir
-        shadermaker = self.shader_interface.get_mmv_shader_maker()
-        interface = self.mmv_package_interface
-        sep = os.path.sep
-        NULL = "MMV_MGL_NULL_FRAGMENT_SHADER"
+        # Raw file
+        if self._preset_name is None:
+            self.mgl.include_dir(f"{self.shaders_dir}{self.sep}include")
 
-        # Open and execute the file with this scope's variables
-        # Note: we can access like locals()["replaces"] from the other file!!
-        with open(preset_file, "rb") as f:
-            code = compile(f.read(), preset_file, "exec")
+        # Preset file
+        else:
+            # Stuff to replace
+            replaces = {
+                "MMV_FFTSIZE": self.MMV_FFTSIZE,
+                "AUDIO_BATCH_SIZE": self._audio_batch_size,
+                "WIDTH": self._width,
+                "HEIGHT": self._height,
+            }
 
-        # We get this info dictionary back from the executed file
-        exec(code, globals(), locals())
+            # Directory of this preset
+            preset_file = f"{self.shaders_dir}{self.sep}presets{self.sep}{self._preset_name}.py"
+            working_directory = self.mmv_package_interface.shaders_dir
+            shadermaker = self.shader_interface.get_mmv_shader_maker()
+            interface = self.mmv_package_interface
+            sep = os.path.sep
+            NULL = "MMV_MGL_NULL_FRAGMENT_SHADER"
 
-        # pylint: disable=E0602 # Disable undefined variables because this info must exist
-        logging.info(f"{debug_prefix} Got info from preset file [{preset_file}]: {info}")
+            # Open and execute the file with this scope's variables
+            # Note: we can access like locals()["replaces"] from the other file!!
+            with open(preset_file, "rb") as f:
+                code = compile(f.read(), preset_file, "exec")
 
-        self._preset_master_shader = info["master_shader"]
+            # We get this info dictionary back from the executed file
+            exec(code, globals(), locals())
 
-        # Include directories
-        self.mgl.preprocessor.reset()
-        to_include = info.get("include_directories", ["default"])
+            # pylint: disable=E0602 # Disable undefined variables because this info must exist
+            logging.info(f"{debug_prefix} Got info from preset file [{preset_file}]: {info}")
 
-        # Add every directory or the default one, note first returned ones have higher priority
-        for directory in self.utils.force_list(to_include):
-            if directory == "default":
-                self.mgl.include_dir(f"{self.shaders_dir}{self.sep}include")
-            else:
-                self.mgl.include_dir(directory)
+            self._preset_master_shader = info["master_shader"]
+
+            # Include directories
+            self.mgl.preprocessor.reset()
+            to_include = info.get("include_directories", ["default"])
+
+            # Add every directory or the default one, note first returned ones have higher priority
+            for directory in self.utils.force_list(to_include):
+                if directory == "default":
+                    self.mgl.include_dir(f"{self.shaders_dir}{self.sep}include")
+                else:
+                    self.mgl.include_dir(directory)
 
     # List capture devices by index
     def list_captures(self):
@@ -347,6 +381,26 @@ class MMVShadersCLI:
         self.__error_assertion()
         self.mgl.set_reset_function(obj = self.__load_preset)
 
+        # Look for file changes
+        if self.watchdog:
+            logging.info(f"{debug_prefix} Starting watchdog")
+
+            self.any_modification_watchdog = AnyModification(controller = self)
+
+            paths = [
+                f"{self.shaders_dir}{self.sep}presets",
+                f"{self.shaders_dir}{self.sep}assets",
+                f"{self.shaders_dir}{self.sep}include",
+                f"{self.mmv_package_interface.runtime_dir}",
+            ]
+
+            self.watchdog_observer = Observer()
+
+            for path in paths:
+                self.watchdog_observer.schedule(self.any_modification_watchdog, path = path, recursive = True)
+
+            self.watchdog_observer.start()
+
         # FPS, manual vsync dealing
         self.start = time.time()
         self.fps_last_n = 120
@@ -395,6 +449,11 @@ class MMVShadersCLI:
 
         # Main loop
         for step in itertools.count(start = 0):
+
+            # To reload or not to reload
+            if self.any_modification_watchdog.reload:
+                self.mgl._read_shaders_from_paths_again()
+                self.any_modification_watchdog.reload = False
 
             # The time this loop is starting
             startcycle = time.time()
@@ -559,7 +618,7 @@ def main():
     app.command()(cli.realtime)
     app.command()(cli.list_captures)
     app.command()(cli.render)
-    app.command()(cli.preset)
+    app.command()(cli.load)
     app()
 
 # This wouldn't be required but Windows :p
