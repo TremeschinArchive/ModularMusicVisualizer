@@ -39,12 +39,14 @@ class MMVShaderMakerTransformations:
         image, assign_to_variable = "layered", new_variable = True,
         x = 0, y = 0, scale = 1.0, angle = 0,
         canvas = "layered", uv = "stuv", anchor = "vec2(0.5, 0.5)",
-        shift = "vec2(0.5, 0.5)", repeat = False, **kwargs
+        shift = "vec2(0.5, 0.5)", repeat = False,
+        undo_gamma = True, gamma = 2.0, **kwargs
     ):
         debug_prefix = "[MMVShaderMakerTransformations.image]"
 
         new = "vec4 " if new_variable else ""
         repeat = self.utils.bool_to_string(repeat)
+        undo_gamma = self.utils.bool_to_string(undo_gamma)
 
         return BlockOfCode((
             f"{new}{assign_to_variable} = mmv_blit_image(\n"
@@ -56,7 +58,9 @@ class MMVShaderMakerTransformations:
             f"    {shift}, // Shift\n"
             f"    {scale}, // Scale\n"
             f"    {angle}, // Angle\n"
-            f"    {repeat} // Repeat\n"
+            f"    {repeat}, // Repeat\n"
+            f"    {undo_gamma}, // Undo gamma\n"
+            f"    {gamma} // Gamma\n"
             f")"
         ), scoped = kwargs.get("scoped", True))
 

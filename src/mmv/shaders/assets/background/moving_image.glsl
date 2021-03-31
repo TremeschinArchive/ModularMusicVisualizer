@@ -33,7 +33,8 @@ void main() {
         vec2(0.0, 0.0), // Anchor rotation
         vec2(0.5, 0.5), // Shift image from center
         scale, angle,
-        true // repeat
+        true, // repeat
+        true, 2.0 // Undo gamma correction, gamma value
     );
 
     fragColor = col;

@@ -39,8 +39,8 @@ background.set_name("background-shader")
 
 
 # Can put "shader" or "image"
-# BACKGROUND = "shader"
-BACKGROUND = "image"
+BACKGROUND = "shader"
+# BACKGROUND = "image"
 
 if BACKGROUND == "shader":
     # Stars universe shader
@@ -49,8 +49,13 @@ if BACKGROUND == "shader":
         replaces = replaces,
     )
 elif BACKGROUND == "image":
-    # Map image
-    background.add_image_mapping(name = "background", path = f"{interface.MMV_PACKAGE_ROOT}{sep}assets{sep}free_assets{sep}glsl_default_background.jpg")
+    # Map image, must be name="background"
+    background.add_image_mapping(
+        name = "background",
+        path = f"{interface.MMV_PACKAGE_ROOT}{sep}assets{sep}free_assets{sep}glsl_default_background.jpg"
+    )
+
+    # Load moving image shader
     background.load_shader_from_path(
         path = f"{interface.shaders_dir}{sep}assets{sep}background{sep}moving_image.glsl",
         replaces = replaces,
