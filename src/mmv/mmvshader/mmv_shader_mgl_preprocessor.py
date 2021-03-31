@@ -38,6 +38,7 @@ import os
 class MMVShaderMGLPreprocessor:
     def __init__(self, mmv_shader_mgl):
         self.mmv_shader_mgl = mmv_shader_mgl
+        self.to_flip_or_not_to_flip = False
         self.include_directories = []
         self.reset()
         
@@ -304,8 +305,9 @@ class MMVShaderMGLPreprocessor:
                         # # Construct a class of this same type of the master shader, use the same context
 
                         # To flip or not to flip is a bit tricky of a question, this worked for me..
-                        flip = False if (self.mmv_shader_mgl.master_shader) else (not self.mmv_shader_mgl.flip)
-                        shader_as_texture = MMVShaderMGL.MMVShaderMGL(flip = flip, gl_context = self.mmv_shader_mgl.gl_context)
+                        # flip = False if (self.mmv_shader_mgl.master_shader) else (not self.mmv_shader_mgl.flip)
+                        self.to_flip_or_not_to_flip = not self.to_flip_or_not_to_flip
+                        shader_as_texture = MMVShaderMGL.MMVShaderMGL(flip = self.to_flip_or_not_to_flip, gl_context = self.mmv_shader_mgl.gl_context)
 
                         # Add included dirs
                         for directory in self.include_directories:

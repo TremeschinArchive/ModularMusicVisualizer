@@ -240,11 +240,6 @@ void main() {
     //#mmv {"type": "include", "value": "math_constants", "mode": "multiple"}
     vec3 col = vec3(0.0);
 
-    // gluv_zoom_drag *= mmv_zoom*mmv_zoom;
-    // stuv_zoom_drag *= mmv_zoom*mmv_zoom;
-    // gluv_zoom_drag += drag * 2.0;
-    // stuv_zoom_drag += drag;
-    
     // // Render many layers
 
     // Config
