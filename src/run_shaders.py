@@ -201,7 +201,7 @@ class MMVShadersCLI:
 
         # Raw file
         if self._preset_name is None:
-            self.mgl.include_dir(f"{self.shaders_dir}{self.sep}include")
+            self.mgl.include_dir(self.mmv_package_interface.shaders_dir / "include")
 
         # Preset file
         else:
