@@ -244,8 +244,10 @@ class MMVShaderMGLPreprocessor:
                         logging.info(f"{debug_prefix} Uploading image texture [{value}] to the GPU in RGBA mode, assign on textures dictionary")
                         texture = self.mmv_shader_mgl.gl_context.texture((width, height), 4, img.tobytes())
 
+                        assign_index = len(self.mmv_shader_mgl.textures.keys())
+
                         # Assign the name, type and texture to the textures dictionary
-                        self.mmv_shader_mgl.textures[len(self.mmv_shader_mgl.textures.keys()) + 1] = {
+                        self.mmv_shader_mgl.textures[assign_index] = {
                             "name": name,
                             "loader": "texture",
                             "texture": texture
