@@ -20,7 +20,7 @@ void main() {
     float amplitude = 0.102 * mmv_rms_0_33[2];
     vec2 offset = vec2(sin(5.0 * mmv_time * speed) * amplitude, cos(8.0 * mmv_time * speed) * amplitude);
     vec2 gluv_offsetted = gluv_zoom_drag - offset;
-    vec2 get_visualizer_angle = gluv_offsetted * get_rotation_mat2((PI / 2.0) + angle_offset);
+    vec2 get_visualizer_angle = gluv_offsetted * get_rotation_mat2(-(PI / 2.0) + angle_offset);
     float angle = atan(get_visualizer_angle.y, get_visualizer_angle.x) * sign(get_visualizer_angle.y);
 
 
