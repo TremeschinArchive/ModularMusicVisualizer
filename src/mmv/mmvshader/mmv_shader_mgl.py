@@ -361,10 +361,56 @@ MMV_MGL_NULL_FRAGMENT_SHADER = "void main() { fragColor = vec4(0.0); }"
 
 # If shader compilation fails, fall back to this
 MMV_MGL_FALLBACK_FRAGMENT_SHADER = f"""
+// ===============================================================================
+
+// This is the fallback shader when something went wrong, check console output
+// for errors as well as the log of the faulty shader.
+
+// ===============================================================================
+
 {MMV_MGL_FRAGMENT_SHADER_MMV_SPECIFICATION_PREFIX}
 
+// Decide if this uv is magenta or not
+bool is_magenta(vec2 uv) {{
+    uv = floor(uv);
+    if (mod(uv.x + uv.y, 2.0) == 0.0) {{
+        return true;
+    }} else {{
+        return false;
+    }}
+}}
+
 void main() {{
-    fragColor = vec4(sin(mmv_time), cos(mmv_time), sin(mmv_time*5.0/4.0), 1.0);
+    // Get coord with aspect ratio
+    vec2 stuv = shadertoy_uv;
+    stuv.x *= (mmv_resolution.x / mmv_resolution.y);
+
+    // Transpose
+    stuv += vec2(mmv_time / 64.0, mmv_time / 64.0);
+
+    // Empty col
+    vec4 col = vec4(0.0);
+    
+    // Grid
+    float size = 16.0;
+    
+    // Raw resolution to uv normalized based on grid size
+    vec2 pixel = 6.0 / mmv_resolution;
+
+    // Kernel size 5
+    for (int x = -5; x < 5; x++) {{
+        for (int y = -5; y < 5; y++) {{
+
+            // Where to put black or that magenta
+            if (is_magenta(size * stuv + dot(pixel, vec2(x, y))) ) {{
+
+                // Add color divided by kernel area and decrease when away from center
+                col += (vec4(1.0, 0.0, 1.0, 0.5) / 25.0) * (1.0 - sqrt(x*x + y*y) / 5.0);
+            }}
+        }}
+    }}
+
+    fragColor = col;
 }}
 """
 
@@ -391,6 +437,7 @@ import time
 import uuid
 import cv2
 import sys
+import gc
 import os
 
 class MMVShaderMGL:
@@ -415,7 +462,11 @@ class MMVShaderMGL:
     def __init__(self, flip = False, master_shader = False, gl_context = None):
         debug_prefix = "[MMVShaderMGL.__init__]"
         self.master_shader = master_shader
-        self.name = str(uuid.uuid4())
+        if self.master_shader:
+            self.name = "Master Shader"
+        else:
+            self.name = str(uuid.uuid4())
+
         self.flip = flip
         self.ssaa = 1
 
@@ -524,7 +575,7 @@ class MMVShaderMGL:
     # Returns [texture, fbo], which the texture is attached to the fbo with the previously
     # configured width, height
     def _construct_texture_fbo(self):
-        debug_prefix = "[MMVShaderMGL._construct_texture_fbo]"
+        debug_prefix = f"[MMVShaderMGL._construct_texture_fbo] [{self.name}]"
 
         # Error assertion, width height or fps is not set
         assert not any([value is None for value in [self.width, self.height]]), ("Width or height wasn't set / is None, did you call .render_config(width, height, fps) first?")
@@ -558,7 +609,7 @@ class MMVShaderMGL:
 
     # Loads one shader from the disk, optionally also a custom vertex shader rather than the screen filling default one
     def load_shader_from_path(self, fragment_shader_path, vertex_shader_path = MMV_MGL_DEFAULT_VERTEX_SHADER):
-        debug_prefix = "[MMVShaderMGL.load_shader_from_path]"
+        debug_prefix = f"[MMVShaderMGL.load_shader_from_path] [{self.name}]"
         self.fragment_shader_path = fragment_shader_path
         self.vertex_shader_path = vertex_shader_path
 
@@ -594,7 +645,7 @@ class MMVShaderMGL:
             vertex_shader = vertex_data,
         )
 
-    # Drop current program, use some other fragment shader or vertex shader inserted from outside
+    # Drop current stuff    , use some other fragment shader or vertex shader inserted from outside
     # (current self.fragment_shader and self.vertex_shader)
     def _read_shaders_from_paths_again(self):
         if self.master_shader:
@@ -604,11 +655,17 @@ class MMVShaderMGL:
             # NOTE: Workaround on RAM leak, drop everything and treat as reload
             self.window_handlers.drop_textures()
             
+            # Delete textures dictionray
+            del self.textures
             self.textures = {}
+
             self.load_shader_from_path(
                 fragment_shader_path = self.fragment_shader_path,
                 vertex_shader_path = self.vertex_shader_path
             )
+
+            # Just in case
+            gc.collect()
 
     # Create one context's program out of a frag and vertex shader, those are used together
     # with VAOs so we render to some FBO. 
@@ -618,7 +675,7 @@ class MMVShaderMGL:
         fragment_shader,
         vertex_shader = MMV_MGL_DEFAULT_VERTEX_SHADER,
     ):
-        debug_prefix = "[MMVShaderMGL.construct_shader]"
+        debug_prefix = f"[MMVShaderMGL.construct_shader] [{self.name}]"
 
         # The raw specification prefix, sets uniforms every one should have
         # we don't add just yet to the fragment shader because we can have some #pragma map
@@ -663,7 +720,7 @@ class MMVShaderMGL:
 
     # Truly construct a shader, returns a ModernGL Program
     def _create_program(self, fragment_shader, vertex_shader):
-        debug_prefix = "[MMVShaderMGL._create_program]"
+        debug_prefix = f"[MMVShaderMGL._create_program] [{self.name}]"
         try:
             return self.gl_context.program(fragment_shader = fragment_shader, vertex_shader = vertex_shader)
         except moderngl.error.Error as e:
@@ -675,7 +732,7 @@ class MMVShaderMGL:
 
     # Create fullscreen VAO that reads position, OpenGL UV coordinates then ShaderToy UV coordinates
     def _create_vao(self):
-        debug_prefix = "[MMVShaderMGL._create_vao]"
+        debug_prefix = f"[MMVShaderMGL._create_vao] [{self.name}]"
         logging.info(f"{debug_prefix} Creating VAO with Full Screen buffer")
 
         # Create one VAO on the program with the coordinate info

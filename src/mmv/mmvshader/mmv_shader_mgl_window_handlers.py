@@ -128,10 +128,13 @@ class MMVShaderMGLWindowHandlers:
                 self.mmv_shader_mgl.textures[index]["shader_as_texture"].render_buffer.release()
                 self.mmv_shader_mgl.textures[index]["shader_as_texture"].texture.release()
                 self.mmv_shader_mgl.textures[index]["shader_as_texture"].fbo.release()
-                self.mmv_shader_mgl.textures[index]["shader_as_texture"].vao.release()
 
                 # Create new ones in place
-                self.mmv_shader_mgl.textures[index]["shader_as_texture"]._create_vao()
+
+                # FIXME: 
+                # self.mmv_shader_mgl.textures[index]["shader_as_texture"]._create_vao()
+                # self.mmv_shader_mgl.textures[index]["shader_as_texture"].vao.release()
+
                 self.mmv_shader_mgl.textures[index]["shader_as_texture"]._create_assing_texture_fbo_render_buffer()
 
                 # Assign texture
@@ -145,8 +148,8 @@ class MMVShaderMGLWindowHandlers:
             # Window viewport
             self.window.fbo.viewport = (0, 0, self.mmv_shader_mgl.width, self.mmv_shader_mgl.height)
 
+    # Release everything
     def drop_textures(self):
-        # Search for dynamic shaders and update them
         for index in self.mmv_shader_mgl.textures.keys():
             if "shader_as_texture" in self.mmv_shader_mgl.textures[index].keys():
                 self.mmv_shader_mgl.textures[index]["shader_as_texture"].render_buffer.release()
