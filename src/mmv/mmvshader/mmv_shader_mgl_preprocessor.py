@@ -301,8 +301,11 @@ class MMVShaderMGLPreprocessor:
                             with open(value, "r") as f:
                                 loader_frag_shader = f.read()
 
-                        # Construct a class of this same type of the master shader, use the same context
-                        shader_as_texture = MMVShaderMGL.MMVShaderMGL(flip = not self.mmv_shader_mgl.flip, gl_context = self.mmv_shader_mgl.gl_context)
+                        # # Construct a class of this same type of the master shader, use the same context
+
+                        # To flip or not to flip is a bit tricky of a question, this worked for me..
+                        flip = False if (self.mmv_shader_mgl.master_shader) else (not self.mmv_shader_mgl.flip)
+                        shader_as_texture = MMVShaderMGL.MMVShaderMGL(flip = flip, gl_context = self.mmv_shader_mgl.gl_context)
 
                         # Add included dirs
                         for directory in self.include_directories:
