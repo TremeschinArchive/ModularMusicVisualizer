@@ -25,10 +25,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
-
-from mmv.common.cmn_constants import STEP_SEPARATOR
 from mmv.common.cmn_download import Download
 from mmv.common.cmn_utils import Utils
+from pathlib import Path
 import subprocess
 import tempfile
 import logging
@@ -106,22 +105,14 @@ f"""{debug_prefix} Show thanks message
 """
         logging.info(message)
 
-    # MMVSkia works with glfw plus Skia to draw on a GL canvas and pipe
-    # through FFmpeg to render a final video. Have Piano Roll options
-    # and modules as well!!
-    def get_skia_interface(self, **kwargs):
-        debug_prefix = "[MMVPackageInterface.get_skia_interface]"
-        from mmv.mmvskia import MMVSkiaInterface
-        logging.info(f"{debug_prefix} Get and return MMVSkiaInterface, kwargs: {kwargs}")
-        return MMVSkiaInterface(mmv_package_interface = self, **kwargs)
-    
     # MMVShader for some post processing or visualization generation
-    def get_shader_interface(self):
-        debug_prefix = "[MMVPackageInterface.get_shader_interface]"
-        self.terminal_width = shutil.get_terminal_size()[0]
-        bias = " "*(math.floor(self.terminal_width/2) - 19)
-        message = \
-f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
+    def ___printshadersmode(self):
+        if not hasattr(self, "___printshader"):
+            self.___printshader = None
+            self.terminal_width = shutil.get_terminal_size()[0]
+            bias = " "*(math.floor(self.terminal_width/2) - 19)
+            message = \
+f"""Show extension\n{"="*self.terminal_width}
 {bias} _____ _               _               
 {bias}/  ___| |             | |              
 {bias}\\ `--.| |__   __ _  __| | ___ _ __ ___ 
@@ -133,10 +124,20 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
 {bias}             + MMV Mode +
 {"="*self.terminal_width}
 """
-        logging.info(message)
-        from mmv.mmvshader import MMVShaderInterface
-        logging.info(f"{debug_prefix} Return MMVShaderInterface")
-        return MMVShaderInterface(mmv_package_interface = self)
+            logging.info(message)
+
+    # Get a moderngl wrapper / interface for rendering fragment shaders, getting their
+    # contents, map images, videos and even other shaders into textures
+    def get_mmv_shader_mgl(self, **kwargs):
+        self.___printshadersmode()
+        from mmv.mmvshader.mmv_shader_mgl import MMVShaderMGL
+        return MMVShaderMGL
+
+    # Return shader maker interface
+    def get_mmv_shader_maker(self, **kwargs):
+        self.___printshadersmode()
+        from mmv.mmvshader.mmv_shader_maker import MMVShaderMaker
+        return MMVShaderMaker
 
     # Return one (usually required) setting up encoder unless using preview window
     def get_ffmpeg_wrapper(self):
@@ -194,39 +195,26 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
     def __init__(self, platform = None, **kwargs) -> None:
         debug_prefix = "[MMVPackageInterface.__init__]"
 
-        # Versioning
         self.version = "3.1: rolling"
-
-        # Can only run on Python 64 bits, this expression returns 32 if 32 bit installation
-        # and 64 if 64 bit installation, we assert that (assume it's true, quit if it isn't)
-        assert (struct.calcsize("P") * 8) == 64, (
-            "You don't have an 64 bit Python installation, MMV will not work on 32 bit Python "
-            "because skia-python package only distributes 64 bit Python wheels (bundles).\n"
-            "This is out of my control, Skia devs don't release 32 bit version of Skia anyways\n\n"
-            "See issue [https://github.com/kyamagu/skia-python/issues/21]"
-        )
-
-        # Shortcut for / on posix and \ on nt
-        sep = os.path.sep
 
         # Where this file is located, please refer using this on the whole package
         # Refer to it as self.mmv_skia_main.MMV_PACKAGE_ROOT at any depth in the code
         # This deals with the case we used pyinstaller and it'll get the executable path instead
         if getattr(sys, 'frozen', True):    
-            self.MMV_PACKAGE_ROOT = os.path.dirname(os.path.abspath(__file__))
+            self.MMV_PACKAGE_ROOT = Path(os.path.dirname(os.path.abspath(__file__)))
             print(f"{debug_prefix} Running directly from source code")
-            print(f"{debug_prefix} Modular Music Visualizer Python package [__init__.py] located at [{self.MMV_PACKAGE_ROOT}]")
         else:
-            self.MMV_PACKAGE_ROOT = os.path.dirname(os.path.abspath(sys.executable))
+            self.MMV_PACKAGE_ROOT = Path(os.path.dirname(os.path.abspath(sys.executable)))
             print(f"{debug_prefix} Running from release (sys.executable..?)")
-            print(f"{debug_prefix} Modular Music Visualizer executable located at [{self.MMV_PACKAGE_ROOT}]")
+
+        print(f"{debug_prefix} Modular Music Visualizer Python package [__init__.py] or executable located at [{self.MMV_PACKAGE_ROOT}]")
 
         # # Load prelude configuration
 
         print(f"{debug_prefix} Loading prelude configuration file")
         
         # Build the path the prelude file should be located at
-        prelude_file = f"{self.MMV_PACKAGE_ROOT}{sep}prelude.toml"
+        prelude_file = self.MMV_PACKAGE_ROOT / "prelude.toml"
         print(f"{debug_prefix} Attempting to load prelude file located at [{prelude_file}], we cannot continue if this is wrong..")
 
         # Load the prelude file
@@ -240,7 +228,6 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
         # # We can now set up logging as we have where this file is located at
 
         # # Reset current handlers if any
-        
         print(f"{debug_prefix} Resetting Python's logging logger handlers to empty list")
 
         # Get logger and empty the list
@@ -265,7 +252,7 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
 
             # Hard coded where the log file will be located
             # this is only valid for the last time we run this software
-            self.LOG_FILE = f"{self.MMV_PACKAGE_ROOT}{sep}last_log.log"
+            self.LOG_FILE = self.MMV_PACKAGE_ROOT / "last_log.log"
 
             # Reset the log file
             with open(self.LOG_FILE, "w") as f:
@@ -343,7 +330,6 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
 
         # Log which OS we're running
         logging.info(f"{debug_prefix} Running Modular Music Visualizer on Operating System: [{self.os}]")
-        logging.info(f"{debug_prefix} (os.path.sep) is [{sep}]")
 
         # # Create interface's classes
 
@@ -356,35 +342,30 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
         # # Common directories between packages
 
         # Externals
-        self.externals_dir = f"{self.MMV_PACKAGE_ROOT}{sep}externals"
+        self.externals_dir = self.MMV_PACKAGE_ROOT / "externals"
+        self.externals_dir.mkdir(parents = True, exist_ok = True)
         logging.info(f"{debug_prefix} Externals dir is [{self.externals_dir}]")
-        self.utils.mkdir_dne(path = self.externals_dir, silent = True)
 
         # Downloads (inside externals)
-        self.downloads_dir = f"{self.MMV_PACKAGE_ROOT}{sep}externals{sep}downloads"
+        self.downloads_dir = self.MMV_PACKAGE_ROOT / "externals" / "downloads"
+        self.downloads_dir.mkdir(parents = True, exist_ok = True)
         logging.info(f"{debug_prefix} Downloads dir is [{self.downloads_dir}]")
-        self.utils.mkdir_dne(path = self.downloads_dir, silent = True)
-
-        # Data dir
-        self.data_dir = f"{self.MMV_PACKAGE_ROOT}{sep}data"
-        logging.info(f"{debug_prefix} Data dir is [{self.data_dir}]")
-        self.utils.mkdir_dne(path = self.data_dir, silent = True)
 
         # Assets dir
-        self.assets_dir = f"{self.MMV_PACKAGE_ROOT}{sep}assets"
+        self.assets_dir = self.MMV_PACKAGE_ROOT / "assets"
+        self.assets_dir.mkdir(parents = True, exist_ok = True)
         logging.info(f"{debug_prefix} Assets dir is [{self.assets_dir}]")
-        self.utils.mkdir_dne(path = self.assets_dir, silent = True)
 
         # Shaders dir
-        self.shaders_dir = f"{self.MMV_PACKAGE_ROOT}{sep}shaders"
-        logging.info(f"{debug_prefix} Shaders dir is [{self.shaders_dir}], deleting..")
-        self.utils.mkdir_dne(path = self.shaders_dir, silent = True)
+        self.shaders_dir = self.MMV_PACKAGE_ROOT / "shaders"
+        self.shaders_dir.mkdir(parents = True, exist_ok = True)
+        logging.info(f"{debug_prefix} Shaders dir is [{self.shaders_dir}]")
 
         # Runtime dir
-        self.runtime_dir = f"{self.MMV_PACKAGE_ROOT}{sep}runtime"
-        logging.info(f"{debug_prefix} Runtime dir is [{self.data_dir}], deleting..")
-        self.utils.rmdir(self.runtime_dir)
-        self.utils.mkdir_dne(path = self.runtime_dir, silent = True)
+        self.runtime_dir = self.MMV_PACKAGE_ROOT / "runtime"
+        logging.info(f"{debug_prefix} Runtime dir is [{self.runtime_dir}], deleting..")
+        shutil.rmtree(self.runtime_dir)
+        self.runtime_dir.mkdir(parents = True, exist_ok = True)
 
         # Windoe juuuust in case
         if self.os == "windows":
@@ -401,22 +382,22 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
         # # External dependencies where to append for PATH
 
         # Externals directory for Linux
-        self.externals_dir_linux = f"{self.MMV_PACKAGE_ROOT}{sep}externals{sep}linux"
+        self.externals_dir_linux = self.MMV_PACKAGE_ROOT / "externals" / "linux"
         if self.os == "linux":
             logging.info(f"{debug_prefix} Externals directory for Linux OS is [{self.externals_dir_linux}]")
-            self.utils.mkdir_dne(path = self.externals_dir_linux, silent = True)
+            self.externals_dir_linux.mkdir(parents = True, exist_ok = True)
 
         # Externals directory for Windows
-        self.externals_dir_windows = f"{self.MMV_PACKAGE_ROOT}{sep}externals{sep}windows"
+        self.externals_dir_windows = self.MMV_PACKAGE_ROOT / "externals" / "windows"
         if self.os == "windows":
             logging.info(f"{debug_prefix} Externals directory for Windows OS is [{self.externals_dir_windows}]")
-            self.utils.mkdir_dne(path = self.externals_dir_windows, silent = True)
+            self.externals_dir_windows.mkdir(parents = True, exist_ok = True)
 
         # Externals directory for macOS
-        self.externals_dir_macos = f"{self.MMV_PACKAGE_ROOT}{sep}externals{sep}macos"
+        self.externals_dir_macos = self.MMV_PACKAGE_ROOT / "externals" / "macos"
         if self.os == "macos":
             logging.info(f"{debug_prefix} Externals directory for Darwin OS (macOS) is [{self.externals_dir_macos}]")
-            self.utils.mkdir_dne(path = self.externals_dir_macos, silent = True)
+            self.externals_dir_macos.mkdir(parents = True, exist_ok = True)
 
         # # This native platform externals dir
         self.externals_dir_this_platform = self.__get_platform_external_dir(self.os)
@@ -442,7 +423,7 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
         }.get(platform)
 
         # mkdir dne just in case cause we asked for this?
-        self.utils.mkdir_dne(path = externals_dir, silent = True)
+        externals_dir.mkdir(parents = True, exist_ok = True)
 
         # log action
         logging.info(f"{debug_prefix} Return external dir for platform [{platform}] -> [{externals_dir}]")
@@ -468,7 +449,6 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
     # Don't append the extra .exe because Linux, macOS doesn't have these, returns False if no binary was found
     def find_binary(self, binary):
         debug_prefix = "[MMVPackageInterface.find_binary]"
-        logging.info(STEP_SEPARATOR)
 
         # Append .exe for Windows
         if (self.os == "windows") and (not binary.endswith(".exe")):
@@ -645,8 +625,6 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
 
             # Update the externals search path because we downloaded stuff
             self.update_externals_search_path()
-
-        logging.info(STEP_SEPARATOR)
 
     # Ensure we have an external dependency we can't micro manage because too much entropy
     def __cant_micro_manage_external_for_you(self, binary, help_fix = None):

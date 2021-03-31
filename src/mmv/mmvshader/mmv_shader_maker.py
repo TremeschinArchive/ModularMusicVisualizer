@@ -30,14 +30,14 @@ from mmv.mmvshader.mmv_shader_maker_transformations import MMVShaderMakerTransfo
 from mmv.mmvshader.abstractions.abstraction_block_of_code import BlockOfCode
 from mmv.mmvshader.mmv_shader_maker_loaders import MMVShaderMakerLoaders
 from mmv.common.cmn_utils import Utils
+from pathlib import Path
 import numpy as np
 import logging
+import shutil
 import copy
 import uuid
 import sys
 import os
-
-sep = os.path.sep
 
 
 BASE_FRAGMENT_SHADER = """\
@@ -95,11 +95,11 @@ class MMVShaderMaker:
         # # Sessions and Shader Maker runtime directory
 
         # Where to place
-        self.runtime_dir = f"{self.working_directory}{sep}runtime"
+        self.runtime_dir = self.working_directory / "runtime"
 
         # Reset runtime directory
-        self.utils.rmdir(self.runtime_dir)
-        self.utils.mkdir_dne(self.runtime_dir)
+        logging.info(f"{debug_prefix} Resetting directory")
+        self.utils.reset_dir(self.runtime_dir)
 
         # # Add stuff
 

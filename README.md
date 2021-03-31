@@ -41,7 +41,7 @@ More on performance later
 <hr>
 
 ![Demo image of MMV Piano Roll](repo/piano-roll-4.jpg)
-_^ "Old code" which is currently used to draw the piano roll_
+_^ "Old code" which is currently used to draw the piano roll, deprecated on current master and needs rewrite into GLSL_
 
 [Link on YouTube](https://www.youtube.com/watch?v=NwP5LESrceY) (Piano Roll Mode)
 
@@ -155,7 +155,7 @@ Please be patient if you want features to be implemented, I work on MMV code in 
 
 # Running
 
-**Important: The project is under some heavy rewiring and R&D, have yet to normalize instructions and documentation, I can't test everything after every commit so expect minor bugs.** Also there is technically two projects in the same repository ("old" MMVSkia and new MMVShader) sharing some common files, keeping compatibility while rewriting stuff is a bit tricky and is the main source of current problems.
+**Important: The project is under some heavy rewiring and R&D, have yet to normalize instructions and documentation, I can't test everything after every commit so expect minor bugs.**
 
 ## Python
 
@@ -175,7 +175,7 @@ First you have to install Python:
 
 ### Installing Python
 
-_Linux and macOS have optional dependency `musescore` to convert midi files to audio when using Skia + Piano Roll mode_
+_Linux and macOS have optional dependency `musescore` to convert midi files to audio when using Piano Roll mode_
 
 **Windows Note:** Windows uses ugly backslashes `\` rather than forward slashes `/` when referring to files and directories. Replace those to yours equivalent OS separator.
 
@@ -237,29 +237,8 @@ _(Binary is `poetry.exe` on Windows if you're on PowerShell or just `poetry` if 
 
 I highly recommend reading the basics of Python [here](https://learnxinyminutes.com/docs/python/), it doesn't take much to read and will avoid some beginner pitfalls.
 
-For the "new" code (shaders), keep reading.
-
-For the "old" code, configure the file `/src/run_skia.py` to your needs (images, audios) _[though there is a default configuration, if you want fast results skip this]_ before continuing, though it have some defaults so you can get some out of the box experience
-
-
 
 ### Executing:
-
-<hr>
-
-#### Running Skia "old" code
-
-Quick Skia code tutorial, for shaders ignore this part:
-
-- `poetry run skia`: "Old code", music mode -> video file
-- `poetry run skia mode=piano`: "Old code", piano roll mode -> video file
-- `python ./src/run_skia.py (arguments)`
-
-Edit this `run_skia.py` with some config. This is "deprecated" code, will be kept for historical reasons.
-
-<hr>
-
-#### Running Shaders code
 
 - `poetry run shaders (arguments)`
 - `python ./src/run_shaders.py (arguments)`
@@ -267,8 +246,6 @@ Edit this `run_skia.py` with some config. This is "deprecated" code, will be kep
 For the Shaders arguments, keep reading, they are kinda complex.
 
 # Configuration Flags
-
-These apply only to the Shaders interface, since the Skia code is being "replaced".
 
 You can run `poetry run shaders --help` and see a list of possible commands and arguments.
 
@@ -470,15 +447,11 @@ I'll mainly list the main name and where to find more info, it's just impossible
 
 - The [GLSL](https://en.wikipedia.org/wiki/OpenGL_Shading_Language) language, OpenGL, Vulkan (on mpv flag), the [Khronos group](https://www.khronos.org) on its entirety, seriously, you guys are awesome!!
 
-  - Also the [Python wrapper](https://pypi.org/project/glfw/) for the [GLFW](https://www.glfw.org/) library for setting up an GL canvas so Skia can draw on.
+  - Also the [Python wrapper](https://pypi.org/project/glfw/) for the [GLFW](https://www.glfw.org/) library for setting up an GL stuff.
 
 - [Poetry](https://github.com/python-poetry/poetry), easier to micro manage Python dependencies and generate builds.
 
 - [MuseScore](https://github.com/musescore/MuseScore), a really good composition software with a very promising next major release, really good default soundfont and CLI for converting midi to audio files. 
-
-- [Skia-Python wrapper](https://github.com/kyamagu/skia-python), for a stable Python interface with the [Skia Graphics Library](https://skia.org).
-  
-  - Generates the base videos and piano roll mode graphics.
 
 ### Python packages and others involved
 
@@ -495,8 +468,6 @@ I'll mainly list the main name and where to find more info, it's just impossible
 - _Tom's Obvious, Minimal Language._: [Python interface](https://pypi.org/project/toml/), [main project](https://github.com/toml-lang/toml); _YAML Ain't Markup Language_: [Python interface](https://pypi.org/project/PyYAML/), [main project](https://yaml.org/): Both for reading / saving configuration files.
   
   - I dislike a bit JSON due to its kinda steep UX at first on fixing the syntax the end user itself, those two helps a lot on the overhaul UX on project I believe.
-
-- The [Python Image Library](https://pypi.org/project/Pillow/) Pillow, was extensively used in the past as a render backend but now it is used only for rotating images then sending to Skia.
 
 - Python package [samplerate](https://pypi.org/project/samplerate/) for a binding to libsamplerate, used for downsampling audio before calculating the FFT so we get more information on the lower frequencies.
 
