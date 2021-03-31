@@ -338,6 +338,7 @@ uniform vec2 mmv_resolution;
 
 uniform float mmv_zoom;
 uniform vec2 mmv_drag;
+uniform int mmv_flip;
 
 // Progressive audio amplitude
 uniform vec3 mmv_progressive_rms;
@@ -411,7 +412,7 @@ class MMVShaderMGL:
 
     # # Generic methods
 
-    def __init__(self, flip = True, master_shader = False, gl_context = None):
+    def __init__(self, flip = False, master_shader = False, gl_context = None):
         debug_prefix = "[MMVShaderMGL.__init__]"
         self.master_shader = master_shader
         self.name = str(uuid.uuid4())
@@ -452,6 +453,9 @@ class MMVShaderMGL:
 
             # Mouse position on screen, not normalized
             "mmv_mouse": [0, 0],
+
+            # Are we flipped?
+            "mmv_flip": -1 if self.flip else 1,
         }
 
         # If on real time view we want to freeze the shader for analysis
