@@ -49,7 +49,8 @@ void main() {
         size * 2.0 * logo_relative_to_bar_ratio,  //scale
             sin(mmv_time*2.3 + mmv_progressive_rms[2]/8.0) / 8.0
             + sin(mmv_time*2.3 + mmv_progressive_rms[2]/5.0) / 8.0, //angle
-        false
+        false, // repeat
+        true, 2.0 // Undo gamma, Gamma
     );
     col = mix(col, logo_pixel, logo_pixel.a);
 
