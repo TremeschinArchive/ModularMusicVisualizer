@@ -31,12 +31,9 @@ from mmv.common.cmn_utils import DataUtils
 from mmv.common.cmn_fourier import Fourier
 import mmv.common.cmn_any_logger
 from tqdm import tqdm
-import audio2numpy
 import numpy as np
 import samplerate
 import subprocess
-import audioread
-import soundfile
 import threading
 import logging
 import math
@@ -573,119 +570,3 @@ class AudioProcessing:
         index = (np.abs(array - value)).argmin()
         return index, array[index]
     
-
-    # # Old methods [compatibility]
-
-
-    # Slice a mono and stereo audio data TODO: make this a generator and also accept "real time input?"
-    def slice_audio(self,
-            stereo_data: np.ndarray,
-            mono_data: np.ndarray,
-            sample_rate: int,
-            start_cut: int,
-            end_cut: int,
-            batch_size: int=None
-        ) -> None:
-        
-        # Cut the left and right points range
-        left_slice = stereo_data[0][start_cut:end_cut]
-        right_slice = stereo_data[1][start_cut:end_cut]
-
-        # Cut the mono points range
-        # mono_slice = mono_data[start_cut:end_cut]
-
-        if not batch_size == None:
-            # Empty audio slice array if we're at the end of the audio
-            self.audio_slice = np.zeros([3, batch_size])
-
-            # Get the audio slices of the left and right channel
-            self.audio_slice[0][ 0:left_slice.shape[0] ] = left_slice
-            self.audio_slice[1][ 0:right_slice.shape[0] ] = right_slice
-            # self.audio_slice[2][ 0:mono_slice.shape[0] ] = mono_slice
-
-        else:
-            # self.audio_slice = [left_slice, right_slice, mono_slice]
-            self.audio_slice = [left_slice, right_slice]
-
-        # Calculate average amplitude
-        self.average_value = float(np.mean(np.abs(
-            mono_data[start_cut:end_cut]
-        )))
-
-    # Calculate the FFT of this data, get only wanted frequencies based on the musical notes
-    def process(self,
-            data: np.ndarray,
-            original_sample_rate: int,
-        ) -> None:
-        
-        # The returned dictionary
-        processed = {}
-
-        # Iterate on config
-        for layer in self.config:
-            value = self._get_config_stuff(layer)
-
-            # Get info on config
-            original_sample_rate = value.get("original_sample_rate")
-            target_sample_rate = value.get("target_sample_rate")
-            start_freq = value.get("start_freq")
-            end_freq = value.get("end_freq")
-
-            # Get the frequencies we want and will return in the end
-            wanted_freqs = self.datautils.list_items_in_between(
-                self.piano_keys_frequencies,
-                start_freq, end_freq,
-            )
-
-            # Calculate the binned FFT, we get N vectors of [freq, value]
-            # of this FFT
-            binned_fft = self.fourier.binned_fft(
-                # Resample our data to the one specified on the config
-                data = self.resample(
-                    data = data,
-                    original_sample_rate = original_sample_rate,
-                    target_sample_rate = target_sample_rate,
-                ),
-
-                # # Target (re?)sample rate so we normalize the FFT values
-
-                target_sample_rate =  target_sample_rate,
-                original_sample_rate = original_sample_rate,
-            )
-
-            # Get the nearest freq and add to processed            
-            for freq in wanted_freqs:
-
-                # Get the nearest and FFT value
-                nearest = self.find_nearest(binned_fft[0], freq)
-                value = binned_fft[1][nearest[0]] * 0.2
-     
-                # How much bars we'll render duped at this freq, see
-                # this function on the Functions class for more detail
-                N = math.ceil(
-                    self.functions.how_much_bars_on_this_frequency(
-                        x = freq,
-                        where_decay_less_than_one = self.where_decay_less_than_one,
-                        value_at_zero = self.value_at_zero,
-                    )
-                )
-
-                # Add repeated bars or just one, this is a hacky workaround since we
-                # add a small fraction on the target freq, it shouldn't really overlap
-                for i in range(N):
-                    processed[nearest[1] + (i/10)] = value
-        
-        # FIXME: inefficient
-
-        # # Convert a dictionary of FFTs to a list of values:frequencies
-        # We can use a array with shape (N, 2) but I'm lazy to change that
-
-        linear_processed_fft = []
-        frequencies = []
-
-        # For each pair in the dictionary, append to each list
-        for frequency, value in processed.items():
-            frequencies.append(frequency)
-            linear_processed_fft.append(value)
-        
-        return [linear_processed_fft, frequencies]

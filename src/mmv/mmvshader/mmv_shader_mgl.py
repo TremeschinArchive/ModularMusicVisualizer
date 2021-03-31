@@ -40,10 +40,9 @@ import mmv
 
 # Get interfaces
 interface = mmv.MMVPackageInterface()
-shader_interface = interface.get_shader_interface()
 
 # Boot MMVShaderMGL
-mgl = shader_interface.get_mmv_shader_mgl()(master_shader = True)
+mgl = interface.get_mmv_shader_mgl()(master_shader = True)
 
 # Add some Include dir
 mgl.include_dir(f"{interface.shaders_dir}{os.path.sep}include")
@@ -104,8 +103,7 @@ Within MMV the expected way is this:
 
 | import mmv
 | interface = mmv.MMVPackageInterface()
-| shader_interface = interface.get_shader_interface()
-| mgl = shader_interface.get_mgl_interface(master_shader = True)
+| mgl = interface.get_mgl_interface(master_shader = True)
 
 This is the same as importing MMVShaderMGL directly from this file.
 Also note that (master_shader = True) is expected to be given because that's the guy
@@ -413,7 +411,7 @@ class MMVShaderMGL:
 
     # # Generic methods
 
-    def __init__(self, flip = False, master_shader = False, gl_context = None):
+    def __init__(self, flip = True, master_shader = False, gl_context = None):
         debug_prefix = "[MMVShaderMGL.__init__]"
         self.master_shader = master_shader
         self.name = str(uuid.uuid4())
