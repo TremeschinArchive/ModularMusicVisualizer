@@ -36,10 +36,26 @@ BlockOfCode = shadermaker.block_of_code
 
 background = shadermaker.clone()
 background.set_name("background-shader")
-background.load_shader_from_path(
-    path = f"{interface.shaders_dir}{sep}assets{sep}background{sep}stars.glsl",
-    replaces = replaces,
-)
+
+
+# Can put "shader" or "image"
+# BACKGROUND = "shader"
+BACKGROUND = "image"
+
+if BACKGROUND == "shader":
+    # Stars universe shader
+    background.load_shader_from_path(
+        path = f"{interface.shaders_dir}{sep}assets{sep}background{sep}stars.glsl",
+        replaces = replaces,
+    )
+elif BACKGROUND == "image":
+    # Map image
+    background.add_image_mapping(name = "background", path = f"{interface.MMV_PACKAGE_ROOT}{sep}assets{sep}free_assets{sep}glsl_default_background.jpg")
+    background.load_shader_from_path(
+        path = f"{interface.shaders_dir}{sep}assets{sep}background{sep}moving_image.glsl",
+        replaces = replaces,
+    )
+
 background.add_pipeline_texture_mapping(name = "mmv_fft", width = replaces["MMV_FFTSIZE"], height = 1, depth = 1)
 background.build_final_shader()
 background.save_shader_to_file(f"{interface.runtime_dir}{sep}{background.name}-frag.glsl")
