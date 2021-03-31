@@ -21,22 +21,25 @@ gluv.x *= resratio;
 vec2 stuv = shadertoy_uv;
 stuv.x *= resratio;
 
-// Zoomed uv coords
+// Zoomed uv coords, STUV is a bit trickier since we have to transpose the center to the center of 
+// the screenm apply zoom then revert
 vec2 gluv_zoom = gluv * (mmv_zoom * mmv_zoom);
-vec2 stuv_zoom = stuv * (mmv_zoom * mmv_zoom);
+vec2 stuv_zoom = (stuv - vec2(0.5, 0.5)) * (mmv_zoom * mmv_zoom) + vec2(0.5, 0.5);
 
 // Mouse drag
 vec2 drag = (mmv_drag / mmv_resolution);
-drag.x *= - resratio;
-drag.y *= -1.0; 
+drag.x *= -resratio;
+drag.y *= mmv_flip; 
+
+// Since the areas of GLUV = 4*STUV we only apply half the drag to ST* stuff
 
 // GL and ST uv coordinates with drag
 vec2 gluv_drag = gluv + (drag * 2.0);
-vec2 stuv_drag = stuv + (drag * 2.0);
+vec2 stuv_drag = stuv + (drag / 4.0);
 
 // GL and ST uv coordinates with drag + zoom
 vec2 gluv_zoom_drag = gluv_zoom + (drag * 2.0);
-vec2 stuv_zoom_drag = stuv_zoom + (drag * 2.0);
+vec2 stuv_zoom_drag = stuv_zoom + (drag);
 
 
 // [Normally you'd use the shadertoy_uv for reading textures to fullscreen]

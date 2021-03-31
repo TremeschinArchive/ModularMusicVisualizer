@@ -65,7 +65,7 @@ vec4 mmv_blit_image(
     // Scale matrix
     mat2 scale_matrix = mat2(
         (1.0 / scale) * image_ratioX, 0,
-        0, (1.0 / scale)
+        0, -(1.0 / scale)
     );
 
     // Rotation Matrix
