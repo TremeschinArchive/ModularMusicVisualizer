@@ -25,6 +25,13 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
+
+# Add current directory to PATH so we find the "mmv" package
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+# Continue imports
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 import mmv.common.cmn_any_logger
@@ -35,9 +42,8 @@ import soundcard
 import logging
 import typer
 import time
-import sys
 import mmv
-import os
+
 
 # Watchdog for changes, reload shaders
 class AnyModification(FileSystemEventHandler):
@@ -50,6 +56,7 @@ class AnyModification(FileSystemEventHandler):
         logging.info(f"{debug_prefix} Some modification event [{event}], reloading shaders..")
         self.reload = True
 
+
 class MMVShadersCLI:
     def __init__(self):
         debug_prefix = "[MMVShadersCLI.__init__]"
@@ -60,25 +67,23 @@ class MMVShadersCLI:
         # MMV interface
         self.mmv_package_interface = mmv.MMVPackageInterface()
         self.utils = self.mmv_package_interface.utils
-        self.shaders_dir = self.mmv_package_interface.shaders_dir
 
         # Shaders interface and MGL
-        self.shader_interface = self.mmv_package_interface.get_shader_interface()
-        self.mgl = self.shader_interface.get_mmv_shader_mgl()(master_shader = True)
+        self.mgl = self.mmv_package_interface.get_mmv_shader_mgl()(master_shader = True)
 
         # Interpolator
         self.interpolator = ValuesInterpolator()
 
         # Advanced config
         self.advanced_config = self.mmv_package_interface.utils.load_yaml(
-            f"{self.shaders_dir}{self.sep}shaders_advanced_config.yaml"
+            self.mmv_package_interface.shaders_dir / "shaders_advanced_config.yaml"
         )
 
         # Ensure FFmpeg on Windows
         self.mmv_package_interface.check_download_externals(target_externals = ["ffmpeg"])
 
         # IO defaults
-        self._input_audio = f"{self.mmv_package_interface.assets_dir}{self.sep}free_assets{self.sep}kawaii_bass.ogg"
+        self._input_audio = self.mmv_package_interface.assets_dir / "free_assets" / "kawaii_bass.ogg"
         self._output_video = "rendered_shader.mkv"
 
         # Audio
@@ -96,6 +101,7 @@ class MMVShadersCLI:
 
         # Use default preset
         self._preset_name = "default"
+        self.watchdog = True
 
     # # Configuration
 
@@ -137,7 +143,6 @@ class MMVShadersCLI:
         ))
     ):
         debug_prefix = "[MMVShadersCLI.preset]"
-
         self.watchdog = watchdog
 
         # User sent some file to be the main shader so we 
@@ -209,9 +214,9 @@ class MMVShadersCLI:
             }
 
             # Directory of this preset
-            preset_file = f"{self.shaders_dir}{self.sep}presets{self.sep}{self._preset_name}.py"
+            preset_file = self.mmv_package_interface.shaders_dir / "presets" / f"{self._preset_name}.py"
             working_directory = self.mmv_package_interface.shaders_dir
-            shadermaker = self.shader_interface.get_mmv_shader_maker()
+            shadermaker = self.mmv_package_interface.get_mmv_shader_maker()
             interface = self.mmv_package_interface
             sep = os.path.sep
             NULL = "MMV_MGL_NULL_FRAGMENT_SHADER"
@@ -236,7 +241,7 @@ class MMVShadersCLI:
             # Add every directory or the default one, note first returned ones have higher priority
             for directory in self.utils.force_list(to_include):
                 if directory == "default":
-                    self.mgl.include_dir(f"{self.shaders_dir}{self.sep}include")
+                    self.mgl.include_dir(self.mmv_package_interface.shaders_dir / "include")
                 else:
                     self.mgl.include_dir(directory)
 
@@ -387,11 +392,10 @@ class MMVShadersCLI:
 
             self.any_modification_watchdog = AnyModification(controller = self)
 
+            sd = self.mmv_package_interface.shaders_dir
             paths = [
-                f"{self.shaders_dir}{self.sep}presets",
-                f"{self.shaders_dir}{self.sep}assets",
-                f"{self.shaders_dir}{self.sep}include",
-                f"{self.mmv_package_interface.runtime_dir}",
+                sd / "presets", sd / "assets", sd / "include",
+                self.mmv_package_interface.runtime_dir,
             ]
 
             self.watchdog_observer = Observer()
@@ -561,6 +565,7 @@ class MMVShadersCLI:
                 # The window received close command
                 if self.mgl.window_handlers.window_should_close:
                     self.audio_source.stop()
+                    self.mmv_package_interface.thanks_message()
                     break
 
             # Print FPS, well, kinda, the average of the last fps_last_n frames
