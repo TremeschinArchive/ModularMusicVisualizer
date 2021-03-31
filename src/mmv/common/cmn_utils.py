@@ -28,6 +28,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import mmv.common.cmn_any_logger
+from pathlib import Path
 import subprocess
 import hashlib
 import logging
@@ -47,222 +48,12 @@ class Utils:
     def __init__(self):
         self.os = self.get_os()
 
-    # Make sure given path is a directory
-    def assert_dir(self, path, silent = False) -> None:
-        debug_prefix = "[Utils.assert_dir]"
-
-        # Log action
-        if not silent:
-            logging.debug(f"{debug_prefix} Making sure path [{path}] is a directory")
-
-        # Error assertion
-
-        correct = os.path.isdir(path)
-        exists = os.path.exists(path)
-        
-        if not (exists and correct):
-            err = f"{debug_prefix} [ERROR] Path exists: [{exists}], correct type (dir): [{correct}]"
-            logging.error(err)
-            raise RuntimeError(err)
-    
-    # Make sure given path is a file
-    def assert_file(self, path, silent = False) -> None:
-        debug_prefix = "[Utils.assert_file]"
-
-        # Log action
-        if not silent:
-            logging.debug(f"{debug_prefix} Making sure path [{path}] is a file")
-
-        # Error assertion
-
-        correct = os.path.isfile(path)
-        exists = os.path.exists(path)
-        
-        if not (exists and correct):
-            err = f"{debug_prefix} [ERROR] Path exists: [{exists}], correct type (file): [{correct}]"
-            logging.error(err)
-            raise RuntimeError(err)
- 
-    # Make directory / directories if it does not exist
-    # Returns:
-    # - True: existed before
-    # - False: didn't existed before
-    def mkdir_dne(self, path, silent = False) -> bool:
-        debug_prefix = "[Utils.mkdir_dne]"
-
-        # Log action
-        if not silent:
-            logging.info(f"{debug_prefix} Make directory if doesn't exist on path: [{path}], getting absolute and realpath first")
-
-        # Get the absolute and realpath of it
-        path = self.get_absolute_realpath(path = path, silent = silent)
-
-        # Log the absolute and realpath we got
-        if not silent:
-            logging.debug(f"{debug_prefix} Got absolute and realpath: [{path}]")
-
-        # If path already exists, checks if it is in fact a directory otherwise something is wrong
-        if os.path.exists(path):
-            if not silent:
-                logging.debug(f"{debug_prefix} Path already existed, checking if it's a file for error assertion..")
-            
-            # If path is a directory then something is wrong
-            if os.path.isfile(path):
-                logging.error(f"{debug_prefix} Path already existed and is a file, this function creates directories so for safety we'll quit as this is technically not intended behavior (mkdir on a file location, that means we probably misspelled something and created a file where we should in fact have a directory)")
-                sys.exit(-1)
-            
-            # Return True - target already existed
-            return True
-            
-        # Make the directory
-        os.makedirs(path)
-
-        # Check we created the path
-        if not os.path.isdir(path):
-            logging.error(f"{debug_prefix} Target path didn't exist and Python's os.makedirs() function couldn't create the directory (should be some sort of permission errors on Windows os? If we're here then only other option is the path naming is just wrong but os.makedirs would error out on its own")
-            sys.exit(-1)
-
-        # Return False - target didn't existed
-        return False
-    
-    # Make file it does not exist
-    # Returns:
-    # - True: existed before
-    # - False: didn't existed before
-    def mkfile_dne(self, path, silent = False) -> bool:
-        debug_prefix = "[Utils.mkfile_dne]"
-
-        # Log action
-        if not silent:
-            logging.info(f"{debug_prefix} Make empty if doesn't exist on path: [{path}], getting absolute and realpath first")
-
-        # Get the absolute and realpath of it
-        path = self.get_absolute_realpath(path = path, silent = silent)
-
-        # Log the absolute and realpath we got
-        if not silent:
-            logging.debug(f"{debug_prefix} Got absolute and realpath: [{path}]")
-
-        # If path already exists, checks if it is in fact a directory otherwise something is wrong
-        if os.path.exists(path):
-            if not silent:
-                logging.debug(f"{debug_prefix} Path already existed, checking if it's a directory for error assertion..")
-
-            # If path is a directory then something is wrong
-            if os.path.isdir(path):
-                logging.error(f"{debug_prefix} Path already existed and is a file, this function creates directories so for safety we'll quit as this is technically not intended behavior (mkdir on a file location, that means we probably misspelled something and created a file where we should in fact have a directory)")
-                sys.exit(-1)
-
-            # # Reset file content
-
-            if not silent:
-                logging.warn(f"{debug_prefix} Resetting file content [{path}]")
-
-            with open(path, "w") as f:
-                f.write("")
-
-            return False
-        return True
-    
-    # Make sure a parent directory exists
-    def mkparent_dne(self, path, silent = False) -> None:
-        debug_prefix = "[Utils.mkparent_dne]"
-
-        # Log action
-        if not silent:
-            logging.debug(f"{debug_prefix} Make sure the parent directory of the path [{path}] exists")
-
-        # Get the absolute and real path of the parent dir
-        abspath_realpath_parent_dir = self.get_path_parent_dir(
-                self.get_absolute_realpath(
-                    path, silent = silent
-            ), silent = silent
-        )
-
-        # Make it
-        self.mkdir_dne(abspath_realpath_parent_dir, silent = silent)
-
-        if not silent:
-            logging.debug(f"{debug_prefix} (Parent) Directory guaranteed to exist [{abspath_realpath_parent_dir}]")
-
-    # Deletes an directory, fail safe? Quits if we can't delete it..
-    def rmdir(self, path, silent = False) -> None:
-        debug_prefix = "[Utils.rmdir]"
-
-        # Log action
-        if not silent:
-            logging.info(f"{debug_prefix} Removing dir: [{path}]")
-
-        # If the asked directory is even a path
-        if os.path.isdir(path):
-         
-            # Try removing with ignoring errors first..?
-            shutil.rmtree(path, ignore_errors = True)
-
-            # Not deleted? 
-            if os.path.isdir(path):
-
-                # Ok. We can't be silent here we're about to error out probably
-                logging.warn(f"{debug_prefix} Error removing directory with ignore_errors=True, trying again.. will quit if we can't")
-
-                # Remove without ignoring errors?
-                shutil.rmtree(path, ignore_errors = False)
-
-                # Still exists? oops, better quit
-                if os.path.isdir(path):
-                    logging.error(f"{debug_prefix} COULD NOT REMOVE DIRECTORY: [{path}]")
-                    sys.exit(-1)
-
-            # Warn we're done
-            if not silent:
-                logging.debug(f"{debug_prefix} Removed directory successfully")
-        else:
-            # Directory didn't exist at first, nothing to do here
-            if not silent:
-                logging.debug(f"{debug_prefix} Directory didn't exists, nothing to do here... [{path}]")
-
-    # Remove some file
-    def rmfile(self, path, silent = False) -> None:
-        debug_prefix = "[Utils.rmfile]"
-
-        # Log action
-        if not silent:
-            logging.info(f"{debug_prefix} Removing file: [{path}]")
-
-        # Check if it's even a file
-        if os.path.isfile(path):
-            
-            # Remove file
-            os.remove(path)
-    
-            # Check if it still exists (efror if True)
-            if os.path.isfile(path):
-                logging.error(f"{debug_prefix} COULD NOT REMOVE FILE: [{path}]")
-                sys.exit(-1)
-
-            # Ok!
-            logging.debug(f"{debug_prefix} Removed directory successfully")
-        else:
-            # File didn't exist at first, nothing to do here
-            if not silent:
-                logging.debug(f"{debug_prefix} File didn't exists, nothing to do here... [{path}]")
-
-    # Reset an file to empty contents
-    def reset_file(self, path, silent = False) -> None:
-        debug_prefix = "[Utils.reset_file]"
-
-        # Log action
-        if not silent:
-            logging.info(f"{debug_prefix} Reset file located at: [{path}]")
-
-        # Error assertion
-        if (not os.path.isfile(path)) and (os.path.exists(path)):
-            logging.error(f"{debug_prefix} [ERROR] Path is not a file: [{path}]")
-            sys.exit(-1)
-        
-        # Write nothing on the file with write + override mode
-        with open(path, "w") as f:
-            f.write("")
+    def reset_dir(self, path: Path):
+        debug_prefix = "[Utils.reset_dir]"
+        logging.info(f"{debug_prefix} Reset directory (remove")
+        assert path.is_dir, f"{debug_prefix} Path [{path}] must be directory"
+        if os.path.exists(path): shutil.rmtree(path)
+        path.mkdir(parents = True)
 
     # Copy every file of a directory to another
     # TODO: new code style
@@ -296,113 +87,6 @@ class Utils:
             logging.info(f"{debug_prefix} Got file [{r}], ")
 
         return r
-
-    # Get the basename of a path
-    def get_basename(self, path, silent = False):
-        debug_prefix = "[Utils.get_basename]"
-
-        # Log action
-        if not silent:
-            logging.debug(f"{debug_prefix} Get basename of path [{path}]")
-
-        # Actually get the basename
-        basename = os.path.basename(path)
-
-        # Debug and return the basename
-        if not silent:
-            logging.info(f"{debug_prefix} Basename is [{basename}]")
-
-        return basename
-    
-    # Return an absolute and real path always, pointing to the file / directory on the tree
-    # structure where it is truly located (no symlinks) and also relative to the root of the system
-    # that is the absolute path, not relative one, starts with / on Posix and LETTER:\\ on Windows
-    def get_absolute_realpath(self, path, silent = False):
-        debug_prefix = "[Utils.get_absolute_realpath]"
-
-        # Log action
-        if not silent:
-            logging.debug(f"{debug_prefix} Get abspath of path [{path}]")
-
-        # On Linux / MacOS we expand the ~ to the current user's home directory, ~ = /home/$USER
-        if self.os in ["linux", "macos"]:
-            if not silent:
-                logging.debug(f"{debug_prefix} POSIX: Expanding path with user home folder ~ if any")
-
-            # Expand the path
-            path = os.path.expanduser(path)
-
-            if not silent:
-                logging.debug(f"{debug_prefix} POSIX: Expanded path is [{path}]")
-
-        # Actually get the absolute path, that is, if we're on the file /home/user/folder and type
-        # ./binary we are actually referring it as /home/user/folder/binary, that is the absolute
-        # path, not the relative to where we are at, this is optimal because the user can be on a 
-        # shell with a different working directory executing our Python scripts
-        abspath = os.path.abspath(path)
-
-        # Did the path changed at all?
-        if (abspath != path) and (not silent):
-            logging.debug(f"{debug_prefix} Original path changed!! It probably was a relative reference [{path}] -> [{abspath}]")
-
-        # Get the real path
-        abs_realpath = self.get_realpath(path = abspath, silent = False)
-
-        if not silent:
-            logging.info(f"{debug_prefix} Return absolute and real path: [{abs_realpath}]")
-
-        return abs_realpath
-    
-    # Some files can be symlinks on *nix or shortcuts on Windows, get the true real path
-    def get_realpath(self, path, silent = False):
-        debug_prefix = "[Utils.get_realpath]"
-
-        # Log action
-        if not silent:
-            logging.debug(f"{debug_prefix} Get realpath of path [{path}]")
-
-        # Actually get the realpath
-        realpath = os.path.realpath(path)
-
-        # Did the path changed at all?
-        if (not realpath == path) and (not silent):
-            logging.debug(f"{debug_prefix} Got and returning realpath of [{path}] -> [{realpath}")
-            
-        return realpath
-
-    # Get the filename without extension /home/linux/file.ogg -> "file"
-    def get_filename_no_extension(self, path, silent = False):
-        debug_prefix = "[Utils.get_filename_no_extension]"
-
-        # Log action
-        if not silent:
-            logging.info(f"{debug_prefix} Get filename without extension of path [{path}]")
-
-        # Actually get the filename without extension
-        filename_no_ext = os.path.splitext(os.path.basename(self.get_absolute_realpath(path)))[0]
-
-        # Log what we'll return
-        if not silent:
-            logging.debug(f"{debug_prefix} Got and returning filename [{filename_no_ext}]")
-
-        return filename_no_ext
-    
-    # Get the parent directory of a given path
-    def get_path_parent_dir(self, path, silent = False):
-        debug_prefix = "[Utils.get_path_parent_dir]"
-    
-        # Log action
-        if not silent:
-            logging.info(f"{debug_prefix} Get the parent directory of the path [{path}]")
-        
-        # Get the dirname of the path
-        parent = os.path.dirname(self.get_absolute_realpath(path, silent = True))
-
-        # Log action
-        if not silent:
-            logging.info(f"{debug_prefix} Parent directory is [{parent}]")
-        
-        return parent
     
     # The name says it all, given a path get all of its subdirectories
     # Returns empty list "None" --> [] if there is no directory
@@ -455,12 +139,6 @@ class Utils:
         if not silent:
             logging.info(f"{debug_prefix} Loading YAML file from path [{path}], getting absolute realpath first")
 
-        # Get absolute and realpath
-        path = self.get_absolute_realpath(path, silent = True)
-
-        # Error assertion
-        self.assert_file(path)
-
         # Open file in read mode
         with open(path, "r") as f:
             data = yaml.load(f, Loader = yaml.FullLoader)
@@ -481,9 +159,6 @@ class Utils:
             logging.info(f"{debug_prefix} Dumping some data to YAML located at: [{path}], getting absolute realpath first")
             logging.debug(f"{debug_prefix} Data being dumped: [{data}]")
 
-        # Make sure the parent path exists
-        self.mkparent_dne(path)
-
         # Get absolute and realpath
         path = self.get_absolute_realpath(path, silent = True)
 
@@ -497,9 +172,6 @@ class Utils:
         # Log action
         if not silent:
             logging.info(f"{debug_prefix} Loading TOML file from path [{path}], getting absolute realpath first")
-
-        # Get absolute and realpath
-        path = self.get_absolute_realpath(path, silent = True)
 
         # Error assertion
         self.assert_file(path)
@@ -545,47 +217,6 @@ class Utils:
             time.sleep(0.1)
             if os.path.exists(path):
                 break
-        
-    # $ mv A B
-    def move(self, src, dst, silent = False) -> None:
-        debug_prefix = "[Utils.move]"
-
-        # Log action
-        if not silent:
-            logging.info(f"{debug_prefix} Moving path [{src}] -> [{dst}]")
-
-        # Make sure we have the absolute and real path of the targets
-        src = self.get_absolute_realpath(src, silent = silent)
-        dst = self.get_absolute_realpath(dst, silent = silent)
-
-        # Only move if the target directory doesn't exist
-        if not os.path.exists(dst):
-            shutil.move(src, dst)
-        else:
-            err = f"{debug_prefix} Target path already exist"
-            logging.error(err)
-            raise RuntimeError(err)
-    
-    # $ cp A B
-    def copy(self, src, dst, silent = False) -> None:
-        debug_prefix = "[Utils.copy]"
-
-        # Log action
-        if not silent:
-            logging.info(f"{debug_prefix} Copying path [{src}] -> [{dst}]")
-
-        # Make sure we have the absolute and real path of the targets
-        src = self.get_absolute_realpath(src, silent = silent)
-        dst = self.get_absolute_realpath(dst, silent = silent)
-
-        # Copy the directories
-        # Only move if the target directory doesn't exist
-        if not os.path.exists(dst):
-            shutil.copy(src, dst)
-        else:
-            err = f"{debug_prefix} Target path already exist"
-            logging.error(err)
-            raise RuntimeError(err)
 
     # Check if either type A = wanted[0] and B = wanted[1] or the opposite
     def is_matching_type(self, items, wanted):
@@ -632,7 +263,7 @@ class Utils:
 
         # Force list variable
         extra_paths = self.force_list(extra_paths)
-        search_path = os.environ["PATH"] + os.pathsep + os.pathsep.join(extra_paths)
+        search_path = os.environ["PATH"] + os.pathsep + os.pathsep.join([str(path) for path in extra_paths])
 
         # Log search paths
         if not silent:
@@ -770,84 +401,3 @@ class DataUtils:
 
         return intervals
     
-# Python's subprocess utilities because I'm lazy remembering things
-class SubprocessUtils():
-
-    def __init__(self, name, utils, context):
-        debug_prefix = "[SubprocessUtils.__init__]"
-
-        self.name = name
-        self.utils = utils
-        self.context = context
-
-        print(debug_prefix, "Creating SubprocessUtils with name: [%s]" % name)
-
-    # Get the commands from a list to call the subprocess
-    def from_list(self, list):
-        debug_prefix = "[SubprocessUtils.run]"
-
-        print(debug_prefix, "Getting command from list:")
-        print(debug_prefix, list)
-
-        self.command = list
-
-    # Run the subprocess with or without a env / working directory
-    def run(self, working_directory=None, env=None, shell=False):
-        debug_prefix = "[SubprocessUtils.run]"
-        
-        print(debug_prefix, "Popen SubprocessUtils with name [%s]" % self.name)
-        
-        # Copy the environment if nothing was changed and passed as argument
-        if env is None:
-            env = os.environ.copy()
-        
-        # Runs the subprocess based on if we set or not a working_directory
-        if working_directory == None:
-            self.process = subprocess.Popen(self.command, env=env, stdout=subprocess.PIPE, shell=shell)
-        else:
-            self.process = subprocess.Popen(self.command, env=env, cwd=working_directory, stdout=subprocess.PIPE, shell=shell)
-
-    # Get the newlines from the subprocess
-    # This is used for communicating Dandere2x C++ with Python, simplifies having dealing with files
-    def realtime_output(self):
-        while True:
-            # Read next line
-            output = self.process.stdout.readline()
-
-            # If output is empty and process is not alive, quit
-            if output == '' and self.process.poll() is not None:
-                break
-            
-            # Else yield the decoded output as subprocess send bytes
-            if output:
-                yield output.strip().decode("utf-8")
-
-    # Wait until the subprocess has finished
-    def wait(self):
-        debug_prefix = "[SubprocessUtils.wait]"
-
-        print(debug_prefix, "Waiting SubprocessUtils with name [%s] to finish" % self.name)
-
-        self.process.wait()
-
-    # Kill subprocess
-    def terminate(self):
-        debug_prefix = "[SubprocessUtils.terminate]"
-
-        print(debug_prefix, "Terminating SubprocessUtils with name [%s]" % self.name)
-
-        self.process.terminate()
-
-    # See if subprocess is still running
-    def is_alive(self):
-        debug_prefix = "[SubprocessUtils.is_alive]"
-
-        # Get the status of the subprocess
-        status = self.process.poll()
-
-        # None? alive
-        if status == None:
-            return True
-        else:
-            print(debug_prefix, "SubprocessUtils with name [%s] is not alive" % self.name)
-            return False
