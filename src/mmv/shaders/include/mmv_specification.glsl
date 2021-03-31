@@ -48,7 +48,9 @@ vec4 mmv_blit_image(
         in vec2 shift,             // Shift the image (for example vec2(0.5, 0.5) will rotate around the center)
         in float scale,            // Scale of the image 1 = 100%, 2 = 200%
         in float angle,            // Angle of rotation, be aware of aliasing!
-        in bool repeat)            // If out of bounds tile the image?
+        in bool repeat,            // If out of bounds tile the image?
+        in bool undo_gamma,        // Is the image already gamma corrected? usually (99% the time) True
+        in float gamma)            // Gamma value to revert, only used if undo_gamma is True, usually set to 2
     {
     
     // 1. PLEASE, IF YOU ARE USING DYNSHADER REAL TIME SEND MMV_RESOLUTION RATHER THAN THIS OBJECT'S RESOLUTION
@@ -117,6 +119,11 @@ vec4 mmv_blit_image(
     }}
 
     imagepixel = multisampled / (many + center_intensity);
+
+    // Return the square of image pixel colors
+    if (undo_gamma) {
+        imagepixel = pow(imagepixel, vec4(gamma));
+    }
 
     // Return the texture
     return imagepixel;
