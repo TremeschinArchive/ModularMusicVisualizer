@@ -446,12 +446,11 @@ class MMVShaderMGL:
     # # Window management, contexts
 
     # Configurate how we'll output the shader
-    def target_render_settings(self, width, height, fps, ssaa = 1, silent = False):
+    def target_render_settings(self, width, height, fps, ssaa = 1, verbose = False):
         debug_prefix = "[MMVShaderMGL.target_render_settings]"
         (self.width, self.height, self.fps, self.ssaa) = (width, height, fps, ssaa)
         self.original_width, self.original_height = width, height
-        if not silent:
-            logging.info(f"{debug_prefix} Render configuration is [width={self.width}] [height=[{self.height}] [fps=[{self.fps}] [ssaa={self.ssaa}]")
+        if verbose: logging.info(f"{debug_prefix} Render configuration is [width={self.width}] [height=[{self.height}] [fps=[{self.fps}] [ssaa={self.ssaa}]")
 
     def set_reset_function(self, obj): self.__reset_function = obj
     def dummy(self): pass
@@ -574,12 +573,12 @@ class MMVShaderMGL:
     # Create one FBO which is a texture under the hood so we can utilize it in some other shader
     # Returns [texture, fbo], which the texture is attached to the fbo with the previously
     # configured width, height
-    def _construct_texture_fbo(self):
+    def _construct_texture_fbo(self, verbose = True):
         debug_prefix = f"[MMVShaderMGL._construct_texture_fbo] [{self.name}]"
 
         # Error assertion, width height or fps is not set
         assert not any([value is None for value in [self.width, self.height]]), ("Width or height wasn't set / is None, did you call .render_config(width, height, fps) first?")
-        logging.info(f"{debug_prefix} Constructing an FBO attached to an Texture with [width={self.width}] [height=[{self.height}]")
+        if verbose: logging.info(f"{debug_prefix} Constructing an FBO attached to an Texture with [width={self.width}] [height=[{self.height}]")
 
         # Create a RGBA texture of this class's configured resolution, width and height can be supersampled AA
         texture = self.gl_context.texture((
@@ -598,9 +597,9 @@ class MMVShaderMGL:
         return [texture, fbo]
     
     # Create FBO bound to a texture and render buffer
-    def _create_assing_texture_fbo_render_buffer(self):
-        logging.info(f"[MMVShaderMGL._create_assing_texture_fbo_render_buffer] Creating and assigning RGBA Texture to some FBO and Render Buffer")
-        self.texture, self.fbo = self._construct_texture_fbo()
+    def _create_assing_texture_fbo_render_buffer(self, verbose = True):
+        if verbose: logging.info(f"[MMVShaderMGL._create_assing_texture_fbo_render_buffer] Creating and assigning RGBA Texture to some FBO and Render Buffer")
+        self.texture, self.fbo = self._construct_texture_fbo(verbose = verbose)
 
     # Loads one shader from the disk, optionally also a custom vertex shader rather than the screen filling default one
     def load_shader_from_path(self, fragment_shader_path, vertex_shader_path = MMV_MGL_DEFAULT_VERTEX_SHADER):
@@ -669,6 +668,7 @@ class MMVShaderMGL:
     def construct_shader(self,
         fragment_shader,
         vertex_shader = MMV_MGL_DEFAULT_VERTEX_SHADER,
+        verbose = True,
     ):
         debug_prefix = f"[MMVShaderMGL.construct_shader] [{self.name}]"
 
@@ -702,7 +702,7 @@ class MMVShaderMGL:
 
         # Get a texture bound to the FBO
         if not self.master_shader:
-            self._create_assing_texture_fbo_render_buffer()
+            self._create_assing_texture_fbo_render_buffer(verbose = verbose)
 
         # Build the buffer we send when making the VAO
         self.fullscreen_buffer = self.gl_context.buffer(array('f', self.coordinates))
