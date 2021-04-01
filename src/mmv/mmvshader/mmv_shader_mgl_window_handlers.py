@@ -129,7 +129,7 @@ class MMVShaderMGLWindowHandlers:
                 target = self.mmv_shader_mgl.textures[index]["shader_as_texture"]
                 target.texture.release()
                 target.fbo.release()
-                target._create_assing_texture_fbo_render_buffer()
+                target._create_assing_texture_fbo_render_buffer(verbose = False)
 
         # Master shader has window and imgui
         if self.mmv_shader_mgl.master_shader:
