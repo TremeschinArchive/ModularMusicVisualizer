@@ -126,6 +126,11 @@ class MMVShaderMGLPreprocessor:
             height = content.get("height", None)
             depth = content.get("depth", None)
 
+            # Textures mipmaps, anisotropy
+            mipmaps = content.get("mipmaps", True)
+            mipmaps_max_level = content.get("mipmaps_max_level", 2000)
+            anisotropy = content.get("anisotropy", 1.0)
+
             # Didn't find any actions
             if action is None:
                 logging.warn(f"{debug_prefix} Mapping does nothing, no \"type\" specified")
@@ -244,6 +249,16 @@ class MMVShaderMGLPreprocessor:
                         logging.info(f"{debug_prefix} Uploading image texture [{value}] to the GPU in RGBA mode, assign on textures dictionary")
                         texture = self.mmv_shader_mgl.gl_context.texture((width, height), 4, img.tobytes())
 
+                        # Mipmaps
+                        if mipmaps:
+                            logging.info(f"{debug_prefix} Building mipmaps..")
+                            texture.build_mipmaps(max_level = mipmaps_max_level)
+                            logging.info(f"{debug_prefix} Done!")
+
+                        # Anisotropy
+                        logging.info(f"{debug_prefix} Setting anisotropy suggested level to [{anisotropy}]")
+                        texture.anisotropy = anisotropy
+
                         assign_index = len(self.mmv_shader_mgl.textures.keys())
 
                         # Assign the name, type and texture to the textures dictionary
@@ -261,6 +276,7 @@ class MMVShaderMGLPreprocessor:
                         
                         # Create a blank texture..
                         texture = self.mmv_shader_mgl.gl_context.texture((width, height), int(depth), dtype = "f4")
+                        texture.anisotropy = anisotropy
 
                         # Write zeros to texture, there is no guarantee the buffer is clean
                         texture.write(np.zeros((width, height, depth), dtype = np.float32))
@@ -322,6 +338,7 @@ class MMVShaderMGLPreprocessor:
                         # Create a texture and fbo for this mapped shader, here is where we render to the fbo
                         # which is attached to the texture, and we use that texture in this main class
                         texture, fbo, _ = shader_as_texture._construct_texture_fbo()
+                        texture.anisotropy = anisotropy
 
                         # Construct the shader we loaded
                         shader_as_texture.construct_shader(
@@ -348,6 +365,9 @@ class MMVShaderMGLPreprocessor:
 
                         # Create a RGB texture for the video
                         texture = self.mmv_shader_mgl.gl_context.texture((width, height), 3)
+                        texture.anisotropy = anisotropy
+
+                        # CV2 reads stuff as BGR rather than RGB so we have to revert those
                         texture.swizzle = 'BGR'
 
                         # Next available id

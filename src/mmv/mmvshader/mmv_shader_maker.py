@@ -80,7 +80,7 @@ void main() {
 
 
 class MMVShaderMaker:
-    def __init__(self, working_directory, name = None):
+    def __init__(self, working_directory, name = None, replaces = {}):
         debug_prefix = "[MMVShaderMaker.__init__]"
 
         # Instantiate classes
@@ -110,7 +110,8 @@ class MMVShaderMaker:
         self._transformations = []
 
         # Get and add name mapping
-        self.name = str(uuid.uuid4()) if name is None else name
+        self.name = name
+        self.replaces = replaces
      
         # Start with the base shader
         self._fragment_shader = BASE_FRAGMENT_SHADER
@@ -120,13 +121,33 @@ class MMVShaderMaker:
     def clone(self): return copy.deepcopy(self)
     def set_name(self, name): self.name = name
 
+    # Build the shader and save to the working directory, returns the final path
+    def finish(self):
+        debug_prefix = "[MMVShaderMaker.finish]"
+        if self.name is None: self.name = str(uuid.uuid4())
+        save = self.working_directory / f"{self.name}.glsl"
+        logging.info(f"{debug_prefix} Finishing shader [{self.name}] saving to [{save}]")
+        self.build_final_shader()
+        self.save_shader_to_file(save)
+        return self.get_path()
+
     # Load full shader from path
-    def load_shader_from_path(self, path, replaces = {}):
+    def load_shader_from_path(self, path: Path, replaces = {}, get_name_from_file = True):
         debug_prefix = "[MMVShaderMaker.load_from_path]"
         
+        # Concatenate both dictionaries
+        for key, item in self.replaces.items():
+            replaces[key] = item
+
         # Log action
         logging.info(f"{debug_prefix} Loading shader from path [{path}]")
         logging.info(f"{debug_prefix} Replaces: {replaces}")
+
+        # Assign same name of the file
+        if (self.name is None) or get_name_from_file:
+            logging.info(f"{debug_prefix} No name so far, getting filename.. will error if not pathlib.Path")
+            self.name = path.stem
+            logging.info(f"{debug_prefix} Ok! Name is [{self.name}]")
 
         # Load file on path
         with open(path, "r") as f:
@@ -146,33 +167,33 @@ class MMVShaderMaker:
 
     # Add image from file mapping to a target width and height.
     # Uses the resolution of the read file if some width or height is None (or both)
-    def add_image_mapping(self, name, path, width = None, height = None):
+    def add_image_mapping(self, name, path, width = None, height = None, mipmaps = True, anisotropy = 16):
         debug_prefix = "[MMVShaderMaker.add_image_mapping]"
-        mapping = {"type": "map", "name": name, "loader": "image", "value": path, "width": width, "height": height}
+        mapping = {"type": "map", "name": name, "loader": "image", "value": str(path), "width": width, "height": height, "mipmaps": mipmaps, "anisotropy": anisotropy}
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
     # Video mapping to a target width and height
-    def add_video_mapping(self, name, path, width, height):
+    def add_video_mapping(self, name, path, width, height, anisotropy = 16):
         debug_prefix = "[MMVShaderMaker.add_video_mapping]"
-        mapping = {"type": "map", "name": name, "loader": "video", "value": path, "width": width, "height": height}
+        mapping = {"type": "map", "name": name, "loader": "video", "value": str(path), "width": width, "height": height, "anisotropy": anisotropy}
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
     # Pipeline (as) texture is for communicating big arrays from Python to ModernGL's shader being executed
-    def add_pipeline_texture_mapping(self, name, width, height, depth):
+    def add_pipeline_texture_mapping(self, name, width, height, depth, mipmaps = True, anisotropy = 16):
         debug_prefix = "[MMVShaderMaker.add_pipeline_texture_mapping]"
-        mapping = {"type": "map", "name": name, "loader": "pipeline_texture", "width": width, "height": height, "depth": depth}
+        mapping = {"type": "map", "name": name, "loader": "pipeline_texture", "width": width, "height": height, "depth": depth, "mipmaps": mipmaps, "anisotropy": anisotropy}
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
     # Strict shader only renders at this target resolution internally, regardless of output dimensions
-    def add_strict_shader_mapping(self, name, path, width, height):
+    def add_strict_shader_mapping(self, name, path, width, height, anisotropy = 16):
         debug_prefix = "[MMVShaderMaker.add_strict_shader_mapping]"
-        mapping = {"type": "map", "name": name, "loader": "shader", "value": path, "width": width, "height": height}
+        mapping = {"type": "map", "name": name, "loader": "shader", "value": str(path), "width": width, "height": height, "anisotropy": anisotropy}
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
     # Dynamic shader adapts to the viewport / output dimensions, recommended
-    def add_dynamic_shader_mapping(self, name, path):
+    def add_dynamic_shader_mapping(self, name, path, anisotropy = 16):
         debug_prefix = "[MMVShaderMaker.add_dynamic_shader_mapping]"
-        mapping = {"type": "map", "name": name, "loader": "dynshader", "value": path}
+        mapping = {"type": "map", "name": name, "loader": "dynshader", "value": str(path), "anisotropy": anisotropy}
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
     # Name the shader on this class's name
