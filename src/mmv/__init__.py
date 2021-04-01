@@ -364,7 +364,7 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
         # Runtime dir
         self.runtime_dir = self.MMV_PACKAGE_ROOT / "runtime"
         logging.info(f"{debug_prefix} Runtime dir is [{self.runtime_dir}], deleting..")
-        shutil.rmtree(self.runtime_dir)
+        shutil.rmtree(self.runtime_dir, ignore_errors = True)
         self.runtime_dir.mkdir(parents = True, exist_ok = True)
 
         # Windoe juuuust in case
