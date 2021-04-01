@@ -35,6 +35,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 import mmv.common.cmn_any_logger
+from pathlib import Path
 from tqdm import tqdm
 import numpy as np
 import itertools
@@ -240,9 +241,13 @@ class MMVShadersCLI:
 
             # Add every directory or the default one, note first returned ones have higher priority
             for directory in self.utils.force_list(to_include):
+
                 if directory == "default":
                     self.mgl.include_dir(self.mmv_package_interface.shaders_dir / "include")
                 else:
+                    # Convert to pathlib.Path
+                    if isinstance(directory, str):
+                        directory = Path(directory)
                     self.mgl.include_dir(directory)
 
     # List capture devices by index
