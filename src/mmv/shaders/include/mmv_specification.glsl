@@ -88,37 +88,8 @@ vec4 mmv_blit_image(
         if (get_image_uv.y < 0.0) { return canvas; }
         if (get_image_uv.y > 1.0) { return canvas; }
     }
-
-    // // Multi sampling for removing jagged edges
-    float center_intensity = 5.0;
-
     // Get the texture (raw pixel, the center, non anti aliased)
     vec4 imagepixel = texture(image, get_image_uv);
-    imagepixel *= center_intensity;
-
-    // // Multi sample config
-
-    // Distance of the uv texture on this pixel to averate out stuff
-    float lookup = (((1 / mmv_resolution.x) + (1 / mmv_resolution.y))/2.0) * 2.0;
-
-    // How many random pixels around to average
-    float many = 1;
-
-    // Constant
-    float tau = 3.1415*2;
-    vec4 multisampled = imagepixel;
-
-    // The vector we get the translated one given the rotation point
-    vec2 get_lookuped = vec2(0.0);
-
-    // Iterate
-    for (float i = 0.0; i < tau; i += tau / many) {{
-        // A random radially point
-        get_lookuped = get_image_uv + (vec2(rand(i), rand(i+1)) * lookup);
-        multisampled += texture(image, get_lookuped);
-    }}
-
-    imagepixel = multisampled / (many + center_intensity);
 
     // Return the square of image pixel colors
     if (undo_gamma) {

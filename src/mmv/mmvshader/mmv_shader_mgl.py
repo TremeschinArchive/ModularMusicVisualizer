@@ -441,6 +441,7 @@ import gc
 import os
 
 class MMVShaderMGL:
+    EXPERIMENTAL_VIDEO_MIPMAP = True
 
     # # Window management, contexts
 
@@ -842,6 +843,9 @@ class MMVShaderMGL:
                     # frame = cv2.flip(frame, 0)
                     # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                     texture_obj.write(frame)
+
+                    if MMVShaderMGL.EXPERIMENTAL_VIDEO_MIPMAP:
+                        texture_obj.build_mipmaps()
 
                 # Set the location we'll expect this texture
                 self.program[name] = location
