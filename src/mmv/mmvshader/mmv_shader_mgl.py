@@ -360,7 +360,7 @@ MMV_MGL_NULL_FRAGMENT_SHADER = "void main() { fragColor = vec4(0.0); }"
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # If shader compilation fails, fall back to this
-MMV_MGL_FALLBACK_FRAGMENT_SHADER = f"""
+MMV_MGL_FALLBACK_MISSING_TEXTURE_SHADER = f"""
 // ===============================================================================
 
 // This is the fallback shader when something went wrong, check console output
@@ -467,7 +467,6 @@ class MMVShaderMGL:
             self.name = "Master Shader"
         else:
             self.name = str(uuid.uuid4())
-
         self.flip = flip
         self.ssaa = 1
 
@@ -592,21 +591,16 @@ class MMVShaderMGL:
         # to this FBO after fbo.use()-ing it, the contents will be written directly on that texture
         # which we can bind to some location in other shader. This process is recursive
 
-        # Create the Render Buffer
-        render_buffer = self.gl_context.renderbuffer((
-            int(self.width * self.ssaa), int(self.height * self.ssaa)
-        ))
-
         # Create the FBO
-        fbo = self.gl_context.framebuffer(color_attachments = [texture, render_buffer])
+        fbo = self.gl_context.framebuffer(color_attachments = [texture])
 
         # Return the two created objects
-        return [texture, fbo, render_buffer]
+        return [texture, fbo]
     
     # Create FBO bound to a texture and render buffer
     def _create_assing_texture_fbo_render_buffer(self):
         logging.info(f"[MMVShaderMGL._create_assing_texture_fbo_render_buffer] Creating and assigning RGBA Texture to some FBO and Render Buffer")
-        self.texture, self.fbo, self.render_buffer = self._construct_texture_fbo()
+        self.texture, self.fbo = self._construct_texture_fbo()
 
     # Loads one shader from the disk, optionally also a custom vertex shader rather than the screen filling default one
     def load_shader_from_path(self, fragment_shader_path, vertex_shader_path = MMV_MGL_DEFAULT_VERTEX_SHADER):
@@ -725,11 +719,16 @@ class MMVShaderMGL:
         try:
             return self.gl_context.program(fragment_shader = fragment_shader, vertex_shader = vertex_shader)
         except moderngl.error.Error as e:
-            logging.info(f"{debug_prefix} Faulty GLSL:")
+
+            # Log faulty shader
+            logging.error(f"{debug_prefix} Faulty GLSL:")
             for i, line in enumerate(fragment_shader.split("\n")):
-                logging.info(f"[{i:04}] | {line}")
-            logging.info(f"{debug_prefix} Error: {e}")
-            return self.gl_context.program(fragment_shader = MMV_MGL_FALLBACK_FRAGMENT_SHADER, vertex_shader = MMV_MGL_DEFAULT_VERTEX_SHADER)
+                logging.error(f"[{i:04}] | {line}")
+            logging.error(f"{debug_prefix} Error: {e}")
+
+            # Drop textures since we'll not need them and return missing shader texture
+            self.window_handlers.drop_textures()
+            return self.gl_context.program(fragment_shader = MMV_MGL_FALLBACK_MISSING_TEXTURE_SHADER, vertex_shader = MMV_MGL_DEFAULT_VERTEX_SHADER)
 
     # Create fullscreen VAO that reads position, OpenGL UV coordinates then ShaderToy UV coordinates
     def _create_vao(self):
@@ -762,8 +761,10 @@ class MMVShaderMGL:
             target_index = self.writable_textures.get(texture_name, None)
 
             # If it even does exist then we write to its respective texture
+            # AttributeError will happen when / if we get a mgl.InvalidObject (dropped textures)
             if target_index is not None:
-                self.textures[target_index]["texture"].write(data, viewport = viewport)
+                try: self.textures[target_index]["texture"].write(data, viewport = viewport)
+                except AttributeError: pass
 
             # Write recursively with same arguments
             for index in self.textures.keys():
@@ -822,7 +823,11 @@ class MMVShaderMGL:
             # Unpack guaranteed generic items
             name = texture_info["name"]
             loader = texture_info["loader"]
-            texture_obj = texture_info["texture"]
+
+            if loader == "shader":
+                texture_obj = texture_info["shader_as_texture"].texture
+            else:
+                texture_obj = texture_info["texture"]
 
             try:  # TODO: Video that doesn't match target FPS should not read new frame for every frame
                 # Read the next frame of the video

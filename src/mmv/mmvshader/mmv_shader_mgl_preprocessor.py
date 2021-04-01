@@ -335,15 +335,13 @@ class MMVShaderMGLPreprocessor:
                         # as that one will receive the main class's pipeline
                         shader_as_texture.target_render_settings(width = int(width), height = int(height), ssaa = self.mmv_shader_mgl.ssaa, fps = None)
 
-                        # Create a texture and fbo for this mapped shader, here is where we render to the fbo
-                        # which is attached to the texture, and we use that texture in this main class
-                        texture, fbo, _ = shader_as_texture._construct_texture_fbo()
-                        texture.anisotropy = anisotropy
-
                         # Construct the shader we loaded
                         shader_as_texture.construct_shader(
                             fragment_shader = loader_frag_shader,
                         )
+
+                        # Anisotropy
+                        shader_as_texture.texture.anisotropy = anisotropy
 
                         # Next available id
                         assign_index = len(self.mmv_shader_mgl.textures.keys())
@@ -351,7 +349,6 @@ class MMVShaderMGLPreprocessor:
                         # Assign the name, type and texture to the textures dictionary
                         self.mmv_shader_mgl.textures[assign_index] = {
                             "shader_as_texture": shader_as_texture,
-                            "texture": shader_as_texture.texture,
                             "dynamic": loader == "dynshader",
                             "loader": "shader",
                             "name": name,
