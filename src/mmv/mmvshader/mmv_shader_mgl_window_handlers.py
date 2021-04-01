@@ -123,22 +123,13 @@ class MMVShaderMGLWindowHandlers:
 
         # Search for dynamic shaders and update them
         for index in self.mmv_shader_mgl.textures.keys():
+
+            # Release Dynamic Shaders and update their target render
             if self.mmv_shader_mgl.textures[index].get("dynamic", False):
-                # Release OpenGL stuff
-                self.mmv_shader_mgl.textures[index]["shader_as_texture"].render_buffer.release()
-                self.mmv_shader_mgl.textures[index]["shader_as_texture"].texture.release()
-                self.mmv_shader_mgl.textures[index]["shader_as_texture"].fbo.release()
-
-                # Create new ones in place
-
-                # FIXME: 
-                # self.mmv_shader_mgl.textures[index]["shader_as_texture"]._create_vao()
-                # self.mmv_shader_mgl.textures[index]["shader_as_texture"].vao.release()
-
-                self.mmv_shader_mgl.textures[index]["shader_as_texture"]._create_assing_texture_fbo_render_buffer()
-
-                # Assign texture
-                self.mmv_shader_mgl.textures[index]["texture"] = self.mmv_shader_mgl.textures[index]["shader_as_texture"].texture
+                target = self.mmv_shader_mgl.textures[index]["shader_as_texture"]
+                target.texture.release()
+                target.fbo.release()
+                target._create_assing_texture_fbo_render_buffer()
 
         # Master shader has window and imgui
         if self.mmv_shader_mgl.master_shader:
@@ -152,10 +143,11 @@ class MMVShaderMGLWindowHandlers:
     def drop_textures(self):
         for index in self.mmv_shader_mgl.textures.keys():
             if "shader_as_texture" in self.mmv_shader_mgl.textures[index].keys():
-                self.mmv_shader_mgl.textures[index]["shader_as_texture"].render_buffer.release()
-                self.mmv_shader_mgl.textures[index]["shader_as_texture"].texture.release()
-                self.mmv_shader_mgl.textures[index]["shader_as_texture"].fbo.release()
-                self.mmv_shader_mgl.textures[index]["shader_as_texture"].vao.release()
+                target = self.mmv_shader_mgl.textures[index]["shader_as_texture"]
+                print(target.texture, target.fbo, target.vao)
+                target.texture.release()
+                target.fbo.release()
+                target.vao.release()
             else:
                 self.mmv_shader_mgl.textures[index]["texture"].release()
 
