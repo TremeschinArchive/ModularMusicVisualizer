@@ -3,6 +3,9 @@
 
 /// [Include] Coordinates normalization
 
+// NOTE: There are problably some heavy simplification / optimization we can apply here
+// I can't visualize those so I'm open for suggestions
+
 // The ratio relative to the Y coordinate, we expand on X
 float resratio = (mmv_resolution.x / mmv_resolution.y);
 
@@ -24,7 +27,7 @@ stuv.x *= resratio;
 // Zoomed uv coords, STUV is a bit trickier since we have to transpose the center to the center of 
 // the screenm apply zoom then revert
 vec2 gluv_zoom = gluv * (mmv_zoom * mmv_zoom);
-vec2 stuv_zoom = (stuv - vec2(0.5, 0.5)) * (mmv_zoom * mmv_zoom) + vec2(0.5, 0.5);
+vec2 stuv_zoom = (stuv - vec2(resratio*0.5, 0.5)) * (mmv_zoom * mmv_zoom) + vec2(resratio*0.5, 0.5);
 
 // Mouse drag
 vec2 drag = (mmv_drag / mmv_resolution);
