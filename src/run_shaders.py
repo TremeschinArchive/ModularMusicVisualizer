@@ -128,7 +128,7 @@ class MMVShadersCLI:
             "Multi Sampling Anti Aliasing, can only be 1, 2, 4 or 8."
         ))
     ):
-        logging.info(f"[MMVShadersCLI.antialiasing] Set [ssaa={ssaa}] [ssaa={msaa}]")
+        logging.info(f"[MMVShadersCLI.antialiasing] Set [ssaa={ssaa}] [msaa={msaa}]")
         self._ssaa = float(ssaa)
         self._msaa = int(msaa)
 
@@ -215,7 +215,7 @@ class MMVShadersCLI:
 
             # Directory of this preset
             preset_file = self.mmv_package_interface.shaders_dir / "presets" / f"{self._preset_name}.py"
-            working_directory = self.mmv_package_interface.shaders_dir
+            working_directory = self.mmv_package_interface.runtime_dir
             shadermaker = self.mmv_package_interface.get_mmv_shader_maker()
             interface = self.mmv_package_interface
             sep = os.path.sep
