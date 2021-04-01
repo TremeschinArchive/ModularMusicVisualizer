@@ -324,7 +324,7 @@ There are a couple hotkeys and interactions with the window:
 
 - Can click + drag to translate space, scroll to zoom in / out
 - Shift + scroll increases / decrease the intensity of effects (multiplier)
-- Ctrl + scroll increases / decrease the SSAA (Super Sampling Anti Aliasing), gets exponentially slower to render but gives nicer edges as explained, also might leak some ram so better quit and set another target SSAA from scratch.
+- Ctrl + scroll increases / decrease the SSAA (Super Sampling Anti Aliasing), gets exponentially slower to render but gives nicer edges as explained.
 - Pressing `z` resets zoom back to 1x
 - Pressing `x` resets dragged space back to the origin
 - Pressing `i` resets the intensity to 1
