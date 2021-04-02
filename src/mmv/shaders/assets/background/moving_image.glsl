@@ -22,7 +22,7 @@ void main() {
     float angle = sin(mmv_time)/80.0;
 
     // Linear transformation on where to get the texture of the image
-    vec2 get_image_uv = gluv_zoom_drag;
+    vec2 get_image_uv = gluv_all;
     get_image_uv += low_freq_shake + high_freq_shake + offset;
 
     // Blit image

@@ -27,10 +27,14 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 from moderngl_window.integrations.imgui import ModernglWindowRenderer
 from moderngl_window.conf import settings
+from datetime import datetime
+import multiprocessing
 import moderngl_window
+from PIL import Image
 import numpy as np
 import logging
 import imgui
+import math
 
 
 class MMVShaderMGLWindowHandlers:
@@ -38,16 +42,22 @@ class MMVShaderMGLWindowHandlers:
         self.mmv_shader_mgl = mmv_shader_mgl
         
         # Mouse related controls
-        self.target_zoom = 1
         self.target_drag = np.array([0.0, 0.0])
+        self.target_intensity = 1
+        self.target_rotation = 0
+        self.target_zoom = 1
 
         # Multiplier on top of multiplier, configurable real time
-        self.target_intensity = 1
         self.intensity = 1
+        self.rotation = 0
 
         # Keys
         self.shift_pressed = False
         self.ctrl_pressed = False
+        self.alt_pressed = False
+
+        # Mouse
+        self.mouse_buttons_pressed = []
 
     # Which "mode" to render, window loader class, msaa, ssaa, vsync, force res?
     def mode(self, window_class, msaa = 1, vsync = True, strict = False, icon = None):
@@ -153,7 +163,7 @@ class MMVShaderMGLWindowHandlers:
 
     # Close the window
     def close(self, *args, **kwargs):
-        logging.info(f"[MMVShaderMGLPreprocessor.close] Window should close")
+        logging.info(f"[MMVShaderMGLWindowHandlers.close] Window should close")
         self.window_should_close = True
 
     # Swap the window buffers, be careful if vsync is False and you have a heavy
@@ -162,21 +172,57 @@ class MMVShaderMGLWindowHandlers:
     def update_window(self):
         self.window.swap_buffers()
         self.intensity = self.intensity + (self.target_intensity - self.intensity) * 0.2
+        self.rotation = self.rotation + (self.target_rotation - self.rotation) * 0.2
 
     # # Imgui functions
 
     def key_event(self, key, action, modifiers):
-        debug_prefix = "[MMVShaderMGLPreprocessor.key_event]"
+        debug_prefix = "[MMVShaderMGLWindowHandlers.key_event]"
         self.imgui.key_event(key, action, modifiers)
+        logging.info(f"{debug_prefix} Key [{key}] Action [{action}] Modifier [{modifiers}]")
 
         # Shift and control
         if key == 340: self.shift_pressed = bool(action)
         if key == 341: self.ctrl_pressed = bool(action)
+        if key == 342: self.alt_pressed = bool(action)
 
-        # "i" key pressed, reset target intensity
-        if (key == 73) and (action == 1):
-            logging.info(f"{debug_prefix} \"i\" key pressed [Set target intensity to 1]")
-            self.target_intensity = 1
+        # "c" key pressed, reset target rotation
+        if (key == 67) and (action == 1):
+            logging.info(f"{debug_prefix} \"c\" key pressed [Set target rotation to 0]")
+            self.target_rotation = 0
+
+        # "f" key pressed, toggle fullscreen mode
+        if (key == 70) and (action == 1):
+            logging.info(f"{debug_prefix} \"f\" key pressed [Toggle fullscreen]")
+            self.window.fullscreen = not self.window.fullscreen
+
+        # "p" key pressed, screenshot
+        if (key == 80) and (action == 1):
+            m = self.mmv_shader_mgl # Lazy
+
+            # Where to save
+            now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            saveto = m.screenshots_dir / f"{now}.jpg"
+
+            logging.info(f"{debug_prefix} \"r\" key pressed, taking screenshot, saving to [{saveto}]")
+
+            # Get data
+            vp = self.window.fbo.viewport
+            data = self.window.fbo.read()
+            size = (m.width - vp[0], m.height - vp[1])
+
+            # Multiprocess save image to file so we don't lock
+            def save_image_to_file(size, data, path):
+                img = Image.frombytes('RGB', size, data, 'raw').transpose(Image.FLIP_TOP_BOTTOM)
+                img.save(path, quality = 95)
+            
+            # Start the process
+            multiprocessing.Process(target = save_image_to_file, args = (size, data, saveto)).start()
+
+        # "q" key pressed, quit
+        if (key == 81) and (action == 1):
+            logging.info(f"{debug_prefix} \"r\" key pressed, quitting")
+            self.window_should_close = True
 
         # "r" key pressed, reload shaders
         if (key == 82) and (action == 1):
@@ -197,6 +243,11 @@ class MMVShaderMGLWindowHandlers:
             self.mmv_shader_mgl.pipeline["mmv_frame"] = 0
             self.mmv_shader_mgl.pipeline["mmv_time"] = 0
 
+        # "v" key pressed, reset target intensity
+        if (key == 86) and (action == 1):
+            logging.info(f"{debug_prefix} \"v\" key pressed [Set target intensity to 1]")
+            self.target_intensity = 1
+
         # "z" key pressed, reset zoom
         if (key == 90) and (action == 1):
             logging.info(f"{debug_prefix} \"z\" key pressed [Set target zoom to 1]")
@@ -216,25 +267,42 @@ class MMVShaderMGLWindowHandlers:
     def mouse_drag_event(self, x, y, dx, dy):
         self.imgui.mouse_drag_event(x, y, dx, dy)
 
-        # Add to the mmv_drag pipeline item the dx and dy multiplied by the square of the current zoom
-        square_current_zoom = (self.mmv_shader_mgl.pipeline["mmv_zoom"] ** 2)
-        
-        # Add to target drag the dx, dy relative to current zoom and SSAA level
-        self.target_drag += np.array([
-            (dx * square_current_zoom) * self.mmv_shader_mgl.ssaa,
-            (dy * square_current_zoom) * self.mmv_shader_mgl.ssaa,
-        ])
+        if 1 in self.mouse_buttons_pressed:
+            if self.shift_pressed:
+                self.target_zoom += (dy / 1000) * self.target_zoom
+            elif self.alt_pressed:
+                self.target_rotation += dy / 20
+            else:
+                # Add to the mmv_drag pipeline item the dx and dy multiplied by the square of the current zoom
+                square_current_zoom = (self.mmv_shader_mgl.pipeline["mmv_zoom"] ** 2)
+
+                # dx and dy on zoom and SSAA
+                dx = (dx * square_current_zoom) * self.mmv_shader_mgl.ssaa
+                dy = (dy * square_current_zoom) * self.mmv_shader_mgl.ssaa
+
+                # Cosine and sine
+                c = math.cos(math.radians(self.rotation))
+                s = math.sin(math.radians(self.rotation))
+
+                # mat2 rotation times the dx, dy vector
+                drag_rotated = np.array([
+                    (dx * c) + (dy * -s),
+                    (dx * s) + (dy * c)
+                ])
+
+                # Add to target drag the dx, dy relative to current zoom and SSAA level
+                self.target_drag += drag_rotated
 
     # Change SSAA
     def change_ssaa(self, value):
-        debug_prefix = "[MMVShaderMGLPreprocessor.change_ssaa]"
+        debug_prefix = "[MMVShaderMGLWindowHandlers.change_ssaa]"
         self.mmv_shader_mgl.ssaa = value
         self.mmv_shader_mgl._read_shaders_from_paths_again()
         logging.info(f"{debug_prefix} Changed SSAA to [{value}]")
 
     # Zoom in or out (usually)
     def mouse_scroll_event(self, x_offset, y_offset):
-        debug_prefix = "[MMVShaderMGLPreprocessor.mouse_scroll_event]"
+        debug_prefix = "[MMVShaderMGLWindowHandlers.mouse_scroll_event]"
 
         if self.shift_pressed:
             self.target_intensity += y_offset / 10
@@ -243,6 +311,9 @@ class MMVShaderMGLWindowHandlers:
             change_to = self.mmv_shader_mgl.ssaa + ((y_offset / 20) * self.mmv_shader_mgl.ssaa)
             logging.info(f"{debug_prefix} Mouse scroll with shift change SSAA to: [{change_to}]")
             self.change_ssaa(change_to)
+        elif self.alt_pressed:
+            self.target_rotation += y_offset * 5
+            logging.info(f"{debug_prefix} Mouse scroll with alt change target rotation to: [{self.target_rotation}]")
         else:
             logging.info(f"{debug_prefix} Mouse scroll without shift and ctrl Target Zoom: [{self.target_zoom}]")
             self.target_zoom -= (y_offset * 0.05) * self.target_zoom
@@ -250,10 +321,16 @@ class MMVShaderMGLWindowHandlers:
         self.imgui.mouse_scroll_event(x_offset, y_offset)
 
     def mouse_press_event(self, x, y, button):
+        debug_prefix = "[MMVShaderMGLWindowHandlers.mouse_press_event]"
+        logging.info(f"{debug_prefix} Mouse press (x, y): [{x}, {y}] Button [{button}]")
         self.imgui.mouse_press_event(x, y, button)
+        if not button in self.mouse_buttons_pressed: self.mouse_buttons_pressed.append(button)
 
-    def mouse_release_event(self, x: int, y: int, button: int):
+    def mouse_release_event(self, x, y, button):
+        debug_prefix = "[MMVShaderMGLWindowHandlers.mouse_release_event]"
+        logging.info(f"{debug_prefix} Mouse release (x, y): [{x}, {y}] Button [{button}]")
         self.imgui.mouse_release_event(x, y, button)
+        if button in self.mouse_buttons_pressed: self.mouse_buttons_pressed.remove(button)
 
     def unicode_char_entered(self, char):
         self.imgui.unicode_char_entered(char)

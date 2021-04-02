@@ -48,6 +48,11 @@ class Utils:
     def __init__(self):
         self.os = self.get_os()
 
+    # Convert to pathlib.Path
+    def enforce_pathlib_Path(self, path):
+        if isinstance(path, str): path = Path(path)
+        return path
+
     def reset_dir(self, path: Path):
         debug_prefix = "[Utils.reset_dir]"
         logging.info(f"{debug_prefix} Reset directory (remove")
