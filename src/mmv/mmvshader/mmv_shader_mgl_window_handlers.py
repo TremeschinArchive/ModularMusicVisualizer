@@ -88,8 +88,8 @@ class MMVShaderMGLWindowHandlers:
 
         # Make sure we render strictly into the resolution we asked
         if strict:
-            # self.window.set_default_viewport()
             self.window.fbo.viewport = (0, 0, self.mmv_shader_mgl.width, self.mmv_shader_mgl.height)
+            # self.window.set_default_viewport()
 
         # Set the icon
         if icon is not None:
@@ -119,7 +119,7 @@ class MMVShaderMGLWindowHandlers:
         if hasattr(self, "strict"):
             if self.strict:
                 return
-
+            
         # Set width and height
         self.mmv_shader_mgl.width = int(width)
         self.mmv_shader_mgl.height = int(height)
@@ -174,7 +174,7 @@ class MMVShaderMGLWindowHandlers:
         self.intensity = self.intensity + (self.target_intensity - self.intensity) * 0.2
         self.rotation = self.rotation + (self.target_rotation - self.rotation) * 0.2
 
-    # # Imgui functions
+    # # Interactive events
 
     def key_event(self, key, action, modifiers):
         debug_prefix = "[MMVShaderMGLWindowHandlers.key_event]"
@@ -206,10 +206,11 @@ class MMVShaderMGLWindowHandlers:
 
             logging.info(f"{debug_prefix} \"r\" key pressed, taking screenshot, saving to [{saveto}]")
 
-            # Get data
-            vp = self.window.fbo.viewport
-            data = self.window.fbo.read()
-            size = (vp[2] - vp[0], vp[3] - vp[1])
+            # Get data ib the scree's size viewport
+            size = (m.width, m.height)
+            data = self.window.fbo.read( viewport = (0, 0, size[0], size[1]) )
+
+            logging.info(f"{debug_prefix} [Resolution: {size}] [WxHx3: {size[0] * size[1] * 3}] [len(data): {len(data)}]")
 
             # Multiprocess save image to file so we don't lock
             def save_image_to_file(size, data, path):
