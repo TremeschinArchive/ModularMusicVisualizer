@@ -899,14 +899,14 @@ class MMVShaderMGL:
     def next(self, custom_pipeline = {}):
 
         # Interpolate zoom and drag
-        self.pipeline["mmv_zoom"] += (self.window_handlers.target_zoom - self.pipeline["mmv_zoom"]) * 0.2
-        self.pipeline["mmv_drag"] += (self.window_handlers.target_drag - self.pipeline["mmv_drag"]) * 0.3
         self.pipeline["mmv_rotation"] = self.window_handlers.rotation
+        self.pipeline["mmv_zoom"] = self.window_handlers.zoom
+        self.pipeline["mmv_drag"] = self.window_handlers.drag
 
         # Set the pipeline attributes if shader is not frozen
         if not self.freezed_pipeline:
             self.pipeline["mmv_frame"] += 1
-            self.pipeline["mmv_time"] = round((self.pipeline["mmv_frame"] / self.fps), 3)
+            self.pipeline["mmv_time"] = self.pipeline["mmv_frame"] / self.fps
 
         # The resolution needs to be scaled with SSAA
         self.pipeline["mmv_resolution"] = (self.width * self.ssaa, self.height * self.ssaa)

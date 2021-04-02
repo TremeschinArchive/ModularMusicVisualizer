@@ -38,6 +38,12 @@ import math
 
 
 class MMVShaderMGLWindowHandlers:
+    INTENSITY_RESPONSIVENESS = 0.2
+    ROTATION_RESPONSIVENESS = 0.2
+    ZOOM_RESPONSIVENESS = 0.2
+    DRAG_RESPONSIVENESS = 0.3
+    DRAG_MOMENTUM = 0.6
+    
     def __init__(self, mmv_shader_mgl):
         self.mmv_shader_mgl = mmv_shader_mgl
         
@@ -48,8 +54,11 @@ class MMVShaderMGLWindowHandlers:
         self.target_zoom = 1
 
         # Multiplier on top of multiplier, configurable real time
+        self.drag_momentum = np.array([0.0, 0.0])
+        self.drag = np.array([0.0, 0.0])
         self.intensity = 1
         self.rotation = 0
+        self.zoom = 1
 
         # Keys
         self.shift_pressed = False
@@ -171,8 +180,17 @@ class MMVShaderMGLWindowHandlers:
     # the video
     def update_window(self):
         self.window.swap_buffers()
-        self.intensity = self.intensity + (self.target_intensity - self.intensity) * 0.2
-        self.rotation = self.rotation + (self.target_rotation - self.rotation) * 0.2
+
+        # Interpolate stuff
+        self.intensity += (self.target_intensity - self.intensity) * MMVShaderMGLWindowHandlers.INTENSITY_RESPONSIVENESS
+        self.rotation += (self.target_rotation - self.rotation) * MMVShaderMGLWindowHandlers.ROTATION_RESPONSIVENESS
+        self.zoom += (self.target_zoom - self.zoom) * MMVShaderMGLWindowHandlers.ZOOM_RESPONSIVENESS
+        self.drag += (self.target_drag - self.drag) * MMVShaderMGLWindowHandlers.DRAG_RESPONSIVENESS
+        self.drag_momentum *= MMVShaderMGLWindowHandlers.DRAG_MOMENTUM
+
+        # Drag momentum
+        if not 1 in self.mouse_buttons_pressed:
+            self.target_drag += self.drag_momentum
 
     # # Interactive events
 
@@ -293,6 +311,7 @@ class MMVShaderMGLWindowHandlers:
 
                 # Add to target drag the dx, dy relative to current zoom and SSAA level
                 self.target_drag += drag_rotated
+                self.drag_momentum += drag_rotated
 
     # Change SSAA
     def change_ssaa(self, value):
