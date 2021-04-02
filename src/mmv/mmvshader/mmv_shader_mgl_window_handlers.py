@@ -209,7 +209,7 @@ class MMVShaderMGLWindowHandlers:
             # Get data
             vp = self.window.fbo.viewport
             data = self.window.fbo.read()
-            size = (m.width - vp[0], m.height - vp[1])
+            size = (vp[2] - vp[0], vp[3] - vp[1])
 
             # Multiprocess save image to file so we don't lock
             def save_image_to_file(size, data, path):
@@ -312,7 +312,7 @@ class MMVShaderMGLWindowHandlers:
             logging.info(f"{debug_prefix} Mouse scroll with shift change SSAA to: [{change_to}]")
             self.change_ssaa(change_to)
         elif self.alt_pressed:
-            self.target_rotation += y_offset * 5
+            self.target_rotation -= y_offset * 5
             logging.info(f"{debug_prefix} Mouse scroll with alt change target rotation to: [{self.target_rotation}]")
         else:
             logging.info(f"{debug_prefix} Mouse scroll without shift and ctrl Target Zoom: [{self.target_zoom}]")
