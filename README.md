@@ -323,15 +323,21 @@ Example:
 There are a couple hotkeys and interactions with the window:
 
 - Can click + drag to translate space, scroll to zoom in / out
-- Shift + scroll increases / decrease the intensity of effects (multiplier)
-- Ctrl + scroll increases / decrease the SSAA (Super Sampling Anti Aliasing), gets exponentially slower to render but gives nicer edges as explained.
+- Shift + scroll increases / decreases the intensity of effects (multiplier)
+- Ctrl + scroll increases / decreases the SSAA (Super Sampling Anti Aliasing), gets exponentially slower to render but gives nicer edges as explained.
+- Alt + scroll increases / decreases rotation
+- Shift + drag is precise zoom
+- Alt + drag is precise rotation
 - Pressing `z` resets zoom back to 1x
 - Pressing `x` resets dragged space back to the origin
-- Pressing `i` resets the intensity to 1
+- Pressing `c` resets rotation to 0
+- Pressing `v` resets the intensity to 1
 - Pressing `r` rebuilds the preset and reloads the shaders
-- Pressing `s` freezes the pipeline so the shader is rendered (hopefully) static, useful for debugging or screenshots
+- Pressing `s` freezes the pipeline so the shader is rendered (hopefully) static, useful for debugging or screenshoting
 - Pressing `t` resets time to 0 (same as restarting MMV)
-
+- Pressing `f` toggles fullscreen
+- Pressing `q` quits
+  
 And of course, all of those are smoothly animated, not too quick nor too slow, but snappy.
 
 ### Rendering

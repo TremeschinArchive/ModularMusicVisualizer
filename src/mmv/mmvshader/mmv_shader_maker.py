@@ -134,6 +134,7 @@ class MMVShaderMaker:
     # Load full shader from path
     def load_shader_from_path(self, path: Path, replaces = {}, get_name_from_file = True):
         debug_prefix = "[MMVShaderMaker.load_from_path]"
+        path = self.utils.enforce_pathlib_Path(path)
         
         # Concatenate both dictionaries
         for key, item in self.replaces.items():
@@ -169,12 +170,14 @@ class MMVShaderMaker:
     # Uses the resolution of the read file if some width or height is None (or both)
     def add_image_mapping(self, name, path, width = None, height = None, mipmaps = True, anisotropy = 16):
         debug_prefix = "[MMVShaderMaker.add_image_mapping]"
+        path = self.utils.enforce_pathlib_Path(path)
         mapping = {"type": "map", "name": name, "loader": "image", "value": str(path), "width": width, "height": height, "mipmaps": mipmaps, "anisotropy": anisotropy}
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
     # Video mapping to a target width and height
     def add_video_mapping(self, name, path, width, height, anisotropy = 16):
         debug_prefix = "[MMVShaderMaker.add_video_mapping]"
+        path = self.utils.enforce_pathlib_Path(path)
         mapping = {"type": "map", "name": name, "loader": "video", "value": str(path), "width": width, "height": height, "anisotropy": anisotropy}
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
@@ -187,12 +190,14 @@ class MMVShaderMaker:
     # Strict shader only renders at this target resolution internally, regardless of output dimensions
     def add_strict_shader_mapping(self, name, path, width, height, anisotropy = 16):
         debug_prefix = "[MMVShaderMaker.add_strict_shader_mapping]"
+        path = self.utils.enforce_pathlib_Path(path)
         mapping = {"type": "map", "name": name, "loader": "shader", "value": str(path), "width": width, "height": height, "anisotropy": anisotropy}
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
     # Dynamic shader adapts to the viewport / output dimensions, recommended
     def add_dynamic_shader_mapping(self, name, path, anisotropy = 16):
         debug_prefix = "[MMVShaderMaker.add_dynamic_shader_mapping]"
+        path = self.utils.enforce_pathlib_Path(path)
         mapping = {"type": "map", "name": name, "loader": "dynshader", "value": str(path), "anisotropy": anisotropy}
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
