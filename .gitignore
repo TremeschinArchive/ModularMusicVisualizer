@@ -24,6 +24,7 @@ src/mmv/assets/user_assets
 src/mmv/assets/generated
 !src/mmv/assets/free_assets/*
 
+src/mmv/screenshots
 src/mmv/externals
 src/mmv/release
 src/mmv/runtime

@@ -195,7 +195,7 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
     def __init__(self, platform = None, **kwargs) -> None:
         debug_prefix = "[MMVPackageInterface.__init__]"
 
-        self.version = "3.1: rolling"
+        self.version = "3.2: rolling"
 
         # Where this file is located, please refer using this on the whole package
         # Refer to it as self.mmv_skia_main.MMV_PACKAGE_ROOT at any depth in the code
@@ -360,6 +360,11 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
         self.shaders_dir = self.MMV_PACKAGE_ROOT / "shaders"
         self.shaders_dir.mkdir(parents = True, exist_ok = True)
         logging.info(f"{debug_prefix} Shaders dir is [{self.shaders_dir}]")
+
+        # Screenshots dir
+        self.screenshots_dir = self.MMV_PACKAGE_ROOT / "screenshots"
+        self.screenshots_dir.mkdir(parents = True, exist_ok = True)
+        logging.info(f"{debug_prefix} Shaders dir is [{self.screenshots_dir}]")
 
         # Runtime dir
         self.runtime_dir = self.MMV_PACKAGE_ROOT / "runtime"

@@ -336,6 +336,7 @@ uniform int mmv_frame;
 uniform float mmv_time;
 uniform vec2 mmv_resolution;
 
+uniform float mmv_rotation;
 uniform float mmv_zoom;
 uniform vec2 mmv_drag;
 uniform int mmv_flip;
@@ -427,10 +428,12 @@ class FakeUniform:
 
 from mmv.mmvshader.mmv_shader_mgl_window_handlers import MMVShaderMGLWindowHandlers
 from mmv.mmvshader.mmv_shader_mgl_preprocessor import MMVShaderMGLPreprocessor
+from pathlib import Path
 from array import array
 import numpy as np
 import subprocess
 import moderngl
+import tempfile
 import logging
 import shutil
 import time
@@ -459,13 +462,32 @@ class MMVShaderMGL:
 
     # # Generic methods
 
-    def __init__(self, flip = False, master_shader = False, gl_context = None):
+    def __init__(self, flip = False, master_shader = False, gl_context = None, screenshots_dir = None):
         debug_prefix = "[MMVShaderMGL.__init__]"
         self.master_shader = master_shader
+
+        # Screenshot dir only up to master shader
+        if self.master_shader:
+
+            # No given path
+            if screenshots_dir is None:
+                screenshots_dir = Path(tempfile.tempdir())
+                logging.info(f"{debug_prefix} Getting temp dir for screenshots")
+
+            # Enforce pathlib.Path
+            if isinstance(screenshots_dir, str): screenshots_dir = Path(screenshots_dir)
+
+            # Assign
+            self.screenshots_dir = screenshots_dir
+            logging.info(f"{debug_prefix} Screenshots dir is [{self.screenshots_dir}]")
+
+        # Name
         if self.master_shader:
             self.name = "Master Shader"
         else:
             self.name = str(uuid.uuid4())
+
+        # Config
         self.flip = flip
         self.ssaa = 1
 
@@ -496,7 +518,9 @@ class MMVShaderMGL:
             "mmv_resolution": [0, 0],
 
             # - mmv_zoom (float) -> Scroll wheels zoom
+            # - mmv_rotation (float) -> Target rotation in degrees
             "mmv_zoom": 1.0,
+            "mmv_rotation": 0.0,
 
             # - mmv_drag (vec2(float)) -> Dragged pixels with mouse
             "mmv_drag": np.array([0.0, 0.0]),
@@ -782,7 +806,7 @@ class MMVShaderMGL:
 
             # If shader is frozen don't pipe any items unless it's core components like
             # zoom, drag, resolution
-            if (not self.freezed_pipeline) or (any( [item in key for item in ["drag", "zoom", "resolution"]])):
+            if (not self.freezed_pipeline) or (any( [item in key for item in ["drag", "zoom", "resolution", "rotation"]])):
                 uniform = target.program.get(key, FakeUniform())
                 if (not isinstance(value, float)) and (not isinstance(value, int)):
                     value = tuple(value)
@@ -877,6 +901,7 @@ class MMVShaderMGL:
         # Interpolate zoom and drag
         self.pipeline["mmv_zoom"] += (self.window_handlers.target_zoom - self.pipeline["mmv_zoom"]) * 0.2
         self.pipeline["mmv_drag"] += (self.window_handlers.target_drag - self.pipeline["mmv_drag"]) * 0.3
+        self.pipeline["mmv_rotation"] = self.window_handlers.rotation
 
         # Set the pipeline attributes if shader is not frozen
         if not self.freezed_pipeline:

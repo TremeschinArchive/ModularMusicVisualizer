@@ -19,25 +19,39 @@ void main() {
     float speed = 0.3;
     float amplitude = 0.102 * mmv_rms_0_33[2];
     vec2 offset = vec2(sin(5.0 * mmv_time * speed) * amplitude, cos(8.0 * mmv_time * speed) * amplitude);
-    vec2 gluv_offsetted = gluv_zoom_drag - offset;
+    vec2 gluv_offsetted = gluv_all - offset;
     vec2 get_visualizer_angle = gluv_offsetted * get_rotation_mat2(-(PI / 2.0) + angle_offset);
     float angle = atan(get_visualizer_angle.y, get_visualizer_angle.x) * sign(get_visualizer_angle.y);
 
+    // // Which index
 
-    // Which index
-    int which = int({MMV_FFTSIZE} * mmv_proportion(2 * PI, 1, angle));
-    float fft_val = texelFetch(mmv_fft, ivec2(which, 0), 0).r;
+    // Circle sectors
+    bool smooth_bars = true;
+    float which = 0.0;
+    float fft_val = 0.0;
 
+    if (smooth_bars) {
+        which = mmv_proportion(2 * PI, 1, angle);
+        fft_val = texture(mmv_fft, vec2(which, 0), 0).r;
+    } else {
+        which = int({MMV_FFTSIZE} * mmv_proportion(2 * PI, 1, angle));
+        fft_val = texelFetch(mmv_fft, ivec2(which, 0), 0).r;
+    }
+
+    // // 
+    bool angelic = true;
     float size = (0.13) + mmv_rms_0_33[2] * 0.133;
     float bar_size = 0.4;
     float logo_relative_to_bar_ratio = 1.0 - (0.05 * smoothstep(mmv_rms_0_33[2], 0.0, 5.0));
 
     if (length(gluv_offsetted) < (size + (fft_val/50.0) * bar_size)) {
         col = vec4(vec3(
-            1.0 - fft_val / 50,
-            1.0,
-            1.0
+            1.0 - fft_val / 50, 1.0, 1.0
         ), 1.0);
+    } else {
+        if (angelic) {
+            col += (size + (fft_val/50.0) * bar_size) / (1.5 * length(gluv_offsetted));
+        }
     }
 
     vec4 logo_pixel = mmv_blit_image(

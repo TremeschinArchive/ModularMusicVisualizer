@@ -152,17 +152,17 @@ float layer_of_noise(int octaves, vec2 uv) {
 
 
 
-vec3 lines_layer(vec2 gluv_zoom_drag, vec2 raw_gluv_zoom_drag, int layer_index) {
+vec3 lines_layer(vec2 gluv_all, vec2 raw_gluv_all, int layer_index) {
     //#mmv {"type": "include", "value": "math_constants", "mode": "multiple"}
 
     vec3 col = vec3(0.0);
 
     // Make a grid based off OpenGL coordinates with (0, 0) in the middle
     // Standard procedure to some other effects. Also the id is the integer
-    // part of the scaled gluv_zoom_drag coordinates
-    vec2 scaled_gluv_zoom_drag = gluv_zoom_drag * 5.0;
-    vec2 grid_gluv_zoom_drag = fract(scaled_gluv_zoom_drag) - 0.5;
-    vec2 grid_id = floor(scaled_gluv_zoom_drag);
+    // part of the scaled gluv_all coordinates
+    vec2 scaled_gluv_all = gluv_all * 5.0;
+    vec2 grid_gluv_all = fract(scaled_gluv_all) - 0.5;
+    vec2 grid_id = floor(scaled_gluv_all);
     
     // Array for neighbour points positions
     vec2 neighbor_points[9];
@@ -200,7 +200,7 @@ vec3 lines_layer(vec2 gluv_zoom_drag, vec2 raw_gluv_zoom_drag, int layer_index) 
         );
 
         // Sparkle implementation
-        vec2 close_point = (neighbor_points[index] - grid_gluv_zoom_drag) * sparkle_brightness;
+        vec2 close_point = (neighbor_points[index] - grid_gluv_all) * sparkle_brightness;
         
         mat2 flare_rotation = get_rotation_mat2( fract(neighbor_points[index].x) * 2 * PI);
         vec2 flare = close_point * flare_rotation;
@@ -216,18 +216,18 @@ vec3 lines_layer(vec2 gluv_zoom_drag, vec2 raw_gluv_zoom_drag, int layer_index) 
     }
 
     // Stuff we don't catch from grid to grid
-    col += line(grid_gluv_zoom_drag, neighbor_points[1], neighbor_points[3], line_thickness_max, line_thickness_min);
-    col += line(grid_gluv_zoom_drag, neighbor_points[1], neighbor_points[5], line_thickness_max, line_thickness_min);
-    col += line(grid_gluv_zoom_drag, neighbor_points[7], neighbor_points[3], line_thickness_max, line_thickness_min);
-    col += line(grid_gluv_zoom_drag, neighbor_points[7], neighbor_points[5], line_thickness_max, line_thickness_min);
+    col += line(grid_gluv_all, neighbor_points[1], neighbor_points[3], line_thickness_max, line_thickness_min);
+    col += line(grid_gluv_all, neighbor_points[1], neighbor_points[5], line_thickness_max, line_thickness_min);
+    col += line(grid_gluv_all, neighbor_points[7], neighbor_points[3], line_thickness_max, line_thickness_min);
+    col += line(grid_gluv_all, neighbor_points[7], neighbor_points[5], line_thickness_max, line_thickness_min);
 
     float color_change_speed = 1.0;
     vec3 color = sin(
         (mmv_progressive_rms_0_02[2]/300.0 + layer_index / 20.0) * color_change_speed
-        + raw_gluv_zoom_drag.yxy + vec3(0.33, 0.66, 0.99)*PI
+        + raw_gluv_all.yxy + vec3(0.33, 0.66, 0.99)*PI
     ) * 0.5 + 0.5;
 
-    float colnoise = layer_of_noise(4, gluv_zoom_drag * 10.0 + (1.0 + layer_index));
+    float colnoise = layer_of_noise(4, gluv_all * 10.0 + (1.0 + layer_index));
     
     col *= color*3.0*colnoise;
     col += ((0.14 * color) * (0.5 + mmv_rms_0_05[2]/6.0)) * colnoise;
@@ -252,7 +252,7 @@ void main() {
     vec2 offset = vec2(sin(mmv_time/7.135135), cos(mmv_time/4.523894)) / 2.0;
     
     // UV
-    vec2 layer_uv = gluv_zoom_drag;
+    vec2 layer_uv = gluv_all;
     float length_layer_uv = length(layer_uv);
 
     // Asymptote at 1
@@ -273,7 +273,7 @@ void main() {
         // Render layer
         col += lines_layer(
             ((layer_uv * global_rotation) + low_freq_shake + high_freq_shake + offset) * pow(size, 0.5) + layer_index,
-            gluv_zoom_drag, layer_index
+            gluv_all, layer_index
         ) * fade;
     }
 

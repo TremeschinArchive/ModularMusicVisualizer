@@ -70,7 +70,10 @@ class MMVShadersCLI:
         self.utils = self.mmv_package_interface.utils
 
         # Shaders interface and MGL
-        self.mgl = self.mmv_package_interface.get_mmv_shader_mgl()(master_shader = True)
+        self.mgl = self.mmv_package_interface.get_mmv_shader_mgl()(
+            master_shader = True,
+            screenshots_dir = self.mmv_package_interface.screenshots_dir
+        )
 
         # Interpolator
         self.interpolator = ValuesInterpolator()
@@ -245,9 +248,7 @@ class MMVShadersCLI:
                 if directory == "default":
                     self.mgl.include_dir(self.mmv_package_interface.shaders_dir / "include")
                 else:
-                    # Convert to pathlib.Path
-                    if isinstance(directory, str):
-                        directory = Path(directory)
+                    directory = self.utils.enforce_pathlib_Path(directory)
                     self.mgl.include_dir(directory)
 
     # List capture devices by index
