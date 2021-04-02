@@ -128,7 +128,7 @@ float scale = 0.5 + ((atan(mmv_time * 2.0) / 3.1415) * 2) * 0.5;
 if(scale < 0.99) {
     stuv *= scale;
     gluv *= scale;
-    gluv_zoom_drag *= scale;
+    gluv_all *= scale;
 }
 """
 ))
