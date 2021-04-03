@@ -69,6 +69,7 @@ class MMVShaderMGLWindowHandlers:
 
         # Mouse
         self.mouse_buttons_pressed = []
+        self.mouse_exclusivity = False
 
     # Which "mode" to render, window loader class, msaa, ssaa, vsync, force res?
     def mode(self, window_class, msaa = 1, vsync = True, strict = False, icon = None):
@@ -216,10 +217,21 @@ class MMVShaderMGLWindowHandlers:
             logging.info(f"{debug_prefix} \"c\" key pressed [Set target rotation to 0]")
             self.target_rotation = 0
 
+        # "e" key pressed, toggle mouse exclusive mode
+        if (key == 69) and (action == 1):
+            logging.info(f"{debug_prefix} \"e\" key pressed [Toggle mouse exclusive]")
+            self.mouse_exclusivity = not self.mouse_exclusivity
+            self.window.mouse_exclusivity = self.mouse_exclusivity
+
         # "f" key pressed, toggle fullscreen mode
         if (key == 70) and (action == 1):
             logging.info(f"{debug_prefix} \"f\" key pressed [Toggle fullscreen]")
             self.window.fullscreen = not self.window.fullscreen
+
+        # "h" key pressed, toggle mouse visible
+        if (key == 72) and (action == 1):
+            logging.info(f"{debug_prefix} \"h\" key pressed [Toggle mouse hidden]")
+            self.window.cursor = not self.window.cursor
 
         # "p" key pressed, screenshot
         if (key == 80) and (action == 1):
@@ -352,12 +364,14 @@ class MMVShaderMGLWindowHandlers:
         logging.info(f"{debug_prefix} Mouse press (x, y): [{x}, {y}] Button [{button}]")
         self.imgui.mouse_press_event(x, y, button)
         if not button in self.mouse_buttons_pressed: self.mouse_buttons_pressed.append(button)
+        if not self.mouse_exclusivity: self.window.mouse_exclusivity = True
 
     def mouse_release_event(self, x, y, button):
         debug_prefix = "[MMVShaderMGLWindowHandlers.mouse_release_event]"
         logging.info(f"{debug_prefix} Mouse release (x, y): [{x}, {y}] Button [{button}]")
         self.imgui.mouse_release_event(x, y, button)
         if button in self.mouse_buttons_pressed: self.mouse_buttons_pressed.remove(button)
+        if not self.mouse_exclusivity: self.window.mouse_exclusivity = False
 
     def unicode_char_entered(self, char):
         self.imgui.unicode_char_entered(char)
