@@ -77,13 +77,25 @@ logo_visualizer.add_image_mapping(name = "logo", path = interface.MMV_PACKAGE_RO
 
 
 
+vignetting = shadermaker.clone()
+vignetting.load_shader_from_path(
+    path = interface.shaders_dir / "assets" / "pfx" / "vignetting.glsl",
+)
+
+
 # # # Master shader, alpha composite
 
 master_shader = shadermaker.clone()
 
+layers = [
+    background,
+    logo_visualizer,
+    vignetting
+]
+
 # # Alpha composite
 master_shader = shadermaker.macros.alpha_composite(
-    layers = [background, logo_visualizer]
+    layers = layers
 )
 
 # Gamma correction and finish
