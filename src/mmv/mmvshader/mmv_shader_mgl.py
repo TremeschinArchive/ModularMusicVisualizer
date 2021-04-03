@@ -719,7 +719,7 @@ class MMVShaderMGL:
         self.vertex_shader = vertex_shader
 
         # Create a program with the fragment and vertex shader
-        self.program = self._create_program(
+        self._create_program(
             fragment_shader = fragment_shader,
             vertex_shader = vertex_shader,
         )
@@ -741,7 +741,7 @@ class MMVShaderMGL:
     def _create_program(self, fragment_shader, vertex_shader):
         debug_prefix = f"[MMVShaderMGL._create_program] [{self.name}]"
         try:
-            return self.gl_context.program(fragment_shader = fragment_shader, vertex_shader = vertex_shader)
+            self.program = self.gl_context.program(fragment_shader = fragment_shader, vertex_shader = vertex_shader)
         except moderngl.error.Error as e:
 
             # Log faulty shader
@@ -752,7 +752,7 @@ class MMVShaderMGL:
 
             # Drop textures since we'll not need them and return missing shader texture
             self.window_handlers.drop_textures()
-            return self.gl_context.program(fragment_shader = MMV_MGL_FALLBACK_MISSING_TEXTURE_SHADER, vertex_shader = MMV_MGL_DEFAULT_VERTEX_SHADER)
+            self.program = self.gl_context.program(fragment_shader = MMV_MGL_FALLBACK_MISSING_TEXTURE_SHADER, vertex_shader = MMV_MGL_DEFAULT_VERTEX_SHADER)
 
     # Create fullscreen VAO that reads position, OpenGL UV coordinates then ShaderToy UV coordinates
     def _create_vao(self):
