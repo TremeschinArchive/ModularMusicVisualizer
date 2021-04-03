@@ -27,9 +27,8 @@ import os
 
 # # # Initialize shader maker
 shadermaker = shadermaker(working_directory = working_directory, replaces = replaces)
+macros = shadermaker.macros
 BlockOfCode = shadermaker.block_of_code
-
-
 
 
 # # Background
@@ -63,35 +62,19 @@ elif BACKGROUND == "image":
 background.add_pipeline_texture_mapping(name = "mmv_fft", width = replaces["MMV_FFTSIZE"], height = 1, depth = 1)
 
 
-
-
 # # Logo, visualizer
 
-logo_visualizer = shadermaker.clone()
-logo_visualizer.load_shader_from_path(
-    path = interface.shaders_dir / "assets" / "music_bars" / "circle_sectors.glsl",
-)
+logo_visualizer = macros.load(path = interface.shaders_dir / "assets" / "music_bars" / "circle_sectors.glsl")
 logo_visualizer.add_pipeline_texture_mapping(name = "mmv_fft", width = replaces["MMV_FFTSIZE"], height = 1, depth = 1)
 logo_visualizer.add_image_mapping(name = "logo", path = interface.MMV_PACKAGE_ROOT/".."/".."/"repo"/"mmv_logo_alt_white.png")
 
 
-
 # Want some chromatic aberration on logo?
 if True:
-    chromatic_aberration = shadermaker.clone()
-    chromatic_aberration.load_shader_from_path(
-        path = interface.shaders_dir / "assets" / "pfx" / "chromatic_aberration.glsl",
-    )
-    chromatic_aberration.add_dynamic_shader_mapping(name = "layer", path = logo_visualizer.finish())
-    logo_visualizer = chromatic_aberration
+    chromatic_aberration = macros.load(path = interface.shaders_dir / "assets" / "pfx" / "chromatic_aberration.glsl")
+    logo_visualizer = macros.chain(A = logo_visualizer, B = chromatic_aberration)
 
-
-
-
-vignetting = shadermaker.clone()
-vignetting.load_shader_from_path(
-    path = interface.shaders_dir / "assets" / "pfx" / "vignetting.glsl",
-)
+vignetting = macros.load(path = interface.shaders_dir / "assets" / "pfx" / "vignetting.glsl")
 
 
 # # # Master shader, alpha composite
@@ -106,16 +89,11 @@ layers = [
 
 # Rain effect
 if BACKGROUND == "image":
-    rain = shadermaker.clone()
-    rain.load_shader_from_path(
-        path = interface.shaders_dir / "assets" / "fx" / "rain.glsl",
-    )
+    rain = macros.load(path = interface.shaders_dir / "assets" / "fx" / "rain.glsl")
     layers.append(rain)
 
 # # Alpha composite
-master_shader = shadermaker.macros.alpha_composite(
-    layers = layers
-)
+master_shader = macros.alpha_composite(layers = layers)
 
 # Gamma correction and finish
 master_shader.add_transformation(transformation = master_shader.transformations.gamma_correction())
@@ -126,10 +104,7 @@ master_shader_path = master_shader.finish()
 
 # # Build custom include directories
 
-coordinate_normalizations = shadermaker.clone()
-coordinate_normalizations.load_shader_from_path(
-    path = interface.shaders_dir / "include" / "coordinates_normalization.glsl",
-)
+coordinate_normalizations = macros.load(path = interface.shaders_dir / "include" / "coordinates_normalization.glsl")
 
 # Start zoom in then zoom out
 coordinate_normalizations.add_transformation(BlockOfCode(

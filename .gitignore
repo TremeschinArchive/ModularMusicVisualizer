@@ -3,6 +3,8 @@
 # Extensions
 *.mp3
 *.flac
+*.opus
+*.ogg
 *.mkv
 *.mp4
 *.exe
