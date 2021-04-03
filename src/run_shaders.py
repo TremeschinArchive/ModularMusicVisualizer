@@ -198,6 +198,12 @@ class MMVShadersCLI:
         ])
         self.MMV_FFTSIZE = self.audio_source.audio_processing.FFT_length
 
+    # When the user presses "r"
+    def __should_reload_preset(self):
+        self.utils.reset_dir(self.mmv_package_interface.runtime_dir)
+        self.__load_preset()
+        self.__load_master_shader()
+
     def __load_preset(self):
         debug_prefix = "[MMVShadersCLI.__load_preset]"
 
@@ -250,7 +256,7 @@ class MMVShadersCLI:
                 else:
                     directory = self.utils.enforce_pathlib_Path(directory)
                     self.mgl.include_dir(directory)
-
+                    
     # List capture devices by index
     def list_captures(self):
         debug_prefix = "[MMVShadersCLI.list_captures]"
@@ -390,7 +396,7 @@ class MMVShadersCLI:
         debug_prefix = "[MMVShadersCLI.render]"
 
         self.__error_assertion()
-        self.mgl.set_reset_function(obj = self.__load_preset)
+        self.mgl.set_reset_function(obj = self.__should_reload_preset)
 
         # Look for file changes
         if self.watchdog:

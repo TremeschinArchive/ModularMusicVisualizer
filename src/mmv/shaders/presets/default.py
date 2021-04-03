@@ -61,7 +61,6 @@ elif BACKGROUND == "image":
     )
 
 background.add_pipeline_texture_mapping(name = "mmv_fft", width = replaces["MMV_FFTSIZE"], height = 1, depth = 1)
-background_path = background.finish()
 
 
 
@@ -74,40 +73,21 @@ logo_visualizer.load_shader_from_path(
 )
 logo_visualizer.add_pipeline_texture_mapping(name = "mmv_fft", width = replaces["MMV_FFTSIZE"], height = 1, depth = 1)
 logo_visualizer.add_image_mapping(name = "logo", path = interface.MMV_PACKAGE_ROOT/".."/".."/"repo"/"mmv_logo_alt_white.png")
-logo_visualizer_path = logo_visualizer.finish()
 
 
 
 
-# # # Main shader, alpha composite
+# # # Master shader, alpha composite
 
 master_shader = shadermaker.clone()
-master_shader.set_name("mmv-master-shader")
-master_shader.add_include("mmv_specification")
-master_shader.add_dynamic_shader_mapping(name = "background", path = background_path)
-
-# If you want to nullify some shader
-if True:
-    master_shader.add_dynamic_shader_mapping(name = "logo_visualizer", path = logo_visualizer_path)
-else:
-    master_shader.add_dynamic_shader_mapping(name = "logo_visualizer", path = NULL)
 
 # # Alpha composite
+master_shader = shadermaker.macros.alpha_composite(
+    layers = [background, logo_visualizer]
+)
 
-# Get texture from background and alpha composite
-processing = shadermaker.transformations.get_texture(texture_name = "background", uv = "shadertoy_uv", assign_to_variable = "processing")
-processing.extend(shadermaker.transformations.alpha_composite(new = "processing"))
-master_shader.add_transformation(transformation = processing)
-
-# Get texture from logo and alpha composite
-processing = shadermaker.transformations.get_texture(texture_name = "logo_visualizer", uv = "shadertoy_uv", assign_to_variable = "processing")
-processing.extend(shadermaker.transformations.alpha_composite(new = "processing"))
-master_shader.add_transformation(transformation = processing)
-
-# Gamma correction
+# Gamma correction and finish
 master_shader.add_transformation(transformation = master_shader.transformations.gamma_correction())
-
-# # Build shader, save 
 master_shader_path = master_shader.finish()
 
 
