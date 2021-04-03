@@ -50,7 +50,7 @@ void main() {
         ), 1.0);
     } else {
         if (angelic) {
-            col += (size + (fft_val/50.0) * bar_size) / (1.5 * length(gluv_offsetted));
+            col += (size + (fft_val/20.0) * bar_size) / pow(2.8 * length(gluv_offsetted), 2.0);
         }
     }
 
