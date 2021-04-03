@@ -5,7 +5,7 @@
 
 
 [logging]
-log_to_file = true
+log_to_file = false
 log_level = "info"  # critical, debug, error, info
 log_format = "pretty"  # informational, pretty, economic, onlymessage
 

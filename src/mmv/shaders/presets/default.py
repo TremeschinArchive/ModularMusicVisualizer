@@ -51,7 +51,7 @@ elif BACKGROUND == "image":
     # Map image, must be name="background"
     background.add_image_mapping(
         name = "background",
-        path = interface.MMV_PACKAGE_ROOT / "assets" / "free_assets" / "glsl_default_background.jpg"
+        path = interface.MMV_PACKAGE_ROOT / "assets" / "free_assets" / "glsl_default_background.jpg",
     )
 
     # Load moving image shader
@@ -101,8 +101,16 @@ master_shader = shadermaker.clone()
 layers = [
     background,
     logo_visualizer,
-    vignetting
+    vignetting,
 ]
+
+# Rain effect
+if BACKGROUND == "image":
+    rain = shadermaker.clone()
+    rain.load_shader_from_path(
+        path = interface.shaders_dir / "assets" / "fx" / "rain.glsl",
+    )
+    layers.append(rain)
 
 # # Alpha composite
 master_shader = shadermaker.macros.alpha_composite(
