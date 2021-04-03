@@ -169,10 +169,10 @@ class MMVShaderMaker:
 
     # Add image from file mapping to a target width and height.
     # Uses the resolution of the read file if some width or height is None (or both)
-    def add_image_mapping(self, name, path, width = None, height = None, mipmaps = True, anisotropy = 16):
+    def add_image_mapping(self, name, path, width = None, height = None, repeat_x = True, repeat_y = True, mipmaps = True, anisotropy = 16):
         debug_prefix = "[MMVShaderMaker.add_image_mapping]"
         path = self.utils.enforce_pathlib_Path(path)
-        mapping = {"type": "map", "name": name, "loader": "image", "value": str(path), "width": width, "height": height, "mipmaps": mipmaps, "anisotropy": anisotropy}
+        mapping = {"type": "map", "name": name, "loader": "image", "value": str(path), "width": width, "height": height, "mipmaps": mipmaps, "repeat_x": repeat_x, "repeat_y": repeat_y, "anisotropy": anisotropy}
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
     # Video mapping to a target width and height
@@ -183,9 +183,9 @@ class MMVShaderMaker:
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
     # Pipeline (as) texture is for communicating big arrays from Python to ModernGL's shader being executed
-    def add_pipeline_texture_mapping(self, name, width, height, depth, mipmaps = True, anisotropy = 16):
+    def add_pipeline_texture_mapping(self, name, width, height, depth, repeat_x = False, repeat_y = False, mipmaps = True, anisotropy = 16):
         debug_prefix = "[MMVShaderMaker.add_pipeline_texture_mapping]"
-        mapping = {"type": "map", "name": name, "loader": "pipeline_texture", "width": width, "height": height, "depth": depth, "mipmaps": mipmaps, "anisotropy": anisotropy}
+        mapping = {"type": "map", "name": name, "loader": "pipeline_texture", "width": width, "height": height, "depth": depth, "repeat_x": repeat_x, "repeat_y": repeat_y, "mipmaps": mipmaps, "anisotropy": anisotropy}
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
     # Strict shader only renders at this target resolution internally, regardless of output dimensions
