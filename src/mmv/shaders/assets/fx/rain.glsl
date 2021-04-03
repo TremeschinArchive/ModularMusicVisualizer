@@ -23,7 +23,8 @@ vec4 rain_layer(vec2 uv, float amount) {
     // If we're below some amount
     if (grid_noise < amount) {
         col = vec4(1.0);
-        col.a = (pow(sin(grid.x * PI), 80.0) * sin(grid.y * PI) - 0.4) * ((1.0 / amount) * grid_noise);
+        col.a = (pow(sin(grid.x * PI), 80.0) * sin(grid.y * PI) - 0.4)
+            * ((1.0 / amount) * grid_noise); // Random value
         if (col.a < 0.0) { col.a = 0; }
     }
 
@@ -33,18 +34,18 @@ vec4 rain_layer(vec2 uv, float amount) {
 void main() {
     //#mmv {"type": "include", "value": "coordinates_normalization", "mode": "multiple"}
     vec4 col = vec4(0.0);
-    int nlayers = 9;
+    int nlayers = 5;
 
     for (float i = 0; i < 1; i += 1.0 / nlayers) {
 
-        vec2 luv = stuv_all;
-        luv *= (30.0 + i*20.0);
+        vec2 luv = gluv_all;
+        luv *= (10.0 + i*20.0);
 
         // Rotation
-        luv *= get_rotation_mat2(radians(-30 + 15 * i + sin(mmv_time*i) / 2.0));
-
+    
         // Offset
-        vec2 offset = vec2(sin(mmv_time * i * 5.0), cos(mmv_time * (1.0 - i) * 8.0)) / 80.0;
+        vec2 offset = vec2(100*i, 200*i) + vec2(sin(mmv_time * i * 5.0), cos(mmv_time * (1.0 - i) * 8.0)) / 80.0;
+        luv *= get_rotation_mat2(radians(-30 + 15 * i + sin(mmv_time*i) / 2.0));
         luv += offset + vec2(0.0, mmv_time * (10.0 + 30.0 * i));
 
         col.a *= 0.4 + 0.6 * i;
