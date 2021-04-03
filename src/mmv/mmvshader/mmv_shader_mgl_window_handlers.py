@@ -301,6 +301,37 @@ class MMVShaderMGLWindowHandlers:
         self.imgui.mouse_position_event(x, y, dx, dy)
         self.mmv_shader_mgl.pipeline["mmv_mouse"] = [x, y]
 
+        # Drag if on mouse exclusivity
+        if self.mouse_exclusivity:
+            self.__apply_rotated_drag(dx = dx, dy = dy, howmuch = 0.5, inverse = True)
+
+    # Apply drag with the target rotation (because dx and dy are relative to the window itself not the rendered contents)
+    def __apply_rotated_drag(self, dx, dy, howmuch = 1, inverse = False):
+
+        # Inverse drag? Feels more natural when mouse exclusivity is on
+        inverse = -1 if inverse else 1
+
+        # Add to the mmv_drag pipeline item the dx and dy multiplied by the square of the current zoom
+        square_current_zoom = (self.mmv_shader_mgl.pipeline["mmv_zoom"] ** 2)
+
+        # dx and dy on zoom and SSAA
+        dx = (dx * square_current_zoom) * self.mmv_shader_mgl.ssaa
+        dy = (dy * square_current_zoom) * self.mmv_shader_mgl.ssaa
+
+        # Cosine and sine
+        c = math.cos(math.radians(self.rotation))
+        s = math.sin(math.radians(self.rotation))
+
+        # mat2 rotation times the dx, dy vector
+        drag_rotated = np.array([
+            (dx * c) + (dy * -s),
+            (dx * s) + (dy * c)
+        ]) * howmuch * inverse
+
+        # Add to target drag the dx, dy relative to current zoom and SSAA level
+        self.target_drag += drag_rotated
+        self.drag_momentum += drag_rotated
+        
     # Mouse drag, add to pipeline drag
     def mouse_drag_event(self, x, y, dx, dy):
         self.imgui.mouse_drag_event(x, y, dx, dy)
@@ -311,26 +342,7 @@ class MMVShaderMGLWindowHandlers:
             elif self.alt_pressed:
                 self.target_rotation += dy / 20
             else:
-                # Add to the mmv_drag pipeline item the dx and dy multiplied by the square of the current zoom
-                square_current_zoom = (self.mmv_shader_mgl.pipeline["mmv_zoom"] ** 2)
-
-                # dx and dy on zoom and SSAA
-                dx = (dx * square_current_zoom) * self.mmv_shader_mgl.ssaa
-                dy = (dy * square_current_zoom) * self.mmv_shader_mgl.ssaa
-
-                # Cosine and sine
-                c = math.cos(math.radians(self.rotation))
-                s = math.sin(math.radians(self.rotation))
-
-                # mat2 rotation times the dx, dy vector
-                drag_rotated = np.array([
-                    (dx * c) + (dy * -s),
-                    (dx * s) + (dy * c)
-                ])
-
-                # Add to target drag the dx, dy relative to current zoom and SSAA level
-                self.target_drag += drag_rotated
-                self.drag_momentum += drag_rotated
+                self.__apply_rotated_drag(dx = dx, dy = dy)
 
     # Change SSAA
     def change_ssaa(self, value):
