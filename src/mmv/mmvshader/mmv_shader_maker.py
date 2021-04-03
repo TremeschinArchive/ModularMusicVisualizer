@@ -29,6 +29,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from mmv.mmvshader.mmv_shader_maker_transformations import MMVShaderMakerTransformations
 from mmv.mmvshader.abstractions.abstraction_block_of_code import BlockOfCode
 from mmv.mmvshader.mmv_shader_maker_loaders import MMVShaderMakerLoaders
+from mmv.mmvshader.mmv_shader_maker_macros import MMVShaderMakerMacros
 from mmv.common.cmn_utils import Utils
 from pathlib import Path
 import numpy as np
@@ -85,9 +86,12 @@ class MMVShaderMaker:
 
         # Instantiate classes
         self.utils = Utils()
-        self.transformations = MMVShaderMakerTransformations()
         self.block_of_code = BlockOfCode
+
+        # Refactors
+        self.transformations = MMVShaderMakerTransformations()
         self.loaders = MMVShaderMakerLoaders(mmv_shader_maker = self)
+        self.macros = MMVShaderMakerMacros(mmv_shader_maker = self)
     
         # Where to place directories and whatnot
         self.working_directory = working_directory
