@@ -336,6 +336,8 @@ There are a couple hotkeys and interactions with the window:
 - Pressing `s` freezes the pipeline so the shader is rendered (hopefully) static, useful for debugging or screenshoting
 - Pressing `t` resets time to 0 (same as restarting MMV)
 - Pressing `f` toggles fullscreen
+- Pressing `h` hides mouse
+- Pressing `e` get exclusivity of mouse (already does this when you drag)
 - Pressing `q` quits
   
 And of course, all of those are smoothly animated, not too quick nor too slow, but snappy.
