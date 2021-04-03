@@ -298,12 +298,15 @@ class MMVShadersCLI:
         self.__configure_audio_processing()
         self.__load_preset()
 
+        repo_dir = self.mmv_package_interface.MMV_PACKAGE_ROOT/".."/".."/"repo"
+
         # Start mgl window
         self.mgl.mode(
             window_class = window_class,
             vsync = False,
             msaa = self._msaa,
             strict = False,
+            icon = repo_dir/"icon.png"
         )
 
         # Load master shader

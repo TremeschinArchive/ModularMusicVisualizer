@@ -27,7 +27,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 from moderngl_window.integrations.imgui import ModernglWindowRenderer
 from moderngl_window.conf import settings
+from moderngl_window import resources
 from datetime import datetime
+from pathlib import Path
 import multiprocessing
 import moderngl_window
 from PIL import Image
@@ -71,6 +73,7 @@ class MMVShaderMGLWindowHandlers:
     # Which "mode" to render, window loader class, msaa, ssaa, vsync, force res?
     def mode(self, window_class, msaa = 1, vsync = True, strict = False, icon = None):
         debug_prefix = "[MMVShaderMGLWindowHandlers.mode]"
+
         logging.info(f"{debug_prefix} \"i\" Set window mode [window_class={window_class}] [msaa={msaa}] [vsync={vsync}] [strict={strict}] [icon={icon}]")
 
         # Get function arguments
@@ -102,7 +105,10 @@ class MMVShaderMGLWindowHandlers:
 
         # Set the icon
         if icon is not None:
-            self.window.set_icon(icon_path = icon)
+            # Absolute path
+            icon = Path(icon).resolve()
+            resources.register_dir(icon.parent)
+            self.window.set_icon(icon_path = icon.name)
         
         # The context we'll use is the one from the window
         self.gl_context = self.window.ctx
