@@ -101,7 +101,7 @@ class MMVShadersCLI:
         self._fps = 60
         self._ssaa = 1.1
         self._msaa = 8
-        self._multiplier = 3.0
+        self._multiplier = 2.0
 
         # Use default preset
         self._preset_name = "default"
@@ -159,7 +159,7 @@ class MMVShadersCLI:
             self._preset_name = preset
 
     def multiplier(self, 
-        value: float = typer.Option(3.0, help = (
+        value: float = typer.Option(2.0, help = (
             "Multiply target interpolation values by this amount, yields more aggressiveness"
         ))
     ):
