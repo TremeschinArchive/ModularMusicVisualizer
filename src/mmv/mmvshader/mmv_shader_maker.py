@@ -98,12 +98,9 @@ class MMVShaderMaker:
 
         # # Sessions and Shader Maker runtime directory
 
-        # Where to place
-        self.runtime_dir = self.working_directory / "runtime"
-
         # Reset runtime directory
         logging.info(f"{debug_prefix} Resetting directory")
-        self.utils.reset_dir(self.runtime_dir)
+        self.utils.reset_dir(self.working_directory)
 
         # # Add stuff
 
