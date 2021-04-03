@@ -170,6 +170,7 @@ class MMVShaderMGLWindowHandlers:
             if "shader_as_texture" in self.mmv_shader_mgl.textures[index].keys():
                 target = self.mmv_shader_mgl.textures[index]["shader_as_texture"]
                 print(target.texture, target.fbo, target.vao)
+                target.program.release()
                 target.texture.release()
                 target.fbo.release()
                 target.vao.release()

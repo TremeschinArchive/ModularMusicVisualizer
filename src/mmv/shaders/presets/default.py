@@ -37,8 +37,8 @@ BlockOfCode = shadermaker.block_of_code
 background = shadermaker.clone()
 
 # Some background presets for you
-BACKGROUND = "universe"
-# BACKGROUND = "image"
+# BACKGROUND = "universe"
+BACKGROUND = "image"
 
 if BACKGROUND == "universe":
     # Stars universe shader
@@ -140,6 +140,7 @@ if(scale < 0.99) {
     stuv *= scale;
     gluv *= scale;
     gluv_all *= scale;
+    stuv_all *= scale;
 }
 """
 ))
