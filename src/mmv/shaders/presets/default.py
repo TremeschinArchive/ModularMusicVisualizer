@@ -76,6 +76,18 @@ logo_visualizer.add_image_mapping(name = "logo", path = interface.MMV_PACKAGE_RO
 
 
 
+# Chromatic aberration on logo
+if True:
+    chromatic_aberration = shadermaker.clone()
+    chromatic_aberration.load_shader_from_path(
+        path = interface.shaders_dir / "assets" / "pfx" / "chromatic_aberration.glsl",
+    )
+    chromatic_aberration.add_dynamic_shader_mapping(name = "layer", path = logo_visualizer.finish())
+
+    logo_visualizer = chromatic_aberration
+
+
+
 
 vignetting = shadermaker.clone()
 vignetting.load_shader_from_path(
