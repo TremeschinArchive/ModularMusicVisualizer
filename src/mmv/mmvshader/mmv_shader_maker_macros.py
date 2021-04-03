@@ -38,7 +38,18 @@ class MMVShaderMakerMacros:
         # Get master class
         self.mmv_shader_maker = mmv_shader_maker
         self.transformations = self.mmv_shader_maker.transformations
-        
+    
+    # Loads shader from path
+    def load(self, path, get_name_from_file = True):
+        processing = self.mmv_shader_maker.clone()
+        processing.load_shader_from_path(path = path, get_name_from_file = get_name_from_file)
+        return processing
+
+    # Map shader A as "layer" sampler2D on shader B
+    def chain(self, A, B):
+        B.add_dynamic_shader_mapping(name = "layer", path = A.finish())
+        return B
+
     # Alpha composite many layers automatically like magic!
     def alpha_composite(self, layers: list, finish = False):
         debug_prefix = "[MMVShaderMakerMacros.alpha_composite]"
