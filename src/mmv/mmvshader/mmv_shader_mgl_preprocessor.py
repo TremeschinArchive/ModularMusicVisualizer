@@ -131,6 +131,10 @@ class MMVShaderMGLPreprocessor:
             mipmaps_max_level = content.get("mipmaps_max_level", 2000)
             anisotropy = content.get("anisotropy", 1.0)
 
+            # Repeat stuff
+            repeat_x = content.get("repeat_x", True)
+            repeat_y = content.get("repeat_y", True)
+
             # Didn't find any actions
             if action is None:
                 logging.warn(f"{debug_prefix} Mapping does nothing, no \"type\" specified")
@@ -259,6 +263,10 @@ class MMVShaderMGLPreprocessor:
                         logging.info(f"{debug_prefix} Setting anisotropy suggested level to [{anisotropy}]")
                         texture.anisotropy = anisotropy
 
+                        # Repeat
+                        texture.repeat_x = repeat_x
+                        texture.repeat_y = repeat_y
+
                         assign_index = len(self.mmv_shader_mgl.textures.keys())
 
                         # Assign the name, type and texture to the textures dictionary
@@ -278,6 +286,10 @@ class MMVShaderMGLPreprocessor:
                         texture = self.mmv_shader_mgl.gl_context.texture((width, height), int(depth), dtype = "f4")
                         texture.anisotropy = anisotropy
 
+                        # Repeat
+                        texture.repeat_x = repeat_x
+                        texture.repeat_y = repeat_y
+                        
                         # Write zeros to texture, there is no guarantee the buffer is clean
                         texture.write(np.zeros((width, height, depth), dtype = np.float32))
 
