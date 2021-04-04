@@ -98,7 +98,7 @@ void main() {
         // based on the distance we are, also have to account for bar size
         if (angelic) {
             col = vec4(1.0, 1.0, 1.0, 0.0) * 1.0;
-            col.a = (size + (fft_val/20.0) * bar_size) / pow(2.8 * away_from_center, 2.0);
+            col.a = (size + (fft_val/20.0) * bar_size * bar_size) / pow(2.8 * away_from_center, 2.0);
         }
     }
 
