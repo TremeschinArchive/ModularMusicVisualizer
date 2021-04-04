@@ -31,7 +31,6 @@ from ast import literal_eval
 from PIL import Image
 import numpy as np
 import logging
-import cv2
 import os
 
 
@@ -392,6 +391,7 @@ class MMVShaderMGLPreprocessor:
 
                     # Video loader
                     elif loader == "video":
+                        import cv2
 
                         # Get one VideoCapture
                         video = cv2.VideoCapture(value)

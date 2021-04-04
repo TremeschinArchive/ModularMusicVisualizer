@@ -39,6 +39,7 @@ import numpy as np
 import logging
 import imgui
 import math
+import gc
 
 
 class MMVShaderMGLWindowHandlers:
@@ -177,13 +178,18 @@ class MMVShaderMGLWindowHandlers:
         for index in self.mmv_shader_mgl.textures.keys():
             if "shader_as_texture" in self.mmv_shader_mgl.textures[index].keys():
                 target = self.mmv_shader_mgl.textures[index]["shader_as_texture"]
-                print(target.texture, target.fbo, target.vao)
+                target.fullscreen_buffer.release()
                 target.program.release()
                 target.texture.release()
                 target.fbo.release()
                 target.vao.release()
             else:
                 self.mmv_shader_mgl.textures[index]["texture"].release()
+
+        # Delete items
+        for index in list(self.mmv_shader_mgl.textures.keys()):
+            del self.mmv_shader_mgl.textures[index]
+            gc.collect()
 
     # Close the window
     def close(self, *args, **kwargs):

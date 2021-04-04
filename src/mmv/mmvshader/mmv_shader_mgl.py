@@ -439,10 +439,10 @@ import logging
 import shutil
 import time
 import uuid
-import cv2
 import sys
 import gc
 import os
+
 
 class MMVShaderMGL:
     EXPERIMENTAL_VIDEO_MIPMAP = True
@@ -753,7 +753,10 @@ class MMVShaderMGL:
 
             # Drop textures since we'll not need them and return missing shader texture
             self.window_handlers.drop_textures()
-            self.program = self.gl_context.program(fragment_shader = MMV_MGL_FALLBACK_MISSING_TEXTURE_SHADER, vertex_shader = MMV_MGL_DEFAULT_VERTEX_SHADER)
+            self.program = self.gl_context.program(
+                fragment_shader = MMV_MGL_FALLBACK_MISSING_TEXTURE_SHADER,
+                vertex_shader = MMV_MGL_DEFAULT_VERTEX_SHADER
+            )
 
     # Create fullscreen VAO that reads position, OpenGL UV coordinates then ShaderToy UV coordinates
     def _create_vao(self):
@@ -790,6 +793,7 @@ class MMVShaderMGL:
             if target_index is not None:
                 try: self.textures[target_index]["texture"].write(data, viewport = viewport)
                 except AttributeError: pass
+                except KeyError: pass
 
             # Write recursively with same arguments
             for index in self.textures.keys():
@@ -857,6 +861,7 @@ class MMVShaderMGL:
             try:  # TODO: Video that doesn't match target FPS should not read new frame for every frame
                 # Read the next frame of the video
                 if loader == "video":
+                    import cv2
 
                     # We'll only have a fourth element that is video if loader is video
                     video = texture_info["capture"]
