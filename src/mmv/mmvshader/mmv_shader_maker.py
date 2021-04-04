@@ -35,6 +35,7 @@ from pathlib import Path
 import numpy as np
 import logging
 import shutil
+import pprint
 import copy
 import uuid
 import sys
@@ -171,12 +172,38 @@ class MMVShaderMaker:
 
     # # Mappings
 
+    # Return a pretty dictionary and commented with //, multi lines like:
+    # //#mmv {                                                                                                                         //  //
+    # //  'anisotropy': 16,                                                                                                             //  //
+    # //  'height': None,    
+    # ...
+    # //}
+    def __pretty_mapper(self, dictionary):
+        pretty = pprint.pformat(dictionary)[1:-1].split("\n")
+
+        # Add newlines on {}
+        pretty.insert(0, "{")
+        pretty.append("//}")
+
+        # Iterate on lines
+        processing = []
+        for index, line in enumerate(pretty):
+
+            # Add coment if not start or end (because we put //#mmv)
+            if not ( (index == 0) or (index == len(pretty) - 1) ):
+                line = f"// {line}"
+
+          # Append and join
+            processing.append(line)
+        return '\n'.join(processing)
+
     # Add image from file mapping to a target width and height.
     # Uses the resolution of the read file if some width or height is None (or both)
     def add_image_mapping(self, name, path, width = None, height = None, repeat_x = True, repeat_y = True, mipmaps = True, anisotropy = 16):
         debug_prefix = "[MMVShaderMaker.add_image_mapping]"
         path = self.utils.enforce_pathlib_Path(path)
         mapping = {"type": "map", "name": name, "loader": "image", "value": str(path), "width": width, "height": height, "mipmaps": mipmaps, "repeat_x": repeat_x, "repeat_y": repeat_y, "anisotropy": anisotropy}
+        mapping = self.__pretty_mapper(dictionary = mapping)
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
     # Video mapping to a target width and height
@@ -184,12 +211,14 @@ class MMVShaderMaker:
         debug_prefix = "[MMVShaderMaker.add_video_mapping]"
         path = self.utils.enforce_pathlib_Path(path)
         mapping = {"type": "map", "name": name, "loader": "video", "value": str(path), "width": width, "height": height, "anisotropy": anisotropy}
+        mapping = self.__pretty_mapper(dictionary = mapping)
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
     # Pipeline (as) texture is for communicating big arrays from Python to ModernGL's shader being executed
     def add_pipeline_texture_mapping(self, name, width, height, depth, repeat_x = False, repeat_y = False, mipmaps = True, anisotropy = 16):
         debug_prefix = "[MMVShaderMaker.add_pipeline_texture_mapping]"
         mapping = {"type": "map", "name": name, "loader": "pipeline_texture", "width": width, "height": height, "depth": depth, "repeat_x": repeat_x, "repeat_y": repeat_y, "mipmaps": mipmaps, "anisotropy": anisotropy}
+        mapping = self.__pretty_mapper(dictionary = mapping)
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
     # Strict shader only renders at this target resolution internally, regardless of output dimensions
@@ -197,6 +226,7 @@ class MMVShaderMaker:
         debug_prefix = "[MMVShaderMaker.add_strict_shader_mapping]"
         path = self.utils.enforce_pathlib_Path(path)
         mapping = {"type": "map", "name": name, "loader": "shader", "value": str(path), "width": width, "height": height, "anisotropy": anisotropy}
+        mapping = self.__pretty_mapper(dictionary = mapping)
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
     # Dynamic shader adapts to the viewport / output dimensions, recommended
@@ -204,12 +234,14 @@ class MMVShaderMaker:
         debug_prefix = "[MMVShaderMaker.add_dynamic_shader_mapping]"
         path = self.utils.enforce_pathlib_Path(path)
         mapping = {"type": "map", "name": name, "loader": "dynshader", "value": str(path), "anisotropy": anisotropy}
+        mapping = self.__pretty_mapper(dictionary = mapping)
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
     # Name the shader on this class's name
     def _add_name_mapping(self):
         debug_prefix = "[MMVShaderMaker.add_name_mapping]"
         mapping = {"type": "name", "value": self.name}
+        mapping = self.__pretty_mapper(dictionary = mapping)
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
     # # Functions

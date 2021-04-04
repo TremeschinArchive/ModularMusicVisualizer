@@ -52,32 +52,56 @@ class MMVShaderMGLPreprocessor:
         self.included_files_once = []
 
     # Generator that gives us dictionaries on line matchings
-    def __match_mmv_line_yield_dictionary(self, full_file_string):
+    #
+    # For each line if "//#mmv" is on the line keep reading until finds }
+    # We use a comment because we avoid GLSL treating our map as their syntax,
+    # this is mostly likely to fail on Windows by the look of things if we don't comment stuff.
+    #
+    # Yields the size of the indent, the content of the line as dict and the original line itself
+    def __match_mmv_line_yield_dictionary(self, full_file_string) -> list:
         debug_prefix = "[MMVShaderMGLPreprocessor.__match_mmv_line_yield_dictionary]"
 
-        # Stuff we match
-        matched = []
+        # For matching multi line dictionaries
+        partially_matched = []
+        trigger_keep_reading = False
 
-        # Generador: For each line if "//#mmv" is on the line
-        # We use a comment because we avoid GLSL treating our map as their syntax
-        # this is mostly likely to fail on Windows if we don't comment
-        # Yields the size of the indent, the content of the line and the original line itself
+        # Iterate on all lines
         for original_line in full_file_string.split("\n"):
+
+            # We have some work to do, mark as to keep reading and get indentation
             if "//#mmv" in original_line:
+                trigger_keep_reading = True
+                indent, _ = original_line.split("//#mmv")
+            
+            # If we are on a match
+            if trigger_keep_reading:
 
-                # Split the line relative to the //#mmv, note we can have indentation before
-                # or empty values, newline chars, so that's why we strip first, then get the
-                # zero-th and one-th index
-                line = original_line.split("//#mmv")
-                line[1] = line[1].split("}")[0] + "}"
-                content = literal_eval(line[1].strip())
+                # Replace commands #mmv, also remove comments //
+                line = original_line.replace("//#mmv", "").replace("//", "")
 
-                # The length of the indent
-                indent_length = len(line[0])
+                # Add to the partially matched this "cleaned" line from MMV's syntax
+                partially_matched.append(line)
+
+            # If we are still reading stuff (or first pass) and "}"
+            # is present on the line then that means to stop
+            if ("}" in original_line and trigger_keep_reading):
+
+                # Join every line with spaces, replacing newlines
+                partially_matched = ' '.join([p.replace("\n", "") for p in partially_matched if p])
+
+                # Remove trailing whitespaces
+                partially_matched = partially_matched.strip()
+
+                # String -> dictionary
+                content = literal_eval(partially_matched)
+
+                # Reset variables
+                partially_matched = []
+                trigger_keep_reading = False
 
                 # Yield stuff as specified
-                yield [indent_length, content, original_line]
-                
+                yield [len(indent), content, original_line]
+
     # Add a directory to the list of directories to include, note that this will recursively add this
     # include dir to the shaders as textures mapped
     def include_dir(self, path):
