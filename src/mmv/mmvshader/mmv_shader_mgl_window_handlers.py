@@ -360,7 +360,7 @@ class MMVShaderMGLWindowHandlers:
             elif self.alt_pressed:
                 self.target_rotation += dy / 20
             else:
-                self.__apply_rotated_drag(dx = dx, dy = dy)
+                self.__apply_rotated_drag(dx = dx, dy = dy, inverse = True)
 
     # Change SSAA
     def change_ssaa(self, value):

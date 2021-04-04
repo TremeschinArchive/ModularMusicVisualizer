@@ -16,7 +16,7 @@ void main() {
     vec4 col = vec4(0.0);
 
     // User stuff
-    float intensity = (mmv_rms_0_15[2] / 5.5) / mmv_zoom;
+    float intensity = ((mmv_rms_0_15[2] / 5.5)) / (mmv_zoom * mmv_zoom);
     float add = mmv_progressive_rms_0_05[2] / 18.0;
 
     // Shortcuts
