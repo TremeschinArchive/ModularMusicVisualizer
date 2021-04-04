@@ -12,52 +12,101 @@ void main() {
     //#mmv {"type": "include", "value": "coordinates_normalization", "mode": "multiple"}
     //#mmv {"type": "include", "value": "math_constants", "mode": "multiple"}
 
+    // Start with empty color (so it's fully transparent everywhere)
     vec4 col = vec4(0.0);
 
-    // Angle relative to the center
-    float angle_offset = (PI / 4) * sin(mmv_progressive_rms[2] / 16.0)*0.16;
-    float speed = 0.3;
-    float amplitude = 0.102 * mmv_rms_0_33[2];
-    vec2 offset = vec2(sin(5.0 * mmv_time * speed) * amplitude, cos(8.0 * mmv_time * speed) * amplitude);
-    vec2 gluv_offsetted = gluv_all - offset;
-    vec2 get_visualizer_angle = gluv_offsetted * get_rotation_mat2(-(PI / 2.0) + angle_offset);
-    float angle = atan(get_visualizer_angle.y, get_visualizer_angle.x) * sign(get_visualizer_angle.y);
+    // // Movement
 
-    // // Which index
+    // Movement offsets so bar isn't fixed on dead center
+    float offset_speed = 0.3;
+    float offset_amplitude = 0.102 * mmv_rms_0_33[2];
+
+    // Offset vector 2 of x, y to add
+    vec2 offset = vec2(
+        sin(5.0 * mmv_time * offset_speed) * offset_amplitude,
+        cos(8.0 * mmv_time * offset_speed) * offset_amplitude
+    );
+
+    // // Angles
+
+    // Rotate the bars a bit
+    float angle_offset = (PI / 4) * sin(mmv_progressive_rms[2] / 16.0)*0.16;
+
+    // bars_uv is the offsetted coordinates which determines the center of the bars
+    // gluv_all (0, 0) is center of screen so we offset that by the previous vector
+    vec2 bars_uv = gluv_all - offset;
+
+    // Rotate the offsetted coordinates by -pi/2 so the bottom we start on low frequencies
+    // Will make more sense in a few. Also add angle offset
+    vec2 rotated_bars_uv = bars_uv * get_rotation_mat2(-(PI / 2.0) + angle_offset);
+
+    // Current angle we are to get the FFT values from
+    float angle = atan(rotated_bars_uv.y, rotated_bars_uv.x) * sign(rotated_bars_uv.y);
+
+    // // Getting FFT
 
     // Circle sectors
     bool smooth_bars = true;
-    float which = 0.0;
     float fft_val = 0.0;
 
+    // Branch code if we want a smooth bars or rectangle-looking ones
+    // mmv_fft is a texture that starts on left channel low frequencies at x=0,
+    // in x=0.5 we hit the left channel highest frequency and switch to the right channel ones
+    // but this one is reversed, we start 0.5 high freq right channel and 1.0 is right channel 
+    // lowest frequencies.
+
+    // Proportion that given 0 is 0, 2pi is 1, angle is what?
+    float proportion = mmv_proportion(2 * PI, 1, angle);
+
     if (smooth_bars) {
-        which = mmv_proportion(2 * PI, 1, angle);
-        fft_val = texture(mmv_fft, vec2(which, 0), 0).r;
+        // Get the FFT val from the mmv_fft texture with a float vec2 array itself.
+        // GL will interpolate the texture for us into values in between, probably linear nearest
+        fft_val = texture(mmv_fft, vec2(proportion, 0), 0).r;
     } else {
-        which = int({MMV_FFTSIZE} * mmv_proportion(2 * PI, 1, angle));
-        fft_val = texelFetch(mmv_fft, ivec2(which, 0), 0).r;
+        // texelFetch accepts ivec2 (integer vec2)
+        // which is the pixel itself, not filtered by GL
+        fft_val = texelFetch(mmv_fft,
+            ivec2(int({MMV_FFTSIZE} * proportion), 0),
+        0).r;
     }
 
-    // // 
+    // // Sizes, effect configuration
+
+    // Radial "bloom"
     bool angelic = true;
+
+    // Size of everybody, also scales bars
     float size = (0.13) + mmv_rms_0_33[2] * 0.133;
+
+    // "Max" size of the music bar
     float bar_size = 0.4;
+
+    // Size of the logo image relative to the music bars (ratio)
     float logo_relative_to_bar_ratio = 1.0 - (0.05 * smoothstep(mmv_rms_0_33[2], 0.0, 5.0));
 
-    if (length(gluv_offsetted) < (size + (fft_val/50.0) * bar_size)) {
-        col = vec4(vec3(
-            1.0 - fft_val / 50, 1.0, 1.0
-        ), 1.0);
+    // // Render
+
+    float barsize = size + ((fft_val/50.0) * bar_size);
+    float away_from_center = length(bars_uv);
+
+    // Distance from center is smaller than the FFT value times the bar size
+    if (away_from_center < barsize) {
+        // Set value of the bar color
+        col = vec4(1.0 - fft_val / 50, 1.2, 1.0, 1.0);
     } else {
+        // Angelic effect, we're not inside a bar and we add a white component
+        // based on the distance we are, also have to account for bar size
         if (angelic) {
-            col += (size + (fft_val/20.0) * bar_size) / pow(2.8 * length(gluv_offsetted), 2.0);
+            col = vec4(1.0, 1.0, 1.0, 0.0) * 1.0;
+            col.a = (size + (fft_val/20.0) * bar_size) / pow(2.8 * away_from_center, 2.0);
         }
     }
 
+    // Get the logo, do some calculations
     vec4 logo_pixel = mmv_blit_image(
         col, logo,
         logo_resolution,
-        gluv_offsetted,
+        bars_uv,
         vec2(0.0, 0.0), // anchor
         vec2(0.5, 0.5), // shift
         size * 2.0 * logo_relative_to_bar_ratio,  //scale
@@ -66,13 +115,10 @@ void main() {
         false, // repeat
         true, 2.0 // Undo gamma, Gamma
     );
-    col = mix(col, logo_pixel, logo_pixel.a);
 
-    // if (stuv.y < sqrt(fft_val/9000)) {
-    //     col = vec4(shadertoy_uv.x, stuv.y * fft_val/20.0, 1.0 - standard_deviations[2] - stuv.y*4.0, 1.0);
-    // } else {
-    //     col = vec4(vec3(mmv_rms_0_33[2]/4.0), 0.0);
-    // }
+    // Alpha composite logo + bars
+    col = mmv_alpha_composite(logo_pixel, col);
 
+    // Return color
     fragColor = col;
 }
