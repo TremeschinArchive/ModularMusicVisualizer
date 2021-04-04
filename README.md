@@ -337,7 +337,7 @@ There are a couple hotkeys and interactions with the window:
 - Pressing `t` resets time to 0 (same as restarting MMV)
 - Pressing `f` toggles fullscreen
 - Pressing `h` hides mouse
-- Pressing `e` get exclusivity of mouse (already does this when you drag)
+- Pressing `e` get exclusivity of mouse, ie. locks the mouse to the window, other controls also applies but won't require to click (Alt for rotation, Shift for zoom, nothing for dragging)
 - Pressing `q` quits
   
 And of course, all of those are smoothly animated, not too quick nor too slow, but snappy.

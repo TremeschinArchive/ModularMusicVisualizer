@@ -83,7 +83,7 @@ class BlockOfCode:
     
     # Return the lines as a string
     # Scoped yields the string surrounded by {} and properly indented
-    def get_content(self, indent = "") -> list:
+    def get_content(self, indent = "", newline = True) -> list:
 
         # Start empty
         content = []
@@ -134,6 +134,10 @@ class BlockOfCode:
             if BlockOfCode.NEWLINE_PREVIOUS_AND_AFTER and (index == 0) and self.__pretty: constructed.append("\n")
             constructed.append(f"{indent}{enabled}{line}")
             if BlockOfCode.NEWLINE_PREVIOUS_AND_AFTER and (index == len(content) - 1) and self.__pretty: constructed.append("\n")
+
+        # Remove newline
+        if not newline:
+            constructed = [l.replace("\n", "") for l in constructed]
 
         return constructed
         

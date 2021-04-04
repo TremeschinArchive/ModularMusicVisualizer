@@ -76,7 +76,7 @@ class MMVShaderMakerTransformations:
             f"{new}{assign_to_variable} = texture({texture_name}, {uv});"
         ), scoped = kwargs.get("scoped", True))
         logging.info(f"{debug_prefix} Returning BlockOfCode:")
-        for line in boc.get_content(): logging.info(f"{debug_prefix} | {line}")
+        for line in boc.get_content(newline = False): logging.info(f"{debug_prefix} | {line}")
         return boc
 
     # Alpha
@@ -87,7 +87,7 @@ class MMVShaderMakerTransformations:
             f"layered = mmv_alpha_composite({new}, {old});"
         ), scoped = kwargs.get("scoped", False))
         logging.info(f"{debug_prefix} Returning BlockOfCode:")
-        for line in boc.get_content(): logging.info(f"{debug_prefix} | {line}")
+        for line in boc.get_content(newline = False): logging.info(f"{debug_prefix} | {line}")
         return boc
     
     def gamma_correction(self, exponent = 2.0, **kwargs):
@@ -97,7 +97,7 @@ class MMVShaderMakerTransformations:
             f"layered = pow(layered, vec4(1.0 / {exponent}));"
         ), scoped = kwargs.get("scoped", False))
         logging.info(f"{debug_prefix} Returning BlockOfCode:")
-        for line in boc.get_content(): logging.info(f"{debug_prefix} | {line}")
+        for line in boc.get_content(newline = False): logging.info(f"{debug_prefix} | {line}")
         return boc
     
     def fade_in(self, formula = "(atan(mmv_time*mmv_time)*2) / 3.141596", stop_after = 10):
@@ -109,5 +109,5 @@ class MMVShaderMakerTransformations:
             f"}}"
         ), scoped = True)
         logging.info(f"{debug_prefix} Returning BlockOfCode:")
-        for line in boc.get_content(): logging.info(f"{debug_prefix} | {line}")
+        for line in boc.get_content(newline = False): logging.info(f"{debug_prefix} | {line}")
         return boc
