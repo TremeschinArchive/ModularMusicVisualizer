@@ -21,21 +21,22 @@ void main() {
     vec2 offset = vec2(sin(mmv_time/7.135135), cos(mmv_time/4.523894)) / 20.0;
 
     // Scale and angle
-    float scale = 2.2 + mmv_rms_0_20[2] * 0.2;
+    float scale = 3.2 + mmv_rms_0_20[2] * 0.2;
     float angle = sin(mmv_time)/80.0;
 
     // // UV
 
-    vec2 uv = gluv_all * scale;
+    vec2 uv = (gluv_all) * scale;
+    float multiplier = 0.5 * log(length(uv) + 20);
+    uv += vec2(0.5) / multiplier;
+
     // Add stuf, apply scaling, offset and rotate
     uv += low_freq_shake + high_freq_shake + offset;
-    uv *= (7.0 / 4);
-    uv += vec2(0.5, 0.5);
     uv *= get_rotation_mat2(angle);
 
     // Interesting one
     // uv *= 1.41 - log(length(opengl_uv));
-    uv *= 0.5 * log(length(uv) + 20);
+    uv *= multiplier;
 
     // // Grids
     vec2 grid = fract(uv);
@@ -50,9 +51,8 @@ void main() {
     vec4 major_line = vec4(1.0);
     vec4 minor_line = vec4(vec3(1.0), 0.3);
     float major_line_size = 0.03;
-    float minor_line_size = 0.015;
+    float minor_line_size = 0.02;
     int major_line_every = 5;
-
 
     // Abs distance to the 0.5 center coordinate
     float x = abs(grid.x - 0.5);
@@ -84,6 +84,8 @@ void main() {
         col = mix(minor_line, col, minor_v_line);
         col = mix(minor_line, col, minor_h_line);
     }
+
+    col = mmv_saturate(col, 1.0 + pow(length(opengl_uv), 3.0) );
 
     fragColor = col;
 }
