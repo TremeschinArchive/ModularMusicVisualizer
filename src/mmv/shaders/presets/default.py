@@ -31,6 +31,27 @@ macros = shadermaker.macros
 BlockOfCode = shadermaker.block_of_code
 
 
+# # Build custom include directories
+
+coordinate_normalizations = macros.load(path = interface.shaders_dir / "include" / "coordinates_normalization.glsl")
+
+# Start zoom in then zoom out
+coordinate_normalizations.add_transformation(BlockOfCode(
+"""
+// Apply zoom in / out effect
+float scale = 0.5 + ((atan(mmv_time * 2.0) / 3.1415) * 2) * 0.5;
+if(scale < 0.99) {
+    stuv *= scale;
+    gluv *= scale;
+    gluv_all *= scale;
+    stuv_all *= scale;
+}
+"""
+))
+# Append prefix=false for stuff loaded on "include" is optimal
+coordinate_normalizations.finish(append_prefix = False)
+
+
 # # Background
 
 background = shadermaker.clone()
@@ -97,29 +118,11 @@ layers.append(vignetting)
 master_shader = macros.alpha_composite(layers = layers)
 
 # Gamma correction and finish
+master_shader.add_transformation(transformation = master_shader.transformations.fade_in())
 master_shader.add_transformation(transformation = master_shader.transformations.gamma_correction())
 master_shader_path = master_shader.finish()
 
 
-
-# # Build custom include directories
-
-coordinate_normalizations = macros.load(path = interface.shaders_dir / "include" / "coordinates_normalization.glsl")
-
-# Start zoom in then zoom out
-coordinate_normalizations.add_transformation(BlockOfCode(
-"""
-// Apply zoom in / out effect
-float scale = 0.5 + ((atan(mmv_time * 2.0) / 3.1415) * 2) * 0.5;
-if(scale < 0.99) {
-    stuv *= scale;
-    gluv *= scale;
-    gluv_all *= scale;
-    stuv_all *= scale;
-}
-"""
-))
-coordinate_normalizations.finish()
 
 # Return info to the run shaders interface
 global info
