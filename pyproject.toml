@@ -24,6 +24,7 @@ watchdog = "^2.0.2"
 pyunpack = "^0.2.2"
 requests = "^2.25.1"
 scipy = "^1.6.2"
+ujson = "^4.0.2"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.7.2"

@@ -216,7 +216,7 @@ class Utils:
 
         # Log action
         if not silent:
-            logging.warn(f"{debug_prefix} Waiting for file or diretory: [{path}]")
+            logging.warning(f"{debug_prefix} Waiting for file or diretory: [{path}]")
 
         while True:
             time.sleep(0.1)
@@ -254,7 +254,7 @@ class Utils:
             if exists:
                 logging.info(msg)
             else:
-                logging.warn(msg)
+                logging.warning(msg)
 
         return exists
     
@@ -281,7 +281,7 @@ class Utils:
         # If it's not found then return False
         if locate is None:
             if not silent:
-                logging.warn(f"{debug_prefix} Couldn't find binary, returning False..")
+                logging.warning(f"{debug_prefix} Couldn't find binary, returning False..")
             return False
             
         # Else return its path
