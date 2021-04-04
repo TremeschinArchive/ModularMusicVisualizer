@@ -57,15 +57,20 @@ coordinate_normalizations.finish(append_prefix = False)
 background = shadermaker.clone()
 
 # Some background presets for you
-# BACKGROUND = "universe"
-BACKGROUND = "image"
+# BACKGROUND = "stars"
+# BACKGROUND = "image"
+BACKGROUND = "blueprint"
 
 if BACKGROUND == "universe":
+
     # Stars universe shader
     background.load_shader_from_path(
         path = interface.shaders_dir / "assets" / "background" / "stars.glsl",
         replaces = replaces,
     )
+
+elif BACKGROUND == "blueprint":
+    background.load_shader_from_path(path = interface.shaders_dir / "assets" / "background" / "blueprint.glsl")
 
 elif BACKGROUND == "image":
     # Map image, must be name="background"
@@ -108,7 +113,7 @@ layers = [
 ]
 
 # Rain effect
-if BACKGROUND == "image":
+if BACKGROUND in ["image", "blueprint"]:
     rain = macros.load(path = interface.shaders_dir / "assets" / "fx" / "rain.glsl")
     layers.append(rain)
 
