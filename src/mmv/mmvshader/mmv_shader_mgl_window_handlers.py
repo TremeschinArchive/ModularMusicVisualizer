@@ -316,7 +316,12 @@ class MMVShaderMGLWindowHandlers:
 
         # Drag if on mouse exclusivity
         if self.mouse_exclusivity:
-            self.__apply_rotated_drag(dx = dx, dy = dy, howmuch = 0.5, inverse = True)
+            if self.shift_pressed:
+                self.target_zoom += (dy / 1000) * self.target_zoom
+            elif self.alt_pressed:
+                self.target_rotation += dy / 20
+            else:
+                self.__apply_rotated_drag(dx = dx, dy = dy, howmuch = 0.5, inverse = True)
 
     # Apply drag with the target rotation (because dx and dy are relative to the window itself not the rendered contents)
     def __apply_rotated_drag(self, dx, dy, howmuch = 1, inverse = False):
