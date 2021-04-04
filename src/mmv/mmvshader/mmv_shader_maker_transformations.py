@@ -48,7 +48,7 @@ class MMVShaderMakerTransformations:
         repeat = self.utils.bool_to_string(repeat)
         undo_gamma = self.utils.bool_to_string(undo_gamma)
 
-        return BlockOfCode((
+        boc = BlockOfCode((
             f"{new}{assign_to_variable} = mmv_blit_image(\n"
             f"    {canvas}, // Canvas\n"
             f"    {image}, // Image\n"
@@ -64,6 +64,10 @@ class MMVShaderMakerTransformations:
             f")"
         ), scoped = kwargs.get("scoped", True))
 
+        logging.info(f"{debug_prefix} Returning BlockOfCode:")
+        for line in boc.get_content(): logging.info(f"{debug_prefix} | {line}")
+        return boc
+
     def get_texture(self, texture_name, uv = "stuv", assign_to_variable = "processing", new_variable = True, **kwargs):
         debug_prefix = "[MMVShaderMakerTransformations.get_texture]"
 
@@ -71,7 +75,8 @@ class MMVShaderMakerTransformations:
         boc = BlockOfCode((
             f"{new}{assign_to_variable} = texture({texture_name}, {uv});"
         ), scoped = kwargs.get("scoped", True))
-
+        logging.info(f"{debug_prefix} Returning BlockOfCode:")
+        for line in boc.get_content(): logging.info(f"{debug_prefix} | {line}")
         return boc
 
     # Alpha
@@ -81,7 +86,8 @@ class MMVShaderMakerTransformations:
         boc = BlockOfCode((
             f"layered = mmv_alpha_composite({new}, {old});"
         ), scoped = kwargs.get("scoped", False))
-
+        logging.info(f"{debug_prefix} Returning BlockOfCode:")
+        for line in boc.get_content(): logging.info(f"{debug_prefix} | {line}")
         return boc
     
     def gamma_correction(self, exponent = 2.0, **kwargs):
@@ -90,6 +96,18 @@ class MMVShaderMakerTransformations:
         boc = BlockOfCode((
             f"layered = pow(layered, vec4(1.0 / {exponent}));"
         ), scoped = kwargs.get("scoped", False))
-
+        logging.info(f"{debug_prefix} Returning BlockOfCode:")
+        for line in boc.get_content(): logging.info(f"{debug_prefix} | {line}")
         return boc
-        
+    
+    def fade_in(self, formula = "(atan(mmv_time*mmv_time)*2) / 3.141596", stop_after = 10):
+        debug_prefix = "[MMVShaderMakerTransformations.fade_in]"
+        boc = BlockOfCode((
+            f"if (mmv_time < {stop_after}) {{\n"
+            f"    float fadein = {formula};\n"
+            f"    layered = fadein * layered;\n"
+            f"}}"
+        ), scoped = True)
+        logging.info(f"{debug_prefix} Returning BlockOfCode:")
+        for line in boc.get_content(): logging.info(f"{debug_prefix} | {line}")
+        return boc
