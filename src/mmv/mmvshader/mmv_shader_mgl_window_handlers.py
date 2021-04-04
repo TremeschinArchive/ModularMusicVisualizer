@@ -25,9 +25,11 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
+from mmv.common.cmn_persistent_dictionary import PersistentDictionary
 from moderngl_window.integrations.imgui import ModernglWindowRenderer
 from moderngl_window.conf import settings
 from moderngl_window import resources
+import mmv.common.cmn_any_logger
 from datetime import datetime
 from pathlib import Path
 import multiprocessing
@@ -45,6 +47,8 @@ class MMVShaderMGLWindowHandlers:
     ZOOM_RESPONSIVENESS = 0.2
     DRAG_RESPONSIVENESS = 0.3
     DRAG_MOMENTUM = 0.6
+
+    DEVELOPER = False
     
     def __init__(self, mmv_shader_mgl):
         self.mmv_shader_mgl = mmv_shader_mgl
@@ -71,6 +75,9 @@ class MMVShaderMGLWindowHandlers:
         self.mouse_buttons_pressed = []
         self.mouse_exclusivity = False
 
+        # Gui
+        self.hide_gui = True
+
     # Which "mode" to render, window loader class, msaa, ssaa, vsync, force res?
     def mode(self, window_class, msaa = 1, vsync = True, strict = False, icon = None):
         debug_prefix = "[MMVShaderMGLWindowHandlers.mode]"
@@ -93,7 +100,7 @@ class MMVShaderMGLWindowHandlers:
         settings.WINDOW["class"] = f"moderngl_window.context.{window_class}.Window"
         settings.WINDOW["aspect_ratio"] = self.mmv_shader_mgl.width / self.mmv_shader_mgl.height
         settings.WINDOW["vsync"] = self.vsync
-        settings.WINDOW["title"] = "MMVShaderMGL Window"
+        settings.WINDOW["title"] = "MMVShaderMGL Real Time Window"
         settings.WINDOW["size"] = (self.mmv_shader_mgl.width, self.mmv_shader_mgl.height)
 
         # Create the window
@@ -227,6 +234,12 @@ class MMVShaderMGLWindowHandlers:
         if (key == 70) and (action == 1):
             logging.info(f"{debug_prefix} \"f\" key pressed [Toggle fullscreen]")
             self.window.fullscreen = not self.window.fullscreen
+
+        # "g" key pressed, toggle gui
+        if (key == 71) and (action == 1):
+            if MMVShaderMGLWindowHandlers.DEVELOPER:
+                logging.info(f"{debug_prefix} \"g\" key pressed [Toggle gui]")
+                self.hide_gui = not self.hide_gui
 
         # "h" key pressed, toggle mouse visible
         if (key == 72) and (action == 1):

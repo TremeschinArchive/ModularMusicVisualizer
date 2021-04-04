@@ -125,7 +125,10 @@ class MMVShaderMaker:
     # Build the shader and save to the working directory, returns the final path
     def finish(self):
         debug_prefix = "[MMVShaderMaker.finish]"
-        if self.name is None: self.name = str(uuid.uuid4())
+        if self.name is None:
+            self.name = str(uuid.uuid4())
+        else:
+            self.name = f"[{len(os.listdir(self.working_directory))}]_{self.name}"
         save = self.working_directory / f"{self.name}.glsl"
         logging.info(f"{debug_prefix} Finishing shader [{self.name}] saving to [{save}]")
         self.build_final_shader()

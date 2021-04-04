@@ -243,7 +243,7 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
             "debug": logging.DEBUG,
             "error": logging.ERROR,
             "info": logging.INFO,
-            "warn": logging.WARN,
+            "warn": logging.warning,
             "notset": logging.NOTSET,
         }.get(self.prelude["logging"]["log_level"])
 
@@ -294,27 +294,6 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
         sysversion = sys.version.replace("\n", " ").replace("  ", " ")
         logging.info(f"{debug_prefix} Running on Python: [{sysversion}]")
 
-        # # # FIXME: Python 3.9, go home you're drunk
-
-        # Max python version, show info, assert, pretty print
-        maximum_working_python_version = (3, 8)
-        pversion = sys.version_info
-
-        # Log and check
-        logging.info(f"{debug_prefix} Checking if Python <= {maximum_working_python_version} for a working version.. ")
-
-        # Huh we're on Python 2..?
-        if pversion[0] == 2:
-            logging.error(f"{debug_prefix} Please upgrade to at least Python 3")
-            sys.exit(-1)
-        
-        # Python is ok
-        if (pversion[0] <= maximum_working_python_version[0]) and (pversion[1] <= maximum_working_python_version[1]):
-            logging.info(f"{debug_prefix} Ok, good python version")
-        else:
-            # Warn Python 3.9 is a bit unstable, even the developer had issues making it work
-            logging.warn(f"{debug_prefix} Python 3.9 is acting a bit weird regarding some dependencies on some systems, while it should be possible to run, take it with some grain of salt and report back into the discussions troubles or workarounds you found?")
-
         # # The operating system we're on, one of "linux", "windows", "macos"
 
         # Get the desired name from a dict matching against os.name
@@ -355,6 +334,11 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
         self.assets_dir = self.MMV_PACKAGE_ROOT / "assets"
         self.assets_dir.mkdir(parents = True, exist_ok = True)
         logging.info(f"{debug_prefix} Assets dir is [{self.assets_dir}]")
+
+        # Data dir
+        self.data_dir = self.MMV_PACKAGE_ROOT / "data"
+        self.data_dir.mkdir(parents = True, exist_ok = True)
+        logging.info(f"{debug_prefix} Data dir is [{self.data_dir}]")
 
         # Shaders dir
         self.shaders_dir = self.MMV_PACKAGE_ROOT / "shaders"
@@ -635,7 +619,7 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
     def __cant_micro_manage_external_for_you(self, binary, help_fix = None):
         debug_prefix = "[MMVPackageInterface.__cant_micro_manage_external_for_you]"
 
-        logging.warn(f"{debug_prefix} You are using Linux or macOS, please make sure you have [{binary}] package binary installed on your distro or on homebrew, we'll just check for it now, can't continue if you don't have it..")
+        logging.warning(f"{debug_prefix} You are using Linux or macOS, please make sure you have [{binary}] package binary installed on your distro or on homebrew, we'll just check for it now, can't continue if you don't have it..")
         
         # Can't continue
         if not self.find_binary(binary):

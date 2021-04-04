@@ -84,7 +84,6 @@ master_shader = shadermaker.clone()
 layers = [
     background,
     logo_visualizer,
-    vignetting,
 ]
 
 # Rain effect
@@ -92,13 +91,14 @@ if BACKGROUND == "image":
     rain = macros.load(path = interface.shaders_dir / "assets" / "fx" / "rain.glsl")
     layers.append(rain)
 
+layers.append(vignetting)
+
 # # Alpha composite
 master_shader = macros.alpha_composite(layers = layers)
 
 # Gamma correction and finish
 master_shader.add_transformation(transformation = master_shader.transformations.gamma_correction())
 master_shader_path = master_shader.finish()
-
 
 
 
