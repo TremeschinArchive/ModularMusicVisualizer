@@ -34,7 +34,7 @@ vec4 rain_layer(vec2 uv, float amount) {
 void main() {
     //#mmv {"type": "include", "value": "coordinates_normalization", "mode": "multiple"}
     vec4 col = vec4(0.0);
-    int nlayers = 5;
+    int nlayers = 8;
 
     for (float i = 0; i < 1; i += 1.0 / nlayers) {
 

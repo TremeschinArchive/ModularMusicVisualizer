@@ -137,7 +137,7 @@ class MMVShaderMGLPreprocessor:
 
             # Didn't find any actions
             if action is None:
-                logging.warn(f"{debug_prefix} Mapping does nothing, no \"type\" specified")
+                logging.warning(f"{debug_prefix} Mapping does nothing, no \"type\" specified")
 
             # Assign name to this shader
             elif action == "name":

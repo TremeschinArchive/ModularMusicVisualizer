@@ -270,7 +270,7 @@ class MMVShadersCLI:
     # Display shaders real time
     def realtime(self,
         window_class: str = typer.Option("glfw", help = "ModernGL Window backend to use, see [https://moderngl-window.readthedocs.io/en/latest/guide/window_guide.html], values are [sdl2, pyglet, glfw, pyqt5], GLFW works dynshader mode so I advise that. Please install the others if you wanna use them [poetry add / pip install pysdl2, pyqt5 etc]"),
-        cap: int = typer.Option(None, help = "Capture device index to override first loopback we find. Run command [list-captures] to see available indexes, None is to get automatically")
+        cap: int = typer.Option(None, help = "Capture device index to override first loopback we find. Run command [list-captures] to see available indexes, None (empty) is to get automatically")
     ):
         debug_prefix = "[MMVShadersCLI.realtime]"
         self.__mgl_target_render_settings()

@@ -428,6 +428,7 @@ class FakeUniform:
 
 from mmv.mmvshader.mmv_shader_mgl_window_handlers import MMVShaderMGLWindowHandlers
 from mmv.mmvshader.mmv_shader_mgl_preprocessor import MMVShaderMGLPreprocessor
+import mmv.common.cmn_any_logger
 from pathlib import Path
 from array import array
 import numpy as np
@@ -890,8 +891,8 @@ class MMVShaderMGL:
         self.vao.render(mode = moderngl.TRIANGLE_STRIP)
         
         # # TODO: GUI
-        # if not self.headless:
-        #     self.render_ui()
+        if self.master_shader and (not self.window_handlers.headless) and (not self.window_handlers.hide_gui):
+            self.window_handlers.render_ui()
 
     # # User functions
 
