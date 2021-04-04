@@ -874,9 +874,7 @@ class MMVShaderMGL:
                         # Read again
                         ok, frame = video.read()
                     
-                    # Flip the image TODO: flip in GLSL by inverting uv? Also interpret BGR as RGB?
-                    # frame = cv2.flip(frame, 0)
-                    # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    # No need to convert BGR -> RGB since video texture are already created with swizzle
                     texture_obj.write(frame)
 
                     if MMVShaderMGL.EXPERIMENTAL_VIDEO_MIPMAP:
