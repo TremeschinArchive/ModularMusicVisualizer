@@ -116,8 +116,6 @@ class AudioSourceFile:
             len_batch = batch.shape[1]
             progress_bar.update(1)
 
-            self.info[assign_step_counter] = {}
-
             # Insert new data
             for channel_number in [0, 1]:
                 self.current_batch[channel_number] = np.roll(self.current_batch[channel_number], - len_batch, axis = -1)
@@ -129,6 +127,9 @@ class AudioSourceFile:
                     range(self.process_batch_size - len_batch, self.process_batch_size), batch[channel_number],         
                     mode = "wrap"  # Mode (wrap)
                 )
+            
+            # Prevent accessing dictionary without needed data, hold processed info...
+            assigning = {}
 
             # This yields information as it was calculated so we assign the key (index 0) to the value (index 1)
             for info in self.audio_processing.get_info_on_audio_slice(
@@ -136,7 +137,10 @@ class AudioSourceFile:
                 original_sample_rate = self.sample_rate,
                 do_calculate_fft = self.do_calculate_fft,
             ):
-                self.info[assign_step_counter][info[0]] = info[1]
+                assigning[info[0]] = info[1]
+
+            # ... then copy the dict to the main one
+            self.info[assign_step_counter] = assigning.copy()
             assign_step_counter += 1
     
 
