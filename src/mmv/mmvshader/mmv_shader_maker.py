@@ -123,11 +123,12 @@ class MMVShaderMaker:
     def set_name(self, name): self.name = name
 
     # Build the shader and save to the working directory, returns the final path
-    def finish(self):
+    # Append suffix is useful for layer shaders, set to False for includes
+    def finish(self, append_prefix = True):
         debug_prefix = "[MMVShaderMaker.finish]"
         if self.name is None:
             self.name = str(uuid.uuid4())
-        else:
+        elif append_prefix:
             self.name = f"[{len(os.listdir(self.working_directory))}]_{self.name}"
         save = self.working_directory / f"{self.name}.glsl"
         logging.info(f"{debug_prefix} Finishing shader [{self.name}] saving to [{save}]")
