@@ -30,18 +30,16 @@ void main() {
     // // Angles
 
     // Rotate the bars a bit
-    float angle_offset = (PI / 4) * sin(mmv_progressive_rms[2] / 16.0)*0.16;
+    float angle_offset = sin(mmv_progressive_rms[2] / 16.0)*0.16;
 
     // bars_uv is the offsetted coordinates which determines the center of the bars
     // gluv_all (0, 0) is center of screen so we offset that by the previous vector
-    vec2 bars_uv = gluv_all - offset;
+    vec2 bars_uv = (gluv_all - offset);
 
-    // Rotate the offsetted coordinates by -pi/2 so the bottom we start on low frequencies
-    // Will make more sense in a few. Also add angle offset
-    vec2 rotated_bars_uv = bars_uv * get_rotation_mat2(-(PI / 2.0) + angle_offset);
+    vec2 rotated_bars_uv = bars_uv * get_rotation_mat2(-PI/2);
 
     // Current angle we are to get the FFT values from
-    float angle = atan(rotated_bars_uv.y, rotated_bars_uv.x) * sign(rotated_bars_uv.y);
+    float angle = mmv_atan2(rotated_bars_uv.y, rotated_bars_uv.x);
 
     // // Getting FFT
 
@@ -56,7 +54,15 @@ void main() {
     // lowest frequencies.
 
     // Proportion that given 0 is 0, 2pi is 1, angle is what?
-    float proportion = mmv_proportion(2 * PI, 1, angle);
+
+    // We subtract from 2 because first channel is left and angle gets positive with
+    // counter-clockwise rotation
+    float proportion = 1.0 - mmv_proportion(2 * PI, 1, angle);
+    
+    // Mirror the angle after half since we have [[Low, High], [Low, High]] freqs of L/R channel
+    if (proportion > 0.5) {
+        proportion = 1.0 - (proportion - 0.5);
+    }
 
     if (smooth_bars) {
         // Get the FFT val from the mmv_fft texture with a float vec2 array itself.
@@ -102,8 +108,10 @@ void main() {
         }
     }
 
+    vec4 logo_pixel = vec4(0.0);
+
     // Get the logo, do some calculations
-    vec4 logo_pixel = mmv_blit_image(
+    logo_pixel = mmv_blit_image(
         col, logo,
         logo_resolution,
         bars_uv,
@@ -115,6 +123,9 @@ void main() {
         false, // repeat
         true, 2.0 // Undo gamma, Gamma
     );
+
+    // Smooth edges on logo
+    logo_pixel.a = smoothstep(size, size*0.95, length(bars_uv));
 
     // Alpha composite logo + bars
     col = mmv_alpha_composite(logo_pixel, col);

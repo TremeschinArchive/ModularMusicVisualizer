@@ -205,16 +205,6 @@ class AudioSourceRealtime:
 
     def __capture_thread_func(self):
 
-        # Hard debug
-        self.plot_audio = False
-        if self.plot_audio:
-            import matplotlib.pyplot as plt
-            plt.ion()
-            fig = plt.figure()
-            ax = fig.add_subplot(111)
-            x = np.arange(self.batch_size)
-            line1, = ax.plot(x, np.linspace(-0.2, 0.2, self.batch_size), 'b-')
-
         # Open a recorder microphone otherwise we open and close the stream on each loop
         with self.recorder.recorder(samplerate = self.sample_rate, channels = 2) as source:
             while not self.__capture_threadshould_stop:
@@ -247,12 +237,7 @@ class AudioSourceRealtime:
                         new_audio_data[channel_number],                                # Input data
                         mode = "wrap"                                                  # Mode (wrap)
                     )
-                        
-                # Hard debug
-                if self.plot_audio:
-                    line1.set_ydata(self.current_batch[0])
-                    fig.canvas.draw()
-
+                
             self.__capture_threadshould_stop = False
 
     # This is the thread we capture the audio and process it, it's a bit more complicated than a 
@@ -475,10 +460,6 @@ class AudioProcessing:
                     # and at every index it jumps the distance between any index N and N+1
                     fft_freqs = binned_fft[0]
                     jumps = abs(fft_freqs[1])
-
-                    # Reverse the second channel frequencies for continuity
-                    if channel_index:
-                        expected_frequencies = reversed(expected_frequencies)
 
                     # Get the nearest freq and add to processed         
                     for freq in expected_frequencies:
