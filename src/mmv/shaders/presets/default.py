@@ -91,7 +91,7 @@ background.add_pipeline_texture_mapping(name = "mmv_fft", width = replaces["MMV_
 # # Logo, visualizer
 
 logo_visualizer = macros.load(path = interface.shaders_dir / "assets" / "music_bars" / "circle_sectors.glsl")
-logo_visualizer.add_pipeline_texture_mapping(name = "mmv_fft", width = replaces["MMV_FFTSIZE"], height = 1, depth = 1)
+logo_visualizer.add_pipeline_texture_mapping(name = "mmv_radial_fft", width = replaces["MMV_FFTSIZE"], height = 1, depth = 1)
 logo_visualizer.add_image_mapping(name = "logo", path = interface.MMV_PACKAGE_ROOT/".."/".."/"repo"/"mmv_logo_alt_white.png")
 
 

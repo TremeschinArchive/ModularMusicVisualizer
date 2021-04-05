@@ -36,7 +36,7 @@ void main() {
     // gluv_all (0, 0) is center of screen so we offset that by the previous vector
     vec2 bars_uv = (gluv_all - offset);
 
-    vec2 rotated_bars_uv = bars_uv * get_rotation_mat2(-PI/2);
+    vec2 rotated_bars_uv = bars_uv * get_rotation_mat2(angle_offset - PI/2);
 
     // Current angle we are to get the FFT values from
     float angle = mmv_atan2(rotated_bars_uv.y, rotated_bars_uv.x);
@@ -48,7 +48,7 @@ void main() {
     float fft_val = 0.0;
 
     // Branch code if we want a smooth bars or rectangle-looking ones
-    // mmv_fft is a texture that starts on left channel low frequencies at x=0,
+    // mmv_radial_fft is a texture that starts on left channel low frequencies at x=0,
     // in x=0.5 we hit the left channel highest frequency and switch to the right channel ones
     // but this one is reversed, we start 0.5 high freq right channel and 1.0 is right channel 
     // lowest frequencies.
@@ -59,19 +59,20 @@ void main() {
     // counter-clockwise rotation
     float proportion = 1.0 - mmv_proportion(2 * PI, 1, angle);
     
+    // FOR LINEAR FFT TODO: MAKE OWN FUNCTION
     // Mirror the angle after half since we have [[Low, High], [Low, High]] freqs of L/R channel
-    if (proportion > 0.5) {
-        proportion = 1.0 - (proportion - 0.5);
-    }
+    // if (proportion > 0.5) {
+    //     proportion = 1.0 - (proportion - 0.5);
+    // }
 
     if (smooth_bars) {
-        // Get the FFT val from the mmv_fft texture with a float vec2 array itself.
+        // Get the FFT val from the mmv_radial_fft texture with a float vec2 array itself.
         // GL will interpolate the texture for us into values in between, probably linear nearest
-        fft_val = texture(mmv_fft, vec2(proportion, 0), 0).r;
+        fft_val = texture(mmv_radial_fft, vec2(proportion, 0), 0).r;
     } else {
         // texelFetch accepts ivec2 (integer vec2)
         // which is the pixel itself, not filtered by GL
-        fft_val = texelFetch(mmv_fft,
+        fft_val = texelFetch(mmv_radial_fft,
             ivec2(int({MMV_FFTSIZE} * proportion), 0),
         0).r;
     }
