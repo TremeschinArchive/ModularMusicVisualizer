@@ -516,10 +516,18 @@ class MMVShadersCLI:
                 # Interpolate FFT, write to FFT texture
                 if "mmv_fft" in pipeline_info.keys():
                     self.interpolator.next(name = f"mmv_fft", feed = pipeline_info["mmv_fft"], mode = "replace")
-                    self.mgl.write_texture_pipeline(
-                        texture_name = "mmv_fft",
-                        data = self.interpolator.interpolaters["mmv_fft"]["current"].astype(np.float32) * multiplier
-                    )
+
+                    data = self.interpolator.interpolaters["mmv_fft"]["current"].astype(np.float32) * multiplier
+
+                    # Write linear FFT
+                    self.mgl.write_texture_pipeline(texture_name = "mmv_linear_fft", data = data)
+
+                    # Reverse second half of array
+                    a, b = int(self.MMV_FFTSIZE / 2), self.MMV_FFTSIZE
+                    data[a:b] = data[a:b][::-1]
+
+                    # Write "radial" FFT
+                    self.mgl.write_texture_pipeline(texture_name = "mmv_radial_fft", data = data)
 
                 # Write spectrogram values
                 for v in ["mmv_raw_audio_left", "mmv_raw_audio_right"]:
