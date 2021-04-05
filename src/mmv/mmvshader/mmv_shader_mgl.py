@@ -443,9 +443,10 @@ import sys
 import gc
 import os
 
-
 class MMVShaderMGL:
     EXPERIMENTAL_VIDEO_MIPMAP = True
+    DEVELOPER_RAM_PROFILE = False
+    DEVELOPER = False
 
     # # Window management, contexts
 
@@ -911,6 +912,11 @@ class MMVShaderMGL:
         if not self.freezed_pipeline:
             self.pipeline["mmv_frame"] += 1
             self.pipeline["mmv_time"] = self.pipeline["mmv_frame"] / self.fps
+        
+        if MMVShaderMGL.DEVELOPER_RAM_PROFILE:
+            from mem_top import mem_top
+            if self.pipeline["mmv_frame"] % 300 == 0:
+                logging.debug(mem_top())
 
         # The resolution needs to be scaled with SSAA
         self.pipeline["mmv_resolution"] = (self.width * self.ssaa, self.height * self.ssaa)

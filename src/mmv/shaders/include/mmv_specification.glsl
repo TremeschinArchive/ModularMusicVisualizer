@@ -39,8 +39,12 @@ vec4 mmv_saturate(vec4 col, float amount) {
     return clamp(col * amount, 0.0, 1.0);
 }
 
-float atan2(in float y, in float x) {
-    return mix(3.14159265/2.0 - atan(x,y), atan(y,x), (abs(x) > abs(y)));
+float mmv_atan2(in float y, in float x) {
+    if (y < 0) {
+        return (2 * 3.14159265) - atan(-y, x);
+    } else {
+        return atan(y, x);
+    }
 }
 
 // Blit one image on the canvas, see function arguments
