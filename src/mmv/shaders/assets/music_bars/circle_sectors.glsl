@@ -39,7 +39,7 @@ void main() {
     // // Getting FFT
 
     // Circle sectors
-    bool smooth_bars = false;
+    bool smooth_bars = true;
     float fft_val = 0.0;
 
     // Branch code if we want a smooth bars or rectangle-looking ones

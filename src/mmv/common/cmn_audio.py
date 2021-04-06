@@ -42,7 +42,7 @@ import os
 
 
 class WaveFormMaker:
-    WAVEFORM_LENGTH_SECONDS = 10
+    WAVEFORM_LENGTH_SECONDS = 8
     WAVEFORM_PER_SECOND = 60
  
     def __init__(self, sample_rate):
@@ -52,7 +52,7 @@ class WaveFormMaker:
         self.batches_per_bar = int(self.sample_rate / WaveFormMaker.WAVEFORM_PER_SECOND)
     
         self.ready = []
-        threading.Thread(target = self.__process).start()
+        threading.Thread(target = self.__process, daemon = True).start()
 
     def feed(self, data):
         self.sliceable = np.hstack([self.sliceable, data])
