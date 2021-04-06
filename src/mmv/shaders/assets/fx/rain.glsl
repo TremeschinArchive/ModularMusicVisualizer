@@ -1,8 +1,3 @@
-// ===============================================================================
-//#shadermaker includes
-//#shadermaker mappings
-//#shadermaker functions
-// ===============================================================================
 
 //#mmv {"type": "include", "value": "mmv_specification", "mode": "once"}
 

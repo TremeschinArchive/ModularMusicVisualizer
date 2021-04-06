@@ -792,9 +792,13 @@ class MMVShaderMGL:
             # If it even does exist then we write to its respective texture
             # AttributeError will happen when / if we get a mgl.InvalidObject (dropped textures)
             if target_index is not None:
-                try: self.textures[target_index]["texture"].write(data, viewport = viewport)
-                except AttributeError: pass
-                except KeyError: pass
+                try:
+                    tex = self.textures[target_index]["texture"]
+                    # d = data.copy()
+                    # d.resize(tex.size)
+                    tex.write(data, viewport = viewport)
+                except KeyError: 
+                    pass
 
             # Write recursively with same arguments
             for index in self.textures.keys():

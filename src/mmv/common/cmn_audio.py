@@ -41,6 +41,44 @@ import time
 import os
 
 
+class WaveFormMaker:
+    WAVEFORM_LENGTH_SECONDS = 10
+    WAVEFORM_PER_SECOND = 60
+ 
+    def __init__(self, sample_rate):
+        self.sample_rate = sample_rate
+        self.sliceable = np.array([[0.0], [0.0]])
+
+        self.batches_per_bar = int(self.sample_rate / WaveFormMaker.WAVEFORM_PER_SECOND)
+    
+        self.ready = []
+        threading.Thread(target = self.__process).start()
+
+    def feed(self, data):
+        self.sliceable = np.hstack([self.sliceable, data])
+    
+    def next(self):
+        for _ in range(len(self.ready)):
+            yield self.ready.pop(0)
+
+    def __process(self):
+        while True:
+            while self.sliceable.shape[1] > self.batches_per_bar:
+                raw_cut = np.array([
+                    self.sliceable[0][0:self.batches_per_bar],
+                    self.sliceable[1][0:self.batches_per_bar],
+                ], dtype = np.float32)
+
+                # bar = np.sqrt(np.sum(np.square(raw_cut), axis = 1))
+                bar = np.mean(raw_cut, axis = 1)
+                self.ready.append(bar)
+
+                self.sliceable = np.array([
+                    self.sliceable[0][self.batches_per_bar:],
+                    self.sliceable[1][self.batches_per_bar:],
+                ])
+            time.sleep(0.016)
+
 # Read audio from a path
 class AudioSourceFile:
     def __init__(self, ffmpeg_wrapper):
@@ -50,6 +88,8 @@ class AudioSourceFile:
         self.info = {}
 
     def configure(self, target_fps = 60, process_batch_size = 8096, sample_rate = 48000, do_calculate_fft = True):
+        self.waveforms = np.zeros((int(WaveFormMaker.WAVEFORM_LENGTH_SECONDS * WaveFormMaker.WAVEFORM_PER_SECOND), 2), dtype = np.float32)
+        self.waveform_maker = WaveFormMaker(sample_rate = sample_rate)
         self.process_batch_size = process_batch_size
         self.current_batch = np.zeros((2, process_batch_size), dtype = np.float32)
         self.read_batch_size = int(sample_rate / target_fps)
@@ -120,13 +160,19 @@ class AudioSourceFile:
             for channel_number in [0, 1]:
                 self.current_batch[channel_number] = np.roll(self.current_batch[channel_number], - len_batch, axis = -1)
                 np.put(
-                    # Target array
+                    # Target array, where on target array to put the data and input data
                     self.current_batch[channel_number], 
-
-                    # Where on target array to put the data and input data
                     range(self.process_batch_size - len_batch, self.process_batch_size), batch[channel_number],         
                     mode = "wrap"  # Mode (wrap)
                 )
+
+            # # History of the audio
+
+            self.waveform_maker.feed(batch)
+
+            for item in self.waveform_maker.next():
+                self.waveforms = np.roll(self.waveforms, -1, axis = 0)
+                self.waveforms[0] = item
             
             # Prevent accessing dictionary without needed data, hold processed info...
             assigning = {}
@@ -139,6 +185,8 @@ class AudioSourceFile:
             ):
                 assigning[info[0]] = info[1]
 
+            assigning["waveforms"] = self.waveforms.copy()
+
             # ... then copy the dict to the main one
             self.info[assign_step_counter] = assigning.copy()
             assign_step_counter += 1
@@ -149,6 +197,8 @@ class AudioSourceRealtime:
         self.audio_processing = AudioProcessing()
 
     def configure(self, batch_size = 8096, sample_rate = 48000, recorder_numframes = 256, do_calculate_fft = True):
+        self.waveforms = np.zeros((int(WaveFormMaker.WAVEFORM_LENGTH_SECONDS * WaveFormMaker.WAVEFORM_PER_SECOND), 2), dtype = np.float32)
+        self.waveform_maker = WaveFormMaker(sample_rate = sample_rate)
         self.batch_size = batch_size
         self.current_batch = np.zeros((2, batch_size), dtype = np.float32)
         self.sample_rate = sample_rate
@@ -237,6 +287,14 @@ class AudioSourceRealtime:
                         new_audio_data[channel_number],                                # Input data
                         mode = "wrap"                                                  # Mode (wrap)
                     )
+
+                # # History of the audio
+
+                self.waveform_maker.feed(new_audio_data)
+
+                for item in self.waveform_maker.next():
+                    self.waveforms = np.roll(self.waveforms, -1, axis = 0)
+                    self.waveforms[0] = item
                 
             self.__capture_threadshould_stop = False
 
@@ -268,6 +326,8 @@ class AudioSourceRealtime:
             ):
                 self.info[info[0]] = info[1]
                 if self.__should_stop: break
+            
+            self.info["waveforms"] = self.waveforms.copy()
               
         self.__should_stop = False
 

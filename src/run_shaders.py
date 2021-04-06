@@ -219,6 +219,7 @@ class MMVShadersCLI:
             replaces = {
                 "MMV_FFTSIZE": self.MMV_FFTSIZE,
                 "AUDIO_BATCH_SIZE": self._audio_batch_size,
+                "WAVEFORM_LENGTH": self.audio_source.waveforms.shape[0],
                 "WIDTH": self._width,
                 "HEIGHT": self._height,
             }
@@ -529,22 +530,13 @@ class MMVShadersCLI:
                     # Write "radial" FFT
                     self.mgl.write_texture_pipeline(texture_name = "mmv_radial_fft", data = data)
 
-                # Write spectrogram values
-                for v in ["mmv_raw_audio_left", "mmv_raw_audio_right"]:
-                    if v in pipeline_info.keys():
-                        audio_batch = pipeline_info[v].astype(np.float32)
-                        audio_batch_size = audio_batch.shape[0]
-
-                        side = "right" in v
-
-                        self.mgl.write_texture_pipeline(
-                            texture_name = "raw_audio",
-                            data = audio_batch,
-                            viewport = (
-                                0, side,
-                                audio_batch_size, 1
-                            )
-                        )
+                # Waveform
+                if "waveforms" in pipeline_info.keys():
+                    waveform = pipeline_info["waveforms"]
+                    self.mgl.write_texture_pipeline(
+                        texture_name = "mmv_waveform",
+                        data = waveform.reshape(-1).astype(np.float32),
+                    )
 
                 # Build full pipeline from the interpolator, must be tuple and only current values
                 for feature in audio_features:

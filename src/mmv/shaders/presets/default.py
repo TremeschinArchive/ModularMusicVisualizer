@@ -85,7 +85,6 @@ elif BACKGROUND == "image":
         replaces = replaces,
     )
 
-background.add_pipeline_texture_mapping(name = "mmv_fft", width = replaces["MMV_FFTSIZE"], height = 1, depth = 1)
 
 
 # # Logo, visualizer
@@ -103,12 +102,23 @@ if True:
 vignetting = macros.load(path = interface.shaders_dir / "assets" / "pfx" / "vignetting.glsl")
 
 
+# Waveform
+
+waveform = shadermaker.clone()
+waveform.load_shader_from_path(path = interface.shaders_dir / "assets" / "dev" / "waveform.glsl")
+waveform.add_pipeline_texture_mapping(
+    name = "mmv_waveform", width = replaces["WAVEFORM_LENGTH"], height = 1, depth = 2,
+    repeat_x = False, repeat_y = False, mipmaps = False, anisotropy = 1
+)
+
+
 # # # Master shader, alpha composite
 
 master_shader = shadermaker.clone()
 
 layers = [
     background,
+    waveform,
     logo_visualizer,
 ]
 

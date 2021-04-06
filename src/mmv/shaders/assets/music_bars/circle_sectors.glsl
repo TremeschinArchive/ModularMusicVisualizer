@@ -1,8 +1,3 @@
-// ===============================================================================
-//#shadermaker includes
-//#shadermaker mappings
-//#shadermaker functions
-// ===============================================================================
 
 //#mmv {"type": "include", "value": "mmv_specification", "mode": "once"}
 
@@ -44,7 +39,7 @@ void main() {
     // // Getting FFT
 
     // Circle sectors
-    bool smooth_bars = true;
+    bool smooth_bars = false;
     float fft_val = 0.0;
 
     // Branch code if we want a smooth bars or rectangle-looking ones
