@@ -18,11 +18,11 @@ void main() {
     //     int(where / mmv_waveform_width)
     // );
 
-    vec2 center = gluv_all;
+    vec2 center = gluv_all - vec2(0.0, 0.5);
     vec2 offset = vec2(mod(1/60, mmv_time), 0) * coordinates_rotation;
-    
     ivec2 get_waveform = ivec2(int(mmv_waveform_width * ((gluv_all.x - vec2(-resratio, 0) - offset)/2 / resratio) ), 0.0);
-    vec4 mmv_waveform_l = 0.01 + pow( abs(texelFetch(mmv_waveform, get_waveform, 0)) * 0.7, vec4(0.3));
+    vec4 mmv_waveform_l = 0.002 + pow( abs(texelFetch(mmv_waveform, get_waveform, 0)), vec4(0.3));
+    // vec4 mmv_waveform_l = 0.002 + pow( abs(texture(mmv_waveform, shadertoy_uv)) * 0.4, vec4(0.3));
     
     // vec4 mmv_waveform_l = texture(mmv_waveform, vec2(stuv_all.x, 0));
 
@@ -32,10 +32,19 @@ void main() {
         // col += vec4(1.0);
     // } 
 
+    mmv_waveform_l *= 0.6;
+    float dist = abs(center.y);
 
-    if ( abs(center.y) < mmv_waveform_l.x) {
-        col += vec4(0.0, 0.0, 0.0, 0.5);
-        // col += vec4(0.4078, 0.4078, 1.0, 1.0);
+    if ( dist < mmv_waveform_l.x) {
+        float v = dist * mmv_waveform_l.x * 4;
+        col += vec4(v, 0.0, 0.0, 0.25);
+        // col += vec4(0.0118, 0.0118, 0.0392, 1.0);
+    } 
+
+    if ( dist < mmv_waveform_l.y) {
+        float v = dist * mmv_waveform_l.x * 4;
+        col += vec4(v, 0.0, 0.0, 0.25);
+        // col += vec4(0.0118, 0.0118, 0.0392, 1.0);
     } 
 
     // if ( abs(center.y) < mmv_waveform_l.x) {

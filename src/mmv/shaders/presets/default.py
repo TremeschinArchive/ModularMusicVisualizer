@@ -93,11 +93,18 @@ logo_visualizer = macros.load(path = interface.shaders_dir / "assets" / "music_b
 logo_visualizer.add_pipeline_texture_mapping(name = "mmv_radial_fft", width = replaces["MMV_FFTSIZE"], height = 1, depth = 1)
 logo_visualizer.add_image_mapping(name = "logo", path = interface.MMV_PACKAGE_ROOT/".."/".."/"repo"/"mmv_logo_alt_white.png")
 
-
 # Want some chromatic aberration on logo?
 if True:
     chromatic_aberration = macros.load(path = interface.shaders_dir / "assets" / "pfx" / "chromatic_aberration.glsl")
     logo_visualizer = macros.chain(A = logo_visualizer, B = chromatic_aberration)
+
+
+
+horizontal_bars = macros.load(path = interface.shaders_dir / "assets" / "music_bars" / "horizontal.glsl")
+horizontal_bars.add_pipeline_texture_mapping(name = "mmv_linear_fft", width = replaces["MMV_FFTSIZE"], height = 1, depth = 1)
+
+
+# PFX
 
 vignetting = macros.load(path = interface.shaders_dir / "assets" / "pfx" / "vignetting.glsl")
 
@@ -110,6 +117,8 @@ waveform.add_pipeline_texture_mapping(
     name = "mmv_waveform", width = replaces["WAVEFORM_LENGTH"], height = 1, depth = 2,
     repeat_x = False, repeat_y = False, mipmaps = False, anisotropy = 1
 )
+chromatic_aberration = macros.load(path = interface.shaders_dir / "assets" / "pfx" / "chromatic_aberration.glsl")
+waveform = macros.chain(A = waveform, B = chromatic_aberration)
 
 
 # # # Master shader, alpha composite
@@ -119,6 +128,7 @@ master_shader = shadermaker.clone()
 layers = [
     background,
     waveform,
+    horizontal_bars,
     logo_visualizer,
 ]
 
