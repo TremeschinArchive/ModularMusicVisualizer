@@ -36,6 +36,7 @@ import multiprocessing
 import moderngl_window
 from PIL import Image
 import numpy as np
+import moderngl
 import logging
 import imgui
 import math
@@ -43,13 +44,16 @@ import gc
 
 
 class MMVShaderMGLWindowHandlers:
+    LINUX_GNOME_PIXEL_SAVER_EXTENSION_WORKAROUND = False
+
+    # Multipliers
     INTENSITY_RESPONSIVENESS = 0.2
     ROTATION_RESPONSIVENESS = 0.2
     ZOOM_RESPONSIVENESS = 0.2
     DRAG_RESPONSIVENESS = 0.3
     DRAG_MOMENTUM = 0.6
 
-    DEVELOPER = False
+    DEVELOPER = True
     
     def __init__(self, mmv_shader_mgl):
         self.mmv_shader_mgl = mmv_shader_mgl
@@ -77,7 +81,7 @@ class MMVShaderMGLWindowHandlers:
         self.mouse_exclusivity = False
 
         # Gui
-        self.hide_gui = True
+        self.show_gui = False
 
     # Which "mode" to render, window loader class, msaa, ssaa, vsync, force res?
     def mode(self, window_class, msaa = 1, vsync = True, strict = False, icon = None):
@@ -102,7 +106,10 @@ class MMVShaderMGLWindowHandlers:
         settings.WINDOW["aspect_ratio"] = self.mmv_shader_mgl.width / self.mmv_shader_mgl.height
         settings.WINDOW["vsync"] = self.vsync
         settings.WINDOW["title"] = "MMVShaderMGL Real Time Window"
-        settings.WINDOW["size"] = (self.mmv_shader_mgl.width, self.mmv_shader_mgl.height)
+
+        # Don't set target width, height otherwise this will always crash
+        if (self.headless) or (not MMVShaderMGLWindowHandlers.LINUX_GNOME_PIXEL_SAVER_EXTENSION_WORKAROUND):
+            settings.WINDOW["size"] = (self.mmv_shader_mgl.width, self.mmv_shader_mgl.height)
 
         # Create the window
         self.window = moderngl_window.create_window_from_settings()
@@ -110,7 +117,6 @@ class MMVShaderMGLWindowHandlers:
         # Make sure we render strictly into the resolution we asked
         if strict:
             self.window.fbo.viewport = (0, 0, self.mmv_shader_mgl.width, self.mmv_shader_mgl.height)
-            # self.window.set_default_viewport()
 
         # Set the icon
         if icon is not None:
@@ -138,6 +144,8 @@ class MMVShaderMGLWindowHandlers:
             imgui.create_context()
             self.imgui = ModernglWindowRenderer(self.window)
 
+        # self.window_resize(width = self.window.viewport[2], height = self.window.viewport[3])
+        
     # [NOT HEADLESS] Window was resized, update the width and height so we render with the new config
     def window_resize(self, width, height):
         if hasattr(self, "strict"):
@@ -220,6 +228,15 @@ class MMVShaderMGLWindowHandlers:
         self.imgui.key_event(key, action, modifiers)
         logging.info(f"{debug_prefix} Key [{key}] Action [{action}] Modifier [{modifiers}]")
 
+        # "tab" key pressed, toggle gui
+        if (key == 258) and (action == 1):
+            if MMVShaderMGLWindowHandlers.DEVELOPER:
+                logging.info(f"{debug_prefix} \"tab\" key pressed [Toggle gui]")
+                self.show_gui = not self.show_gui
+                self.window.mouse_exclusivity = False
+        
+        if self.show_gui: return
+
         # Shift and control
         if key == 340: self.shift_pressed = bool(action)
         if key == 341: self.ctrl_pressed = bool(action)
@@ -240,12 +257,6 @@ class MMVShaderMGLWindowHandlers:
         if (key == 70) and (action == 1):
             logging.info(f"{debug_prefix} \"f\" key pressed [Toggle fullscreen]")
             self.window.fullscreen = not self.window.fullscreen
-
-        # "g" key pressed, toggle gui
-        if (key == 71) and (action == 1):
-            if MMVShaderMGLWindowHandlers.DEVELOPER:
-                logging.info(f"{debug_prefix} \"g\" key pressed [Toggle gui]")
-                self.hide_gui = not self.hide_gui
 
         # "h" key pressed, toggle mouse visible
         if (key == 72) and (action == 1):
@@ -320,6 +331,8 @@ class MMVShaderMGLWindowHandlers:
         self.imgui.mouse_position_event(x, y, dx, dy)
         self.mmv_shader_mgl.pipeline["mmv_mouse"] = [x, y]
 
+        if self.show_gui: return
+
         # Drag if on mouse exclusivity
         if self.mouse_exclusivity:
             if self.shift_pressed:
@@ -360,6 +373,8 @@ class MMVShaderMGLWindowHandlers:
     def mouse_drag_event(self, x, y, dx, dy):
         self.imgui.mouse_drag_event(x, y, dx, dy)
 
+        if self.show_gui: return
+        
         if 1 in self.mouse_buttons_pressed:
             if self.shift_pressed:
                 self.target_zoom += (dy / 1000) * self.target_zoom
@@ -378,6 +393,8 @@ class MMVShaderMGLWindowHandlers:
     # Zoom in or out (usually)
     def mouse_scroll_event(self, x_offset, y_offset):
         debug_prefix = "[MMVShaderMGLWindowHandlers.mouse_scroll_event]"
+
+        if self.show_gui: return
 
         if self.shift_pressed:
             self.target_intensity += y_offset / 10
@@ -399,6 +416,7 @@ class MMVShaderMGLWindowHandlers:
         debug_prefix = "[MMVShaderMGLWindowHandlers.mouse_press_event]"
         logging.info(f"{debug_prefix} Mouse press (x, y): [{x}, {y}] Button [{button}]")
         self.imgui.mouse_press_event(x, y, button)
+        if self.show_gui: return
         if not button in self.mouse_buttons_pressed: self.mouse_buttons_pressed.append(button)
         if not self.mouse_exclusivity: self.window.mouse_exclusivity = True
 
@@ -406,6 +424,7 @@ class MMVShaderMGLWindowHandlers:
         debug_prefix = "[MMVShaderMGLWindowHandlers.mouse_release_event]"
         logging.info(f"{debug_prefix} Mouse release (x, y): [{x}, {y}] Button [{button}]")
         self.imgui.mouse_release_event(x, y, button)
+        if self.show_gui: return
         if button in self.mouse_buttons_pressed: self.mouse_buttons_pressed.remove(button)
         if not self.mouse_exclusivity: self.window.mouse_exclusivity = False
 

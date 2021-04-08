@@ -35,6 +35,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 import mmv.common.cmn_any_logger
+from mmv.mmv_enums import *
 from pathlib import Path
 from tqdm import tqdm
 import numpy as np
@@ -278,14 +279,13 @@ class MMVShadersCLI:
         self.mode = "view"
 
         # # Audio source Real Time
-        self.audio_source = self.mmv_package_interface.get_audio_source_realtime()
+        self.audio_source = self.mmv_package_interface.get_audio_source(mode = EnumsAudioSource.RealTime)
 
         # Configure audio source
         self.audio_source.configure(
             batch_size = self._audio_batch_size,
             sample_rate = self._sample_rate,
             recorder_numframes =  None,
-            do_calculate_fft = True
         )
 
         # Search for loopback or get index of recorder device
@@ -314,7 +314,7 @@ class MMVShadersCLI:
         self.__load_master_shader()
 
         # Start reading data
-        self.audio_source.start_async()
+        self.audio_source.start()
         self._core_loop()
 
     # Render config to video file
@@ -334,14 +334,13 @@ class MMVShadersCLI:
         self.mode = "render"
 
         # # Audio source File
-        self.audio_source = self.mmv_package_interface.get_audio_source_file()
+        self.audio_source = self.mmv_package_interface.get_audio_source(mode = EnumsAudioSource.AudioFile)
 
         # Configure audio source
         self.audio_source.configure(
-            target_fps = self._fps,
-            process_batch_size = self._audio_batch_size,
+            batch_size = self._audio_batch_size,
             sample_rate = self._sample_rate,
-            do_calculate_fft = True,
+            target_fps = self._fps,
         )
 
         # Read source audio file
@@ -392,14 +391,10 @@ class MMVShadersCLI:
         # Main routines
         self._core_loop()
 
-    def __error_assertion(self):
-        assert os.path.exists(self._input_audio)
-
     # Common main loop for both view and render modes
     def _core_loop(self):
         debug_prefix = "[MMVShadersCLI.render]"
 
-        self.__error_assertion()
         self.mgl.set_reset_function(obj = self.__should_reload_preset)
 
         # Look for file changes
@@ -467,6 +462,8 @@ class MMVShadersCLI:
                 f"Rendering [SSAA={self._ssaa}]({int(self._width * self._ssaa)}x{int(self._height * self._ssaa)})->({self._width}x{self._height})[{self.audio_source.duration:.2f}s] MMV video"
             )
 
+        audio_info = self.audio_source.get_info()
+
         # Main loop
         for step in itertools.count(start = 0):
 
@@ -481,11 +478,8 @@ class MMVShadersCLI:
             # Calculate the fps
             fps = round(self.fps_last_n / (max(self.frame_times) - min(self.frame_times)), 1)
             
-            # Next iteration of some audio reader
-            self.audio_source.next(step)
-
             # Get info to pipe, and the pipelined built info
-            pipeline_info = self.audio_source.get_info()
+            pipeline_info = next(audio_info)
             pipelined = {}
 
             multiplier = self._multiplier * self.mgl.window_handlers.intensity

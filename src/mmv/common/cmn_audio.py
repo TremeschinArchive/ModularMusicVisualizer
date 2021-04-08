@@ -30,11 +30,14 @@ from mmv.common.cmn_functions import Functions
 from mmv.common.cmn_utils import DataUtils
 from mmv.common.cmn_fourier import Fourier
 import mmv.common.cmn_any_logger
+from mmv.mmv_enums import *
 from tqdm import tqdm
 import numpy as np
 import samplerate
 import subprocess
+import soundcard
 import threading
+import itertools
 import logging
 import math
 import time
@@ -49,21 +52,28 @@ class WaveFormMaker:
         self.sample_rate = sample_rate
         self.sliceable = np.array([[0.0], [0.0]])
 
-        self.batches_per_bar = int(self.sample_rate / WaveFormMaker.WAVEFORM_PER_SECOND)
+        self.batches_per_bar = int((self.sample_rate) / (WaveFormMaker.WAVEFORM_LENGTH_SECONDS))
     
         self.ready = []
-        threading.Thread(target = self.__process, daemon = True).start()
+        self.process_thread = threading.Thread(target = self.__process, daemon = True)
+        self.process_thread.start()
 
     def feed(self, data):
         self.sliceable = np.hstack([self.sliceable, data])
     
-    def next(self):
-        for _ in range(len(self.ready)):
-            yield self.ready.pop(0)
+    def contents(self):
+        try:
+            for _ in range(math.floor(len(self.ready))):
+                yield self.ready.pop(0)
+        except IndexError:
+            pass
 
     def __process(self):
         while True:
+            some = False
             while self.sliceable.shape[1] > self.batches_per_bar:
+                some = True
+
                 raw_cut = np.array([
                     self.sliceable[0][0:self.batches_per_bar],
                     self.sliceable[1][0:self.batches_per_bar],
@@ -77,194 +87,172 @@ class WaveFormMaker:
                     self.sliceable[0][self.batches_per_bar:],
                     self.sliceable[1][self.batches_per_bar:],
                 ])
-            time.sleep(0.016)
+            if not some: time.sleep(0.016)
 
-# Read audio from a path
-class AudioSourceFile:
-    def __init__(self, ffmpeg_wrapper):
+
+class AudioSource:
+    def __init__(self, ffmpeg_wrapper, mode = EnumsAudioSource.RealTime):
+
+        # Get values
         self.ffmpeg_wrapper = ffmpeg_wrapper
-        self.return_next_info_index = 0
+        self.mode = mode
+
+        # Create AudioProcessing class
         self.audio_processing = AudioProcessing()
+
+        # Info dictionary
         self.info = {}
 
-    def configure(self, target_fps = 60, process_batch_size = 8096, sample_rate = 48000, do_calculate_fft = True):
+    def configure(self, batch_size = 8096, sample_rate = 48000, target_fps = 60, recorder_numframes = None):
+        # Common
+        self.sample_rate = sample_rate
+        self.batch_size = batch_size
+
         self.waveforms = np.zeros((int(WaveFormMaker.WAVEFORM_LENGTH_SECONDS * WaveFormMaker.WAVEFORM_PER_SECOND), 2), dtype = np.float32)
         self.waveform_maker = WaveFormMaker(sample_rate = sample_rate)
-        self.process_batch_size = process_batch_size
-        self.current_batch = np.zeros((2, process_batch_size), dtype = np.float32)
+        self.current_batch = np.zeros((2, self.batch_size), dtype = np.float32)
+
+        # [AudioFile] How much to read on every step
         self.read_batch_size = int(sample_rate / target_fps)
-        self.sample_rate = sample_rate
-        self.do_calculate_fft = do_calculate_fft
 
-    # Read a .wav file from disk and gets the values on a list
-    def init(self, audio_path: str) -> None:
-        debug_prefix = "[AudioSourceFile.init]"
-        self.audio_path = audio_path
+        # [RealTime]
+        self.recorder_numframes = recorder_numframes
 
-        logging.info(f"{debug_prefix} Reading total steps of audio in path [{audio_path}], can take a bit..")
+    def init(self,
+        # For [EnumsAudioSource.AudioFile]
+        audio_path = None,
+        
+        # For [EnumsAudioSource.RealTime]
+        recorder_device = None,
+        search_for_loopback = False    
+        
+    ) -> None:
+        debug_prefix = "[AudioSource.init]"
 
-        # Calculate total steps
-        self.total_steps = 0
-        for _ in self.read_progressive():
-            self.total_steps += 1
-        logging.info(f"{debug_prefix} Total steps: [{self.total_steps}]")
+        # File source, offline render mode
+        if self.mode == EnumsAudioSource.AudioFile:
+            self.audio_path = audio_path
+            logging.info(f"{debug_prefix} Reading total steps of audio in path [{audio_path}], can take a bit..")
 
-        self.duration = (self.total_steps * self.read_batch_size) / self.sample_rate
-        logging.info(f"{debug_prefix} Duration: [{self.duration}]")
+            # Calculate total steps
+            self.total_steps = sum([1 for _ in self.read_progressive()])
+            logging.info(f"{debug_prefix} Total steps: [{self.total_steps}]")
 
-    # Progressively read the audio file in chunks so we don't assassinate the computer's memory in large files
+            # Total duration of audio
+            self.duration = (self.total_steps * self.read_batch_size) / self.sample_rate
+            logging.info(f"{debug_prefix} Duration: [{self.duration}]")
+
+        # Realtime source
+        elif self.mode == EnumsAudioSource.RealTime:
+            self.__capture_threadshould_stop = False
+
+            # Search for the first loopback device (monitor of the current audio output)
+            # Probably will fail on Linux if not using PulseAudio but oh well
+            if (search_for_loopback) and (recorder_device is None):
+                logging.info(f"{debug_prefix} Attempting to find the first loopback device for recording")
+
+                # Iterate on every "microphone", or recorder-capable devices to be more precise
+                for device in soundcard.all_microphones(include_loopback = True):
+
+                    # If it's marked as loopback then we'll use it
+                    if device.isloopback:
+                        self.recorder = device
+                        logging.info(f"{debug_prefix} Found loopback device: [{device}]")
+                        break            
+
+                # If we didn't match anyone then recorder_device will be None and we'll error out soon
+            else:
+                # Assign the recorder given by the user since 
+            # Assign the recorder given by the user since 
+                # Assign the recorder given by the user since 
+                self.recorder = recorder_device
+
+            # Recorder device should not be none
+            assert (self.recorder is not None), "Auto search is off and didn't give a target recorder device"
+            logging.info(f"{debug_prefix} Use recorder: [{self.recorder}]")
+
+    # [AudioFile] Progressively read the audio file in chunks so we don't assassinate the computer's memory in large files
     def read_progressive(self):
         for batch in self.ffmpeg_wrapper.raw_audio_from_file(
                 input_file = self.audio_path, batch_size = self.read_batch_size,
                 sample_rate = self.sample_rate, channels = 2):
             yield batch
+        # Keep yielding None after we're done
+        while True: yield None
 
     # Start a thread to process the audio
     def start(self):
-        self.slice_process_thread = threading.Thread(target = self.__slice_process, daemon = True)
-        self.slice_process_thread.start()
+        debug_prefix = "[AudioSource.start]"
 
-    def next(self, step):
-        while not step + 1 in self.info.keys():
-            time.sleep(0.01)
-        
-    def get_info(self):
-        self.return_next_info_index += 1
-        return self.info[self.return_next_info_index].copy()
+        # Start progress bar and progressive read generator
+        if self.mode == EnumsAudioSource.AudioFile:
 
-    def __slice_process(self):
-        assign_step_counter = 0
+            # Progress bar
+            self.progress_bar = tqdm(
+                total = self.total_steps,
+                unit = " slices",
+                # unit_scale = True,
+                dynamic_ncols = True,
+                colour = '#00ff00',
+                position = 1,
+                smoothing = 0.3
+            )
 
-        # Progress bar
-        progress_bar = tqdm(
-            total = self.total_steps,
-            unit = " slices",
-            # unit_scale = True,
-            dynamic_ncols = True,
-            colour = '#00ff00',
-            position = 1,
-            smoothing = 0.3
-        )
+            # Set the description
+            self.progress_bar.set_description("Processing Audio File")
 
-        # Arrange message such that both tqdm message align
-        message = f"Processing Audio File"
+            # Generator that gives us audio stuff
+            self.read_progressive_generator = self.read_progressive()
 
-        # Set the description
-        progress_bar.set_description(message)
+            # Dummy class so we can enter with "with"            
+            class DummyWith:
+                def __enter__(self): return self
+                def __exit__(self, *args, **kwargs): return None
+                def recorder(*args, **kwargs): return DummyWith()
+            self.recorder = DummyWith
 
-        for batch in self.read_progressive():
-            len_batch = batch.shape[1]
-            progress_bar.update(1)
+        # Start capture Thread
+        self.capture_thread = threading.Thread(target = self.__capture_thread)
+        self.capture_thread.start()
 
-            # Insert new data
-            for channel_number in [0, 1]:
-                self.current_batch[channel_number] = np.roll(self.current_batch[channel_number], - len_batch, axis = -1)
-                np.put(
-                    # Target array, where on target array to put the data and input data
-                    self.current_batch[channel_number], 
-                    range(self.process_batch_size - len_batch, self.process_batch_size), batch[channel_number],         
-                    mode = "wrap"  # Mode (wrap)
-                )
-
-            # # History of the audio
-
-            self.waveform_maker.feed(batch)
-
-            for item in self.waveform_maker.next():
-                self.waveforms = np.roll(self.waveforms, -1, axis = 0)
-                self.waveforms[0] = item
-            
-            # Prevent accessing dictionary without needed data, hold processed info...
-            assigning = {}
-
-            # This yields information as it was calculated so we assign the key (index 0) to the value (index 1)
-            for info in self.audio_processing.get_info_on_audio_slice(
-                audio_slice = self.current_batch,
-                original_sample_rate = self.sample_rate,
-                do_calculate_fft = self.do_calculate_fft,
-            ):
-                assigning[info[0]] = info[1]
-
-            assigning["waveforms"] = self.waveforms.copy()
-
-            # ... then copy the dict to the main one
-            self.info[assign_step_counter] = assigning.copy()
-            assign_step_counter += 1
-    
-
-class AudioSourceRealtime:
-    def __init__(self):
-        self.audio_processing = AudioProcessing()
-
-    def configure(self, batch_size = 8096, sample_rate = 48000, recorder_numframes = 256, do_calculate_fft = True):
-        self.waveforms = np.zeros((int(WaveFormMaker.WAVEFORM_LENGTH_SECONDS * WaveFormMaker.WAVEFORM_PER_SECOND), 2), dtype = np.float32)
-        self.waveform_maker = WaveFormMaker(sample_rate = sample_rate)
-        self.batch_size = batch_size
-        self.current_batch = np.zeros((2, batch_size), dtype = np.float32)
-        self.sample_rate = sample_rate
-        self.recorder_numframes = recorder_numframes
-        self.do_calculate_fft = do_calculate_fft
-
-    def init(self, recorder_device = None, search_for_loopback = False):
-        import soundcard
-        debug_prefix = "[AudioSourceRealtime.init]"
-
-        # Search for the first loopback device (monitor of the current audio output)
-        # Probably will fail on Linux if not using PulseAudio but oh well
-        if (search_for_loopback) and (recorder_device is None):
-            logging.info(f"{debug_prefix} Attempting to find the first loopback device for recording")
-
-            # Iterate on every "microphone", or recorder-capable devices to be more precise
-            for device in soundcard.all_microphones(include_loopback = True):
-
-                # If it's marked as loopback then we'll use it
-                if device.isloopback:
-                    self.recorder = device
-                    logging.info(f"{debug_prefix} Found loopback device: [{device}]")
-                    break            
-
-            # If we didn't match anyone then recorder_device will be None and we'll error out soon
-        else:
-            # Assign the recorder given by the user since 
-            self.recorder = recorder_device
-
-        # Recorder device should not be none
-        assert (self.recorder is not None), "Auto search is off and didn't give a target recorder device"
-
-    def start(self): pass
-
-    # Start the main routines since we configured everything
-    def start_async(self):
-        debug_prefix = "[AudioSourceRealtime.start_async]"
-    
-        logging.info(f"{debug_prefix} Starting the main capture and processing thread..")
-
-        # Start the thread we capture and process the audio
-        self.capture_process_thread = threading.Thread(target = self.capture_and_process_loop, daemon = True)
-        self.capture_process_thread.start()
+        self.info = {}
 
         # Wait until we have some info so we don't accidentally crash with None type has no attribute blabla
-        self.info = {}
-        while not self.info == {}:
-            time.sleep(0.016)
-    
-    # Stop the main thread
-    def stop(self):
-        self.__should_stop = True
-        self.__capture_threadshould_stop = True
+        if self.mode == EnumsAudioSource.RealTime:
+            while not self.info == {}:
+                time.sleep(0.016)
 
-    def __capture_thread_func(self):
+    # [AudioFile] Slice
+    def __capture_thread(self):
 
-        # Open a recorder microphone otherwise we open and close the stream on each loop
-        with self.recorder.recorder(samplerate = self.sample_rate, channels = 2) as source:
-            while not self.__capture_threadshould_stop:
+        # Start processing Thread
+        self.processing_thread = threading.Thread(target = self.__process_thread)
+        self.processing_thread.start()
 
-                # The array with new stereo data to process, we get whatever there is ready that was
-                # buffered (numframes = None) so we don't have to sync with the video or block the code
-                # (though we're supposed to be multithreaded here so it won't matter but we lose the
-                # ability to have big batch sizes in a "progressive" processing mode).
-                # We also transpose the result so we get a [channels, samples] array shape
-                new_audio_data = source.record(numframes = self.recorder_numframes).T
+        self.newdata = False
+
+        # Open recorder for RealTime or Dummy for AudioFile
+        with self.recorder.recorder(samplerate = self.sample_rate, channels = 2) as recorder:
+            
+            # Repeat infinitely
+            for i in itertools.count():
+                if self.mode == EnumsAudioSource.RealTime:
+                    if self.__capture_threadshould_stop:
+                        break
+
+                    # The array with new stereo data to process, we get whatever there is ready that was
+                    # buffered (numframes = None) so we don't have to sync with the video or block the code
+                    # (though we're supposed to be multithreaded here so it won't matter but we lose the
+                    # ability to have big batch sizes in a "progressive" processing mode).
+                    # We also transpose the result so we get a [channels, samples] array shape
+                    new_audio_data = recorder.record(numframes = self.recorder_numframes).T
+
+                # Get next info on the read progressive
+                elif self.mode == EnumsAudioSource.AudioFile:
+                    new_audio_data = next(self.read_progressive_generator)
+                    self.progress_bar.update(1)
+
+                self.newdata = True
 
                 # The number of new samples we got
                 new_audio_data_len = new_audio_data.shape[1]
@@ -288,56 +276,57 @@ class AudioSourceRealtime:
                         mode = "wrap"                                                  # Mode (wrap)
                     )
 
-                # # History of the audio
+                # # Waveforms height
 
                 self.waveform_maker.feed(new_audio_data)
 
-                for item in self.waveform_maker.next():
-                    self.waveforms = np.roll(self.waveforms, -1, axis = 0)
-                    self.waveforms[0] = item
-                
-            self.__capture_threadshould_stop = False
 
-    # This is the thread we capture the audio and process it, it's a bit more complicated than a 
-    # class that reads from a file because we don't have guaranteed slices we read and also to 
-    # synchronize the processing part and the frames we're rendering so it's better to just do
-    # stuff as fast as possible here and get whatever next numframes we have to read 
-    def capture_and_process_loop(self):
+    def __process_thread(self):
+        while True:
+            # Prevent accessing dictionary without needed data, hold processed info...
+            assigning = {}
 
-        # Thread and code flow control
-        self.__capture_threadshould_stop = False
-        self.__should_stop = False
-
-        # A float32 zeros to store the current audio to process
-        self.current_batch = np.zeros((2, self.batch_size), dtype = np.float32)
-        self.info = {}
-
-        self.__capture_thread = threading.Thread(target = self.__capture_thread_func, daemon = True)
-        self.__capture_thread.start()
-
-        # Until the user don't run the function stop
-        while not self.__should_stop:
-            
             # This yields information as it was calculated so we assign the key (index 0) to the value (index 1)
             for info in self.audio_processing.get_info_on_audio_slice(
                 audio_slice = self.current_batch,
                 original_sample_rate = self.sample_rate,
-                do_calculate_fft = self.do_calculate_fft,
             ):
-                self.info[info[0]] = info[1]
-                if self.__should_stop: break
-            
-            self.info["waveforms"] = self.waveforms.copy()
-              
-        self.__should_stop = False
+                assigning[info[0]] = info[1]
 
-    # Do nothing, we're threaded processing the audio
-    def next(self, step):
-        pass
-    
-    # We just return the current info
+            for item in self.waveform_maker.contents():
+                self.waveforms = np.roll(self.waveforms, -1, axis = 0)
+                self.waveforms[0] = item
+                
+            # Copy of waveforms dict
+            assigning["waveforms"] = self.waveforms.copy()
+
+            if self.mode == EnumsAudioSource.RealTime:
+                self.info = assigning.copy()
+
+            elif self.mode == EnumsAudioSource.AudioFile:
+                # ... then copy the dict to the main one
+                self.info[i] = assigning.copy()
+            
+            time.sleep(0.008)
+
     def get_info(self):
-        return self.info.copy()
+        if self.mode == EnumsAudioSource.AudioFile:
+            for i in itertools.count():
+
+                # Wait for information on the info dictionary
+                while not i + 1 in self.info.keys(): time.sleep(0.01)
+                yield self.info[i].copy()
+            
+        # Info dictionary on RealTime always keeps changing
+        elif self.mode == EnumsAudioSource.RealTime:
+            while True: yield self.info.copy()
+
+    # Stop the main thread
+    def stop(self):
+        self.__capture_threadshould_stop = True
+
+
+
 
 
 class AudioProcessing:
@@ -383,6 +372,7 @@ class AudioProcessing:
                     value_at_zero = self.value_at_zero,
                 )
             )
+            N = 1
 
             # Add to total freqs the amount we expect
             expected_N_frequencies += N

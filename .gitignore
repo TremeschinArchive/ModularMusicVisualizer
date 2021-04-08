@@ -8,6 +8,8 @@
 *.mkv
 *.mp4
 *.exe
+*.ini
+*.svg
 .vscode
 
 # Dolphin, nautilus

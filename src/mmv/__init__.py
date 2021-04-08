@@ -27,6 +27,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 from mmv.common.cmn_download import Download
 from mmv.common.cmn_utils import Utils
+from mmv.mmv_enums import *
 from pathlib import Path
 import subprocess
 import tempfile
@@ -155,17 +156,10 @@ f"""Show extension\n{"="*self.terminal_width}
     
     # # Audio sources
 
-    # Real time, reads from a loopback device
-    def get_audio_source_realtime(self):
-        debug_prefix = "[MMVPackageInterface.get_audio_source_realtime]"
-        from mmv.common.cmn_audio import AudioSourceRealtime
-        return AudioSourceRealtime()
-
-    # File source, used for headless rendering    
-    def get_audio_source_file(self):
-        debug_prefix = "[MMVPackageInterface.get_audio_source_file]"
-        from mmv.common.cmn_audio import AudioSourceFile
-        return AudioSourceFile(ffmpeg_wrapper = self.get_ffmpeg_wrapper())
+    def get_audio_source(self, mode: EnumsAudioSource):
+        debug_prefix = "[MMVPackageInterface.get_audio_source]"
+        from mmv.common.cmn_audio import AudioSource
+        return AudioSource(ffmpeg_wrapper = self.get_ffmpeg_wrapper(), mode = mode)
 
     # Real time, reads from a loopback device
     def get_jumpcutter(self):
@@ -299,9 +293,9 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
         # Get the desired name from a dict matching against os.name
         if platform is None:
             self.os = {
-                "posix": "linux",
-                "nt": "windows",
-                "darwin": "macos"
+                "darwin": EnumsOS.MacOS,
+                "posix": EnumsOS.Linux,
+                "nt": EnumsOS.Windows,
             }.get(os.name)
         else:
             logging.info(f"{debug_prefix} Overriding platform OS to = [{platform}]")
@@ -372,19 +366,19 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
 
         # Externals directory for Linux
         self.externals_dir_linux = self.MMV_PACKAGE_ROOT / "externals" / "linux"
-        if self.os == "linux":
+        if self.os == EnumsOS.Linux:
             logging.info(f"{debug_prefix} Externals directory for Linux OS is [{self.externals_dir_linux}]")
             self.externals_dir_linux.mkdir(parents = True, exist_ok = True)
 
         # Externals directory for Windows
         self.externals_dir_windows = self.MMV_PACKAGE_ROOT / "externals" / "windows"
-        if self.os == "windows":
+        if self.os == EnumsOS.Windows:
             logging.info(f"{debug_prefix} Externals directory for Windows OS is [{self.externals_dir_windows}]")
             self.externals_dir_windows.mkdir(parents = True, exist_ok = True)
 
         # Externals directory for macOS
         self.externals_dir_macos = self.MMV_PACKAGE_ROOT / "externals" / "macos"
-        if self.os == "macos":
+        if self.os == EnumsOS.MacOS:
             logging.info(f"{debug_prefix} Externals directory for Darwin OS (macOS) is [{self.externals_dir_macos}]")
             self.externals_dir_macos.mkdir(parents = True, exist_ok = True)
 
@@ -406,9 +400,9 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
 
         # # This platform externals dir
         externals_dir = {
-            "linux": self.externals_dir_linux,
-            "windows": self.externals_dir_windows,
-            "macos": self.externals_dir_macos,
+            EnumsOS.Windows: self.externals_dir_windows,
+            EnumsOS.Linux: self.externals_dir_linux,
+            EnumsOS.MacOS: self.externals_dir_macos,
         }.get(platform)
 
         # mkdir dne just in case cause we asked for this?
@@ -431,8 +425,7 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
         self.EXTERNALS_SEARCH_PATH = [self.externals_dir_this_platform]
 
         # If we do have subdirectories on this platform externals then append to it
-        if externals_subdirs:
-            self.EXTERNALS_SEARCH_PATH += externals_subdirs
+        if externals_subdirs: self.EXTERNALS_SEARCH_PATH += externals_subdirs
 
     # Search for something in system's PATH, also searches for the externals folder
     # Don't append the extra .exe because Linux, macOS doesn't have these, returns False if no binary was found
@@ -461,13 +454,6 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
         # Overwrite os if user set to a specific one
         if platform is None:
             platform = self.os
-        else:
-            # Error assertion, only allow linux, macos or windows target os
-            valid = ["linux", "macos", "windows"]
-            if not platform in valid:
-                err = f"Target os [{platform}] not valid: should be one of {valid}"
-                logging.error(f"{debug_prefix} {err}")
-                raise RuntimeError(err)
 
         # Force the externals argument to be a list
         target_externals = self.utils.force_list(target_externals)
@@ -497,7 +483,7 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
                 debug_prefix = f"[MMVPackageInterface.check_download_externals({external})]"
 
                 # We're on Linux / macOS so checking ffmpeg external dependency on system's path
-                if platform in ["linux", "macos"]:
+                if platform in [EnumsOS.Linux, EnumsOS.MacOS]:
                     self.__cant_micro_manage_external_for_you(binary = "ffmpeg")
                     continue
                 
@@ -542,7 +528,7 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
                     logging.info(f"{debug_prefix} Download URL: [{download_url}]")
 
                     # Where we'll save the compressed zip of FFmpeg
-                    ffmpeg_zip = self.downloads_dir + f"{sep}{name}"
+                    ffmpeg_zip = self.downloads_dir / f"{sep}{name}"
 
                     # Download FFmpeg build
                     self.download.wget(download_url, ffmpeg_zip, f"FFmpeg v={name}")

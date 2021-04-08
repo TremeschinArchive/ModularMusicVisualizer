@@ -899,8 +899,9 @@ class MMVShaderMGL:
         self.vao.render(mode = moderngl.TRIANGLE_STRIP)
         
         # # TODO: GUI
-        if self.master_shader and (not self.window_handlers.headless) and (not self.window_handlers.hide_gui):
+        if self.master_shader and (not self.window_handlers.headless) and (self.window_handlers.show_gui):
             self.window_handlers.render_ui()
+            self.gl_context.enable_only(moderngl.NOTHING)
 
     # # User functions
 
