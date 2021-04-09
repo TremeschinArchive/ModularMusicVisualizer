@@ -417,7 +417,7 @@ class MMVShaderMGLWindowHandlers:
         if self.shift_pressed:
             self.target_intensity += y_offset / 10
             logging.info(f"{debug_prefix} Mouse scroll with shift Target Intensity: [{self.target_intensity}]")
-        elif self.ctrl_pressed:
+        elif self.ctrl_pressed and (not self.is_dragging):
             change_to = self.mmv_shader_mgl.ssaa + ((y_offset / 20) * self.mmv_shader_mgl.ssaa)
             logging.info(f"{debug_prefix} Mouse scroll with shift change SSAA to: [{change_to}]")
             self.change_ssaa(change_to)
