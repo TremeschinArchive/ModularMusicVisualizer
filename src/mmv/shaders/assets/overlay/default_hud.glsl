@@ -92,13 +92,14 @@ void main() {
 
         float stepp = 1.0 / float(alignment_grid_N/2);
 
+        // 2.3 because floating point..
         for (float i = -1 + stepp; i < 1; i += stepp) {
             for (float k = -1 + stepp; k < 1; k += stepp) {
-                if (abs(opengl_uv.x - i) < 2 / mmv_resolution.x) {
+                if (abs(opengl_uv.x - i) < 2.3 / mmv_resolution.x) {
                     col = mmv_alpha_composite(vec4(alignment_color, across_screen_alpha), col);
                 }
 
-                if (abs(opengl_uv.y - k) < 2 / mmv_resolution.y) {
+                if (abs(opengl_uv.y - k) < 2.3 / mmv_resolution.y) {
                     col = mmv_alpha_composite(vec4(alignment_color, across_screen_alpha), col);
                 }
             }

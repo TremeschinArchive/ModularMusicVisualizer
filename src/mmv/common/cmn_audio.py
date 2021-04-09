@@ -231,7 +231,7 @@ class AudioSource:
             self.recorder = DummyWith
 
         # Start capture Thread
-        self.capture_thread = threading.Thread(target = self.__capture_thread)
+        self.capture_thread = threading.Thread(target = self.__capture_thread, daemon = True)
         self.capture_thread.start()
 
         self.info = {}
@@ -245,7 +245,7 @@ class AudioSource:
     def __capture_thread(self):
 
         # Start processing Thread
-        self.processing_thread = threading.Thread(target = self.__process_thread)
+        self.processing_thread = threading.Thread(target = self.__process_thread, daemon = True)
         self.processing_thread.start()
 
         self.newdata = False
