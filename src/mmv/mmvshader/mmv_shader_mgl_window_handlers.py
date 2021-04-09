@@ -267,7 +267,7 @@ class MMVShaderMGLWindowHandlers:
             logging.info(f"{debug_prefix} \"c\" key pressed [Set target rotation to 0]")
 
             # Target rotation to the nearest 360° multiple (current minus negative remainder if you think hard enough)
-            self.target_rotation = self.rotation - (math.remainder(self.rotation, 360))
+            self.target_rotation = self.target_rotation - (math.remainder(self.target_rotation, 360))
 
         # "e" key pressed, toggle mouse exclusive mode
         if (key == 69) and (action == 1):
@@ -463,10 +463,10 @@ class MMVShaderMGLWindowHandlers:
         imgui.new_frame()
         imgui.begin("Info", True)
         imgui.text_colored("Coordinates related", 0, 0, 1)
-        imgui.text(f"(x, y): [{self.drag[0]:.3f}, {self.drag[1]:.3f}]")
-        imgui.text(f"Intensity: [{self.intensity:.2f}]")
-        imgui.text(f"Zoom: [{self.zoom:.5f}]")
-        imgui.text(f"Rotation: [{self.rotation:.3f}°]")
+        imgui.text(f"(x, y): [{self.drag[0]:.3f}, {self.drag[1]:.3f}] => [{self.target_drag[0]:.3f}, {self.target_drag[1]:.3f}]")
+        imgui.text(f"Intensity: [{self.intensity:.2f}] => [{self.target_intensity:.2f}]")
+        imgui.text(f"Zoom: [{self.zoom:.5f}] => [{self.target_zoom:.5f}]")
+        imgui.text(f"Rotation: [{self.rotation:.3f}°] => [{self.target_rotation:.3f}]")
         imgui.end()
 
         # Render
