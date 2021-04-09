@@ -28,6 +28,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 import mmv.common.cmn_any_logger
 from pyunpack import Archive
+from pathlib import Path
 from tqdm import tqdm
 import requests
 import zipfile
@@ -58,14 +59,17 @@ class Download:
 
     def wget(self, url, save, name="Undefined"):
         debug_prefix = "[Download.wget]"
+        logging.info(f"{debug_prefix} Get file from URL [{url}] saving to [{save}]")
 
         self.download_name = name
         self.start = time.time()
+        
+        # Ensure absolute path string
+        save = str(Path(save).resolve())
 
-        print(debug_prefix, f"Get file from URL [{url}] saving to [{save}]")
-
+        # No need to download if already exists
         if os.path.exists(save):
-            print(debug_prefix, f"Download file already exists, skipping")
+            logging.info(f"{debug_prefix} Download file already exists, skipping")
             return
 
         wget.download(url, save, bar=self.wget_progress_bar)
@@ -74,17 +78,14 @@ class Download:
     # Get html content
     def get_html_content(self, url):
         debug_prefix = "[Download.get_html_content]"
-
-        print(debug_prefix, f"Getting content from [{url}]")
-
+        logging.info(f"{debug_prefix} Getting content from [{url}]")
         r = requests.get(url)
         return r.text
 
     # Extract a compressed file
     def extract_file(self, src, dst):
         debug_prefix = "[Download.extract_file]"
-        print(debug_prefix, f"Extracing [{src}] -> [{dst}]")
-
+        logging.info(f"{debug_prefix} Extracing [{src}] -> [{dst}]")
         Archive(src).extractall(dst)
     
     def extract_zip(self, src, dst):

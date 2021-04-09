@@ -299,7 +299,12 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
             }.get(os.name)
         else:
             logging.info(f"{debug_prefix} Overriding platform OS to = [{platform}]")
-            self.os = platform
+            self.os = {
+                "macos": EnumsOS.MacOS,
+                "linux": EnumsOS.Linux,
+                "windows": EnumsOS.Windows,
+            }.get(platform, None)
+            assert self.os is not None, "Manual platform not in [windows, macos, linux]"
 
         # Log which OS we're running
         logging.info(f"{debug_prefix} Running Modular Music Visualizer on Operating System: [{self.os}]")
@@ -397,6 +402,7 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
     # Get the target externals dir for this platform
     def __get_platform_external_dir(self, platform):
         debug_prefix = "[MMVPackageInterface.__get_platform_external_dir]"
+        logging.info(f"{debug_prefix} Get external dir for platform [{platform}]")
 
         # # This platform externals dir
         externals_dir = {
@@ -528,7 +534,7 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
                     logging.info(f"{debug_prefix} Download URL: [{download_url}]")
 
                     # Where we'll save the compressed zip of FFmpeg
-                    ffmpeg_zip = self.downloads_dir / f"{sep}{name}"
+                    ffmpeg_zip = self.downloads_dir / name
 
                     # Download FFmpeg build
                     self.download.wget(download_url, ffmpeg_zip, f"FFmpeg v={name}")

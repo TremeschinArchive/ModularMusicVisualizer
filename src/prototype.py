@@ -5,6 +5,11 @@ import os
 
 def main():
     interface = mmv.MMVPackageInterface()
+
+    if False:
+        interface = mmv.MMVPackageInterface(platform = "windows")
+        interface.check_download_externals(target_externals = "ffmpeg")
+
     shader_interface = interface.get_shader_interface()
 
     # ShaderMaker Interface
