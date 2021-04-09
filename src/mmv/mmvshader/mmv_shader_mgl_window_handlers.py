@@ -375,8 +375,8 @@ class MMVShaderMGLWindowHandlers:
         dy = (dy * square_current_zoom) * self.mmv_shader_mgl.ssaa
 
         # Cosine and sine
-        c = math.cos(math.radians(self.rotation))
-        s = math.sin(math.radians(self.rotation))
+        c = math.cos(math.radians(-self.rotation))
+        s = math.sin(math.radians(-self.rotation))
 
         # mat2 rotation times the dx, dy vector
         drag_rotated = np.array([

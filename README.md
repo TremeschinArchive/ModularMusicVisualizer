@@ -322,7 +322,8 @@ Example:
 
 There are a couple hotkeys and interactions with the window:
 
-- `Can click + drag` to translate space, scroll to zoom in / out, hold `ctrl` while dragging for alignment overlay
+- `Can click + drag` to translate space, scroll to zoom in / out
+- Hold `ctrl` for alignment overlay
 - `Shift + scroll` increases / decreases the intensity of effects (multiplier)
 - `Ctrl + scroll` (only when not dragging) increases / decreases the SSAA (Super Sampling Anti Aliasing), gets exponentially slower to render but gives nicer edges as explained.
 - `Alt + scroll` increases / decreases rotation
