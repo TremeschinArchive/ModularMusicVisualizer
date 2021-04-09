@@ -261,6 +261,9 @@ class MMVShaderMGLWindowHandlers:
         # "c" key pressed, reset target rotation
         if (key == 67) and (action == 1):
             logging.info(f"{debug_prefix} \"c\" key pressed [Set target rotation to 0]")
+
+            # Make sure angle interval is between 0 and 360 degrees
+            self.rotation = math.remainder(self.rotation, 360)
             self.target_rotation = 0
 
         # "e" key pressed, toggle mouse exclusive mode
@@ -354,7 +357,7 @@ class MMVShaderMGLWindowHandlers:
             if self.shift_pressed:
                 self.target_zoom += (dy / 1000) * self.target_zoom
             elif self.alt_pressed:
-                self.target_rotation += dy / 20
+                self.target_rotation -= dy / 20
             else:
                 self.__apply_rotated_drag(dx = dx, dy = dy, howmuch = 0.5, inverse = True)
 

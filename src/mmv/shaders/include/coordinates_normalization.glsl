@@ -19,8 +19,8 @@ vec2 fulldh_scalar = vec2(mmv_resolution.x / 1920, mmv_resolution.y / 1080);
 
 // Rotation
  
-float c = cos( (mmv_rotation * 3.14159265358979323846264338) / 180 );
-float s = sin( (mmv_rotation * 3.14159265358979323846264338) / 180 );
+float c = cos( (-mmv_rotation * 3.14159265358979323846264338) / 180 );
+float s = sin( (-mmv_rotation * 3.14159265358979323846264338) / 180 );
 mat2 coordinates_rotation = mat2(c, s, -s, c);
 
 // // Normalization
