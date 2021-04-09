@@ -20,7 +20,7 @@ void main() {
     }
 
     // Crosshair
-    if (is_dragging) {
+    if (is_dragging_mode) {
         float line_size = 0.002;
         float border = 0.001;
         float size = 0.02;
@@ -43,6 +43,17 @@ void main() {
 
         if (abs(opengl_uv.y) < line_size / fulldh_scalar.y && abs(opengl_uv.x) < size / resratio) {
             col = mmv_alpha_composite(vec4(1, 1, 1, 1.0), col);
+        }
+
+        // While dragging crosshair changes color
+        if (is_dragging) {
+            if (abs(opengl_uv.x) < (line_size / fulldh_scalar.y) / resratio && abs(opengl_uv.y) < size) {
+                col = mmv_alpha_composite(vec4(1, 1.0, 0.0, 1.0), col);
+            }
+
+            if (abs(opengl_uv.y) < line_size / fulldh_scalar.y && abs(opengl_uv.x) < size / resratio) {
+                col = mmv_alpha_composite(vec4(1.0, 1.0, 0, 1.0), col);
+            }
         }
 
         // Draw border
@@ -75,17 +86,20 @@ void main() {
     if (mmv_key_ctrl) {
 
         // Ultra thin bars across screen
-        float across_screen_alpha = 0.5;
+        float across_screen_alpha = 0.9;
         int alignment_grid_N = 4;
+        vec3 alignment_color = vec3(1.0);
 
-        for (float i = -1; i < 1; i += 1.0 / float(alignment_grid_N/2)) {
-            for (float k = -1; k < 1; k += 1.0 / float(alignment_grid_N/2)) {
-                if (abs(opengl_uv.x - i) < 1.5 / mmv_resolution.x) {
-                    col = mmv_alpha_composite(vec4(0, 0, 0, across_screen_alpha), col);
+        float stepp = 1.0 / float(alignment_grid_N/2);
+
+        for (float i = -1 + stepp; i < 1; i += stepp) {
+            for (float k = -1 + stepp; k < 1; k += stepp) {
+                if (abs(opengl_uv.x - i) < 2 / mmv_resolution.x) {
+                    col = mmv_alpha_composite(vec4(alignment_color, across_screen_alpha), col);
                 }
 
-                if (abs(opengl_uv.y - k) < 1.5 / mmv_resolution.y) {
-                    col = mmv_alpha_composite(vec4(0, 0, 0, across_screen_alpha), col);
+                if (abs(opengl_uv.y - k) < 2 / mmv_resolution.y) {
+                    col = mmv_alpha_composite(vec4(alignment_color, across_screen_alpha), col);
                 }
             }
         }
@@ -93,7 +107,7 @@ void main() {
 
     // Gui focus
     if (is_gui_visible) {
-        col = mmv_alpha_composite(col, vec4(0.0, 0.0, 0.0, 0.486));
+        // col = mmv_alpha_composite(col, vec4(0.0, 0.0, 0.0, 0.486));
     }
 
     fragColor = col;

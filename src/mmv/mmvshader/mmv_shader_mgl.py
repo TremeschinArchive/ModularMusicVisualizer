@@ -343,6 +343,7 @@ uniform int mmv_flip;
 
 // Gui
 uniform bool is_dragging;
+uniform bool is_dragging_mode;
 uniform bool is_gui_visible;
 uniform bool mmv_debug_mode;
 
@@ -931,6 +932,7 @@ class MMVShaderMGL:
             self.pipeline["mmv_frame"] += 1
             self.pipeline["mmv_time"] = self.pipeline["mmv_frame"] / self.fps
         
+        self.pipeline["is_dragging_mode"] = self.window_handlers.is_dragging_mode
         self.pipeline["is_dragging"] = self.window_handlers.is_dragging
         self.pipeline["is_gui_visible"] = self.window_handlers.show_gui
         self.pipeline["mmv_debug_mode"] = self.window_handlers.debug_mode

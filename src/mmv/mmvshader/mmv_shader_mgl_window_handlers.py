@@ -63,6 +63,7 @@ class MMVShaderMGLWindowHandlers:
         self.target_intensity = 1
         self.target_rotation = 0
         self.target_zoom = 1
+        self.is_dragging_mode = False
         self.is_dragging = False
 
         # Multiplier on top of multiplier, configurable real time
@@ -228,6 +229,9 @@ class MMVShaderMGLWindowHandlers:
         if not 1 in self.mouse_buttons_pressed:
             self.target_drag += self.drag_momentum
 
+        # If we're still iterating towards target drag then we're dragging
+        self.is_dragging = not np.allclose(self.target_drag, self.drag)
+
     # # Interactive events
 
     def key_event(self, key, action, modifiers):
@@ -262,9 +266,8 @@ class MMVShaderMGLWindowHandlers:
         if (key == 67) and (action == 1):
             logging.info(f"{debug_prefix} \"c\" key pressed [Set target rotation to 0]")
 
-            # Make sure angle interval is between 0 and 360 degrees
-            self.rotation = math.remainder(self.rotation, 360)
-            self.target_rotation = 0
+            # Target rotation to the nearest 360° multiple (current minus negative remainder if you think hard enough)
+            self.target_rotation = self.rotation - (math.remainder(self.rotation, 360))
 
         # "e" key pressed, toggle mouse exclusive mode
         if (key == 69) and (action == 1):
@@ -395,7 +398,7 @@ class MMVShaderMGLWindowHandlers:
         if self.show_gui and self.lock_controls_due_gui: return
         
         if 1 in self.mouse_buttons_pressed:
-            self.is_dragging = True
+            self.is_dragging_mode = True
 
             if self.shift_pressed:
                 self.target_zoom += (dy / 1000) * self.target_zoom
@@ -420,7 +423,7 @@ class MMVShaderMGLWindowHandlers:
         if self.shift_pressed:
             self.target_intensity += y_offset / 10
             logging.info(f"{debug_prefix} Mouse scroll with shift Target Intensity: [{self.target_intensity}]")
-        elif self.ctrl_pressed and (not self.is_dragging):
+        elif self.ctrl_pressed and (not self.is_dragging_mode):
             change_to = self.mmv_shader_mgl.ssaa + ((y_offset / 20) * self.mmv_shader_mgl.ssaa)
             logging.info(f"{debug_prefix} Mouse scroll with shift change SSAA to: [{change_to}]")
             self.change_ssaa(change_to)
@@ -445,7 +448,7 @@ class MMVShaderMGLWindowHandlers:
         debug_prefix = "[MMVShaderMGLWindowHandlers.mouse_release_event]"
         logging.info(f"{debug_prefix} Mouse release (x, y): [{x}, {y}] Button [{button}]")
         self.imgui.mouse_release_event(x, y, button)
-        self.is_dragging = False
+        self.is_dragging_mode = False
         if self.show_gui and self.lock_controls_due_gui: return
         if button in self.mouse_buttons_pressed: self.mouse_buttons_pressed.remove(button)
         if not self.mouse_exclusivity: self.window.mouse_exclusivity = False
