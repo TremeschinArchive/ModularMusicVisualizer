@@ -63,6 +63,7 @@ class MMVShaderMGLWindowHandlers:
         self.target_intensity = 1
         self.target_rotation = 0
         self.target_zoom = 1
+        self.is_dragging = False
 
         # Multiplier on top of multiplier, configurable real time
         self.drag_momentum = np.array([0.0, 0.0])
@@ -81,7 +82,9 @@ class MMVShaderMGLWindowHandlers:
         self.mouse_exclusivity = False
 
         # Gui
+        self.lock_controls_due_gui = False
         self.show_gui = False
+        self.debug_mode = False
 
     # Which "mode" to render, window loader class, msaa, ssaa, vsync, force res?
     def mode(self, window_class, msaa = 1, vsync = True, strict = False, icon = None):
@@ -101,9 +104,14 @@ class MMVShaderMGLWindowHandlers:
             self.strict = True
             self.vsync = False
 
+            # Fixed aspect ratio
+            settings.WINDOW["aspect_ratio"] = self.mmv_shader_mgl.width / self.mmv_shader_mgl.height
+        else:
+            # Aspect ratio can change (Imgui integration "fix")
+            settings.WINDOW["aspect_ratio"] = None
+
         # Assign the function arguments
         settings.WINDOW["class"] = f"moderngl_window.context.{window_class}.Window"
-        settings.WINDOW["aspect_ratio"] = self.mmv_shader_mgl.width / self.mmv_shader_mgl.height
         settings.WINDOW["vsync"] = self.vsync
         settings.WINDOW["title"] = "MMVShaderMGL Real Time Window"
 
@@ -118,9 +126,8 @@ class MMVShaderMGLWindowHandlers:
         if strict:
             self.window.fbo.viewport = (0, 0, self.mmv_shader_mgl.width, self.mmv_shader_mgl.height)
 
-        # Set the icon
+        # Set the icon, FIXME: TODO: Proper resources directory?
         if icon is not None:
-            # Absolute path
             icon = Path(icon).resolve()
             resources.register_dir(icon.parent)
             self.window.set_icon(icon_path = icon.name)
@@ -230,18 +237,27 @@ class MMVShaderMGLWindowHandlers:
 
         # "tab" key pressed, toggle gui
         if (key == 258) and (action == 1):
-            if MMVShaderMGLWindowHandlers.DEVELOPER:
+            if self.shift_pressed:
+                # Shift + "tab" key pressed, toggle controls (can't drag)
+                logging.info(f"{debug_prefix} \"Shift + tab\" key pressed [Toggle controls]")
+                self.lock_controls_due_gui = not self.lock_controls_due_gui
+            else:
                 logging.info(f"{debug_prefix} \"tab\" key pressed [Toggle gui]")
                 self.show_gui = not self.show_gui
                 self.window.mouse_exclusivity = False
-        
-        if self.show_gui: return
 
         # Shift and control
         if key == 340: self.shift_pressed = bool(action)
         if key == 341: self.ctrl_pressed = bool(action)
         if key == 342: self.alt_pressed = bool(action)
 
+        if self.show_gui and self.lock_controls_due_gui: return
+
+        # "d" key pressed, debug mode
+        if (key == 68) and (action == 1):
+            logging.info(f"{debug_prefix} \"d\" key pressed [Toggle debug mode]")
+            self.debug_mode = not self.debug_mode
+            
         # "c" key pressed, reset target rotation
         if (key == 67) and (action == 1):
             logging.info(f"{debug_prefix} \"c\" key pressed [Set target rotation to 0]")
@@ -331,7 +347,7 @@ class MMVShaderMGLWindowHandlers:
         self.imgui.mouse_position_event(x, y, dx, dy)
         self.mmv_shader_mgl.pipeline["mmv_mouse"] = [x, y]
 
-        if self.show_gui: return
+        if self.show_gui and self.lock_controls_due_gui: return
 
         # Drag if on mouse exclusivity
         if self.mouse_exclusivity:
@@ -373,9 +389,11 @@ class MMVShaderMGLWindowHandlers:
     def mouse_drag_event(self, x, y, dx, dy):
         self.imgui.mouse_drag_event(x, y, dx, dy)
 
-        if self.show_gui: return
+        if self.show_gui and self.lock_controls_due_gui: return
         
         if 1 in self.mouse_buttons_pressed:
+            self.is_dragging = True
+
             if self.shift_pressed:
                 self.target_zoom += (dy / 1000) * self.target_zoom
             elif self.alt_pressed:
@@ -394,7 +412,7 @@ class MMVShaderMGLWindowHandlers:
     def mouse_scroll_event(self, x_offset, y_offset):
         debug_prefix = "[MMVShaderMGLWindowHandlers.mouse_scroll_event]"
 
-        if self.show_gui: return
+        if self.show_gui and self.lock_controls_due_gui: return
 
         if self.shift_pressed:
             self.target_intensity += y_offset / 10
@@ -416,7 +434,7 @@ class MMVShaderMGLWindowHandlers:
         debug_prefix = "[MMVShaderMGLWindowHandlers.mouse_press_event]"
         logging.info(f"{debug_prefix} Mouse press (x, y): [{x}, {y}] Button [{button}]")
         self.imgui.mouse_press_event(x, y, button)
-        if self.show_gui: return
+        if self.show_gui and self.lock_controls_due_gui: return
         if not button in self.mouse_buttons_pressed: self.mouse_buttons_pressed.append(button)
         if not self.mouse_exclusivity: self.window.mouse_exclusivity = True
 
@@ -424,7 +442,8 @@ class MMVShaderMGLWindowHandlers:
         debug_prefix = "[MMVShaderMGLWindowHandlers.mouse_release_event]"
         logging.info(f"{debug_prefix} Mouse release (x, y): [{x}, {y}] Button [{button}]")
         self.imgui.mouse_release_event(x, y, button)
-        if self.show_gui: return
+        self.is_dragging = False
+        if self.show_gui and self.lock_controls_due_gui: return
         if button in self.mouse_buttons_pressed: self.mouse_buttons_pressed.remove(button)
         if not self.mouse_exclusivity: self.window.mouse_exclusivity = False
 
@@ -436,9 +455,12 @@ class MMVShaderMGLWindowHandlers:
 
         # Test window
         imgui.new_frame()
-        imgui.begin("Custom window", True)
-        imgui.text("Bar")
-        imgui.text_colored("Eggs", 0.2, 1., 0.)
+        imgui.begin("Info", True)
+        imgui.text_colored("Coordinates related", 0, 0, 1)
+        imgui.text(f"(x, y): [{self.drag[0]:.3f}, {self.drag[1]:.3f}]")
+        imgui.text(f"Intensity: [{self.intensity:.2f}]")
+        imgui.text(f"Zoom: [{self.zoom:.5f}]")
+        imgui.text(f"Rotation: [{self.rotation:.3f}°]")
         imgui.end()
 
         # Render

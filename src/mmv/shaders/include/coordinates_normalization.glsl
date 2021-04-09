@@ -9,6 +9,9 @@
 // The ratio relative to the Y coordinate, we expand on X
 float resratio = (mmv_resolution.x / mmv_resolution.y);
 
+// We gotta keep stuff such as lines proportional to the resolution
+vec2 fulldh_scalar = vec2(mmv_resolution.x / 1920, mmv_resolution.y / 1080);
+
 // OpenGL and Shadertoy UV coordinates, GL goes from -1 to 1 on every corner
 // and Shadertoy uses bottom left = (0, 0) and top right = (1, 1).
 // glub and stuv are normalized relative to the height of the screen, they are
@@ -33,7 +36,7 @@ stuv.x *= resratio;
 // Zoomed uv coords, STUV is a bit trickier since we have to transpose the center to the center of 
 // the screenm apply zoom then revert
 vec2 gluv_zoom = gluv * (mmv_zoom * mmv_zoom);
-vec2 stuv_zoom = (stuv - vec2(resratio * 0.5, 0.5)) * (mmv_zoom * mmv_zoom) + vec2(resratio * 0.5, 0.5);
+vec2 stuv_zoom = (stuv - vec2(resratio * 0.5, 0.5)) * (mmv_zoom * mmv_zoom) * coordinates_rotation + vec2(resratio * 0.5, 0.5);
 
 // Mouse drag
 vec2 drag = (mmv_drag / mmv_resolution);
@@ -48,7 +51,7 @@ vec2 stuv_drag = stuv + (drag / 4.0);
 
 // GL and ST uv coordinates with drag + zoom
 vec2 gluv_all = (gluv_zoom * coordinates_rotation) + (drag * 2.0);
-vec2 stuv_all = (stuv_zoom * coordinates_rotation) + (drag);
+vec2 stuv_all = (stuv_zoom) + (drag);
 
 // [Normally you'd use the shadertoy_uv for reading textures to fullscreen]
 

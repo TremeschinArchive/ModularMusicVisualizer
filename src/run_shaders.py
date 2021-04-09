@@ -180,6 +180,7 @@ class MMVShadersCLI:
 
     def __load_master_shader(self):
         self.mgl.load_shader_from_path(fragment_shader_path = self._preset_master_shader)
+        # self.mgl.get_used_variables()
 
     def __configure_audio_processing(self):
         # Configure FFT TODO: advanced config?
@@ -525,12 +526,13 @@ class MMVShadersCLI:
                     self.mgl.write_texture_pipeline(texture_name = "mmv_radial_fft", data = data)
 
                 # Waveform
-                if "waveforms" in pipeline_info.keys():
-                    waveform = pipeline_info["waveforms"]
-                    self.mgl.write_texture_pipeline(
-                        texture_name = "mmv_waveform",
-                        data = waveform.reshape(-1).astype(np.float32),
-                    )
+                for waveform_type in ["rms_waveforms", "mean_waveforms"]:
+                    if waveform_type in pipeline_info.keys():
+                        waveform = pipeline_info[waveform_type] * multiplier
+                        self.mgl.write_texture_pipeline(
+                            texture_name = f"mmv_{waveform_type}",
+                            data = waveform.reshape(-1).astype(np.float32),
+                        )
 
                 # Build full pipeline from the interpolator, must be tuple and only current values
                 for feature in audio_features:

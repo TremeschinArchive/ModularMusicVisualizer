@@ -45,49 +45,68 @@ import os
 
 
 class WaveFormMaker:
-    WAVEFORM_LENGTH_SECONDS = 8
-    WAVEFORM_PER_SECOND = 60
+    SECONDS_OF_CONTENT = 20
+    BARS_DT = 0.03  
  
     def __init__(self, sample_rate):
         self.sample_rate = sample_rate
-        self.sliceable = np.array([[0.0], [0.0]])
+        self.__buffer = np.array([[0.0], [0.0]])
 
-        self.batches_per_bar = int((self.sample_rate) / (WaveFormMaker.WAVEFORM_LENGTH_SECONDS))
+        self.batches_per_bar = int(self.sample_rate * WaveFormMaker.BARS_DT)
+        self.N_bars = int(WaveFormMaker.SECONDS_OF_CONTENT / WaveFormMaker.BARS_DT)
     
-        self.ready = []
+        # Empty
+        self.__rms_bars = np.zeros((self.N_bars, 2), dtype = np.float32)
+        self.__mean_bars = np.zeros((self.N_bars, 2), dtype = np.float32)
+
         self.process_thread = threading.Thread(target = self.__process, daemon = True)
         self.process_thread.start()
 
+    # Feed internal buffer with some data
     def feed(self, data):
-        self.sliceable = np.hstack([self.sliceable, data])
+        self.__buffer = np.hstack([self.__buffer, data])
     
-    def contents(self):
-        try:
-            for _ in range(math.floor(len(self.ready))):
-                yield self.ready.pop(0)
-        except IndexError:
-            pass
+    # Get root mean square bar heights
+    @property
+    def rms_contents(self): return self.__rms_bars.copy()
+
+    # Get simple average of slices audio bars
+    @property
+    def mean_contents(self): return self.__mean_bars.copy()
 
     def __process(self):
         while True:
             some = False
-            while self.sliceable.shape[1] > self.batches_per_bar:
+
+            # If size of __buffer is bigger than target batches per bar, generate stuff
+            while self.__buffer.shape[1] > self.batches_per_bar:
                 some = True
 
+                # Slice from current buffer
                 raw_cut = np.array([
-                    self.sliceable[0][0:self.batches_per_bar],
-                    self.sliceable[1][0:self.batches_per_bar],
+                    self.__buffer[0][0:self.batches_per_bar],
+                    self.__buffer[1][0:self.batches_per_bar],
                 ], dtype = np.float32)
 
-                # bar = np.sqrt(np.sum(np.square(raw_cut), axis = 1))
-                bar = np.mean(raw_cut, axis = 1)
-                self.ready.append(bar)
-
-                self.sliceable = np.array([
-                    self.sliceable[0][self.batches_per_bar:],
-                    self.sliceable[1][self.batches_per_bar:],
+                # Get rid of the slice
+                self.__buffer = np.array([
+                    self.__buffer[0][self.batches_per_bar:],
+                    self.__buffer[1][self.batches_per_bar:],
                 ])
-            if not some: time.sleep(0.016)
+
+                # Calculate root mean square and mean
+                rms = np.sqrt(np.mean(raw_cut ** 2, axis = 1))
+                mean = np.mean(raw_cut, axis = 1)
+
+                # Add to arrays
+                self.__rms_bars = np.roll(self.__rms_bars, -1, axis = 0)
+                self.__rms_bars[0] = rms
+
+                self.__mean_bars = np.roll(self.__mean_bars, -1, axis = 0)
+                self.__mean_bars[0] = mean
+
+            # Wait for something because there were none, to not lock GIL on infinite while True loop
+            if not some: time.sleep(0.005)
 
 
 class AudioSource:
@@ -108,8 +127,8 @@ class AudioSource:
         self.sample_rate = sample_rate
         self.batch_size = batch_size
 
-        self.waveforms = np.zeros((int(WaveFormMaker.WAVEFORM_LENGTH_SECONDS * WaveFormMaker.WAVEFORM_PER_SECOND), 2), dtype = np.float32)
         self.waveform_maker = WaveFormMaker(sample_rate = sample_rate)
+        self.waveforms = np.zeros((self.waveform_maker.N_bars, 2), dtype = np.float32)
         self.current_batch = np.zeros((2, self.batch_size), dtype = np.float32)
 
         # [AudioFile] How much to read on every step
@@ -280,7 +299,6 @@ class AudioSource:
 
                 self.waveform_maker.feed(new_audio_data)
 
-
     def __process_thread(self):
         while True:
             # Prevent accessing dictionary without needed data, hold processed info...
@@ -292,13 +310,10 @@ class AudioSource:
                 original_sample_rate = self.sample_rate,
             ):
                 assigning[info[0]] = info[1]
-
-            for item in self.waveform_maker.contents():
-                self.waveforms = np.roll(self.waveforms, -1, axis = 0)
-                self.waveforms[0] = item
                 
             # Copy of waveforms dict
-            assigning["waveforms"] = self.waveforms.copy()
+            assigning["rms_waveforms"] = self.waveform_maker.rms_contents
+            assigning["mean_waveforms"] = self.waveform_maker.mean_contents
 
             if self.mode == EnumsAudioSource.RealTime:
                 self.info = assigning.copy()
@@ -372,7 +387,7 @@ class AudioProcessing:
                     value_at_zero = self.value_at_zero,
                 )
             )
-            N = 1
+            # N = 1
 
             # Add to total freqs the amount we expect
             expected_N_frequencies += N

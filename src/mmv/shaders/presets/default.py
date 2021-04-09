@@ -104,8 +104,8 @@ horizontal_bars = macros.load(path = interface.shaders_dir / "assets" / "music_b
 horizontal_bars.add_pipeline_texture_mapping(name = "mmv_linear_fft", width = replaces["MMV_FFTSIZE"], height = 1, depth = 1)
 
 
-# PFX
 
+# PFX
 vignetting = macros.load(path = interface.shaders_dir / "assets" / "pfx" / "vignetting.glsl")
 
 
@@ -113,10 +113,12 @@ vignetting = macros.load(path = interface.shaders_dir / "assets" / "pfx" / "vign
 
 waveform = shadermaker.clone()
 waveform.load_shader_from_path(path = interface.shaders_dir / "assets" / "dev" / "waveform.glsl")
-waveform.add_pipeline_texture_mapping(
-    name = "mmv_waveform", width = replaces["WAVEFORM_LENGTH"], height = 1, depth = 2,
-    repeat_x = False, repeat_y = False, mipmaps = False, anisotropy = 1
-)
+
+for name in ["mmv_rms_waveforms", "mmv_mean_waveforms"]:
+    waveform.add_pipeline_texture_mapping(
+        name = name, width = replaces["WAVEFORM_LENGTH"], height = 1, depth = 2,
+        repeat_x = False, repeat_y = False, mipmaps = False, anisotropy = 1
+    )
 chromatic_aberration = macros.load(path = interface.shaders_dir / "assets" / "pfx" / "chromatic_aberration.glsl")
 waveform = macros.chain(A = waveform, B = chromatic_aberration)
 
@@ -128,7 +130,7 @@ master_shader = shadermaker.clone()
 layers = [
     background,
     waveform,
-    horizontal_bars,
+    # horizontal_bars,
     logo_visualizer,
 ]
 
@@ -139,6 +141,11 @@ if BACKGROUND in ["image", "blueprint"]:
 
 layers.append(vignetting)
 
+# HUD / overlay
+if True:
+    default_hud = macros.load(path = interface.shaders_dir / "assets" / "overlay" / "default_hud.glsl")
+    layers.append(default_hud)
+    
 # # Alpha composite
 master_shader = macros.alpha_composite(layers = layers)
 

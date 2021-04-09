@@ -341,6 +341,16 @@ uniform float mmv_zoom;
 uniform vec2 mmv_drag;
 uniform int mmv_flip;
 
+// Gui
+uniform bool is_dragging;
+uniform bool is_gui_visible;
+uniform bool mmv_debug_mode;
+
+// Keys
+uniform bool mmv_key_shift;
+uniform bool mmv_key_ctrl;
+uniform bool mmv_key_alt;
+
 // Progressive audio amplitude
 uniform vec3 mmv_progressive_rms;
 
@@ -816,7 +826,11 @@ class MMVShaderMGL:
 
             # If shader is frozen don't pipe any items unless it's core components like
             # zoom, drag, resolution
-            if (not self.freezed_pipeline) or (any( [item in key for item in ["drag", "zoom", "resolution", "rotation"]])):
+            letpass = [
+                "drag", "zoom", "resolution", "rotation",
+                "key", "debug"
+            ]
+            if (not self.freezed_pipeline) or (any( [item in key for item in letpass])):
                 uniform = target.program.get(key, FakeUniform())
                 if (not isinstance(value, float)) and (not isinstance(value, int)):
                     value = tuple(value)
@@ -898,7 +912,6 @@ class MMVShaderMGL:
         # Render to this class FBO
         self.vao.render(mode = moderngl.TRIANGLE_STRIP)
         
-        # # TODO: GUI
         if self.master_shader and (not self.window_handlers.headless) and (self.window_handlers.show_gui):
             self.window_handlers.render_ui()
             self.gl_context.enable_only(moderngl.NOTHING)
@@ -918,6 +931,15 @@ class MMVShaderMGL:
             self.pipeline["mmv_frame"] += 1
             self.pipeline["mmv_time"] = self.pipeline["mmv_frame"] / self.fps
         
+        self.pipeline["is_dragging"] = self.window_handlers.is_dragging
+        self.pipeline["is_gui_visible"] = self.window_handlers.show_gui
+        self.pipeline["mmv_debug_mode"] = self.window_handlers.debug_mode
+
+        # Keys
+        self.pipeline["mmv_key_ctrl"] = self.window_handlers.ctrl_pressed
+        self.pipeline["mmv_key_shift"] = self.window_handlers.shift_pressed
+        self.pipeline["mmv_key_alt"] = self.window_handlers.alt_pressed
+
         if MMVShaderMGL.DEVELOPER_RAM_PROFILE:
             from mem_top import mem_top
             if self.pipeline["mmv_frame"] % 300 == 0:
@@ -936,11 +958,26 @@ class MMVShaderMGL:
         self._render(pipeline = self.pipeline)
             
     # Read from the current window FBO, return the bytes (remember that it can be headless window)
-    def read(self):
-        return self.window_handlers.window.fbo.read()
+    def read(self): return self.window_handlers.window.fbo.read()
     
-    # Write directly into a subprocess (FFmpeg, FFplay)
-    # Use this for speeds preferably
+    # Write directly into a subprocess (FFmpeg, FFplay), use this for speeds preferably
     def read_into_subprocess_stdin(self, target_stdin):
         # target_stdin.write(self.window.fbo.read(viewport = self.window.viewport))
         target_stdin.write(self.window_handlers.window.fbo.read())
+
+    # Return list of used variables in program
+    def get_used_variables(self) -> list:
+        if self.master_shader:
+
+            # Create empty info            
+            info = [k for k in self.program._members.keys()]
+
+            # Call for every shader as texture loaders
+            for index in self.textures.keys():
+                if self.textures[index]["loader"] == "shader":
+                    for key in self.textures[index]["shader_as_texture"].get_used_variables():
+                        info.append(key)
+            return info
+        
+        # Return child variables
+        else: return [k for k in self.program._members.keys()]
