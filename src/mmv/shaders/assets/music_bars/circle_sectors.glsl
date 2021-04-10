@@ -1,7 +1,8 @@
 
 //#mmv {"type": "include", "value": "mmv_specification", "mode": "once"}
 
-uniform vec3 mmv_rms_0_33;
+uniform sampler2D mmv_audio_fft_radial_0_20;
+uniform vec3 mmv_audio_rms_0_33;
 
 void main() {
     //#mmv {"type": "include", "value": "coordinates_normalization", "mode": "multiple"}
@@ -14,7 +15,7 @@ void main() {
 
     // Movement offsets so bar isn't fixed on dead center
     float offset_speed = 0.3;
-    float offset_amplitude = 0.102 * mmv_rms_0_33[2];
+    float offset_amplitude = 0.102 * mmv_audio_rms_0_33[2];
 
     // Offset vector 2 of x, y to add
     vec2 offset = vec2(
@@ -43,7 +44,7 @@ void main() {
     float fft_val = 0.0;
 
     // Branch code if we want a smooth bars or rectangle-looking ones
-    // mmv_radial_fft is a texture that starts on left channel low frequencies at x=0,
+    // mmv_audio_fft_radial is a texture that starts on left channel low frequencies at x=0,
     // in x=0.5 we hit the left channel highest frequency and switch to the right channel ones
     // but this one is reversed, we start 0.5 high freq right channel and 1.0 is right channel 
     // lowest frequencies.
@@ -61,13 +62,13 @@ void main() {
     // }
 
     if (smooth_bars) {
-        // Get the FFT val from the mmv_radial_fft texture with a float vec2 array itself.
+        // Get the FFT val from the mmv_audio_fft_radial texture with a float vec2 array itself.
         // GL will interpolate the texture for us into values in between, probably linear nearest
-        fft_val = texture(mmv_radial_fft, vec2(proportion, 0), 0).r;
+        fft_val = texture(mmv_audio_fft_radial_0_20, vec2(proportion, 0), 0).r;
     } else {
         // texelFetch accepts ivec2 (integer vec2)
         // which is the pixel itself, not filtered by GL
-        fft_val = texelFetch(mmv_radial_fft,
+        fft_val = texelFetch(mmv_audio_fft_radial_0_20,
             ivec2(int({MMV_FFTSIZE} * proportion), 0),
         0).r;
     }
@@ -78,13 +79,13 @@ void main() {
     bool angelic = true;
 
     // Size of everybody, also scales bars
-    float size = (0.13) + mmv_rms_0_33[2] * 0.133;
+    float size = (0.13) + mmv_audio_rms_0_33[2] * 0.133;
 
     // "Max" size of the music bar
     float bar_size = 0.4;
 
     // Size of the logo image relative to the music bars (ratio)
-    float logo_relative_to_bar_ratio = 1.0 - (0.05 * smoothstep(mmv_rms_0_33[2], 0.0, 5.0));
+    float logo_relative_to_bar_ratio = 1.0 - (0.05 * smoothstep(mmv_audio_rms_0_33[2], 0.0, 5.0));
 
     // // Render
 

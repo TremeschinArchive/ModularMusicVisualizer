@@ -16,11 +16,11 @@
 //#mmv {"type": "include", "value": "mmv_specification", "mode": "once"}
 
 uniform vec3 mmv_progressive_rms_0_02;
-uniform vec3 mmv_rms_0_60;
-uniform vec3 mmv_rms_0_30;
-uniform vec3 mmv_rms_0_20;
-uniform vec3 mmv_rms_0_15;
-uniform vec3 mmv_rms_0_05;
+uniform vec3 mmv_audio_rms_0_60;
+uniform vec3 mmv_audio_rms_0_30;
+uniform vec3 mmv_audio_rms_0_20;
+uniform vec3 mmv_audio_rms_0_15;
+uniform vec3 mmv_audio_rms_0_05;
 
 // Find the distance to some line segment relative to a point.
 // The idea is to project the vector starting in one line end to the point relative
@@ -190,7 +190,7 @@ vec3 lines_layer(vec2 gluv_all, vec2 raw_gluv_all, int layer_index) {
 
         // // Sparkle
 
-        float sparkle_brightness = 40.0 - mmv_rms_0_60[2]*25.0; // This acts sorta like the inverse
+        float sparkle_brightness = 40.0 - mmv_audio_rms_0_60[2]*25.0; // This acts sorta like the inverse
         float twinkle = 0.5 + 0.5*sin(
             (mmv_time) * (
             5.0 * fract(neighbor_points[index].x)
@@ -230,7 +230,7 @@ vec3 lines_layer(vec2 gluv_all, vec2 raw_gluv_all, int layer_index) {
     float colnoise = layer_of_noise(4, gluv_all * 10.0 + (1.0 + layer_index));
     
     col *= color*3.0*colnoise;
-    col += ((0.14 * color) * (0.5 + mmv_rms_0_05[2]/6.0)) * colnoise;
+    col += ((0.14 * color) * (0.5 + mmv_audio_rms_0_05[2]/6.0)) * colnoise;
 
     return col;
 }
@@ -244,7 +244,7 @@ void main() {
 
     // Config
     int n_layers = 6;
-    float speed = (((mmv_time / 15.0) + (mmv_progressive_rms_0_02[2]/60.0)) / 7.0) + (mmv_rms_0_30[2] * 0.035);
+    float speed = (((mmv_time / 15.0) + (mmv_progressive_rms_0_02[2]/60.0)) / 7.0) + (mmv_audio_rms_0_30[2] * 0.035);
     float layer_max_size = 0.5;
 
     vec2 low_freq_shake = vec2(cos(mmv_time*5.0/1.5), sin(mmv_time*8.0/1.5)) / 180.0;
@@ -256,7 +256,7 @@ void main() {
     float length_layer_uv = length(layer_uv);
 
     // Asymptote at 1
-    layer_uv *= ( -(length_layer_uv + mmv_rms_0_05[2] - 0.6) / (length_layer_uv + 1.0) ) + 2.0;
+    layer_uv *= ( -(length_layer_uv + mmv_audio_rms_0_05[2] - 0.6) / (length_layer_uv + 1.0) ) + 2.0;
 
     // Main loop
     for (int layer_index; layer_index < n_layers; layer_index++) {

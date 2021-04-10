@@ -28,6 +28,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 import mmv.mmvshader.mmv_shader_mgl as MMVShaderMGL
 from ast import literal_eval
+from pathlib import Path
 from PIL import Image
 import numpy as np
 import logging
@@ -119,9 +120,9 @@ class MMVShaderMGLPreprocessor:
         logging.info(f"{debug_prefix} Path was already included in the include directories")
 
         # Add recursively the paths as well
-        for index in self.mmv_shader_mgl.textures:
-            if self.mmv_shader_mgl.textures[index]["loader"] == "shader":
-                self.mmv_shader_mgl.textures[index]["shader_as_texture"].include_dir(path = path)
+        for index in self.mmv_shader_mgl.contents:
+            if self.mmv_shader_mgl.contents[index]["loader"] == "shader":
+                self.mmv_shader_mgl.contents[index]["shader_as_texture"].include_dir(path = path)
 
     # Parse a shader, load stuff on MMVShaderMGL main file
     def parse(self, shader):
@@ -157,6 +158,11 @@ class MMVShaderMGLPreprocessor:
             # Repeat stuff
             repeat_x = content.get("repeat_x", True)
             repeat_y = content.get("repeat_y", True)
+
+            # Shader as texture
+            fragment_shader_path = content.get("fragment_shader_path", None)
+            vertex_shader_path = content.get("vertex_shader_path", None)
+            geometry_shader_path = content.get("geometry_shader_path", None)
 
             # Didn't find any actions
             if action is None:
@@ -248,10 +254,6 @@ class MMVShaderMGLPreprocessor:
                 loaders = ["image", "video", "shader", "dynshader", "pipeline_texture", "include"]
                 assert loader in loaders, f"Loader [{loader}] not implemented in loaders [{content}]"
 
-                # All but pipeline texture must be valid paths
-                if (not loader in ["pipeline_texture"]) and (value != "MMV_MGL_NULL_FRAGMENT_SHADER"):
-                    assert os.path.exists(value), f"Value of loader [{value}] is not a valid path in [{content}]"
-
                 # We'll map one texture to this shader, either a static image, another shader or a video
                 # we do create and store the shader and video objects so we render or get the next image later on before using
                 textures_related = ["image", "shader", "dynshader", "video", "pipeline_texture"]
@@ -290,10 +292,10 @@ class MMVShaderMGLPreprocessor:
                         texture.repeat_x = repeat_x
                         texture.repeat_y = repeat_y
 
-                        assign_index = len(self.mmv_shader_mgl.textures.keys())
+                        assign_index = len(self.mmv_shader_mgl.contents.keys())
 
                         # Assign the name, type and texture to the textures dictionary
-                        self.mmv_shader_mgl.textures[assign_index] = {
+                        self.mmv_shader_mgl.contents[assign_index] = {
                             "name": name,
                             "loader": "texture",
                             "texture": texture
@@ -317,9 +319,9 @@ class MMVShaderMGLPreprocessor:
                         texture.write(np.zeros((width, height, depth), dtype = np.float32))
 
                         # Assign the name, type and texture to the textures dictionary
-                        assign_index = len(self.mmv_shader_mgl.textures.keys())
+                        assign_index = len(self.mmv_shader_mgl.contents.keys())
                         
-                        self.mmv_shader_mgl.textures[assign_index] = {
+                        self.mmv_shader_mgl.contents[assign_index] = {
                             "name": name, 
                             "loader": "texture",
                             "texture": texture
@@ -345,15 +347,28 @@ class MMVShaderMGLPreprocessor:
                             # Convert to int the width and height
                             width, height = int(width), int(height)
                             
-                        # Null shader
-                        if value == "MMV_MGL_NULL_FRAGMENT_SHADER":
-                            logging.info(f"{debug_prefix} Shader loader is MMV_MGL_NULL_FRAGMENT_SHADER")
+                        # Load frag shader
+                        if fragment_shader_path == "NULL":
+                            logging.info(f"{debug_prefix} Fragment shader path is NULL, use NULL shader")
                             loader_frag_shader = MMVShaderMGL.MMV_MGL_NULL_FRAGMENT_SHADER
-                        
                         else:
-                            # Read the shader we'll map
-                            with open(value, "r") as f:
-                                loader_frag_shader = f.read()
+                            assert fragment_shader_path is not None, "Fragment shader must be set!!"
+                            logging.info(f"{debug_prefix} Load fragment shader in path [{fragment_shader_path}]")
+                            loader_frag_shader = Path(fragment_shader_path).read_text()
+
+                        # Load vertex shader
+                        if vertex_shader_path == "None":
+                            logging.info(f"{debug_prefix} User default Vertex Shader")
+                            loader_vertex_shader = MMVShaderMGL.MMV_MGL_DEFAULT_VERTEX_SHADER
+                        else:
+                            logging.info(f"{debug_prefix} Load vertex shader in path [{vertex_shader_path}]")
+                            loader_vertex_shader = Path(vertex_shader_path).read_text()
+
+                        # Load geometry shader if any
+                        if geometry_shader_path != "None":
+                            logging.info(f"{debug_prefix} Load geometry shader in path [{geometry_shader_path}]")
+                            loader_geometry_shader = Path(geometry_shader_path).read_text()
+                        else: loader_geometry_shader = None
 
                         # # Construct a class of this same type of the master shader, use the same context
 
@@ -373,16 +388,18 @@ class MMVShaderMGLPreprocessor:
                         # Construct the shader we loaded
                         shader_as_texture.construct_shader(
                             fragment_shader = loader_frag_shader,
+                            vertex_shader = loader_vertex_shader,
+                            geometry_shader = loader_geometry_shader,
                         )
 
                         # Anisotropy
                         shader_as_texture.texture.anisotropy = anisotropy
 
                         # Next available id
-                        assign_index = len(self.mmv_shader_mgl.textures.keys())
+                        assign_index = len(self.mmv_shader_mgl.contents.keys())
 
                         # Assign the name, type and texture to the textures dictionary
-                        self.mmv_shader_mgl.textures[assign_index] = {
+                        self.mmv_shader_mgl.contents[assign_index] = {
                             "shader_as_texture": shader_as_texture,
                             "dynamic": loader == "dynshader",
                             "loader": "shader",
@@ -404,10 +421,10 @@ class MMVShaderMGLPreprocessor:
                         texture.swizzle = 'BGR'
 
                         # Next available id
-                        assign_index = len(self.mmv_shader_mgl.textures.keys())
+                        assign_index = len(self.mmv_shader_mgl.contents.keys())
 
                         # Assign the name, type and texture to the textures dictionary
-                        self.mmv_shader_mgl.textures[assign_index] = {
+                        self.mmv_shader_mgl.contents[assign_index] = {
                             "name": name,
                             "loader": "video",
                             "texture": texture,

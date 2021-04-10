@@ -1,7 +1,7 @@
 
 //#mmv {"type": "include", "value": "mmv_specification", "mode": "once"}
 
-uniform vec3 mmv_rms_0_33;
+uniform vec3 mmv_audio_rms_0_33;
 
 void main() {
     //#mmv {"type": "include", "value": "coordinates_normalization", "mode": "multiple"}
@@ -13,8 +13,8 @@ void main() {
     vec2 uv = stuv_all;
     uv.x /= resratio;
 
-    float fft_val_l = texelFetch(mmv_linear_fft, ivec2(int(uv.x * mmv_linear_fft_width) / 2, 0), 0).r;
-    float fft_val_r = texelFetch(mmv_linear_fft, ivec2(int(mmv_linear_fft_width / 2) + int(uv.x * mmv_linear_fft_width) / 2, 0), 0).r;
+    float fft_val_l = texelFetch(mmv_audio_fft_linear, ivec2(int(uv.x * mmv_audio_fft_linear_width) / 2, 0), 0).r;
+    float fft_val_r = texelFetch(mmv_audio_fft_linear, ivec2(int(mmv_audio_fft_linear_width / 2) + int(uv.x * mmv_audio_fft_linear_width) / 2, 0), 0).r;
 
 
     if (uv.y < pow(fft_val_l / 180, 0.8)) {

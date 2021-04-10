@@ -557,9 +557,9 @@ class MMVShaderMGL:
         # 
         # This dictionary is mostly for information on which loader we have and to organize its
         # object if we need to do some action.
-        self.textures = {}
+        self.contents = {}
 
-        # Dictionary to hold name: indexes on self.textures dictionary for writing to textures
+        # Dictionary to hold name: indexes on self.contents dictionary for writing to textures
         # used for communicating big data arrays between Python and the GPU
         # One example usage is for writing FFT values
         self.writable_textures = {}
@@ -639,9 +639,10 @@ class MMVShaderMGL:
         self.texture, self.fbo = self._construct_texture_fbo(verbose = verbose)
 
     # Loads one shader from the disk, optionally also a custom vertex shader rather than the screen filling default one
-    def load_shader_from_path(self, fragment_shader_path, vertex_shader_path = MMV_MGL_DEFAULT_VERTEX_SHADER):
+    def load_shader_from_path(self, fragment_shader_path, vertex_shader_path = MMV_MGL_DEFAULT_VERTEX_SHADER, geometry_shader_path = None):
         debug_prefix = f"[MMVShaderMGL.load_shader_from_path] [{self.name}]"
         self.fragment_shader_path = fragment_shader_path
+        self.geometry_shader_path = geometry_shader_path
         self.vertex_shader_path = vertex_shader_path
 
         # # Fragment shader
@@ -670,10 +671,17 @@ class MMVShaderMGL:
         else: # Otherwise the vertex data is the default screen filling one
             vertex_data = MMV_MGL_DEFAULT_VERTEX_SHADER
 
+        # Load the geometry shader file
+        if geometry_shader_path is not None:
+            with open(vertex_shader_path, "r") as geometry_shader:
+                geometry_shader_data = geometry_shader.read()
+        else: geometry_shader_data = None
+
         # # Construct the shader
         self.construct_shader(
             fragment_shader = frag_data,
             vertex_shader = vertex_data,
+            geometry_shader = geometry_shader_data,
         )
 
     # Drop current stuff    , use some other fragment shader or vertex shader inserted from outside
@@ -687,8 +695,8 @@ class MMVShaderMGL:
             self.window_handlers.drop_textures()
             
             # Delete textures dictionray
-            del self.textures
-            self.textures = {}
+            del self.contents
+            self.contents = {}
 
             self.load_shader_from_path(
                 fragment_shader_path = self.fragment_shader_path,
@@ -705,6 +713,7 @@ class MMVShaderMGL:
     def construct_shader(self,
         fragment_shader,
         vertex_shader = MMV_MGL_DEFAULT_VERTEX_SHADER,
+        geometry_shader = None,
         verbose = True,
     ):
         debug_prefix = f"[MMVShaderMGL.construct_shader] [{self.name}]"
@@ -728,13 +737,15 @@ class MMVShaderMGL:
 
         # We might need our frag shader or vertex shader later on when we 
         # ._reconstruct_program() if the window gets rescaled
+        self.geometry_shader = geometry_shader
         self.fragment_shader = fragment_shader
         self.vertex_shader = vertex_shader
 
         # Create a program with the fragment and vertex shader
         self._create_program(
-            fragment_shader = fragment_shader,
-            vertex_shader = vertex_shader,
+            fragment_shader = self.fragment_shader,
+            vertex_shader = self.vertex_shader,
+            geometry_shader = self.geometry_shader,
         )
 
         # Get a texture bound to the FBO
@@ -751,10 +762,14 @@ class MMVShaderMGL:
             uniform.value = value
 
     # Truly construct a shader, returns a ModernGL Program
-    def _create_program(self, fragment_shader, vertex_shader):
+    def _create_program(self, fragment_shader, vertex_shader, geometry_shader = None):
         debug_prefix = f"[MMVShaderMGL._create_program] [{self.name}]"
         try:
-            self.program = self.gl_context.program(fragment_shader = fragment_shader, vertex_shader = vertex_shader)
+            self.program = self.gl_context.program(
+                fragment_shader = fragment_shader,
+                vertex_shader = vertex_shader,
+                geometry_shader = geometry_shader,
+            )
         except moderngl.error.Error as e:
 
             # Log faulty shader
@@ -767,7 +782,7 @@ class MMVShaderMGL:
             self.window_handlers.drop_textures()
             self.program = self.gl_context.program(
                 fragment_shader = MMV_MGL_FALLBACK_MISSING_TEXTURE_SHADER,
-                vertex_shader = MMV_MGL_DEFAULT_VERTEX_SHADER
+                vertex_shader = MMV_MGL_DEFAULT_VERTEX_SHADER,
             )
 
     # Create fullscreen VAO that reads position, OpenGL UV coordinates then ShaderToy UV coordinates
@@ -804,7 +819,7 @@ class MMVShaderMGL:
             # AttributeError will happen when / if we get a mgl.InvalidObject (dropped textures)
             if target_index is not None:
                 try:
-                    tex = self.textures[target_index]["texture"]
+                    tex = self.contents[target_index]["texture"]
                     # d = data.copy()
                     # d.resize(tex.size)
                     tex.write(data, viewport = viewport)
@@ -812,9 +827,9 @@ class MMVShaderMGL:
                     pass
 
             # Write recursively with same arguments
-            for index in self.textures.keys():
-                if self.textures[index]["loader"] == "shader":
-                    self.textures[index]["shader_as_texture"].write_texture_pipeline(
+            for index in self.contents.keys():
+                if self.contents[index]["loader"] == "shader":
+                    self.contents[index]["shader_as_texture"].write_texture_pipeline(
                         texture_name = texture_name, data = data, viewport = viewport
                     )
 
@@ -843,17 +858,17 @@ class MMVShaderMGL:
         debug_prefix = "[MMVShaderMGL._render]"
 
         # Render every shader as texture recursively
-        for index in self.textures.keys():
-            if self.textures[index]["loader"] == "shader":
+        for index in self.contents.keys():
+            if self.contents[index]["loader"] == "shader":
 
                 # Send info about the pipeline
                 self._pipe_pipeline(
                     pipeline = pipeline,
-                    target = self.textures[index]["shader_as_texture"]
+                    target = self.contents[index]["shader_as_texture"]
                 )
 
                 # Call this function again but for child shaders
-                self.textures[index]["shader_as_texture"]._render(pipeline = pipeline)
+                self.contents[index]["shader_as_texture"]._render(pipeline = pipeline)
 
         # Pipe the pipeline to self
         self._pipe_pipeline(pipeline = pipeline, target = self)
@@ -867,7 +882,7 @@ class MMVShaderMGL:
             self.fbo.clear()
 
         # The location is the dict index, the texture info is [name, loader, object]
-        for location, texture_info in self.textures.items():
+        for location, texture_info in self.contents.items():
 
             # Unpack guaranteed generic items
             name = texture_info["name"]
@@ -969,17 +984,22 @@ class MMVShaderMGL:
 
     # Return list of used variables in program
     def get_used_variables(self) -> list:
+        debug_prefix = "[MMVShaderMGL.get_used_variables]"
+
+        info = [k for k in self.program._members.keys()]
+
         if self.master_shader:
 
-            # Create empty info            
-            info = [k for k in self.program._members.keys()]
-
             # Call for every shader as texture loaders
-            for index in self.textures.keys():
-                if self.textures[index]["loader"] == "shader":
-                    for key in self.textures[index]["shader_as_texture"].get_used_variables():
+            for index in self.contents.keys():
+                if self.contents[index]["loader"] == "shader":
+                    for key in self.contents[index]["shader_as_texture"].get_used_variables():
                         info.append(key)
+
+            # Remove duplicates
+            info = list(set(info))
+            logging.info(f"{debug_prefix} Returning used variables {info}")
             return info
         
         # Return child variables
-        else: return [k for k in self.program._members.keys()]
+        else: return info

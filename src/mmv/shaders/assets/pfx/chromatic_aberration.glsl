@@ -9,14 +9,14 @@
 // ===============================================================================
 
 uniform vec3 mmv_progressive_rms_0_05;
-uniform vec3 mmv_rms_0_15;
+uniform vec3 mmv_audio_rms_0_15;
 
 void main() {
     //#mmv {"type": "include", "value": "coordinates_normalization", "mode": "multiple"}
     vec4 col = vec4(0.0);
 
     // User stuff
-    float intensity = ((mmv_rms_0_15[2] / 5.5)) / (mmv_zoom * mmv_zoom);
+    float intensity = ((mmv_audio_rms_0_15[2] / 5.5)) / (mmv_zoom * mmv_zoom);
     float add = mmv_progressive_rms_0_05[2] / 18.0;
 
     // Shortcuts

@@ -165,18 +165,18 @@ class MMVShaderMGLWindowHandlers:
         self.mmv_shader_mgl.height = int(height)
 
         # Recursively call this function on every shader on textures dictionary
-        for index in self.mmv_shader_mgl.textures.keys():
-            if self.mmv_shader_mgl.textures[index]["loader"] == "shader":
-                self.mmv_shader_mgl.textures[index]["shader_as_texture"].window_handlers.window_resize(
+        for index in self.mmv_shader_mgl.contents.keys():
+            if self.mmv_shader_mgl.contents[index]["loader"] == "shader":
+                self.mmv_shader_mgl.contents[index]["shader_as_texture"].window_handlers.window_resize(
                     width = self.mmv_shader_mgl.width, height = self.mmv_shader_mgl.height
                 )
 
         # Search for dynamic shaders and update them
-        for index in self.mmv_shader_mgl.textures.keys():
+        for index in self.mmv_shader_mgl.contents.keys():
 
             # Release Dynamic Shaders and update their target render
-            if self.mmv_shader_mgl.textures[index].get("dynamic", False):
-                target = self.mmv_shader_mgl.textures[index]["shader_as_texture"]
+            if self.mmv_shader_mgl.contents[index].get("dynamic", False):
+                target = self.mmv_shader_mgl.contents[index]["shader_as_texture"]
                 target.texture.release()
                 target.fbo.release()
                 target._create_assing_texture_fbo_render_buffer(verbose = False)
@@ -191,20 +191,20 @@ class MMVShaderMGLWindowHandlers:
 
     # Release everything
     def drop_textures(self):
-        for index in self.mmv_shader_mgl.textures.keys():
-            if "shader_as_texture" in self.mmv_shader_mgl.textures[index].keys():
-                target = self.mmv_shader_mgl.textures[index]["shader_as_texture"]
+        for index in self.mmv_shader_mgl.contents.keys():
+            if "shader_as_texture" in self.mmv_shader_mgl.contents[index].keys():
+                target = self.mmv_shader_mgl.contents[index]["shader_as_texture"]
                 target.fullscreen_buffer.release()
                 target.program.release()
                 target.texture.release()
                 target.fbo.release()
                 target.vao.release()
             else:
-                self.mmv_shader_mgl.textures[index]["texture"].release()
+                self.mmv_shader_mgl.contents[index]["texture"].release()
 
         # Delete items
-        for index in list(self.mmv_shader_mgl.textures.keys()):
-            del self.mmv_shader_mgl.textures[index]
+        for index in list(self.mmv_shader_mgl.contents.keys()):
+            del self.mmv_shader_mgl.contents[index]
             gc.collect()
 
     # Close the window
@@ -323,9 +323,9 @@ class MMVShaderMGLWindowHandlers:
         if (key == 83) and (action == 1):
             logging.info(f"{debug_prefix} \"s\" key pressed [Freezing time and pipelines but resolution, zoom]")
             self.mmv_shader_mgl.freezed_pipeline = not self.mmv_shader_mgl.freezed_pipeline
-            for index in self.mmv_shader_mgl.textures.keys():
-                if self.mmv_shader_mgl.textures[index]["loader"] == "shader":
-                    self.mmv_shader_mgl.textures[index]["shader_as_texture"].freezed_pipeline = self.mmv_shader_mgl.freezed_pipeline
+            for index in self.mmv_shader_mgl.contents.keys():
+                if self.mmv_shader_mgl.contents[index]["loader"] == "shader":
+                    self.mmv_shader_mgl.contents[index]["shader_as_texture"].freezed_pipeline = self.mmv_shader_mgl.freezed_pipeline
 
         # "t" key pressed, reset time to zero
         if (key == 84) and (action == 1):

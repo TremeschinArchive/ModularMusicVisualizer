@@ -245,7 +245,7 @@ class AudioSource:
     def __capture_thread(self):
 
         # Start processing Thread
-        self.processing_thread = threading.Thread(target = self.__process_thread, daemon = True)
+        self.processing_thread = threading.Thread(target = self.__process_thread)
         self.processing_thread.start()
 
         self.newdata = False
@@ -459,8 +459,8 @@ class AudioProcessing:
         # Calculate MONO
         mono = (audio_slice[0] + audio_slice[1]) / 2
 
-        yield ["mmv_raw_audio_left", audio_slice[0]]
-        yield ["mmv_raw_audio_right", audio_slice[1]]
+        # yield ["mmv_raw_audio_left", audio_slice[0]]
+        # yield ["mmv_raw_audio_right", audio_slice[1]]
 
         # # Average audio amplitude based on RMS
 
@@ -476,11 +476,11 @@ class AudioProcessing:
         RMS.append(sum(RMS) / 2)
 
         # Yield average amplitudes info
-        yield ["mmv_rms", tuple([round(value, 8) for value in RMS])]
+        yield ["mmv_audio_rms", np.array(RMS)]
 
         # # Standard deviations
 
-        yield ["mmv_std", tuple([
+        yield ["mmv_audio_std", np.array([
             np.std(audio_slice[0]),
             np.std(audio_slice[1]),
             np.std(mono)
@@ -551,7 +551,7 @@ class AudioProcessing:
                         counter += 1
 
             # Yield FFT data
-            yield ["mmv_fft", processed]
+            yield ["mmv_audio_fft", processed]
 
     # # Common Methods
 

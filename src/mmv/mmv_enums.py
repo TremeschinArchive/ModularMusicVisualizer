@@ -27,6 +27,10 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 from enum import Enum, auto
 
+class EnumRunShadersMode(Enum):
+    RealTime = "realtime"
+    Render = "render"
+    
 class EnumsOS(Enum):
     Windows = "windows"
     Linux = "linux"

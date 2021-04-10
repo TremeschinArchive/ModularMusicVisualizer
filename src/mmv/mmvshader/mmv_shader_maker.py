@@ -213,7 +213,12 @@ class MMVShaderMaker:
     def add_image_mapping(self, name, path, width = None, height = None, repeat_x = True, repeat_y = True, mipmaps = True, anisotropy = 16):
         debug_prefix = "[MMVShaderMaker.add_image_mapping]"
         path = self.utils.enforce_pathlib_Path(path)
-        mapping = {"type": "map", "name": name, "loader": "image", "value": str(path), "width": width, "height": height, "mipmaps": mipmaps, "repeat_x": repeat_x, "repeat_y": repeat_y, "anisotropy": anisotropy}
+        mapping = {
+            "type": "map", "name": name, "loader": "image", "value": str(path),
+            "width": width, "height": height,
+            "mipmaps": mipmaps, "anisotropy": anisotropy,
+            "repeat_x": repeat_x, "repeat_y": repeat_y
+        }
         mapping = self.__pretty_mapper(dictionary = mapping)
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
@@ -221,30 +226,58 @@ class MMVShaderMaker:
     def add_video_mapping(self, name, path, width, height, anisotropy = 16):
         debug_prefix = "[MMVShaderMaker.add_video_mapping]"
         path = self.utils.enforce_pathlib_Path(path)
-        mapping = {"type": "map", "name": name, "loader": "video", "value": str(path), "width": width, "height": height, "anisotropy": anisotropy}
+        mapping = {
+            "type": "map", "name": name, "loader": "video", "value": str(path),
+            "width": width, "height": height, "anisotropy": anisotropy
+        }
         mapping = self.__pretty_mapper(dictionary = mapping)
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
     # Pipeline (as) texture is for communicating big arrays from Python to ModernGL's shader being executed
     def add_pipeline_texture_mapping(self, name, width, height, depth, repeat_x = False, repeat_y = False, mipmaps = True, anisotropy = 16):
         debug_prefix = "[MMVShaderMaker.add_pipeline_texture_mapping]"
-        mapping = {"type": "map", "name": name, "loader": "pipeline_texture", "width": width, "height": height, "depth": depth, "repeat_x": repeat_x, "repeat_y": repeat_y, "mipmaps": mipmaps, "anisotropy": anisotropy}
+        mapping = {
+            "type": "map", "name": name, "loader": "pipeline_texture",
+            "width": width, "height": height, "depth": depth,
+            "mipmaps": mipmaps, "anisotropy": anisotropy,
+            "repeat_x": repeat_x, "repeat_y": repeat_y,
+        }
         mapping = self.__pretty_mapper(dictionary = mapping)
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
     # Strict shader only renders at this target resolution internally, regardless of output dimensions
-    def add_strict_shader_mapping(self, name, path, width, height, anisotropy = 16):
+    def add_strict_shader_mapping(self, name, width, height, fragment_shader_path, vertex_shader_path = None, geometry_shader_path = None, anisotropy = 16):
         debug_prefix = "[MMVShaderMaker.add_strict_shader_mapping]"
-        path = self.utils.enforce_pathlib_Path(path)
-        mapping = {"type": "map", "name": name, "loader": "shader", "value": str(path), "width": width, "height": height, "anisotropy": anisotropy}
+        
+        fragment_shader = self.utils.enforce_pathlib_Path(fragment_shader_path, accept_None = True)
+        vertex_shader = self.utils.enforce_pathlib_Path(vertex_shader_path, accept_None = True)
+        geometry_shader = self.utils.enforce_pathlib_Path(geometry_shader_path, accept_None = True)
+
+        mapping = {
+            "type": "map", "name": name, "loader": "shader", "value": str(path),
+            "fragment_shader_path": str(fragment_shader_path),
+            "vertex_shader_path": str(vertex_shader_path),
+            "geometry_shader_path": str(geometry_shader_path),
+            "width": width, "height": height, "anisotropy": anisotropy,
+        }
         mapping = self.__pretty_mapper(dictionary = mapping)
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 
     # Dynamic shader adapts to the viewport / output dimensions, recommended
-    def add_dynamic_shader_mapping(self, name, path, anisotropy = 16):
+    def add_dynamic_shader_mapping(self, name, fragment_shader_path, vertex_shader_path = None, geometry_shader_path = None, anisotropy = 16):
         debug_prefix = "[MMVShaderMaker.add_dynamic_shader_mapping]"
-        path = self.utils.enforce_pathlib_Path(path)
-        mapping = {"type": "map", "name": name, "loader": "dynshader", "value": str(path), "anisotropy": anisotropy}
+        
+        fragment_shader = self.utils.enforce_pathlib_Path(fragment_shader_path, accept_None = True)
+        vertex_shader = self.utils.enforce_pathlib_Path(vertex_shader_path, accept_None = True)
+        geometry_shader = self.utils.enforce_pathlib_Path(geometry_shader_path, accept_None = True)
+        
+        mapping = {
+            "type": "map", "name": name, "loader": "dynshader",
+            "fragment_shader_path": str(fragment_shader_path),
+            "vertex_shader_path": str(vertex_shader_path),
+            "geometry_shader_path": str(geometry_shader_path),
+            "anisotropy": anisotropy,
+        }
         mapping = self.__pretty_mapper(dictionary = mapping)
         self._mappings.append(BlockOfCode(f"//#mmv {mapping}", scoped = False, name = f"{debug_prefix}"))
 

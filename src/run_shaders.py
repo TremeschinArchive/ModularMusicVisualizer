@@ -32,6 +32,7 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Continue imports
+from mmv.mmvshader.mmv_shader_values_interpolator import MMVShaderValuesInterpolator
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 import mmv.common.cmn_any_logger
@@ -49,9 +50,7 @@ import mmv
 
 # Watchdog for changes, reload shaders
 class AnyModification(FileSystemEventHandler):
-    def __init__(self, controller):
-        self.controller = controller
-        self.reload = False
+    def __init__(self): self.reload = False
 
     def on_modified(self, event):
         debug_prefix = "[AnyModification.on_modified]"
@@ -77,7 +76,7 @@ class MMVShadersCLI:
         )
 
         # Interpolator
-        self.interpolator = ValuesInterpolator()
+        self.interpolation = MMVShaderValuesInterpolator()
 
         # Advanced config
         self.advanced_config = self.mmv_package_interface.utils.load_yaml(
@@ -180,8 +179,8 @@ class MMVShadersCLI:
 
     def __load_master_shader(self):
         self.mgl.load_shader_from_path(fragment_shader_path = self._preset_master_shader)
-        # self.mgl.get_used_variables()
-
+        self.interpolation.parse_used_variables(self.mgl.get_used_variables())
+        
     def __configure_audio_processing(self):
         # Configure FFT TODO: advanced config?
         self.audio_source.audio_processing.configure(config = [
@@ -203,11 +202,11 @@ class MMVShadersCLI:
     # When the user presses "r"
     def __should_reload_preset(self):
         self.utils.reset_dir(self.mmv_package_interface.runtime_dir)
-        self.__load_preset()
+        self.__construct_preset()
         self.__load_master_shader()
 
-    def __load_preset(self):
-        debug_prefix = "[MMVShadersCLI.__load_preset]"
+    def __construct_preset(self):
+        debug_prefix = "[MMVShadersCLI.__construct_preset]"
 
         # # Will we load preset file or raw file shader? 
 
@@ -236,8 +235,7 @@ class MMVShadersCLI:
 
             # Open and execute the file with this scope's variables
             # Note: we can access like locals()["replaces"] from the other file!!
-            with open(preset_file, "rb") as f:
-                code = compile(f.read(), preset_file, "exec")
+            with open(preset_file, "rb") as f: code = compile(f.read(), preset_file, "exec")
 
             # We get this info dictionary back from the executed file
             exec(code, globals(), locals())
@@ -272,12 +270,20 @@ class MMVShadersCLI:
 
     # Display shaders real time
     def realtime(self,
-        window_class: str = typer.Option("glfw", help = "ModernGL Window backend to use, see [https://moderngl-window.readthedocs.io/en/latest/guide/window_guide.html], values are [sdl2, pyglet, glfw, pyqt5], GLFW works dynshader mode so I advise that. Please install the others if you wanna use them [poetry add / pip install pysdl2, pyqt5 etc]"),
-        cap: int = typer.Option(None, help = "Capture device index to override first loopback we find. Run command [list-captures] to see available indexes, None (empty) is to get automatically")
+        window_class: str = typer.Option("glfw", help = (
+            "ModernGL Window backend to use, see [https://moderngl-window.readthedocs.io/en/latest/guide/window_guide.html], "
+            "values are [sdl2, pyglet, glfw, pyqt5], GLFW works dynshader mode so I advise that. Please install the others if "
+            "you wanna use them [poetry add / pip install pysdl2, pyqt5 etc]"
+        )),
+        cap: int = typer.Option(None, help = (
+            "Capture device index to override first loopback we find. Run command [list-captures] to see available indexes, "
+            "None (empty) is to get automatically first device marked as loopback (recording some other stream) that isn't a "
+            "microphone."
+        )),
     ):
         debug_prefix = "[MMVShadersCLI.realtime]"
+        self.mode = EnumRunShadersMode.RealTime
         self.__mgl_target_render_settings()
-        self.mode = "view"
 
         # # Audio source Real Time
         self.audio_source = self.mmv_package_interface.get_audio_source(mode = EnumsAudioSource.RealTime)
@@ -294,11 +300,10 @@ class MMVShadersCLI:
             self.audio_source.init(search_for_loopback = True)
         else:
             for index, device in enumerate(soundcard.all_microphones(include_loopback = True)):
-                if index == cap:
-                    self.audio_source.init(recorder_device = device)
+                if index == cap: self.audio_source.init(recorder_device = device)
 
         self.__configure_audio_processing()
-        self.__load_preset()
+        self.__construct_preset()
 
         repo_dir = self.mmv_package_interface.MMV_PACKAGE_ROOT/".."/".."/"repo"
 
@@ -321,18 +326,25 @@ class MMVShadersCLI:
     # Render config to video file
     def render(self,
         output_video: str = typer.Option("rendered_shader.mkv", help = (
-            "Name of the final video"
+            "Name of the final video to be rendered to. MKV format is highly recommended since it supports "
+            "partial file playback, that means the container gets progressively written and if you have like, "
+            "5 seconds of video you can playback it. MP4 format is somewhat discouraged because if it fails mid way "
+            "there is no way of rescuing the video file, it must finish the container so one can read the contents. "
+            "Though MP4 is kinda wished for streams and thumbnails works better in chatting apps. "
+            "Check before where you're going to use the file if they require some specific format, otherwise go MKV"
         )),
-        audio: str = typer.Option(None, help = "Which audio to use as source on file?"),
+        audio: str = typer.Option(None, help = (
+            "Which audio to use as source on file? Can be even a video file here, FFmpeg will read the raw stream "
+            "(probably the first one) progressively so we don't need to load the raw audio file contents from the start into "
+            "the computer's memory, which uses quite a lot for 5 minutes+ files."
+        )),
     ):
         debug_prefix = "[MMVShadersCLI.render]"
+        self.__mgl_target_render_settings()
+        self.mode = EnumRunShadersMode.Render
 
         self._output_video = output_video
-        if audio is not None:
-            self._input_audio = audio
-
-        self.__mgl_target_render_settings()
-        self.mode = "render"
+        if audio is not None: self._input_audio = audio
 
         # # Audio source File
         self.audio_source = self.mmv_package_interface.get_audio_source(mode = EnumsAudioSource.AudioFile)
@@ -347,7 +359,7 @@ class MMVShadersCLI:
         # Read source audio file
         self.audio_source.init(audio_path = self._input_audio)
         self.__configure_audio_processing()
-        self.__load_preset()
+        self.__construct_preset()
 
         # How much bars we'll have
         self.MMV_FFTSIZE = self.audio_source.audio_processing.FFT_length
@@ -394,15 +406,16 @@ class MMVShadersCLI:
 
     # Common main loop for both view and render modes
     def _core_loop(self):
-        debug_prefix = "[MMVShadersCLI.render]"
+        debug_prefix = "[MMVShadersCLI._core_loop]"
 
+        # Reloading shaders we rebuild the preset
         self.mgl.set_reset_function(obj = self.__should_reload_preset)
 
         # Look for file changes
         if self.watchdog:
             logging.info(f"{debug_prefix} Starting watchdog")
 
-            self.any_modification_watchdog = AnyModification(controller = self)
+            self.any_modification_watchdog = AnyModification()
 
             sd = self.mmv_package_interface.shaders_dir
             paths = [
@@ -426,26 +439,8 @@ class MMVShadersCLI:
         self.audio_source.start()
         logging.info(f"{debug_prefix} Started audio source")
 
-        steps_each = 0.01 # Generate and write interpolation values 0.00, 0.01, 0.02.. 0.80, 0.81, 0.82
-        size = int(1 / steps_each)
-        audio_features = ["rms", "std"]
-
-        # Init interpolations based on name and channel yieldeds
-        for feature in audio_features:
-            for index, channel_name in enumerate("rlm"):
-                self.interpolator.add_interpolater(f"mmv_{feature}_{channel_name}", size)
-                self.interpolator.add_interpolater(f"mmv_progressive_{feature}_{channel_name}", size)
-
-        # Progressive audio amplitude
-        mmv_progressive_rms = [0, 0, 0]
-
-        # FFTs
-        self.interpolator.add_interpolater(f"mmv_fft", self.MMV_FFTSIZE, fixed_ratio = 0.2)
-        logging.info(f"{debug_prefix} Created interpolators")
-        logging.info(f"{debug_prefix} Starting main render loop")
-
         # Render mode have progress bar
-        if self.mode == "render":
+        if self.mode == EnumRunShadersMode.Render:
 
             # Create progress bar
             self.progress_bar = tqdm(
@@ -463,7 +458,8 @@ class MMVShadersCLI:
                 f"Rendering [SSAA={self._ssaa}]({int(self._width * self._ssaa)}x{int(self._height * self._ssaa)})->({self._width}x{self._height})[{self.audio_source.duration:.2f}s] MMV video"
             )
 
-        audio_info = self.audio_source.get_info()
+        # Generator
+        audio_info_generator = self.audio_source.get_info()
 
         # Main loop
         for step in itertools.count(start = 0):
@@ -480,83 +476,18 @@ class MMVShadersCLI:
             fps = round(self.fps_last_n / (max(self.frame_times) - min(self.frame_times)), 1)
             
             # Get info to pipe, and the pipelined built info
-            pipeline_info = next(audio_info)
-            pipelined = {}
-
+            pipeline_info = next(audio_info_generator)
             multiplier = self._multiplier * self.mgl.window_handlers.intensity
 
-            # Shader is not frozen (don't interpolate nor write stuff)
-            if not self.mgl.freezed_pipeline:
-            
-                # Interpolate values
-                for feature in audio_features:
-                    for index, channel_name in enumerate("rlm"):
-                        if f"mmv_{feature}" in pipeline_info.keys():
-                            self.interpolator.next(
-                                name = f"mmv_{feature}_{channel_name}",
-                                feed = pipeline_info[f"mmv_{feature}"][index] * multiplier
-                            )
-
-                            self.interpolator.next(
-                                name = f"mmv_progressive_{feature}_{channel_name}",
-                                feed = (pipeline_info[f"mmv_{feature}"][index] * multiplier) * 4.0,
-                                mode = "add"
-                            )
-
-                            # Add mono 
-                            if feature == "rms":
-                                mmv_progressive_rms[index] = \
-                                    mmv_progressive_rms[index] + pipeline_info[f"mmv_rms"][index] * multiplier
-
-
-                # Interpolate FFT, write to FFT texture
-                if "mmv_fft" in pipeline_info.keys():
-                    self.interpolator.next(name = f"mmv_fft", feed = pipeline_info["mmv_fft"], mode = "replace")
-
-                    data = self.interpolator.interpolaters["mmv_fft"]["current"].astype(np.float32) * multiplier
-
-                    # Write linear FFT
-                    self.mgl.write_texture_pipeline(texture_name = "mmv_linear_fft", data = data)
-
-                    # Reverse second half of array
-                    a, b = int(self.MMV_FFTSIZE / 2), self.MMV_FFTSIZE
-                    data[a:b] = data[a:b][::-1]
-
-                    # Write "radial" FFT
-                    self.mgl.write_texture_pipeline(texture_name = "mmv_radial_fft", data = data)
-
-                # Waveform
-                for waveform_type in ["rms_waveforms", "mean_waveforms"]:
-                    if waveform_type in pipeline_info.keys():
-                        waveform = pipeline_info[waveform_type] * multiplier
-                        self.mgl.write_texture_pipeline(
-                            texture_name = f"mmv_{waveform_type}",
-                            data = waveform.reshape(-1).astype(np.float32),
-                        )
-
-                # Build full pipeline from the interpolator, must be tuple and only current values
-                for feature in audio_features:
-                    for n in range(size):
-                        ratio_prefix = f"{round(n * steps_each, 2):.02f}".replace(".", "_")
-
-                        # The pairs of Right, Left, Mono values vec3 mmv_rms -> mmv_rms[0] [1] [2]
-                        pipelined[f"mmv_{feature}_{ratio_prefix}"] = tuple([
-                            list(self.interpolator.interpolaters[f"mmv_{feature}_{channel_name}"]["current"])[n]
-                            for channel_name in "rlm"
-                        ])
-
-                        pipelined[f"mmv_progressive_{feature}_{ratio_prefix}"] = tuple([
-                            list(self.interpolator.interpolaters[f"mmv_progressive_{feature}_{channel_name}"]["current"])[n]
-                            for channel_name in "rlm"
-                        ])
-
-                pipelined["mmv_progressive_rms"] = tuple(mmv_progressive_rms)
+            # Interpolate values that will be used
+            pipeline = self.interpolation.next(data = pipeline_info)
+            print(pipeline)
 
             # Next iteration
-            self.mgl.next(custom_pipeline = pipelined)
+            self.mgl.next(custom_pipeline = pipeline)
 
             # Write current image to the video encoder
-            if self.mode == "render":
+            if self.mode == EnumRunShadersMode.Render:
                 self.progress_bar.update(1)
 
                 # Write to the FFmpeg stdin
@@ -565,10 +496,11 @@ class MMVShadersCLI:
                 # Looped the audio one time, exit
                 if step == self.audio_source.total_steps - 2:
                     self.ffmpeg.subprocess.stdin.close()
+                    sys.exit(0)
                     break
 
             # View mode we just update window, print fps
-            elif self.mode == "view":
+            elif self.mode == EnumRunShadersMode.RealTime:
                 self.mgl.update_window()
 
                 print(f":: Resolution: [SSAA={self.mgl.ssaa:.2f}]({int(self.mgl.width * self.mgl.ssaa)}x{int(self.mgl.height * self.mgl.ssaa)})->({self.mgl.width}x{self.mgl.height}) Average FPS last ({self.fps_last_n} frames): [{fps}] \r", end = "", flush = True)
@@ -577,52 +509,16 @@ class MMVShadersCLI:
                 if self.mgl.window_handlers.window_should_close:
                     self.audio_source.stop()
                     self.mmv_package_interface.thanks_message()
+                    sys.exit(0)
                     break
 
             # Print FPS, well, kinda, the average of the last fps_last_n frames
             self.frame_times[step % self.fps_last_n] = time.time()
 
             # Manual vsync (yea we really need this)
-            if (not self.mgl.window_handlers.vsync) and (self.mode == "view"):
+            if (not self.mgl.window_handlers.vsync) and (self.mode == EnumRunShadersMode.RealTime):
                 while (time.time() - startcycle) < (1 / self._fps):
                     time.sleep(1 / (self._fps * 100))
-
-class ValuesInterpolator:
-    def __init__(self):
-        self.interpolaters = {}
-    
-    # Add value to interpolate
-    # Size is a np.linspace that goes from 0 to 1 (where interpolation makes sense)
-    # if fixed ratio is given then use array filled with that as ratios (ie. FFT bars)
-    def add_interpolater(self, name, size, fixed_ratio = None):
-        if fixed_ratio is None:
-            ratios = np.linspace(0, 1, size)
-        else:
-            ratios = np.zeros(size, dtype = np.float32)
-            ratios.fill(fixed_ratio)
-        
-        # Build interpolater
-        self.interpolaters[name] = {
-            "current": np.zeros(size, dtype = np.float32),
-            "target": np.zeros(size, dtype = np.float32),
-            "ratios": ratios,
-        }
-
-    def next(self, name, feed, mode = "fill"):
-        # Set new target
-        if mode == "fill":
-            self.interpolaters[name]["target"].fill(feed)
-        if mode == "replace":
-            self.interpolaters[name]["target"] = feed
-        if mode == "add":
-            self.interpolaters[name]["target"] += feed
-
-        # Apply progressive interpolation on ratios, "sc" is shortcut
-        sc = self.interpolaters[name]
-
-        # Calculate interpolation between current and target values
-        self.interpolaters[name]["current"] = (sc["current"] + ((sc["target"] - sc["current"]) * sc["ratios"]))
-
 
 # main function to use typer for CLI
 def main():

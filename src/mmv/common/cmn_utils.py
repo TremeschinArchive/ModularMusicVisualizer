@@ -49,7 +49,8 @@ class Utils:
         self.os = self.get_os()
 
     # Convert to pathlib.Path
-    def enforce_pathlib_Path(self, path):
+    def enforce_pathlib_Path(self, path, accept_None = False):
+        if accept_None and (path is None): return None
         if isinstance(path, str): path = Path(path)
         return path
 

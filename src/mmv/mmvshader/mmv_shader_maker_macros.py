@@ -47,7 +47,7 @@ class MMVShaderMakerMacros:
 
     # Map shader A as "layer" sampler2D on shader B
     def chain(self, A, B):
-        B.add_dynamic_shader_mapping(name = "layer", path = A.finish())
+        B.add_dynamic_shader_mapping(name = "layer", fragment_shader_path = A.finish())
         return B
 
     # Alpha composite many layers automatically like magic!
@@ -65,7 +65,7 @@ class MMVShaderMakerMacros:
             path = layer.finish()
 
             # Add mapping
-            concatenated.add_dynamic_shader_mapping(name = layer_name, path = path)
+            concatenated.add_dynamic_shader_mapping(name = layer_name, fragment_shader_path = path)
 
             # Alpha Composite variable name
             AC = f"alpha_composite_{layer_name}"
