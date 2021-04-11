@@ -59,20 +59,30 @@ class MMVShaderValuesInterpolator:
                     # "mmv_audio_rms_0_23" -> "0_23"
                     t = full_name.replace(match_name + "_", "").split("_")
 
-                    # "0_23" -> 0.23f
-                    ratio = float(f"{t[0]}.{t[1]}")
+                    if len(t) == 2:
+                        # "0_23" -> 0.23f
+                        ratio = float(f"{t[0]}.{t[1]}")
+                    else:
+                        # "1" -> 1f
+                        ratio = float(t[0])
 
                     logging.info(f"{debug_prefix} :: Matched [{full_name}] ratio [{ratio}]")
                     self.instructions[match_name].append(ratio)
+
+                    # FFT radial is dependent on linear
+                    if match_name == "mmv_audio_fft_radial":
+                        self.instructions["mmv_audio_fft_linear"].append(ratio)
 
         # Convert to numpy arrays
         self.instructions = {k: np.array(v, dtype = np.float32) for k, v in self.instructions.items()}
         logging.info(f"{debug_prefix} Instruction on ratios: {self.instructions}")
 
-    def next(self, data):
+    def next(self, data, multiplier: float = 1.0):
         keys = list(data.keys())
 
-        for match_name in [f"mmv_audio_{x}" for x in ["rms", "std", "fft_radial", "fft_linear"]]:
+        # # Progressive interpolation variables
+        
+        for match_name in [f"mmv_audio_{x}" for x in ["rms", "std", "fft_linear"]]:
             if (match_name in keys):
 
                 # Ratios to interpolate (if any)
@@ -82,7 +92,7 @@ class MMVShaderValuesInterpolator:
                 if ratios.shape[0] > 0:
 
                     # The data to feed
-                    feed = data[match_name]
+                    feed = data[match_name] * multiplier
 
                     for ratio in ratios:
                         str_ratio = str(ratio).replace(".", "_")
@@ -94,5 +104,18 @@ class MMVShaderValuesInterpolator:
                         else:
                             # Interpolate on ratios
                             self.pipeline[var_name] = self.pipeline[var_name] + (feed - self.pipeline[var_name]) * ratio
+
+                            print(var_name, self.pipeline[var_name].shape)
+
+                # Convert to radial as well if we want
+                if (match_name == "mmv_audio_fft_linear") and ("mmv_audio_fft_radial" in self.instructions.keys()):
+
+                    # Reverse second half of array
+                    temp = self.pipeline[var_name].copy()
+                    size = temp.shape[0]
+                    a, b = int(size / 2), size
+                    temp[a:b] = temp[a:b][::-1]
+
+                    self.pipeline[f"mmv_audio_fft_radial_{str_ratio}"] = temp
 
         return self.pipeline

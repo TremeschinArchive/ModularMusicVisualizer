@@ -354,8 +354,7 @@ uniform bool mmv_key_alt;
 
 // Progressive audio amplitude
 uniform vec3 mmv_progressive_rms;
-
-//#shadermgl add_uniforms
+//#preprocessor add_uniforms
 
 // ===============================================================================
 
@@ -457,7 +456,7 @@ import os
 class MMVShaderMGL:
     EXPERIMENTAL_VIDEO_MIPMAP = True
     DEVELOPER_RAM_PROFILE = False
-    DEVELOPER = False
+    DEVELOPER = True
 
     # # Window management, contexts
 
@@ -475,7 +474,10 @@ class MMVShaderMGL:
 
     # # Generic methods
 
-    def __init__(self, flip = False, master_shader = False, gl_context = None, screenshots_dir = None):
+    def __init__(self,
+            flip = False, master_shader = False, gl_context = None,
+            screenshots_dir = None,
+    ):
         debug_prefix = "[MMVShaderMGL.__init__]"
         self.master_shader = master_shader
 
@@ -761,6 +763,12 @@ class MMVShaderMGL:
             uniform = self.program.get(name, FakeUniform())
             uniform.value = value
 
+        # Dump preprocessed shaders to disk
+        if MMVShaderMGL.DEVELOPER:
+            dump = str(self.fragment_shader_path).replace(".glsl", "_preprocessed.glsl")
+            with open(dump, "w") as f:
+                f.write(self.fragment_shader)
+
     # Truly construct a shader, returns a ModernGL Program
     def _create_program(self, fragment_shader, vertex_shader, geometry_shader = None):
         debug_prefix = f"[MMVShaderMGL._create_program] [{self.name}]"
@@ -988,14 +996,13 @@ class MMVShaderMGL:
 
         info = [k for k in self.program._members.keys()]
 
+        # Call for every shader as texture loaders
+        for index in self.contents.keys():
+            if self.contents[index]["loader"] == "shader":
+                for key in self.contents[index]["shader_as_texture"].get_used_variables():
+                    info.append(key)
+
         if self.master_shader:
-
-            # Call for every shader as texture loaders
-            for index in self.contents.keys():
-                if self.contents[index]["loader"] == "shader":
-                    for key in self.contents[index]["shader_as_texture"].get_used_variables():
-                        info.append(key)
-
             # Remove duplicates
             info = list(set(info))
             logging.info(f"{debug_prefix} Returning used variables {info}")

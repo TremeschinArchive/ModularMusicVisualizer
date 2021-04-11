@@ -551,7 +551,7 @@ class AudioProcessing:
                         counter += 1
 
             # Yield FFT data
-            yield ["mmv_audio_fft", processed]
+            yield ["mmv_audio_fft_linear", processed]
 
     # # Common Methods
 

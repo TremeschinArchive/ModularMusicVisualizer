@@ -1,7 +1,7 @@
 
 //#mmv {"type": "include", "value": "mmv_specification", "mode": "once"}
 
-uniform vec3 mmv_audio_rms_0_20;
+uniform vec3 mmv_audio_rms_0_2;
 
 void main() {
     //#mmv {"type": "include", "value": "coordinates_normalization", "mode": "multiple"}
@@ -16,7 +16,7 @@ void main() {
     vec2 offset = vec2(sin(mmv_time/7.135135), cos(mmv_time/4.523894)) / 20.0;
 
     // Scale and angle
-    float scale = 3.2 + mmv_audio_rms_0_20[2] * 0.2;
+    float scale = 3.2 + mmv_audio_rms_0_2[2] * 0.2;
     float angle = sin(mmv_time)/30.0;
 
     // // UV

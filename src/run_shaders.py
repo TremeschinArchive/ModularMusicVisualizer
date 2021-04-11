@@ -179,6 +179,7 @@ class MMVShadersCLI:
 
     def __load_master_shader(self):
         self.mgl.load_shader_from_path(fragment_shader_path = self._preset_master_shader)
+        self.mgl.next()
         self.interpolation.parse_used_variables(self.mgl.get_used_variables())
         
     def __configure_audio_processing(self):
@@ -480,8 +481,14 @@ class MMVShadersCLI:
             multiplier = self._multiplier * self.mgl.window_handlers.intensity
 
             # Interpolate values that will be used
-            pipeline = self.interpolation.next(data = pipeline_info)
-            print(pipeline)
+            pipeline = self.interpolation.next(data = pipeline_info, multiplier = multiplier)
+            
+            not_uniforms = []
+            for key in pipeline.keys():
+                if any([match in key for match in ["audio_fft", "audio_waveform"]]):
+                    self.mgl.write_texture_pipeline(texture_name = key, data = pipeline[key])
+                    not_uniforms.append(key)
+            pipeline = {k: v for k, v in pipeline.items() if not any([k in not_uniforms])}
 
             # Next iteration
             self.mgl.next(custom_pipeline = pipeline)

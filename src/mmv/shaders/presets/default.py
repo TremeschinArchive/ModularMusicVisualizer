@@ -90,7 +90,7 @@ elif BACKGROUND == "image":
 # # Logo, visualizer
 
 logo_visualizer = macros.load(path = interface.shaders_dir / "assets" / "music_bars" / "circle_sectors.glsl")
-logo_visualizer.add_pipeline_texture_mapping(name = "mmv_radial_fft", width = replaces["MMV_FFTSIZE"], height = 1, depth = 1)
+logo_visualizer.add_pipeline_texture_mapping(name = "mmv_audio_fft_radial_0_2", width = replaces["MMV_FFTSIZE"], height = 1, depth = 1)
 logo_visualizer.add_image_mapping(name = "logo", path = interface.MMV_PACKAGE_ROOT/".."/".."/"repo"/"mmv_logo_alt_white.png")
 
 # Want some chromatic aberration on logo?
@@ -101,7 +101,7 @@ if True:
 
 
 horizontal_bars = macros.load(path = interface.shaders_dir / "assets" / "music_bars" / "horizontal.glsl")
-horizontal_bars.add_pipeline_texture_mapping(name = "mmv_linear_fft", width = replaces["MMV_FFTSIZE"], height = 1, depth = 1)
+horizontal_bars.add_pipeline_texture_mapping(name = "mmv_audio_fft_linear_0_2", width = replaces["MMV_FFTSIZE"], height = 1, depth = 1)
 
 
 

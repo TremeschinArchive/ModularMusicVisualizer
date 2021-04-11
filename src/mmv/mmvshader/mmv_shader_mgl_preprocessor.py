@@ -385,6 +385,10 @@ class MMVShaderMGLPreprocessor:
                         # as that one will receive the main class's pipeline
                         shader_as_texture.target_render_settings(width = int(width), height = int(height), ssaa = self.mmv_shader_mgl.ssaa, fps = None)
 
+                        shader_as_texture.fragment_shader_path = fragment_shader_path
+                        shader_as_texture.geometry_shader_path = geometry_shader_path
+                        shader_as_texture.vertex_shader_path = vertex_shader_path
+                        
                         # Construct the shader we loaded
                         shader_as_texture.construct_shader(
                             fragment_shader = loader_frag_shader,
@@ -432,8 +436,8 @@ class MMVShaderMGLPreprocessor:
                         }
                         
                     # Add the texture uniform values
-                    marker = "//#shadermgl add_uniforms"
-                    shader = shader.replace(f"{marker}", f"\n// Texture\n{marker}")
+                    marker = "//#preprocessor add_uniforms"
+                    shader = shader.replace(f"{marker}", f"\n// // [Preprocessor] Texture\n{marker}")
                     shader = shader.replace(f"{marker}", f"uniform sampler2D {name};\n{marker}")
                     shader = shader.replace(f"{marker}", f"uniform int {name}_width;\n{marker}")
                     shader = shader.replace(f"{marker}", f"uniform int {name}_height;\n{marker}\n")
