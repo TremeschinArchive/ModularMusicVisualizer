@@ -29,7 +29,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from mmv.sombrero.sombrero_window import SombreroWindow
 from mmv.sombrero.sombrero_constructor import *
 from mmv.sombrero.sombrero_shader import *
-from mmv.mmv_enums import *
 from enum import Enum, auto
 from PIL import Image
 import numpy as np

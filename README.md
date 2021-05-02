@@ -151,6 +151,7 @@ Please be patient if you want features to be implemented, I work on MMV code in 
 <hr>
 
 
+# THIS BRANCH IS UNDER HEAVY DEVELOPMENT AND INFO ON README NEED TO BE UPDATED, STUFF IMPLEMENTED.
 
 
 # Running
