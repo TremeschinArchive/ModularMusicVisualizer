@@ -150,13 +150,11 @@ class IO(CallableAddToParent):
 
     @property
     def in_name(self) -> str:
-        if self.prefix:
-            return f"in_{self.name}"
+        if self.prefix: return f"in_{self.name}"
         return f"{self.name}"
     @property
     def out_name(self) -> str:
-        if self.prefix:
-            return f"out_{self.name}"
+        if self.prefix: return f"out_{self.name}"
         return f"{self.name}"
 
 # Alpha composite function from sombrero specification
@@ -207,7 +205,7 @@ class GenericMapping:
     def __init__(self, **config): assign_locals(locals())
 
     # We need where to place (parent =~= PlaceHolder), the main sombrero mgl and the shader
-    def __call__(self, parent, sombrero_mgl, sombrero_shader):
+    def __call__(self, sombrero_shader, parent, sombrero_mgl):
         assign_locals(locals()); self.parent._add(self)
 
     # Return uniform type name;
@@ -234,7 +232,6 @@ class SombreroShader(Searchable, SimpleBuildableChilds, SimpleEnterable):
     def copy(self): return copy.deepcopy(self)
     def build(self, indent = "") -> str:
         return '\n'.join( [built for item in self.contents for built in item.build(indent = indent)] )
-
 
     # Get In / Outs elements from the contents
     def get_in_outs(self) -> list: return self.search_class(IO)
@@ -270,20 +267,28 @@ class SombreroShaderMacros:
                 FragColor("mainImage()")(main)
         return SHADER
 
+    # # These assign_to_parent are for automatically setting the parent SombreroMGL's .shader attribute
+    # to what we will return. Using it False doesn't have much sense unless generating shaders from a single
+    # macro instance then assigning to other SombreroMGLs
+
     # Load some fragment shader, vertex and geometry are defined per constructor object
-    def load(self, path) -> SombreroShader:
+    def load(self, path, assign_to_parent = True) -> SombreroShader:
         with self.__base_shader() as SHADER:
             Include(Path(path).resolve())(SHADER.UserShader)
+        if assign_to_parent: self.sombrero_mgl.shader = SHADER; return
         return SHADER
 
+    def add_mapping(self, item): item(self.sombrero_mgl.shader, self.sombrero_mgl.shader.Mappings, self.sombrero_mgl)
+
     # Alpha composite many layers together
-    def alpha_composite(self, layers, gamma_correction = False) -> SombreroShader:
+    def alpha_composite(self, layers, gamma_correction = False, assign_to_parent = True) -> SombreroShader:
         with self.__base_shader() as SHADER:
 
             # # Map layers as shader textures
             for index, layer in enumerate(layers):
+                if hasattr(layer, "finish"): layer.finish()
                 # Return("ASD")(SHADER.Mappings)
-                TextureShader(name = f"layer{index}", sombrero_mgl = layer)(SHADER.Mappings, self.sombrero_mgl, SHADER)
+                TextureShader(name = f"layer{index}", sombrero_mgl = layer)(SHADER, SHADER.Mappings, self.sombrero_mgl)
 
             # mainImage function
             with Function("vec4", "mainImage", "")(SHADER.UserShader) as main:
@@ -297,4 +302,5 @@ class SombreroShaderMacros:
                 # Gamma correction
                 if gamma_correction: GammaCorrection("col", "col", 2.0)(main)
                 Return("col")(main)
+        if assign_to_parent: self.sombrero_mgl.shader = SHADER; return
         return SHADER

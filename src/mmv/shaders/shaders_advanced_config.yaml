@@ -1,9 +1,0 @@
-audio:
-  sample_rate: 48000
-  batch_size: 4096
-
-ffmpeg:
-  preset: slow
-  crf: 18
-  tune: film
-  vflip: True
