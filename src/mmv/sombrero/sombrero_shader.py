@@ -1,0 +1,300 @@
+"""
+===============================================================================
+                                GPL v3 License                                
+===============================================================================
+
+Copyright (c) 2020 - 2021,
+  - Tremeschin < https://tremeschin.gitlab.io > 
+
+===============================================================================
+
+Purpose: Toolkit for writing shader. HEAVY metaprogramming
+
+===============================================================================
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <http://www.gnu.org/licenses/>.
+
+===============================================================================
+"""
+from pathlib import Path
+import copy
+
+
+# Yeet values from __init__ as self. values (overkill shorthand..)
+def assign_locals(data):
+    for key, value in data.items():
+        if key != "self": data["self"].__dict__[key] = value
+
+
+# # Abstractions
+
+# Create contents dictionary
+class HasContents:
+    def __init__(self): self.contents = []
+    def _add(self, content): self.contents.append(content) 
+
+# When you instantiate Class()(parent_obj) you call .add to the parent
+class CallableAddToParent:
+    def __call__(self, parent): self.parent = parent; parent._add(self)
+
+# One can search the contents of this object for stuff
+# like matching classes or names
+class Searchable(HasContents):
+    def __init__(self): super().__init__()
+
+    @property # Every Searchable / HasContents instances
+    def everyone(self): yield from self.__get_everyone()
+
+    # Recursively search because this item is Searchable; f we have contents then search that (core idea)
+    def __get_everyone(self):
+        for stuff in self.contents:
+            if issubclass(type(stuff), Searchable): yield from stuff.everyone
+            if issubclass(type(self), HasContents): yield stuff
+
+    # Search functions, they return list of candidates, preferably will only have one..
+
+    # Search for some specific class instance like search_class(IO) will yield all the IOs
+    def search_class(self, who): return [stuff for stuff in self.everyone if isinstance(stuff, who)]
+
+    # If item has attribute name (functions, placeholders) then match against it
+    def search_by_name(self, name): return [stuff for stuff in self.everyone if ((hasattr(stuff, "name")) and (stuff.name == name))]
+
+    # Search some placeholder
+    def search_placeholder(self, name): return [ph for ph in self.search_by_name(name) if isinstance(ph, PlaceHolder)]
+
+
+
+# Build method will only yield each content being built to a plain list, we can override this though
+class SimpleBuildableChilds:
+    def build(self, indent = "") -> list:
+        return [built for item in self.contents for built in item.build(indent = indent)]
+
+# Return self if entered, do nothing when exit
+class SimpleEnterable:
+    def __exit__(self, *args, **kwargs): pass 
+    def __enter__(self): return self
+
+# You can put this class on a with statement, it holds the content
+#
+# with SomeClass() as foo:
+#     Include("path")(foo)
+#
+class WithScopedAddToParent(Searchable, SimpleBuildableChilds):
+    def __init__(self): super().__init__()
+    def __enter__(self): return self
+    def __call__(self, parent): self.parent = parent; return self
+    def __exit__(self, *args, **kwargs): self.parent._add(self)
+
+
+
+
+# # Functionality, complete line statements
+
+
+
+class Version(CallableAddToParent):
+    def __init__(self, number): self.number = number
+    def build(self, indent = "") -> list: return [f"#version {self.number}"]
+
+class Include(CallableAddToParent):
+    def __init__(self, file): self.file = file
+    def build(self, indent = "") -> list:
+        data = Path(self.file).resolve().read_text()
+        ret = [f"// // Include [{self.file}]\n"]
+        for line in data.split("\n"):
+            ret += [f"{indent}{line}"]
+        ret += [f"\n// // End Include [{self.file}]"]
+        return ret
+
+# # Variables, Uniforms
+class Uniform(CallableAddToParent):
+    def __init__(self, var_type, name): assign_locals(locals())
+    def build(self, indent = "") -> list: return [f"{indent}uniform {self.var_type} {self.name};"]
+class Variable(CallableAddToParent):
+    def __init__(self, var_type, name, value): assign_locals(locals())
+    def build(self, indent = "") -> list: return [f"{indent}{self.var_type} {self.name} = {self.value};"]
+
+# # Return stuff
+class Return(CallableAddToParent):
+    def __init__(self, what): self.what = what
+    def build(self, indent = "") -> list: return [f"{indent}return {self.what};"]
+class FragColor(CallableAddToParent):
+    def __init__(self, what): self.what = what
+    def build(self, indent = "") -> list: return [f"{indent}fragColor = {self.what};"]
+
+# One input or output marked variable, communication between vertex, geometry and fragment shader
+class IO(CallableAddToParent):
+    def __repr__(self): return f"<IO {str(id(self))[-4:]} name:\"{self.name}\" mode:\"{self.mode}\">"
+    def __init__(self, glsltype, name, use = True, prefix = True, mode = "io"):
+        assign_locals(locals())
+        {"io": self.do_input_and_output, 'i': self.do_only_input, 'o': self.do_only_output}.get(mode, "io")()
+
+    def build(self, indent = "") -> list:
+        R = []
+        if "i" in self.mode: R += [f"{indent}in {self.glsltype} {self.in_name};"]
+        if "o" in self.mode: R += [f"{indent}out {self.glsltype} {self.out_name};"]
+        return R
+
+    def do_only_input(self): self.mode = "i"
+    def do_only_output(self): self.mode = "o"
+    def do_input_and_output(self): self.mode = "io"
+
+    @property
+    def in_name(self) -> str:
+        if self.prefix:
+            return f"in_{self.name}"
+        return f"{self.name}"
+    @property
+    def out_name(self) -> str:
+        if self.prefix:
+            return f"out_{self.name}"
+        return f"{self.name}"
+
+# Alpha composite function from sombrero specification
+class AlphaComposite(CallableAddToParent):
+    def __init__(self, new, old, target): assign_locals(locals())
+    def build(self, indent = "") -> list: return [f"{indent}{self.target} = mAlphaComposite({self.new}, {self.old});"]
+
+class GammaCorrection(CallableAddToParent):
+    def __init__(self, assign, who, gamma): assign_locals(locals())
+    def build(self, indent = ""): return [f"{indent}{self.assign} = pow({self.who}, vec4(1.0 / {self.gamma}));"]
+ 
+
+# Incomplete statement, meant to be used alongside some other one. They also return strings
+# when called inside fstrings, makes sense since we want to just f"something {partialstatement}"
+# and no need to directly call build on them
+class PartialStatement:
+    def __repr__(self): return self.build()
+
+class Texture(PartialStatement):
+    def __init__(self, sampler2D, uv): assign_locals(locals())
+    def build(self, indent = "") -> str: return f"texture({self.sampler2D}, {self.uv})"
+
+
+# # Scoped
+
+
+class Function(WithScopedAddToParent):
+    def __init__(self, return_type, name, arguments):
+        super().__init__(); assign_locals(locals())
+
+    def build(self, indent = "") -> list:
+        data = [f"{indent}{self.return_type} {self.name}({self.arguments}) {{"]
+        for item in self.contents:
+            data += [f"{indent}{line}" for line in item.build("    " + indent)]
+        data += [f"{indent}}}"]
+        return data
+
+
+class PlaceHolder(Searchable, CallableAddToParent, SimpleBuildableChilds):
+    def __repr__(self): return f"<PlaceHolder {str(id(self))[-4:]} \"{self.name}\" {self.contents}>"
+    def __init__(self, name): super().__init__(); assign_locals(locals())
+
+
+# # Mappings
+
+
+class GenericMapping:
+    def __init__(self, **config): assign_locals(locals())
+
+    # We need where to place (parent =~= PlaceHolder), the main sombrero mgl and the shader
+    def __call__(self, parent, sombrero_mgl, sombrero_shader):
+        assign_locals(locals()); self.parent._add(self)
+
+    # Return uniform type name;
+    def build(self, indent = ""):
+        self.action()
+        for item in self.info:
+            if isinstance(item, Uniform):
+                item( self.sombrero_shader.Uniforms )
+        return []
+
+class TextureImage(GenericMapping):
+    def action(self): self.info = self.sombrero_mgl.map_image(**self.config)
+class TextureShader(GenericMapping):
+    def action(self): self.info = self.sombrero_mgl.map_shader(**self.config)
+
+
+# # Main classes
+
+
+# A Shader is basically a placeholder that have some inputs and outputs variables.
+class SombreroShader(Searchable, SimpleBuildableChilds, SimpleEnterable):
+    def __init__(self): super().__init__()
+    def __repr__(self): return f"<Shader {self.contents}>"
+    def copy(self): return copy.deepcopy(self)
+    def build(self, indent = "") -> str:
+        return '\n'.join( [built for item in self.contents for built in item.build(indent = indent)] )
+
+
+    # Get In / Outs elements from the contents
+    def get_in_outs(self) -> list: return self.search_class(IO)
+
+    @property
+    def Mappings(self): return self.search_placeholder("Mappings")[0]
+    @property
+    def UserShader(self): return self.search_placeholder("UserShader")[0]
+    @property
+    def Uniforms(self): return self.search_placeholder("Uniforms")[0]
+    @property
+    def IOPlaceHolder(self): return self.search_placeholder("IO")[0]
+
+class SombreroShaderMacros:
+    def __init__(self, sombrero_mgl):
+        self.sombrero_mgl = sombrero_mgl
+
+    # Versioned, placeholders, and sombrero specification
+    def __base_shader(self) -> SombreroShader:
+        with SombreroShader() as SHADER:
+            Version("330")(SHADER)
+            PlaceHolder("IO")(SHADER)
+            PlaceHolder("Mappings")(SHADER)
+            PlaceHolder("Uniforms")(SHADER)
+            Include(Path(self.sombrero_mgl.mmv_interface.shaders_dir)/"include"/"sombrero_specification.glsl")(SHADER)
+
+            # Add your main() and stuff from file here, mainImage() 
+            # is called after everyone since it's the final step
+            PlaceHolder("UserShader")(SHADER)
+
+            # Return mainImage from main function, gamma correction of sqrt
+            with Function("void", "main", "")(SHADER) as main:
+                FragColor("mainImage()")(main)
+        return SHADER
+
+    # Load some fragment shader, vertex and geometry are defined per constructor object
+    def load(self, path) -> SombreroShader:
+        with self.__base_shader() as SHADER:
+            Include(Path(path).resolve())(SHADER.UserShader)
+        return SHADER
+
+    # Alpha composite many layers together
+    def alpha_composite(self, layers, gamma_correction = False) -> SombreroShader:
+        with self.__base_shader() as SHADER:
+
+            # # Map layers as shader textures
+            for index, layer in enumerate(layers):
+                # Return("ASD")(SHADER.Mappings)
+                TextureShader(name = f"layer{index}", sombrero_mgl = layer)(SHADER.Mappings, self.sombrero_mgl, SHADER)
+
+            # mainImage function
+            with Function("vec4", "mainImage", "")(SHADER.UserShader) as main:
+                Variable("vec4", "col", "vec4(0.0)")(main)
+
+                # Alpha composite every layer
+                for index, layer in enumerate(layers):
+                    # New, Old, Target -> Target = AC(New, Old)
+                    AlphaComposite("col", Texture(f"layer{index}", "shadertoy_uv"), "col")(main)
+
+                # Gamma correction
+                if gamma_correction: GammaCorrection("col", "col", 2.0)(main)
+                Return("col")(main)
+        return SHADER

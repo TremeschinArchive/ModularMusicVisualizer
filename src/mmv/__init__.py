@@ -41,10 +41,6 @@ import os
 
 
 # Class that distributes MMV packages, sets up logging and behavior;
-# This class is distributed as being called "interface" among mmvskia
-# and mmvshader packages, which this one have the "prelude" attribute
-# which is the dictionary of the file prelude.toml containing
-# general behavior of MMV
 class MMVPackageInterface:
 
     # Hello world!
@@ -126,18 +122,10 @@ f"""Show extension\n{"="*self.terminal_width}
 """
             logging.info(message)
 
-    # Get a moderngl wrapper / interface for rendering fragment shaders, getting their
-    # contents, map images, videos and even other shaders into textures
-    def get_mmv_shader_mgl(self, **kwargs):
+    def get_sombrero(self, **kwargs):
         self.___printshadersmode()
-        from mmv.mmvshader.mmv_shader_mgl import MMVShaderMGL
-        return MMVShaderMGL
-
-    # Return shader maker interface
-    def get_mmv_shader_maker(self, **kwargs):
-        self.___printshadersmode()
-        from mmv.mmvshader.mmv_shader_maker import MMVShaderMaker
-        return MMVShaderMaker
+        from mmv.sombrero.sombrero_main import SombreroMGL
+        return SombreroMGL
 
     # Return one (usually required) setting up encoder unless using preview window
     def get_ffmpeg_wrapper(self):
@@ -167,35 +155,12 @@ f"""Show extension\n{"="*self.terminal_width}
         from mmv.common.cmn_audio import AudioSourceFile
         return AudioSourceFile(ffmpeg_wrapper = self.get_ffmpeg_wrapper())
 
-    # Real time, reads from a loopback device
-    def get_jumpcutter(self):
-        debug_prefix = "[MMVPackageInterface.get_jumpcutter]"
-        self.terminal_width = shutil.get_terminal_size()[0]
-        bias = " "*(math.floor(self.terminal_width/2) - 28)
-        message = \
-f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
-{bias}   ___                       _____       _   _            
-{bias}  |_  |                     /  __ \\     | | | |           
-{bias}    | |_   _ _ __ ___  _ __ | /  \\/_   _| |_| |_ ___ _ __ 
-{bias}    | | | | | '_ ` _ \\| '_ \\| |   | | | | __| __/ _ \\ '__|
-{bias}/\\__/ / |_| | | | | | | |_) | \\__/\\ |_| | |_| ||  __/ |   
-{bias}\\____/ \\__,_|_| |_| |_| .__/ \\____/\\__,_|\\__|\\__\\___|_|   
-{bias}                      | |                                 
-{bias}                      |_|                                
-{bias}
-{bias}                   + MMV Extension +
-{"="*self.terminal_width}
-"""
-        logging.info(message)
-        from mmv.extra.extra_jumpcutter import JumpCutter
-        return JumpCutter(ffmpeg_wrapper = self.get_ffmpeg_wrapper())
-
     # Main interface class, mainly sets up root dirs, get config, distributes classes
     # Send platform = "windows", "macos", "linux" for forcing a specific one
     def __init__(self, platform = None, **kwargs) -> None:
         debug_prefix = "[MMVPackageInterface.__init__]"
 
-        self.version = "3.2: rolling"
+        self.version = "4.0: Sombrerõ"
 
         # Where this file is located, please refer using this on the whole package
         # Refer to it as self.mmv_skia_main.MMV_PACKAGE_ROOT at any depth in the code
@@ -207,25 +172,25 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
             self.MMV_PACKAGE_ROOT = Path(os.path.dirname(os.path.abspath(sys.executable)))
             print(f"{debug_prefix} Running from release (sys.executable..?)")
 
+        # Utils class
+        logging.info(f"{debug_prefix} Creating Utils() class")
+        self.utils = Utils()
+
         print(f"{debug_prefix} Modular Music Visualizer Python package [__init__.py] or executable located at [{self.MMV_PACKAGE_ROOT}]")
+        print(f"{debug_prefix} Loading config configuration file")
 
-        # # Load prelude configuration
-
-        print(f"{debug_prefix} Loading prelude configuration file")
+        # # Load config
         
-        # Build the path the prelude file should be located at
-        prelude_file = self.MMV_PACKAGE_ROOT / "prelude.toml"
-        print(f"{debug_prefix} Attempting to load prelude file located at [{prelude_file}], we cannot continue if this is wrong..")
+        # Build the path the config file should be located at
+        config_file = self.MMV_PACKAGE_ROOT / "config.toml"
+        print(f"{debug_prefix} Attempting to load config file located at [{config_file}], we cannot continue if this is wrong..")
 
-        # Load the prelude file
-        with open(prelude_file, "r") as f:
-            self.prelude = toml.loads(f.read())
+        # Load the config file
+        self.config = self.utils.load_yaml(self.MMV_PACKAGE_ROOT / "config.yaml")
         
-        print(f"{debug_prefix} Loaded prelude configuration file, data: [{self.prelude}]")
+        print(f"{debug_prefix} Loaded config configuration file, data: [{self.config}]")
 
         # # # Logging 
-
-        # # We can now set up logging as we have where this file is located at
 
         # # Reset current handlers if any
         print(f"{debug_prefix} Resetting Python's logging logger handlers to empty list")
@@ -237,7 +202,7 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
         # Handlers on logging to file and shell output, the first one if the user says to
         handlers = [logging.StreamHandler(sys.stdout)]
 
-        # Loglevel is defined in the prelude.toml configuration
+        # Loglevel is defined in the config.toml configuration
         LOG_LEVEL = {
             "critical": logging.CRITICAL,
             "debug": logging.DEBUG,
@@ -245,22 +210,20 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
             "info": logging.INFO,
             "warn": logging.warning,
             "notset": logging.NOTSET,
-        }.get(self.prelude["logging"]["log_level"])
+        }.get(self.config["logging"]["log_level"])
 
         # If user chose to log to a file, add its handler..
-        if self.prelude["logging"]["log_to_file"]:
+        if self.config["logging"]["log_to_file"]:
 
             # Hard coded where the log file will be located
             # this is only valid for the last time we run this software
             self.LOG_FILE = self.MMV_PACKAGE_ROOT / "last_log.log"
 
             # Reset the log file
-            with open(self.LOG_FILE, "w") as f:
-                print(f"{debug_prefix} Reset log file located at [{self.LOG_FILE}]")
-                f.write("")
+            self.LOG_FILE.write_text("")
+            print(f"{debug_prefix} Reset log file located at [{self.LOG_FILE}]")
 
             # Verbose and append the file handler
-            print(f"{debug_prefix} Reset log file located at [{self.LOG_FILE}]")
             handlers.append(logging.FileHandler(filename = self.LOG_FILE, encoding = 'utf-8'))
 
         # .. otherwise just keep the StreamHandler to stdout
@@ -270,7 +233,7 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
             "pretty": "[%(levelname)-8s] (%(relativeCreated)-5d)ms %(message)s",
             "economic": "[%(levelname)s::%(filename)s::%(lineno)d] %(message)s",
             "onlymessage": "%(message)s"
-        }.get(self.prelude["logging"]["log_format"])
+        }.get(self.config["logging"]["log_format"])
 
         # Start the logging global class, output to file and stdout
         logging.basicConfig(
@@ -288,7 +251,7 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
         print("-" * self.terminal_width + "\n")
 
         # Log what we'll do next
-        logging.info(f"{debug_prefix} We're done with the pre configuration of Python's behavior and loading prelude.toml configuration file")
+        logging.info(f"{debug_prefix} We're done with the pre configuration of Python's behavior and loading config.toml configuration file")
 
         # Log precise Python version
         sysversion = sys.version.replace("\n", " ").replace("  ", " ")
@@ -311,9 +274,6 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
         logging.info(f"{debug_prefix} Running Modular Music Visualizer on Operating System: [{self.os}]")
 
         # # Create interface's classes
-
-        logging.info(f"{debug_prefix} Creating Utils() class")
-        self.utils = Utils()
 
         logging.info(f"{debug_prefix} Creating Download() class")
         self.download = Download()
@@ -363,11 +323,6 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
 
         # # Common files
 
-        # Code flow management
-        if self.prelude["flow"]["stop_at_initialization"]:
-            logging.critical(f"{debug_prefix} Exiting as stop_at_initialization key on prelude.toml is True")
-            sys.exit(0)
-        
         # # External dependencies where to append for PATH
 
         # Externals directory for Linux
@@ -395,11 +350,6 @@ f"""{debug_prefix} Show extension\n{"="*self.terminal_width}
         # Update the externals search path (create one in this case)
         self.update_externals_search_path()
 
-        # Code flow management
-        if self.prelude["flow"]["stop_at_initialization"]:
-            logging.critical(f"{debug_prefix} Exiting as stop_at_initialization key on prelude.toml is True")
-            sys.exit(0)
-    
     # Get the target externals dir for this platform
     def __get_platform_external_dir(self, platform):
         debug_prefix = "[MMVPackageInterface.__get_platform_external_dir]"

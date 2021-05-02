@@ -322,12 +322,15 @@ Example:
 
 There are a couple hotkeys and interactions with the window:
 
-- Can click + drag to translate space, scroll to zoom in / out
-- Shift + scroll increases / decreases the intensity of effects (multiplier)
-- Ctrl + scroll increases / decreases the SSAA (Super Sampling Anti Aliasing), gets exponentially slower to render but gives nicer edges as explained.
-- Alt + scroll increases / decreases rotation
-- Shift + drag is precise zoom
-- Alt + drag is precise rotation
+- `Can click + drag` to translate space, scroll to zoom in / out
+- Hold `ctrl` for alignment overlay
+- `Shift + scroll` increases / decreases the intensity of effects (multiplier)
+- `Ctrl + scroll` (only when not dragging) increases / decreases the SSAA (Super Sampling Anti Aliasing), gets exponentially slower to render but gives nicer edges as explained.
+- `Alt + scroll` increases / decreases rotation
+- `Shift + drag` is precise zoom
+- `Alt + drag` is precise rotation
+- Pressing `Tab` toggles GUI
+- Pressing `shift + tab` toggles "gui exclusive mode", while gui is shown stops drag, zoom, rotation, other commands so one can click and use the gui without coordinates interactive controls
 - Pressing `z` resets zoom back to 1x
 - Pressing `x` resets dragged space back to the origin
 - Pressing `c` resets rotation to 0
@@ -339,6 +342,7 @@ There are a couple hotkeys and interactions with the window:
 - Pressing `h` hides mouse
 - Pressing `e` get exclusivity of mouse, ie. locks the mouse to the window, other controls also applies but won't require to click (Alt for rotation, Shift for zoom, nothing for dragging)
 - Pressing `q` quits
+- Pressing `d` enables debug mode
   
 And of course, all of those are smoothly animated, not too quick nor too slow, but snappy.
 
