@@ -84,6 +84,8 @@ class SombreroMGL:
                 "mTime": 0.0, "mFrame": 0,
                 "mResolution": np.array([0, 0], dtype = np.int32),
             }
+        
+        self.__ever_finished = False
     
     def new_child(self,):
         child = SombreroMGL(mmv_interface = self.mmv_interface, master_shader = False, gl_context = self.gl_context)
@@ -120,13 +122,11 @@ class SombreroMGL:
         self.pending_uniforms += uniforms
 
         self.assign_content({
-            "name": name, "loader": ContentType.Image,
+            "name": name, "loader": "image",
             "resolution": img.size,
             "texture": texture,
         })
-        print("Map image", name, path, texture, uniforms)
-
-        return uniforms
+        return [Uniform("sampler2D", name), Uniform("vec2", f"{name}_resolution")]
     
     def map_shader(self, name, sombrero_mgl):
         uniforms = [["sampler2D", name, None]]
@@ -167,6 +167,7 @@ class SombreroMGL:
 
     # Load shader from this class's SombreroConstructor
     def finish(self):
+        self.__ever_finished = True
 
         # Default constructor is Fullscreen if not set
         if self.constructor is None: self.constructor = FullScreenConstructor(self)
@@ -195,6 +196,7 @@ class SombreroMGL:
 
     # Next iteration, also render
     def next(self, custom_pipeline = {}):
+        if not self.__ever_finished: self.finish()
 
         # # Update pipeline
 
