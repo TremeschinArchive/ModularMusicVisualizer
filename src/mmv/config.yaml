@@ -3,11 +3,8 @@
 # for configurations such as logging, namely Python stuff or QOL, let
 # you name it.
 
+logging:
+  log_to_file: true
+  log_level: "info"  # critical, debug, error, info
+  log_format: "pretty"  # informational, pretty, economic, onlymessage
 
-[logging]
-log_to_file = false
-log_level = "info"  # critical, debug, error, info
-log_format = "pretty"  # informational, pretty, economic, onlymessage
-
-[flow]
-stop_at_initialization = false

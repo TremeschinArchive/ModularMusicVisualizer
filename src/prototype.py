@@ -1,83 +1,38 @@
+from mmv.sombrero.sombrero_constructor import *
+from mmv.sombrero.sombrero_shader import *
+from PIL import Image
 import time
 import mmv
 import os
 
+FPS = 60
+
 
 def main():
     interface = mmv.MMVPackageInterface()
-    shader_interface = interface.get_shader_interface()
+    sombrero_main = interface.get_sombrero()(mmv_interface = interface, master_shader = True)
+    sombrero_main.configure(width = 1920, height = 1080, fps = FPS, ssaa = 1)
+    sombrero_main.window.configure()
 
-    # ShaderMaker Interface
+    background = sombrero_main.new_child()
+    background.shader = background.macros.load(interface.shaders_dir/"assets"/"background"/"blueprint.glsl")
+    background.finish()
 
-    shadermaker = shader_interface.get_mmv_shader_maker()(
-        working_directory = interface.shaders_dir, name = "Prototype test shader"
-    )
-    BlockOfCode = shadermaker.block_of_code
-
-    # Test add stuff
-
-    # shadermaker.add_function(function = BlockOfCode(
-    # """\
-    # vec4 demo(vec2 uv) {
-    #     return vec4(uv.x, uv.y, 0.0, 1.0);
-    # }""", scoped = False, name = "Add test function"
-    # ))
-
-    # image = shadermaker.transformations.image(
-    #     image = "background"
-    # )
-    # image.set_name("Original image")
-    # image.disable()
-
-    # print(image)
-    # print("Extend image with image")
-
-    # copied_image = image.clone()
-    # copied_image.unscope()
-    # copied_image.set_name("Cloned and unscoped image, set as extensions")
-    # image.extend(copied_image)
-    # copied_image.scope()
-
-    # shadermaker.add_transformation(transformation = image)
-
-    # # # Test shadermaker.transformations and stuff
+    hud = sombrero_main.new_child()
+    hud.shader = hud.macros.load(interface.shaders_dir/"sombrero"/"default_hud.glsl")
+    hud.finish()
 
     # # Alpha composite
 
-    shadermaker.add_image_mapping(name = "background", path = f"{interface.assets_dir}/free_assets/glsl_default_background.jpg")
-    shadermaker.add_include(include = "mmv_specification")
+    layers = [background, hud]
 
-    background_layer = shadermaker.transformations.get_texture(texture_name = "background", uv = "shadertoy_uv", assign_to_variable = "processing")
-    alpha_composite = shadermaker.transformations.alpha_composite(new = "processing")
-    background_layer.extend(alpha_composite)
-
-    shadermaker.add_transformation(transformation = background_layer)
-
-    # Build final shader
-    shadermaker.build_final_shader()
-
-    # Save to file
-    saveto = f"{interface.runtime_dir}{os.path.sep}{shadermaker.name}-frag.glsl"
-    shadermaker.save_shader_to_file(saveto)
-    path = shadermaker.get_path()
-
-    # # View realtime code
-
-    mgl = shader_interface.get_mmv_shader_mgl()(master_shader = True)
-    mgl.include_dir(f"{interface.shaders_dir}{os.path.sep}include")
-    mgl.target_render_settings(width = 1920, height = 1080, ssaa = 1, fps = 60)
-    mgl.mode(window_class = "glfw", strict = False, vsync = False, msaa = 4)
-
-    mgl.load_shader_from_path(path)
+    sombrero_main.shader = sombrero_main.macros.alpha_composite(layers, gamma_correction = True)
+    sombrero_main.finish()
 
     while True:
         start = time.time()
-        mgl.next()
-        mgl.update_window()
-        if mgl.window_handlers.window_should_close:
-            break
-        while (time.time() - start) < (1 / 60):
-            time.sleep(1 / (60 * 100))
+        sombrero_main.next()
+        # print("\r" + str(sombrero_main.pipeline["mFrame"]), end = "", flush = True)
+        if sombrero_main.window.window_should_close: break
+        while time.time() - start < 1 / FPS: time.sleep(1/(2*FPS))
 
-if __name__ == "__main__":
-    main()

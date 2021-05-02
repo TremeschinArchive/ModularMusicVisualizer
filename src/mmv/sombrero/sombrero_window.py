@@ -36,29 +36,35 @@ import multiprocessing
 import moderngl_window
 from PIL import Image
 import numpy as np
+import moderngl
 import logging
 import imgui
 import math
 import gc
 
 
-class MMVShaderMGLWindowHandlers:
+class SombreroWindow:
+    LINUX_GNOME_PIXEL_SAVER_EXTENSION_WORKAROUND = False
+
+    # Multipliers
     INTENSITY_RESPONSIVENESS = 0.2
     ROTATION_RESPONSIVENESS = 0.2
     ZOOM_RESPONSIVENESS = 0.2
     DRAG_RESPONSIVENESS = 0.3
     DRAG_MOMENTUM = 0.6
 
-    DEVELOPER = False
+    DEVELOPER = True
     
-    def __init__(self, mmv_shader_mgl):
-        self.mmv_shader_mgl = mmv_shader_mgl
+    def __init__(self, sombrero):
+        self.sombrero = sombrero
         
         # Mouse related controls
         self.target_drag = np.array([0.0, 0.0])
         self.target_intensity = 1
         self.target_rotation = 0
         self.target_zoom = 1
+        self.is_dragging_mode = False
+        self.is_dragging = False
 
         # Multiplier on top of multiplier, configurable real time
         self.drag_momentum = np.array([0.0, 0.0])
@@ -77,11 +83,16 @@ class MMVShaderMGLWindowHandlers:
         self.mouse_exclusivity = False
 
         # Gui
-        self.hide_gui = True
+        self.lock_controls_due_gui = False
+        self.show_gui = False
+        self.debug_mode = False
+        
+        # Actions
+        self.do_playback = True
 
     # Which "mode" to render, window loader class, msaa, ssaa, vsync, force res?
-    def mode(self, window_class, msaa = 1, vsync = True, strict = False, icon = None):
-        debug_prefix = "[MMVShaderMGLWindowHandlers.mode]"
+    def configure(self, window_class = "glfw", msaa = 8, vsync = False, strict = False, icon = None):
+        debug_prefix = "[SombreroWindow.configure]"
 
         logging.info(f"{debug_prefix} \"i\" Set window mode [window_class={window_class}] [msaa={msaa}] [vsync={vsync}] [strict={strict}] [icon={icon}]")
 
@@ -97,31 +108,37 @@ class MMVShaderMGLWindowHandlers:
             self.strict = True
             self.vsync = False
 
+            # Fixed aspect ratio
+            settings.WINDOW["aspect_ratio"] = self.sombrero.width / self.sombrero.height
+        else:
+            # Aspect ratio can change (Imgui integration "fix")
+            settings.WINDOW["aspect_ratio"] = None
+
         # Assign the function arguments
         settings.WINDOW["class"] = f"moderngl_window.context.{window_class}.Window"
-        settings.WINDOW["aspect_ratio"] = self.mmv_shader_mgl.width / self.mmv_shader_mgl.height
         settings.WINDOW["vsync"] = self.vsync
-        settings.WINDOW["title"] = "MMVShaderMGL Real Time Window"
-        settings.WINDOW["size"] = (self.mmv_shader_mgl.width, self.mmv_shader_mgl.height)
+        settings.WINDOW["title"] = "Sombrero Real Time"
+
+        # Don't set target width, height otherwise this will always crash
+        if (self.headless) or (not SombreroWindow.LINUX_GNOME_PIXEL_SAVER_EXTENSION_WORKAROUND):
+            settings.WINDOW["size"] = (self.sombrero.width, self.sombrero.height)
 
         # Create the window
         self.window = moderngl_window.create_window_from_settings()
 
         # Make sure we render strictly into the resolution we asked
         if strict:
-            self.window.fbo.viewport = (0, 0, self.mmv_shader_mgl.width, self.mmv_shader_mgl.height)
-            # self.window.set_default_viewport()
+            self.window.fbo.viewport = (0, 0, self.sombrero.width, self.sombrero.height)
 
-        # Set the icon
+        # Set the icon, FIXME: TODO: Proper resources directory?
         if icon is not None:
-            # Absolute path
             icon = Path(icon).resolve()
             resources.register_dir(icon.parent)
             self.window.set_icon(icon_path = icon.name)
         
         # The context we'll use is the one from the window
         self.gl_context = self.window.ctx
-        self.mmv_shader_mgl.gl_context = self.gl_context
+        self.sombrero.gl_context = self.gl_context
         self.window_should_close = False
 
         # Functions of the window if not headless
@@ -138,6 +155,8 @@ class MMVShaderMGLWindowHandlers:
             imgui.create_context()
             self.imgui = ModernglWindowRenderer(self.window)
 
+        # self.window_resize(width = self.window.viewport[2], height = self.window.viewport[3])
+        
     # [NOT HEADLESS] Window was resized, update the width and height so we render with the new config
     def window_resize(self, width, height):
         if hasattr(self, "strict"):
@@ -145,55 +164,55 @@ class MMVShaderMGLWindowHandlers:
                 return
             
         # Set width and height
-        self.mmv_shader_mgl.width = int(width)
-        self.mmv_shader_mgl.height = int(height)
+        self.sombrero.width = int(width)
+        self.sombrero.height = int(height)
 
         # Recursively call this function on every shader on textures dictionary
-        for index in self.mmv_shader_mgl.textures.keys():
-            if self.mmv_shader_mgl.textures[index]["loader"] == "shader":
-                self.mmv_shader_mgl.textures[index]["shader_as_texture"].window_handlers.window_resize(
-                    width = self.mmv_shader_mgl.width, height = self.mmv_shader_mgl.height
+        for index in self.sombrero.contents.keys():
+            if self.sombrero.contents[index]["loader"] == "shader":
+                self.sombrero.contents[index]["shader_as_texture"].window_handlers.window_resize(
+                    width = self.sombrero.width, height = self.sombrero.height
                 )
 
         # Search for dynamic shaders and update them
-        for index in self.mmv_shader_mgl.textures.keys():
+        for index in self.sombrero.contents.keys():
 
             # Release Dynamic Shaders and update their target render
-            if self.mmv_shader_mgl.textures[index].get("dynamic", False):
-                target = self.mmv_shader_mgl.textures[index]["shader_as_texture"]
+            if self.sombrero.contents[index].get("dynamic", False):
+                target = self.sombrero.contents[index]["shader_as_texture"]
                 target.texture.release()
                 target.fbo.release()
                 target._create_assing_texture_fbo_render_buffer(verbose = False)
 
         # Master shader has window and imgui
-        if self.mmv_shader_mgl.master_shader:
+        if self.sombrero.master_shader:
             if not self.headless:
-                self.imgui.resize(self.mmv_shader_mgl.width, self.mmv_shader_mgl.height)
+                self.imgui.resize(self.sombrero.width, self.sombrero.height)
 
             # Window viewport
-            self.window.fbo.viewport = (0, 0, self.mmv_shader_mgl.width, self.mmv_shader_mgl.height)
+            self.window.fbo.viewport = (0, 0, self.sombrero.width, self.sombrero.height)
 
     # Release everything
     def drop_textures(self):
-        for index in self.mmv_shader_mgl.textures.keys():
-            if "shader_as_texture" in self.mmv_shader_mgl.textures[index].keys():
-                target = self.mmv_shader_mgl.textures[index]["shader_as_texture"]
+        for index in self.sombrero.contents.keys():
+            if "shader_as_texture" in self.sombrero.contents[index].keys():
+                target = self.sombrero.contents[index]["shader_as_texture"]
                 target.fullscreen_buffer.release()
                 target.program.release()
                 target.texture.release()
                 target.fbo.release()
                 target.vao.release()
             else:
-                self.mmv_shader_mgl.textures[index]["texture"].release()
+                self.sombrero.contents[index]["texture"].release()
 
         # Delete items
-        for index in list(self.mmv_shader_mgl.textures.keys()):
-            del self.mmv_shader_mgl.textures[index]
+        for index in list(self.sombrero.contents.keys()):
+            del self.sombrero.contents[index]
             gc.collect()
 
     # Close the window
     def close(self, *args, **kwargs):
-        logging.info(f"[MMVShaderMGLWindowHandlers.close] Window should close")
+        logging.info(f"[SombreroWindow.close] Window should close")
         self.window_should_close = True
 
     # Swap the window buffers, be careful if vsync is False and you have a heavy
@@ -203,32 +222,60 @@ class MMVShaderMGLWindowHandlers:
         self.window.swap_buffers()
 
         # Interpolate stuff
-        self.intensity += (self.target_intensity - self.intensity) * MMVShaderMGLWindowHandlers.INTENSITY_RESPONSIVENESS
-        self.rotation += (self.target_rotation - self.rotation) * MMVShaderMGLWindowHandlers.ROTATION_RESPONSIVENESS
-        self.zoom += (self.target_zoom - self.zoom) * MMVShaderMGLWindowHandlers.ZOOM_RESPONSIVENESS
-        self.drag += (self.target_drag - self.drag) * MMVShaderMGLWindowHandlers.DRAG_RESPONSIVENESS
-        self.drag_momentum *= MMVShaderMGLWindowHandlers.DRAG_MOMENTUM
+        self.intensity += (self.target_intensity - self.intensity) * SombreroWindow.INTENSITY_RESPONSIVENESS
+        self.rotation += (self.target_rotation - self.rotation) * SombreroWindow.ROTATION_RESPONSIVENESS
+        self.zoom += (self.target_zoom - self.zoom) * SombreroWindow.ZOOM_RESPONSIVENESS
+        self.drag += (self.target_drag - self.drag) * SombreroWindow.DRAG_RESPONSIVENESS
+        self.drag_momentum *= SombreroWindow.DRAG_MOMENTUM
 
         # Drag momentum
         if not 1 in self.mouse_buttons_pressed:
             self.target_drag += self.drag_momentum
 
+        # If we're still iterating towards target drag then we're dragging
+        self.is_dragging = not np.allclose(self.target_drag, self.drag, rtol = 0.01)
+
     # # Interactive events
 
     def key_event(self, key, action, modifiers):
-        debug_prefix = "[MMVShaderMGLWindowHandlers.key_event]"
+        debug_prefix = "[SombreroWindow.key_event]"
         self.imgui.key_event(key, action, modifiers)
         logging.info(f"{debug_prefix} Key [{key}] Action [{action}] Modifier [{modifiers}]")
+
+        # "tab" key pressed, toggle gui
+        if (key == 258) and (action == 1):
+            if self.shift_pressed:
+                # Shift + "tab" key pressed, toggle controls (can't drag)
+                logging.info(f"{debug_prefix} \"Shift + tab\" key pressed [Toggle controls]")
+                self.lock_controls_due_gui = not self.lock_controls_due_gui
+            else:
+                logging.info(f"{debug_prefix} \"tab\" key pressed [Toggle gui]")
+                self.show_gui = not self.show_gui
+                self.window.mouse_exclusivity = False
 
         # Shift and control
         if key == 340: self.shift_pressed = bool(action)
         if key == 341: self.ctrl_pressed = bool(action)
         if key == 342: self.alt_pressed = bool(action)
 
+        if self.show_gui and self.lock_controls_due_gui: return
+
+        # "space" key pressed, toggle playback
+        if (key == 32) and (action == 1):
+            logging.info(f"{debug_prefix} \"space\" key pressed [Toggle playback]")
+            self.do_playback = not self.do_playback
+
+        # "d" key pressed, debug mode
+        if (key == 68) and (action == 1):
+            logging.info(f"{debug_prefix} \"d\" key pressed [Toggle debug mode]")
+            self.debug_mode = not self.debug_mode
+            
         # "c" key pressed, reset target rotation
         if (key == 67) and (action == 1):
             logging.info(f"{debug_prefix} \"c\" key pressed [Set target rotation to 0]")
-            self.target_rotation = 0
+
+            # Target rotation to the nearest 360° multiple (current minus negative remainder if you think hard enough)
+            self.target_rotation = self.target_rotation - (math.remainder(self.target_rotation, 360))
 
         # "e" key pressed, toggle mouse exclusive mode
         if (key == 69) and (action == 1):
@@ -241,12 +288,6 @@ class MMVShaderMGLWindowHandlers:
             logging.info(f"{debug_prefix} \"f\" key pressed [Toggle fullscreen]")
             self.window.fullscreen = not self.window.fullscreen
 
-        # "g" key pressed, toggle gui
-        if (key == 71) and (action == 1):
-            if MMVShaderMGLWindowHandlers.DEVELOPER:
-                logging.info(f"{debug_prefix} \"g\" key pressed [Toggle gui]")
-                self.hide_gui = not self.hide_gui
-
         # "h" key pressed, toggle mouse visible
         if (key == 72) and (action == 1):
             logging.info(f"{debug_prefix} \"h\" key pressed [Toggle mouse hidden]")
@@ -254,11 +295,11 @@ class MMVShaderMGLWindowHandlers:
 
         # "p" key pressed, screenshot
         if (key == 80) and (action == 1):
-            m = self.mmv_shader_mgl # Lazy
+            m = self.sombrero # Lazy
 
             # Where to save
             now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            saveto = m.screenshots_dir / f"{now}.jpg"
+            saveto = m.mmv_interface.screenshots_dir / f"{now}.jpg"
 
             logging.info(f"{debug_prefix} \"r\" key pressed, taking screenshot, saving to [{saveto}]")
 
@@ -284,21 +325,21 @@ class MMVShaderMGLWindowHandlers:
         # "r" key pressed, reload shaders
         if (key == 82) and (action == 1):
             logging.info(f"{debug_prefix} \"r\" key pressed [Reloading shaders]")
-            self.mmv_shader_mgl._read_shaders_from_paths_again()
+            self.sombrero._read_shaders_from_paths_again()
 
         # "s" key pressed, don't pipe pipeline
         if (key == 83) and (action == 1):
             logging.info(f"{debug_prefix} \"s\" key pressed [Freezing time and pipelines but resolution, zoom]")
-            self.mmv_shader_mgl.freezed_pipeline = not self.mmv_shader_mgl.freezed_pipeline
-            for index in self.mmv_shader_mgl.textures.keys():
-                if self.mmv_shader_mgl.textures[index]["loader"] == "shader":
-                    self.mmv_shader_mgl.textures[index]["shader_as_texture"].freezed_pipeline = self.mmv_shader_mgl.freezed_pipeline
+            self.sombrero.freezed_pipeline = not self.sombrero.freezed_pipeline
+            for index in self.sombrero.contents.keys():
+                if self.sombrero.contents[index]["loader"] == "shader":
+                    self.sombrero.contents[index]["shader_as_texture"].freezed_pipeline = self.sombrero.freezed_pipeline
 
         # "t" key pressed, reset time to zero
         if (key == 84) and (action == 1):
             logging.info(f"{debug_prefix} \"t\" key pressed [Set time to 0]")
-            self.mmv_shader_mgl.pipeline["mmv_frame"] = 0
-            self.mmv_shader_mgl.pipeline["mmv_time"] = 0
+            self.sombrero.pipeline["mFrame"] = 0
+            self.sombrero.pipeline["mTime"] = 0
 
         # "v" key pressed, reset target intensity
         if (key == 86) and (action == 1):
@@ -318,14 +359,16 @@ class MMVShaderMGLWindowHandlers:
     # Mouse position changed
     def mouse_position_event(self, x, y, dx, dy):
         self.imgui.mouse_position_event(x, y, dx, dy)
-        self.mmv_shader_mgl.pipeline["mmv_mouse"] = [x, y]
+        self.sombrero.pipeline["mmv_mouse"] = [x, y]
+
+        if self.show_gui and self.lock_controls_due_gui: return
 
         # Drag if on mouse exclusivity
         if self.mouse_exclusivity:
             if self.shift_pressed:
                 self.target_zoom += (dy / 1000) * self.target_zoom
             elif self.alt_pressed:
-                self.target_rotation += dy / 20
+                self.target_rotation -= dy / 20
             else:
                 self.__apply_rotated_drag(dx = dx, dy = dy, howmuch = 0.5, inverse = True)
 
@@ -336,15 +379,15 @@ class MMVShaderMGLWindowHandlers:
         inverse = -1 if inverse else 1
 
         # Add to the mmv_drag pipeline item the dx and dy multiplied by the square of the current zoom
-        square_current_zoom = (self.mmv_shader_mgl.pipeline["mmv_zoom"] ** 2)
+        square_current_zoom = (self.sombrero.pipeline["mZoom"] ** 2)
 
         # dx and dy on zoom and SSAA
-        dx = (dx * square_current_zoom) * self.mmv_shader_mgl.ssaa
-        dy = (dy * square_current_zoom) * self.mmv_shader_mgl.ssaa
+        dx = (dx * square_current_zoom) * self.sombrero.ssaa
+        dy = (dy * square_current_zoom) * self.sombrero.ssaa
 
         # Cosine and sine
-        c = math.cos(math.radians(self.rotation))
-        s = math.sin(math.radians(self.rotation))
+        c = math.cos(math.radians(-self.rotation))
+        s = math.sin(math.radians(-self.rotation))
 
         # mat2 rotation times the dx, dy vector
         drag_rotated = np.array([
@@ -360,7 +403,11 @@ class MMVShaderMGLWindowHandlers:
     def mouse_drag_event(self, x, y, dx, dy):
         self.imgui.mouse_drag_event(x, y, dx, dy)
 
+        if self.show_gui and self.lock_controls_due_gui: return
+        
         if 1 in self.mouse_buttons_pressed:
+            self.is_dragging_mode = True
+
             if self.shift_pressed:
                 self.target_zoom += (dy / 1000) * self.target_zoom
             elif self.alt_pressed:
@@ -370,20 +417,22 @@ class MMVShaderMGLWindowHandlers:
 
     # Change SSAA
     def change_ssaa(self, value):
-        debug_prefix = "[MMVShaderMGLWindowHandlers.change_ssaa]"
-        self.mmv_shader_mgl.ssaa = value
-        self.mmv_shader_mgl._read_shaders_from_paths_again()
+        debug_prefix = "[SombreroWindow.change_ssaa]"
+        self.sombrero.ssaa = value
+        self.sombrero._read_shaders_from_paths_again()
         logging.info(f"{debug_prefix} Changed SSAA to [{value}]")
 
     # Zoom in or out (usually)
     def mouse_scroll_event(self, x_offset, y_offset):
-        debug_prefix = "[MMVShaderMGLWindowHandlers.mouse_scroll_event]"
+        debug_prefix = "[SombreroWindow.mouse_scroll_event]"
+
+        if self.show_gui and self.lock_controls_due_gui: return
 
         if self.shift_pressed:
             self.target_intensity += y_offset / 10
             logging.info(f"{debug_prefix} Mouse scroll with shift Target Intensity: [{self.target_intensity}]")
-        elif self.ctrl_pressed:
-            change_to = self.mmv_shader_mgl.ssaa + ((y_offset / 20) * self.mmv_shader_mgl.ssaa)
+        elif self.ctrl_pressed and (not self.is_dragging_mode):
+            change_to = self.sombrero.ssaa + ((y_offset / 20) * self.sombrero.ssaa)
             logging.info(f"{debug_prefix} Mouse scroll with shift change SSAA to: [{change_to}]")
             self.change_ssaa(change_to)
         elif self.alt_pressed:
@@ -396,16 +445,19 @@ class MMVShaderMGLWindowHandlers:
         self.imgui.mouse_scroll_event(x_offset, y_offset)
 
     def mouse_press_event(self, x, y, button):
-        debug_prefix = "[MMVShaderMGLWindowHandlers.mouse_press_event]"
+        debug_prefix = "[SombreroWindow.mouse_press_event]"
         logging.info(f"{debug_prefix} Mouse press (x, y): [{x}, {y}] Button [{button}]")
         self.imgui.mouse_press_event(x, y, button)
+        if self.show_gui and self.lock_controls_due_gui: return
         if not button in self.mouse_buttons_pressed: self.mouse_buttons_pressed.append(button)
         if not self.mouse_exclusivity: self.window.mouse_exclusivity = True
 
     def mouse_release_event(self, x, y, button):
-        debug_prefix = "[MMVShaderMGLWindowHandlers.mouse_release_event]"
+        debug_prefix = "[SombreroWindow.mouse_release_event]"
         logging.info(f"{debug_prefix} Mouse release (x, y): [{x}, {y}] Button [{button}]")
         self.imgui.mouse_release_event(x, y, button)
+        self.is_dragging_mode = False
+        if self.show_gui and self.lock_controls_due_gui: return
         if button in self.mouse_buttons_pressed: self.mouse_buttons_pressed.remove(button)
         if not self.mouse_exclusivity: self.window.mouse_exclusivity = False
 
@@ -417,9 +469,12 @@ class MMVShaderMGLWindowHandlers:
 
         # Test window
         imgui.new_frame()
-        imgui.begin("Custom window", True)
-        imgui.text("Bar")
-        imgui.text_colored("Eggs", 0.2, 1., 0.)
+        imgui.begin("Info", True)
+        imgui.text_colored("Coordinates related", 0, 0, 1)
+        imgui.text(f"(x, y): [{self.drag[0]:.3f}, {self.drag[1]:.3f}] => [{self.target_drag[0]:.3f}, {self.target_drag[1]:.3f}]")
+        imgui.text(f"Intensity: [{self.intensity:.2f}] => [{self.target_intensity:.2f}]")
+        imgui.text(f"Zoom: [{self.zoom:.5f}] => [{self.target_zoom:.5f}]")
+        imgui.text(f"Rotation: [{self.rotation:.3f}°] => [{self.target_rotation:.3f}]")
         imgui.end()
 
         # Render

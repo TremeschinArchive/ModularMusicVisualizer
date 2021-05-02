@@ -33,6 +33,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Continue imports
 from watchdog.events import FileSystemEventHandler
+from mmv.sombrero.sombrero_shader import *
 from watchdog.observers import Observer
 import mmv.common.cmn_any_logger
 from pathlib import Path
@@ -70,10 +71,7 @@ class MMVShadersCLI:
         self.utils = self.mmv_package_interface.utils
 
         # Shaders interface and MGL
-        self.mgl = self.mmv_package_interface.get_mmv_shader_mgl()(
-            master_shader = True,
-            screenshots_dir = self.mmv_package_interface.screenshots_dir
-        )
+        self.sombrero = self.mmv_package_interface.get_sombrero()(mmv_interface = self.mmv_package_interface, master_shader = True)
 
         # Interpolator
         self.interpolator = ValuesInterpolator()
@@ -170,15 +168,10 @@ class MMVShadersCLI:
 
     # Set MMVShaderMGL target settings
     def __mgl_target_render_settings(self):
-        self.mgl.target_render_settings(
-            width = self._width,
-            height = self._height,
-            ssaa = self._ssaa,
-            fps = self._fps,
+        self.sombrero.configure(
+            width = self._width, height = self._height,
+            ssaa = self._ssaa, fps = self._fps,
         )
-
-    def __load_master_shader(self):
-        self.mgl.load_shader_from_path(fragment_shader_path = self._preset_master_shader)
 
     def __configure_audio_processing(self):
         # Configure FFT TODO: advanced config?
@@ -202,7 +195,6 @@ class MMVShadersCLI:
     def __should_reload_preset(self):
         self.utils.reset_dir(self.mmv_package_interface.runtime_dir)
         self.__load_preset()
-        self.__load_master_shader()
 
     def __load_preset(self):
         debug_prefix = "[MMVShadersCLI.__load_preset]"
