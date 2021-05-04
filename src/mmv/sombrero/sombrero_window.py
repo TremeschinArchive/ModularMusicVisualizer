@@ -154,15 +154,19 @@ class SombreroWindow:
             self.window.close_func = self.close
             imgui.create_context()
             self.imgui = ModernglWindowRenderer(self.window)
+            self.imgui_io = imgui.get_io()
 
         # self.window_resize(width = self.window.viewport[2], height = self.window.viewport[3])
         
     # [NOT HEADLESS] Window was resized, update the width and height so we render with the new config
     def window_resize(self, width, height):
-        if hasattr(self, "strict"):
-            if self.strict:
-                return
-            
+        if hasattr(self, "strict") and self.strict: return
+
+        # We need to do some sort of change of basis between drag numbers when we change resolutions because
+        # drag itself is absolute, not related 
+        self.target_drag *= np.array([width, height]) / np.array([self.sombrero.width, self.sombrero.height])
+        self.drag = self.target_drag.copy()
+
         # Set width and height
         self.sombrero.width = int(width)
         self.sombrero.height = int(height)
@@ -244,21 +248,16 @@ class SombreroWindow:
 
         # "tab" key pressed, toggle gui
         if (key == 258) and (action == 1):
-            if self.shift_pressed:
-                # Shift + "tab" key pressed, toggle controls (can't drag)
-                logging.info(f"{debug_prefix} \"Shift + tab\" key pressed [Toggle controls]")
-                self.lock_controls_due_gui = not self.lock_controls_due_gui
-            else:
-                logging.info(f"{debug_prefix} \"tab\" key pressed [Toggle gui]")
-                self.show_gui = not self.show_gui
-                self.window.mouse_exclusivity = False
+            logging.info(f"{debug_prefix} \"tab\" key pressed [Toggle gui]")
+            self.show_gui = not self.show_gui
+            self.window.mouse_exclusivity = False
 
         # Shift and control
         if key == 340: self.shift_pressed = bool(action)
         if key == 341: self.ctrl_pressed = bool(action)
         if key == 342: self.alt_pressed = bool(action)
 
-        if self.show_gui and self.lock_controls_due_gui: return
+        if self.imgui_io.want_capture_mouse: return
 
         # "space" key pressed, toggle playback
         if (key == 32) and (action == 1):
@@ -360,7 +359,6 @@ class SombreroWindow:
     def mouse_position_event(self, x, y, dx, dy):
         self.imgui.mouse_position_event(x, y, dx, dy)
         self.sombrero.pipeline["mmv_mouse"] = [x, y]
-
         if self.show_gui and self.lock_controls_due_gui: return
 
         # Drag if on mouse exclusivity
@@ -384,6 +382,7 @@ class SombreroWindow:
         # dx and dy on zoom and SSAA
         dx = (dx * square_current_zoom) * self.sombrero.ssaa
         dy = (dy * square_current_zoom) * self.sombrero.ssaa
+        dx *= self.sombrero.width / self.sombrero.height
 
         # Cosine and sine
         c = math.cos(math.radians(-self.rotation))
@@ -402,9 +401,8 @@ class SombreroWindow:
     # Mouse drag, add to pipeline drag
     def mouse_drag_event(self, x, y, dx, dy):
         self.imgui.mouse_drag_event(x, y, dx, dy)
+        if self.imgui_io.want_capture_mouse: return
 
-        if self.show_gui and self.lock_controls_due_gui: return
-        
         if 1 in self.mouse_buttons_pressed:
             self.is_dragging_mode = True
 
@@ -425,8 +423,7 @@ class SombreroWindow:
     # Zoom in or out (usually)
     def mouse_scroll_event(self, x_offset, y_offset):
         debug_prefix = "[SombreroWindow.mouse_scroll_event]"
-
-        if self.show_gui and self.lock_controls_due_gui: return
+        if self.imgui_io.want_capture_mouse: return
 
         if self.shift_pressed:
             self.target_intensity += y_offset / 10
@@ -448,7 +445,7 @@ class SombreroWindow:
         debug_prefix = "[SombreroWindow.mouse_press_event]"
         logging.info(f"{debug_prefix} Mouse press (x, y): [{x}, {y}] Button [{button}]")
         self.imgui.mouse_press_event(x, y, button)
-        if self.show_gui and self.lock_controls_due_gui: return
+        if self.imgui_io.want_capture_mouse: return
         if not button in self.mouse_buttons_pressed: self.mouse_buttons_pressed.append(button)
         if not self.mouse_exclusivity: self.window.mouse_exclusivity = True
 
@@ -457,7 +454,7 @@ class SombreroWindow:
         logging.info(f"{debug_prefix} Mouse release (x, y): [{x}, {y}] Button [{button}]")
         self.imgui.mouse_release_event(x, y, button)
         self.is_dragging_mode = False
-        if self.show_gui and self.lock_controls_due_gui: return
+        if self.imgui_io.want_capture_mouse: return
         if button in self.mouse_buttons_pressed: self.mouse_buttons_pressed.remove(button)
         if not self.mouse_exclusivity: self.window.mouse_exclusivity = False
 
@@ -469,12 +466,18 @@ class SombreroWindow:
 
         # Test window
         imgui.new_frame()
-        imgui.begin("Info", True)
+        imgui.begin("Info", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE)
+
+        imgui.text_colored("Render", 1, 0, 0)
+
+        imgui.text(f"SSAA: [{self.sombrero.ssaa:.3f}]")
+        imgui.text(f"Res: [{int(self.sombrero.width)}, {int(self.sombrero.height)}] => [{int(self.sombrero.width*self.sombrero.ssaa)}, {int(self.sombrero.height*self.sombrero.ssaa)}]")
+
         imgui.text_colored("Coordinates related", 0, 0, 1)
-        imgui.text(f"(x, y): [{self.drag[0]:.3f}, {self.drag[1]:.3f}] => [{self.target_drag[0]:.3f}, {self.target_drag[1]:.3f}]")
+        imgui.text(f"(x, y):    [{self.drag[0]:.3f}, {self.drag[1]:.3f}] => [{self.target_drag[0]:.3f}, {self.target_drag[1]:.3f}]")
         imgui.text(f"Intensity: [{self.intensity:.2f}] => [{self.target_intensity:.2f}]")
-        imgui.text(f"Zoom: [{self.zoom:.5f}] => [{self.target_zoom:.5f}]")
-        imgui.text(f"Rotation: [{self.rotation:.3f}°] => [{self.target_rotation:.3f}]")
+        imgui.text(f"Zoom:      [{self.zoom:.5f}x] => [{self.target_zoom:.5f}x]")
+        imgui.text(f"Rotation:  [{self.rotation:.3f}°] => [{self.target_rotation:.3f}°]")
         imgui.end()
 
         # Render

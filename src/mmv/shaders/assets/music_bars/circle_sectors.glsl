@@ -1,19 +1,13 @@
-// ===============================================================================
-//#shadermaker includes
-//#shadermaker mappings
-//#shadermaker functions
-// ===============================================================================
+// uniform vec3 mmv_rms_0_33;
 
-//#mmv {"type": "include", "value": "mmv_specification", "mode": "once"}
-
-uniform vec3 mmv_rms_0_33;
-
-void main() {
-    //#mmv {"type": "include", "value": "coordinates_normalization", "mode": "multiple"}
-    //#mmv {"type": "include", "value": "math_constants", "mode": "multiple"}
+vec4 mainImage() {
 
     // Start with empty color (so it's fully transparent everywhere)
     vec4 col = vec4(0.0);
+    vec3 mmv_rms_0_33 = vec3(0.0);
+    vec3 mmv_progressive_rms = vec3(0.0);
+
+    vec2 gluv_all = mGetGLUVAll();
 
     // // Movement
 
@@ -23,8 +17,8 @@ void main() {
 
     // Offset vector 2 of x, y to add
     vec2 offset = vec2(
-        sin(5.0 * mmv_time * offset_speed) * offset_amplitude,
-        cos(8.0 * mmv_time * offset_speed) * offset_amplitude
+        sin(5.0 * mTime * offset_speed) * offset_amplitude,
+        cos(8.0 * mTime * offset_speed) * offset_amplitude
     );
 
     // // Angles
@@ -36,15 +30,15 @@ void main() {
     // gluv_all (0, 0) is center of screen so we offset that by the previous vector
     vec2 bars_uv = (gluv_all - offset);
 
-    vec2 rotated_bars_uv = bars_uv * get_rotation_mat2(angle_offset - PI/2);
+    vec2 rotated_bars_uv = bars_uv * mRotation2D(angle_offset - PI/2);
 
     // Current angle we are to get the FFT values from
-    float angle = mmv_atan2(rotated_bars_uv.y, rotated_bars_uv.x);
+    float angle = mAtan2(rotated_bars_uv.y, rotated_bars_uv.x);
 
     // // Getting FFT
 
     // Circle sectors
-    bool smooth_bars = true;
+    bool smooth_bars = false;
     float fft_val = 0.0;
 
     // Branch code if we want a smooth bars or rectangle-looking ones
@@ -57,7 +51,7 @@ void main() {
 
     // We subtract from 2 because first channel is left and angle gets positive with
     // counter-clockwise rotation
-    float proportion = 1.0 - mmv_proportion(2 * PI, 1, angle);
+    float proportion = 1.0 - mProportion(2 * PI, 1, angle);
     
     // FOR LINEAR FFT TODO: MAKE OWN FUNCTION
     // Mirror the angle after half since we have [[Low, High], [Low, High]] freqs of L/R channel
@@ -68,13 +62,11 @@ void main() {
     if (smooth_bars) {
         // Get the FFT val from the mmv_radial_fft texture with a float vec2 array itself.
         // GL will interpolate the texture for us into values in between, probably linear nearest
-        fft_val = texture(mmv_radial_fft, vec2(proportion, 0), 0).r;
+        fft_val = texture(mmv_fft, vec2(proportion, 0), 0).r;
     } else {
         // texelFetch accepts ivec2 (integer vec2)
         // which is the pixel itself, not filtered by GL
-        fft_val = texelFetch(mmv_radial_fft,
-            ivec2(int({MMV_FFTSIZE} * proportion), 0),
-        0).r;
+        fft_val = texelFetch(mmv_fft, ivec2(int(mmv_fft_resolution[0] * proportion), 0), 0).r;
     }
 
     // // Sizes, effect configuration
@@ -112,15 +104,15 @@ void main() {
     vec4 logo_pixel = vec4(0.0);
 
     // Get the logo, do some calculations
-    logo_pixel = mmv_blit_image(
+    logo_pixel = mBlitImage(
         col, logo,
         logo_resolution,
         bars_uv,
         vec2(0.0, 0.0), // anchor
         vec2(0.5, 0.5), // shift
         size * 2.0 * logo_relative_to_bar_ratio,  //scale
-            sin(mmv_time*2.3 + mmv_progressive_rms[2]/8.0) / 8.0
-            + sin(mmv_time*2.3 + mmv_progressive_rms[2]/5.0) / 8.0, //angle
+            sin(mTime*2.3 + mmv_progressive_rms[2]/8.0) / 8.0
+            + sin(mTime*2.3 + mmv_progressive_rms[2]/5.0) / 8.0, //angle
         false, // repeat
         true, 2.0 // Undo gamma, Gamma
     );
@@ -129,8 +121,8 @@ void main() {
     logo_pixel.a = smoothstep(size, size*0.95, length(bars_uv));
 
     // Alpha composite logo + bars
-    col = mmv_alpha_composite(logo_pixel, col);
+    col = mAlphaComposite(col, logo_pixel);
 
     // Return color
-    fragColor = col;
+    return col;
 }

@@ -49,37 +49,33 @@ vec2 mGetFullHDScalar() { return vec2(mResolution.x / 1920, mResolution.y / 1080
 mat2 mGetCoordinatesRotation() { return mRotation2D((-mRotation * PI) / 180.0); }
 
 // GL and ST uv based on the aspect ratio
-vec2 mGetGLUV() { vec2 gluv = opengl_uv; gluv.x *= mGetNormalizeYratio(); return gluv;}
-vec2 mGetSTUV() { vec2 stuv = shadertoy_uv; stuv.x *= mGetNormalizeYratio(); return stuv;}
+vec2 mGetGLUV() { vec2 gluv = opengl_uv; gluv.x *= mGetNormalizeYratio(); return gluv; }
+vec2 mGetSTUV() { vec2 stuv = shadertoy_uv; stuv.x *= mGetNormalizeYratio(); return stuv; }
 
 // Mouse drag relative to the resolution, flip etc, because mDrag is raw pixels
 // we want a vec2 normalized to 1 also relative to the aspect ratio
-vec2 mGetMouseDrag() { 
+vec2 mGetNormalizedDrag() { 
     vec2 drag = (mDrag / mResolution);
-    drag.x *= - mGetNormalizeYratio();
-    drag.y *= mFlip; 
+    drag *= vec2(-1, mFlip);
     return drag;
 }
 
 // ShaderToy UV-like coordinates with zoom, drag applied (interactive)
 vec2 mGetSTUVAll() {
     vec2 stuv = mGetSTUV();
-    vec2 drag = mGetMouseDrag();
+    vec2 drag = mGetNormalizedDrag();
     float resratio = mGetNormalizeYratio();
-    mat2 coordinates_rotation = mGetCoordinatesRotation();
-    vec2 stuv_zoom = (stuv - vec2(resratio * 0.5, 0.5)) * (mZoom * mZoom) * coordinates_rotation + vec2(resratio * 0.5, 0.5);
-    vec2 stuv_drag = stuv + (drag / 4.0);
+    mat2 rotation = mGetCoordinatesRotation();
+    vec2 stuv_zoom = (stuv - vec2(resratio * 0.5, 0.5)) * (mZoom * mZoom) * rotation + vec2(resratio * 0.5, 0.5);
     return (stuv_zoom) + (drag);
 }
 
 // OpenGL UV-like coordinates with zoom, drag applied (interactive)
 vec2 mGetGLUVAll() {
+    vec2 drag = mGetNormalizedDrag();
     vec2 gluv = mGetGLUV();
-    vec2 drag = mGetMouseDrag();
-    mat2 coordinates_rotation = mGetCoordinatesRotation();
-    vec2 gluv_zoom = gluv * (mZoom * mZoom);
-    vec2 gluv_drag = gluv + (drag * 2.0);
-    return (gluv_zoom * coordinates_rotation) + (drag * 2.0);
+    mat2 rotation = mGetCoordinatesRotation();
+    return ((gluv * (mZoom * mZoom)) * rotation) + (drag * 2.0);
 }
 
 // // Noise

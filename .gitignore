@@ -10,6 +10,8 @@
 *.exe
 .vscode
 
+imgui.ini
+
 # Dolphin, nautilus
 *.directory
 

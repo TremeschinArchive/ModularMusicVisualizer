@@ -117,7 +117,7 @@ class Include(CallableAddToParent):
 
 # # Variables, Uniforms
 class Uniform(CallableAddToParent):
-    def __init__(self, var_type, name): assign_locals(locals())
+    def __init__(self, var_type, name, value = None): assign_locals(locals())
     def build(self, indent = "") -> list: return [f"{indent}uniform {self.var_type} {self.name};"]
 class Variable(CallableAddToParent):
     def __init__(self, var_type, name, value): assign_locals(locals())
@@ -220,6 +220,8 @@ class TextureImage(GenericMapping):
     def action(self): self.info = self.sombrero_mgl.map_image(**self.config)
 class TextureShader(GenericMapping):
     def action(self): self.info = self.sombrero_mgl.map_shader(**self.config)
+class TexturePipeline(GenericMapping):
+    def action(self): self.info = self.sombrero_mgl.map_pipeline_texture(**self.config)
 
 
 # # Main classes
@@ -244,6 +246,8 @@ class SombreroShader(Searchable, SimpleBuildableChilds, SimpleEnterable):
     def Uniforms(self): return self.search_placeholder("Uniforms")[0]
     @property
     def IOPlaceHolder(self): return self.search_placeholder("IO")[0]
+    @property
+    def Includes(self): return self.search_placeholder("Includes")[0]
 
 class SombreroShaderMacros:
     def __init__(self, sombrero_mgl):
@@ -256,6 +260,7 @@ class SombreroShaderMacros:
             PlaceHolder("IO")(SHADER)
             PlaceHolder("Mappings")(SHADER)
             PlaceHolder("Uniforms")(SHADER)
+            PlaceHolder("Includes")(SHADER)
             Include(Path(self.sombrero_mgl.mmv_interface.shaders_dir)/"include"/"sombrero_specification.glsl")(SHADER)
 
             # Add your main() and stuff from file here, mainImage() 
@@ -277,18 +282,29 @@ class SombreroShaderMacros:
             Include(Path(path).resolve())(SHADER.UserShader)
         if assign_to_parent: self.sombrero_mgl.shader = SHADER; return
         return SHADER
+    
+    # Some shaders most likely pfx ones require one layer layer0, two layer0 layer1 to work this is 
+    # so that you chain those, please read the shader you're loading first otherwise this might do nothing.
+    def load_chain_dependent(self, path, processed_layers, assign_to_parent = True) -> SombreroShader:
+        with self.__base_shader() as SHADER:
+            self.__map_shader_as_textures(processed_layers, SHADER)
+            Include(Path(path).resolve())(SHADER.UserShader)
+        if assign_to_parent: self.sombrero_mgl.shader = SHADER; return
+        return SHADER
+
+    # # Map layers as shader textures layer0 layer1 layer2...
+    def __map_shader_as_textures(self, layers, shader: SombreroShader):
+        for index, layer in enumerate(layers):
+            if hasattr(layer, "finish"): layer.finish()
+            TextureShader(name = f"layer{index}", sombrero_mgl = layer)(shader, shader.Mappings, self.sombrero_mgl)
 
     def add_mapping(self, item): item(self.sombrero_mgl.shader, self.sombrero_mgl.shader.Mappings, self.sombrero_mgl)
+    def add_include(self, item): item(self.sombrero_mgl.shader.Includes)
 
     # Alpha composite many layers together
     def alpha_composite(self, layers, gamma_correction = False, assign_to_parent = True) -> SombreroShader:
         with self.__base_shader() as SHADER:
-
-            # # Map layers as shader textures
-            for index, layer in enumerate(layers):
-                if hasattr(layer, "finish"): layer.finish()
-                # Return("ASD")(SHADER.Mappings)
-                TextureShader(name = f"layer{index}", sombrero_mgl = layer)(SHADER, SHADER.Mappings, self.sombrero_mgl)
+            self.__map_shader_as_textures(layers, SHADER)
 
             # mainImage function
             with Function("vec4", "mainImage", "")(SHADER.UserShader) as main:

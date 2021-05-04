@@ -331,7 +331,6 @@ There are a couple hotkeys and interactions with the window:
 - `Shift + drag` is precise zoom
 - `Alt + drag` is precise rotation
 - Pressing `Tab` toggles GUI
-- Pressing `shift + tab` toggles "gui exclusive mode", while gui is shown stops drag, zoom, rotation, other commands so one can click and use the gui without coordinates interactive controls
 - Pressing `z` resets zoom back to 1x
 - Pressing `x` resets dragged space back to the origin
 - Pressing `c` resets rotation to 0
