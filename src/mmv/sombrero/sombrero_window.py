@@ -293,9 +293,8 @@ class SombreroWindow:
 
         # "tab" key pressed, toggle gui
         if (key == 258) and (action == 1):
-            logging.info(f"{debug_prefix} \"tab\" key pressed [Toggle gui]")
             self.show_gui = not self.show_gui
-            self.messages.add(f"Toggle GUI {self.show_gui}", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
+            self.messages.add(f"(TAB) Toggle GUI [{self.show_gui}]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
             self.window.mouse_exclusivity = False
 
         # Shift and control
@@ -317,7 +316,7 @@ class SombreroWindow:
             
         # "c" key pressed, reset target rotation
         if (key == 67) and (action == 1):
-            self.messages.add(f"{debug_prefix} (c) Reset rotation", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
+            self.messages.add(f"{debug_prefix} (c) Reset rotation to [0°]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
 
             # Target rotation to the nearest 360° multiple (current minus negative remainder if you think hard enough)
             self.target_rotation = self.target_rotation - (math.remainder(self.target_rotation, 360))
@@ -341,12 +340,15 @@ class SombreroWindow:
         # "p" key pressed, screenshot
         if (key == 80) and (action == 1):
             m = self.sombrero # Lazy
+            old = self.show_gui  # Did we have GUI enabled previously?
+            self.show_gui = False  # Disable for screenshot
+            self.sombrero._render()  # Update screen so we actually remove the GUI
 
             # Where to save
             now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             saveto = m.mmv_interface.screenshots_dir / f"{now}.jpg"
 
-            self.messages.add(f"{debug_prefix} (p) Screenshot save [{self.saveto}]", SombreroWindow.ACTION_MESSAGE_TIMEOUT * 4)
+            self.messages.add(f"{debug_prefix} (p) Screenshot save [{saveto}]", SombreroWindow.ACTION_MESSAGE_TIMEOUT * 4)
 
             # Get data ib the scree's size viewport
             size = (m.width, m.height)
@@ -361,6 +363,7 @@ class SombreroWindow:
             
             # Start the process
             multiprocessing.Process(target = save_image_to_file, args = (size, data, saveto)).start()
+            self.show_gui = old  # Revert
 
         # "q" key pressed, quit
         if (key == 81) and (action == 1):
@@ -384,21 +387,21 @@ class SombreroWindow:
         if (key == 84) and (action == 1):
             self.sombrero.pipeline["mFrame"] = 0
             self.sombrero.pipeline["mTime"] = 0
-            self.messages.add(f"{debug_prefix} (t) Set time to zero", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
+            self.messages.add(f"{debug_prefix} (t) Set time to [0s]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
 
         # "v" key pressed, reset target intensity
         if (key == 86) and (action == 1):
-            self.messages.add(f"{debug_prefix} (v) Reset intensity to 1", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
+            self.messages.add(f"{debug_prefix} (v) Reset intensity to [1]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
             self.target_intensity = 1
 
         # "z" key pressed, reset zoom
         if (key == 90) and (action == 1):
-            self.messages.add(f"{debug_prefix} (z) Reset zoom to 1", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
+            self.messages.add(f"{debug_prefix} (z) Reset zoom to [1x]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
             self.target_zoom = 1
 
         # "x" key, reset drag
         if (key == 88) and (action == 1):
-            self.messages.add(f"{debug_prefix} (x) Reset drag", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
+            self.messages.add(f"{debug_prefix} (x) Reset drag to [0, 0]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
             self.target_drag = np.array([0.0, 0.0])
 
     # Mouse position changed
