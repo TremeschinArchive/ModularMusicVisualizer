@@ -428,7 +428,6 @@ class SombreroWindow:
         # dx and dy on zoom and SSAA
         dx = (dx * square_current_zoom) * self.sombrero.ssaa
         dy = (dy * square_current_zoom) * self.sombrero.ssaa
-        dx *= self.sombrero.width / self.sombrero.height
 
         # Cosine and sine
         c = math.cos(math.radians(-self.rotation))
@@ -439,6 +438,9 @@ class SombreroWindow:
             (dx * c) + (dy * -s),
             (dx * s) + (dy * c)
         ]) * howmuch * inverse
+
+        # Normalize dx step due aspect ratio
+        drag_rotated[0] *= self.sombrero.width / self.sombrero.height 
 
         # Add to target drag the dx, dy relative to current zoom and SSAA level
         self.target_drag += drag_rotated
