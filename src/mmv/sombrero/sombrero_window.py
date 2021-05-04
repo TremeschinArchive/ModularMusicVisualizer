@@ -104,21 +104,19 @@ class FrameTimesCounter:
 
         # Cut array in wrap mode, basically where we are minus the plot_seconds target
         plot_seconds_frametimes = self.frametimes.take(range(self.counter - (self.plot_seconds * self.fps), self.counter), mode = "wrap")
-
-        # Ignore zero entries
-        frametimes = self.frametimes[self.frametimes != 0]
+        plot_seconds_frametimes_no_zeros = plot_seconds_frametimes[plot_seconds_frametimes != 0]
 
         # Simple average, doesn't tel much
-        avg = np.mean(plot_seconds_frametimes[plot_seconds_frametimes != 0])
+        avg = np.mean(plot_seconds_frametimes_no_zeros)
 
-        # Sort for getting 1% and .1%
+        # Ignore zero entries, sort for getting 1% and .1%
+        frametimes = self.frametimes[self.frametimes != 0]
         frametimes = list(reversed(list(sorted(frametimes))))
-
+  
         return {
-            "frametimes": plot_seconds_frametimes,
-            "average": avg,
-            "min": min(plot_seconds_frametimes),
-            "max": max(plot_seconds_frametimes),
+            "frametimes": plot_seconds_frametimes, "average": avg,
+            "min": min(plot_seconds_frametimes_no_zeros),
+            "max": max(plot_seconds_frametimes_no_zeros),
             "1%": np.mean(frametimes[0 : max(int(len(frametimes) * .01), 1)]),
             "0.1%": np.mean(frametimes[0 : max(int(len(frametimes) * .001), 1)]),
         }
@@ -549,6 +547,8 @@ class SombreroWindow:
     def render_ui(self):
         imgui.new_frame()
         dock_y = 0
+        imgui.push_style_var(imgui.STYLE_WINDOW_BORDERSIZE, 0.0)
+        imgui.push_style_var(imgui.STYLE_WINDOW_ROUNDING, 0)
 
         # # # Info window
 
@@ -614,6 +614,7 @@ class SombreroWindow:
             imgui.end()
 
         # # # Render
+        imgui.pop_style_var(2)
 
         imgui.render()
         self.imgui.render(imgui.get_draw_data())
