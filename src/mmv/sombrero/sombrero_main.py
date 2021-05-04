@@ -233,12 +233,13 @@ class SombreroMGL:
             self.pipeline["mFlip"] = -1 if self.flip else 1
             self.pipeline["mTime"] = self.pipeline["mFrame"] / self.fps
 
-        # Gui
+        # GUI related
         self.pipeline["mIsDraggingMode"] = self.window.is_dragging_mode
         self.pipeline["mIsDragging"] = self.window.is_dragging
         self.pipeline["mIsGuiVisible"] = self.window.show_gui
         self.pipeline["mIsDebugMode"] = self.window.debug_mode
 
+        # Keys
         self.pipeline["mKeyCtrl"] = self.window.ctrl_pressed
         self.pipeline["mKeyShift"] = self.window.shift_pressed
         self.pipeline["mKeyAlt"] = self.window.alt_pressed
@@ -248,12 +249,11 @@ class SombreroMGL:
             self.pipeline[key] = value
 
         # Render, update window
-        self._render(pipeline = self.pipeline)
+        self._render()
         self.window.update_window()
 
     # Internal function for rendering (some stuff needs to be called like getting next image of video)
-    def _render(self, pipeline = []):
-        self.pipeline = pipeline
+    def _render(self):
 
         # VAO, constructor
         self.constructor.next()
@@ -264,8 +264,9 @@ class SombreroMGL:
 
         # Pipe the pipeline to child shaders and render them
         for child in self.children_sombrero_mgl():
-            child.pipe_pipeline(pipeline)
-            child._render(pipeline)
+            child.pipe_pipeline(self.pipeline)
+            child.pipeline = self.pipeline
+            child._render()
 
         # Which FBO to use
         if self.master_shader: self.window.window.use(); self.window.window.clear()
