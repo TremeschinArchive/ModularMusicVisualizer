@@ -40,11 +40,51 @@ import moderngl
 import logging
 import imgui
 import math
+import uuid
+import time
 import gc
+
+
+# Handler for messages that expire or doesn't
+class OnScreenTextMessages:
+    def __init__(self): self.contents = {}
+    
+    # Add some message to the messages list
+    def add(self, message: str, expire: float, has_counter = True) -> None:
+        logging.info(f"[OnScreenTextMessages] Add message: [{message}] [expire: {expire}]")
+        self.contents[str(uuid.uuid4())] = {
+            "message": message,
+            "expire": time.time() + expire,
+            "has_counter": has_counter}
+
+        # Sort items chronologically
+        self.contents = {k: v for k, v in sorted(self.contents.items(), key = lambda x: x[1]["expire"])}
+    
+    # Delete expired messages
+    def next(self):
+        expired_keys = []
+        for key, item in self.contents.items():
+            if time.time() > item["expire"]: expired_keys.append(key)
+        for key in expired_keys: del self.contents[key]
+
+    # Generator that yields messages to be shown
+    def get_contents(self):
+        self.next()
+
+        # Process message, yield it
+        for item in self.contents.values():
+            message = ""
+            if item["has_counter"]:
+                message += f"[{item['expire'] - time.time():.1f}s] | "
+            message += item["message"]
+            yield message
 
 
 class SombreroWindow:
     LINUX_GNOME_PIXEL_SAVER_EXTENSION_WORKAROUND = False
+
+    # Defaults
+    ACTION_MESSAGE_TIMEOUT = 2
 
     # Multipliers
     INTENSITY_RESPONSIVENESS = 0.2
@@ -83,12 +123,12 @@ class SombreroWindow:
         self.mouse_exclusivity = False
 
         # Gui
-        self.lock_controls_due_gui = False
-        self.show_gui = False
         self.debug_mode = False
         
         # Actions
         self.do_playback = True
+
+        self.messages = OnScreenTextMessages()
 
     # Which "mode" to render, window loader class, msaa, ssaa, vsync, force res?
     def configure(self, window_class = "glfw", msaa = 8, vsync = False, strict = False, icon = None):
@@ -105,6 +145,7 @@ class SombreroWindow:
         # Headless we disable vsync because we're rendering only..?
         # And also force aspect ratio just in case (strict option)
         if self.headless:
+            self.show_gui = False
             self.strict = True
             self.vsync = False
 
@@ -113,6 +154,7 @@ class SombreroWindow:
         else:
             # Aspect ratio can change (Imgui integration "fix")
             settings.WINDOW["aspect_ratio"] = None
+            self.show_gui = True
 
         # Assign the function arguments
         settings.WINDOW["class"] = f"moderngl_window.context.{window_class}.Window"
@@ -155,6 +197,7 @@ class SombreroWindow:
             imgui.create_context()
             self.imgui = ModernglWindowRenderer(self.window)
             self.imgui_io = imgui.get_io()
+            self.imgui_io.ini_saving_rate = 1
 
         # self.window_resize(width = self.window.viewport[2], height = self.window.viewport[3])
         
@@ -198,6 +241,7 @@ class SombreroWindow:
 
     # Release everything
     def drop_textures(self):
+        self.messages.add("Dropped textures", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
         for index in self.sombrero.contents.keys():
             if "shader_as_texture" in self.sombrero.contents[index].keys():
                 target = self.sombrero.contents[index]["shader_as_texture"]
@@ -217,6 +261,7 @@ class SombreroWindow:
     # Close the window
     def close(self, *args, **kwargs):
         logging.info(f"[SombreroWindow.close] Window should close")
+        self.imgui_io.want_save_ini_setting = True
         self.window_should_close = True
 
     # Swap the window buffers, be careful if vsync is False and you have a heavy
@@ -250,6 +295,7 @@ class SombreroWindow:
         if (key == 258) and (action == 1):
             logging.info(f"{debug_prefix} \"tab\" key pressed [Toggle gui]")
             self.show_gui = not self.show_gui
+            self.messages.add(f"Toggle GUI {self.show_gui}", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
             self.window.mouse_exclusivity = False
 
         # Shift and control
@@ -261,36 +307,36 @@ class SombreroWindow:
 
         # "space" key pressed, toggle playback
         if (key == 32) and (action == 1):
-            logging.info(f"{debug_prefix} \"space\" key pressed [Toggle playback]")
+            self.messages.add(f"{debug_prefix} (space) Toggle playback", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
             self.do_playback = not self.do_playback
 
         # "d" key pressed, debug mode
         if (key == 68) and (action == 1):
-            logging.info(f"{debug_prefix} \"d\" key pressed [Toggle debug mode]")
+            self.messages.add(f"{debug_prefix} (d) Toggle debug", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
             self.debug_mode = not self.debug_mode
             
         # "c" key pressed, reset target rotation
         if (key == 67) and (action == 1):
-            logging.info(f"{debug_prefix} \"c\" key pressed [Set target rotation to 0]")
+            self.messages.add(f"{debug_prefix} (c) Reset rotation", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
 
             # Target rotation to the nearest 360° multiple (current minus negative remainder if you think hard enough)
             self.target_rotation = self.target_rotation - (math.remainder(self.target_rotation, 360))
 
         # "e" key pressed, toggle mouse exclusive mode
         if (key == 69) and (action == 1):
-            logging.info(f"{debug_prefix} \"e\" key pressed [Toggle mouse exclusive]")
             self.mouse_exclusivity = not self.mouse_exclusivity
             self.window.mouse_exclusivity = self.mouse_exclusivity
+            self.messages.add(f"{debug_prefix} (e) Toggle mouse exclusivity [{self.mouse_exclusivity}", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
 
         # "f" key pressed, toggle fullscreen mode
         if (key == 70) and (action == 1):
-            logging.info(f"{debug_prefix} \"f\" key pressed [Toggle fullscreen]")
             self.window.fullscreen = not self.window.fullscreen
+            self.messages.add(f"{debug_prefix} (f) Toggle fullscreen [{self.window.fullscreen}]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
 
         # "h" key pressed, toggle mouse visible
         if (key == 72) and (action == 1):
-            logging.info(f"{debug_prefix} \"h\" key pressed [Toggle mouse hidden]")
             self.window.cursor = not self.window.cursor
+            self.messages.add(f"{debug_prefix} (h) Toggle Hide Mouse [{self.window.cursor}]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
 
         # "p" key pressed, screenshot
         if (key == 80) and (action == 1):
@@ -300,7 +346,7 @@ class SombreroWindow:
             now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             saveto = m.mmv_interface.screenshots_dir / f"{now}.jpg"
 
-            logging.info(f"{debug_prefix} \"r\" key pressed, taking screenshot, saving to [{saveto}]")
+            self.messages.add(f"{debug_prefix} (p) Screenshot save [{self.saveto}]", SombreroWindow.ACTION_MESSAGE_TIMEOUT * 4)
 
             # Get data ib the scree's size viewport
             size = (m.width, m.height)
@@ -318,48 +364,48 @@ class SombreroWindow:
 
         # "q" key pressed, quit
         if (key == 81) and (action == 1):
-            logging.info(f"{debug_prefix} \"r\" key pressed, quitting")
+            logging.info(f"{debug_prefix} \"q\" key pressed, quitting")
             self.window_should_close = True
 
         # "r" key pressed, reload shaders
         if (key == 82) and (action == 1):
-            logging.info(f"{debug_prefix} \"r\" key pressed [Reloading shaders]")
             self.sombrero._read_shaders_from_paths_again()
+            self.messages.add(f"{debug_prefix} (r) Reloading shaders..", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
 
         # "s" key pressed, don't pipe pipeline
         if (key == 83) and (action == 1):
-            logging.info(f"{debug_prefix} \"s\" key pressed [Freezing time and pipelines but resolution, zoom]")
             self.sombrero.freezed_pipeline = not self.sombrero.freezed_pipeline
+            self.messages.add(f"{debug_prefix} (s) Freeze time [{self.sombrero.freezed_pipeline}]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
             for index in self.sombrero.contents.keys():
                 if self.sombrero.contents[index]["loader"] == "shader":
                     self.sombrero.contents[index]["shader_as_texture"].freezed_pipeline = self.sombrero.freezed_pipeline
 
         # "t" key pressed, reset time to zero
         if (key == 84) and (action == 1):
-            logging.info(f"{debug_prefix} \"t\" key pressed [Set time to 0]")
             self.sombrero.pipeline["mFrame"] = 0
             self.sombrero.pipeline["mTime"] = 0
+            self.messages.add(f"{debug_prefix} (t) Set time to zero", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
 
         # "v" key pressed, reset target intensity
         if (key == 86) and (action == 1):
-            logging.info(f"{debug_prefix} \"v\" key pressed [Set target intensity to 1]")
+            self.messages.add(f"{debug_prefix} (v) Reset intensity to 1", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
             self.target_intensity = 1
 
         # "z" key pressed, reset zoom
         if (key == 90) and (action == 1):
-            logging.info(f"{debug_prefix} \"z\" key pressed [Set target zoom to 1]")
+            self.messages.add(f"{debug_prefix} (z) Reset zoom to 1", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
             self.target_zoom = 1
 
         # "x" key, reset drag
         if (key == 88) and (action == 1):
-            logging.info(f"{debug_prefix} \"z\" key pressed [Set target drag to [0, 0]]")
+            self.messages.add(f"{debug_prefix} (x) Reset drag", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
             self.target_drag = np.array([0.0, 0.0])
 
     # Mouse position changed
     def mouse_position_event(self, x, y, dx, dy):
         self.imgui.mouse_position_event(x, y, dx, dy)
         self.sombrero.pipeline["mmv_mouse"] = [x, y]
-        if self.show_gui and self.lock_controls_due_gui: return
+        if self.imgui_io.want_capture_mouse: return
 
         # Drag if on mouse exclusivity
         if self.mouse_exclusivity:
@@ -463,23 +509,49 @@ class SombreroWindow:
     
     # Render the user interface
     def render_ui(self):
-
-        # Test window
         imgui.new_frame()
-        imgui.begin("Info", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE)
+
+        # # # Info Window
+
+        imgui.set_next_window_position(0, 0, imgui.ONCE)
+        imgui.set_next_window_bg_alpha(0.5)
+        imgui.begin("Info Window", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE)
+
+        # Render related
 
         imgui.text_colored("Render", 1, 0, 0)
+        imgui.text(f"SSAA:       [{self.sombrero.ssaa:.3f}]")
+        imgui.text(f"Resolution: [{int(self.sombrero.width)}, {int(self.sombrero.height)}] => [{int(self.sombrero.width*self.sombrero.ssaa)}, {int(self.sombrero.height*self.sombrero.ssaa)}]")
 
-        imgui.text(f"SSAA: [{self.sombrero.ssaa:.3f}]")
-        imgui.text(f"Res: [{int(self.sombrero.width)}, {int(self.sombrero.height)}] => [{int(self.sombrero.width*self.sombrero.ssaa)}, {int(self.sombrero.height*self.sombrero.ssaa)}]")
+        # Coordinates, attributes
 
-        imgui.text_colored("Coordinates related", 0, 0, 1)
+        imgui.text_colored("Coordinates, attributes", 1, 0, 0)
         imgui.text(f"(x, y):    [{self.drag[0]:.3f}, {self.drag[1]:.3f}] => [{self.target_drag[0]:.3f}, {self.target_drag[1]:.3f}]")
         imgui.text(f"Intensity: [{self.intensity:.2f}] => [{self.target_intensity:.2f}]")
         imgui.text(f"Zoom:      [{self.zoom:.5f}x] => [{self.target_zoom:.5f}x]")
         imgui.text(f"Rotation:  [{self.rotation:.3f}°] => [{self.target_rotation:.3f}°]")
+        dock_y = imgui.get_window_height()
         imgui.end()
 
-        # Render
+        # # # Messages box
+
+        # Do have at least some message?
+        messages = [m for m in self.messages.get_contents()]
+        if len(messages) > 0: imgui.set_next_window_bg_alpha(0.2)
+        else: imgui.set_next_window_bg_alpha(0)
+        
+        # Dock window
+        imgui.set_next_window_position(0, dock_y)
+
+        # Yes long line, but it's just setting stuff to no title bar, resize, moving
+        imgui.begin("Messages", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE | imgui.WINDOW_NO_TITLE_BAR | imgui.WINDOW_NO_RESIZE | imgui.WINDOW_NO_MOVE | imgui.WINDOW_NO_SCROLLBAR | imgui.WINDOW_NO_SAVED_SETTINGS | imgui.WINDOW_NO_INPUTS)
+
+        # Add messages to the window
+        for message in messages: imgui.text(message)
+        imgui.end()
+
+        # # # Render
+
         imgui.render()
         self.imgui.render(imgui.get_draw_data())
+  
