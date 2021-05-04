@@ -249,6 +249,8 @@ class SombreroShader(Searchable, SimpleBuildableChilds, SimpleEnterable):
     @property
     def Includes(self): return self.search_placeholder("Includes")[0]
 
+
+# Here is what all this jazz is about
 class SombreroShaderMacros:
     def __init__(self, sombrero_mgl):
         self.sombrero_mgl = sombrero_mgl

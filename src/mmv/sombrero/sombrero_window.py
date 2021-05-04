@@ -8,7 +8,7 @@ Copyright (c) 2020 - 2021,
 
 ===============================================================================
 
-Purpose: Window utilities, functions for MMVShaderMGL
+Purpose: Window utilities, functions for SombreroMGL
 
 ===============================================================================
 
@@ -80,11 +80,55 @@ class OnScreenTextMessages:
             yield message
 
 
+class FrameTimesCounter:
+    def __init__(self, fps = 60, plot_seconds = 2, history = 30):
+        self.fps, self.plot_seconds, self.history = fps, plot_seconds, history
+        self.size = fps * history
+        self.last = time.time()
+        self.counter = 0
+        self.clear()
+    
+    # Create or reset the framtimes array
+    def clear(self):
+        self.frametimes = np.zeros((self.fps * self.history), dtype = np.float32)
+        self.last = time.time()
+    
+    # Update counters
+    def next(self):
+        self.frametimes[self.counter % self.size] = time.time() - self.last
+        self.last = time.time()
+        self.counter += 1
+
+    # Get dictionary with info
+    def get_info(self):
+
+        # Cut array in wrap mode, basically where we are minus the plot_seconds target
+        plot_seconds_frametimes = self.frametimes.take(range(self.counter - (self.plot_seconds * self.fps), self.counter), mode = "wrap")
+
+        # Ignore zero entries
+        frametimes = self.frametimes[self.frametimes != 0]
+
+        # Simple average, doesn't tel much
+        avg = np.mean(plot_seconds_frametimes[plot_seconds_frametimes != 0])
+
+        # Sort for getting 1% and .1%
+        frametimes = list(reversed(list(sorted(frametimes))))
+
+        return {
+            "frametimes": plot_seconds_frametimes,
+            "average": avg,
+            "min": min(plot_seconds_frametimes),
+            "max": max(plot_seconds_frametimes),
+            "1%": np.mean(frametimes[0 : max(int(len(frametimes) * .01), 1)]),
+            "0.1%": np.mean(frametimes[0 : max(int(len(frametimes) * .001), 1)]),
+        }
+
+
 class SombreroWindow:
     LINUX_GNOME_PIXEL_SAVER_EXTENSION_WORKAROUND = False
 
     # Defaults
-    ACTION_MESSAGE_TIMEOUT = 2
+    ACTION_MESSAGE_TIMEOUT = 1.3
 
     # Multipliers
     INTENSITY_RESPONSIVENESS = 0.2
@@ -124,15 +168,14 @@ class SombreroWindow:
 
         # Gui
         self.debug_mode = False
-        
+        self.messages = OnScreenTextMessages()
+
         # Actions
         self.do_playback = True
 
-        self.messages = OnScreenTextMessages()
-
     # Which "mode" to render, window loader class, msaa, ssaa, vsync, force res?
-    def configure(self, window_class = "glfw", msaa = 8, vsync = False, strict = False, icon = None):
-        debug_prefix = "[SombreroWindow.configure]"
+    def create(self, window_class = "glfw", msaa = 8, vsync = False, strict = False, icon = None):
+        debug_prefix = "[SombreroWindow.create]"
 
         logging.info(f"{debug_prefix} \"i\" Set window mode [window_class={window_class}] [msaa={msaa}] [vsync={vsync}] [strict={strict}] [icon={icon}]")
 
@@ -199,6 +242,9 @@ class SombreroWindow:
             self.imgui_io = imgui.get_io()
             self.imgui_io.ini_saving_rate = 1
 
+            # Frame Rate
+            self.framerate = FrameTimesCounter(fps = self.sombrero.fps)
+
         # self.window_resize(width = self.window.viewport[2], height = self.window.viewport[3])
         
     # [NOT HEADLESS] Window was resized, update the width and height so we render with the new config
@@ -233,8 +279,7 @@ class SombreroWindow:
 
         # Master shader has window and imgui
         if self.sombrero.master_shader:
-            if not self.headless:
-                self.imgui.resize(self.sombrero.width, self.sombrero.height)
+            if not self.headless: self.imgui.resize(self.sombrero.width, self.sombrero.height)
 
             # Window viewport
             self.window.fbo.viewport = (0, 0, self.sombrero.width, self.sombrero.height)
@@ -282,7 +327,7 @@ class SombreroWindow:
             self.target_drag += self.drag_momentum
 
         # If we're still iterating towards target drag then we're dragging
-        self.is_dragging = not np.allclose(self.target_drag, self.drag, rtol = 0.01)
+        self.is_dragging = not np.allclose(self.target_drag, self.drag, rtol = 0.003)
 
     # # Interactive events
 
@@ -296,6 +341,7 @@ class SombreroWindow:
             self.show_gui = not self.show_gui
             self.messages.add(f"(TAB) Toggle GUI [{self.show_gui}]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
             self.window.mouse_exclusivity = False
+            self.framerate.clear()
 
         # Shift and control
         if key == 340: self.shift_pressed = bool(action)
@@ -304,78 +350,40 @@ class SombreroWindow:
 
         if self.imgui_io.want_capture_mouse: return
 
-        # "space" key pressed, toggle playback
         if (key == 32) and (action == 1):
             self.messages.add(f"{debug_prefix} (space) Toggle playback", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
             self.do_playback = not self.do_playback
 
-        # "d" key pressed, debug mode
         if (key == 68) and (action == 1):
             self.messages.add(f"{debug_prefix} (d) Toggle debug", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
             self.debug_mode = not self.debug_mode
             
-        # "c" key pressed, reset target rotation
+        # Target rotation to the nearest 360° multiple (current minus negative remainder if you think hard enough)
         if (key == 67) and (action == 1):
             self.messages.add(f"{debug_prefix} (c) Reset rotation to [0°]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
-
-            # Target rotation to the nearest 360° multiple (current minus negative remainder if you think hard enough)
             self.target_rotation = self.target_rotation - (math.remainder(self.target_rotation, 360))
 
-        # "e" key pressed, toggle mouse exclusive mode
         if (key == 69) and (action == 1):
             self.mouse_exclusivity = not self.mouse_exclusivity
             self.window.mouse_exclusivity = self.mouse_exclusivity
             self.messages.add(f"{debug_prefix} (e) Toggle mouse exclusivity [{self.mouse_exclusivity}", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
 
-        # "f" key pressed, toggle fullscreen mode
         if (key == 70) and (action == 1):
             self.window.fullscreen = not self.window.fullscreen
             self.messages.add(f"{debug_prefix} (f) Toggle fullscreen [{self.window.fullscreen}]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
 
-        # "h" key pressed, toggle mouse visible
         if (key == 72) and (action == 1):
             self.window.cursor = not self.window.cursor
             self.messages.add(f"{debug_prefix} (h) Toggle Hide Mouse [{self.window.cursor}]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
 
-        # "p" key pressed, screenshot
-        if (key == 80) and (action == 1):
-            m = self.sombrero # Lazy
-            old = self.show_gui  # Did we have GUI enabled previously?
-            self.show_gui = False  # Disable for screenshot
-            self.sombrero._render()  # Update screen so we actually remove the GUI
-
-            # Where to save
-            now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            saveto = m.mmv_interface.screenshots_dir / f"{now}.jpg"
-
-            self.messages.add(f"{debug_prefix} (p) Screenshot save [{saveto}]", SombreroWindow.ACTION_MESSAGE_TIMEOUT * 4)
-
-            # Get data ib the scree's size viewport
-            size = (m.width, m.height)
-            data = self.window.fbo.read( viewport = (0, 0, size[0], size[1]) )
-
-            logging.info(f"{debug_prefix} [Resolution: {size}] [WxHx3: {size[0] * size[1] * 3}] [len(data): {len(data)}]")
-
-            # Multiprocess save image to file so we don't lock
-            def save_image_to_file(size, data, path):
-                img = Image.frombytes('RGB', size, data, 'raw').transpose(Image.FLIP_TOP_BOTTOM)
-                img.save(path, quality = 95)
-            
-            # Start the process
-            multiprocessing.Process(target = save_image_to_file, args = (size, data, saveto)).start()
-            self.show_gui = old  # Revert
-
-        # "q" key pressed, quit
         if (key == 81) and (action == 1):
             logging.info(f"{debug_prefix} \"q\" key pressed, quitting")
             self.window_should_close = True
 
-        # "r" key pressed, reload shaders
         if (key == 82) and (action == 1):
             self.sombrero._read_shaders_from_paths_again()
             self.messages.add(f"{debug_prefix} (r) Reloading shaders..", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
 
-        # "s" key pressed, don't pipe pipeline
         if (key == 83) and (action == 1):
             self.sombrero.freezed_pipeline = not self.sombrero.freezed_pipeline
             self.messages.add(f"{debug_prefix} (s) Freeze time [{self.sombrero.freezed_pipeline}]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
@@ -383,26 +391,47 @@ class SombreroWindow:
                 if self.sombrero.contents[index]["loader"] == "shader":
                     self.sombrero.contents[index]["shader_as_texture"].freezed_pipeline = self.sombrero.freezed_pipeline
 
-        # "t" key pressed, reset time to zero
         if (key == 84) and (action == 1):
             self.sombrero.pipeline["mFrame"] = 0
             self.sombrero.pipeline["mTime"] = 0
             self.messages.add(f"{debug_prefix} (t) Set time to [0s]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
 
-        # "v" key pressed, reset target intensity
         if (key == 86) and (action == 1):
             self.messages.add(f"{debug_prefix} (v) Reset intensity to [1]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
             self.target_intensity = 1
 
-        # "z" key pressed, reset zoom
         if (key == 90) and (action == 1):
             self.messages.add(f"{debug_prefix} (z) Reset zoom to [1x]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
             self.target_zoom = 1
 
-        # "x" key, reset drag
         if (key == 88) and (action == 1):
             self.messages.add(f"{debug_prefix} (x) Reset drag to [0, 0]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
             self.target_drag = np.array([0.0, 0.0])
+
+        # "p" key pressed, screenshot
+        if (key == 80) and (action == 1):
+            m = self.sombrero # Lazy
+
+            # Where to save
+            now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            saveto = m.mmv_interface.screenshots_dir / f"{now}.jpg"
+            self.messages.add(f"{debug_prefix} (p) Screenshot save [{saveto}]", SombreroWindow.ACTION_MESSAGE_TIMEOUT * 4)
+
+            old = self.show_gui  # Did we have GUI enabled previously?
+            self.show_gui = False  # Disable for screenshot
+            self.sombrero._render()  # Update screen so we actually remove the GUI
+            self.show_gui = old  # Revert
+      
+            # Get data ib the scree's size viewport
+            size = (m.width, m.height)
+            data = self.window.fbo.read( viewport = (0, 0, size[0], size[1]) )
+            logging.info(f"{debug_prefix} [Resolution: {size}] [WxHx3: {size[0] * size[1] * 3}] [len(data): {len(data)}]")
+
+            # Multiprocessing save image to file so we don't lock
+            def save_image_to_file(size, data, path):
+                img = Image.frombytes('RGB', size, data, 'raw').transpose(Image.FLIP_TOP_BOTTOM)
+                img.save(path, quality = 95)
+            multiprocessing.Process(target = save_image_to_file, args = (size, data, saveto)).start()
 
     # Mouse position changed
     def mouse_position_event(self, x, y, dx, dy):
@@ -512,48 +541,77 @@ class SombreroWindow:
     def unicode_char_entered(self, char):
         self.imgui.unicode_char_entered(char)
     
+
+    # # # # GUI, somewhat intensive and weird code that can't be really simplified
+
+
     # Render the user interface
     def render_ui(self):
         imgui.new_frame()
+        dock_y = 0
 
-        # # # Info Window
+        # # # Info window
 
-        imgui.set_next_window_position(0, 0, imgui.ONCE)
-        imgui.set_next_window_bg_alpha(0.5)
-        imgui.begin("Info Window", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE)
+        if 1:
+            imgui.set_next_window_position(0, dock_y, imgui.ONCE)
+            imgui.set_next_window_bg_alpha(0.5)
+            imgui.begin("Info Window", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE)
 
-        # Render related
+            # Render related
+            imgui.text_colored("Render", 1, 0, 0)
+            imgui.text(f"SSAA:       [{self.sombrero.ssaa:.3f}]")
+            imgui.text(f"Resolution: [{int(self.sombrero.width)}, {int(self.sombrero.height)}] => [{int(self.sombrero.width*self.sombrero.ssaa)}, {int(self.sombrero.height*self.sombrero.ssaa)}]")
 
-        imgui.text_colored("Render", 1, 0, 0)
-        imgui.text(f"SSAA:       [{self.sombrero.ssaa:.3f}]")
-        imgui.text(f"Resolution: [{int(self.sombrero.width)}, {int(self.sombrero.height)}] => [{int(self.sombrero.width*self.sombrero.ssaa)}, {int(self.sombrero.height*self.sombrero.ssaa)}]")
+            # Coordinates, attributes
+            imgui.text_colored("Coordinates, attributes", 1, 0, 0)
+            imgui.text(f"(x, y):    [{self.drag[0]:.3f}, {self.drag[1]:.3f}] => [{self.target_drag[0]:.3f}, {self.target_drag[1]:.3f}]")
+            imgui.text(f"Intensity: [{self.intensity:.2f}] => [{self.target_intensity:.2f}]")
+            imgui.text(f"Zoom:      [{self.zoom:.5f}x] => [{self.target_zoom:.5f}x]")
+            imgui.text(f"Rotation:  [{self.rotation:.3f}°] => [{self.target_rotation:.3f}°]")
+            dock_y += imgui.get_window_height()
+            imgui.end()
 
-        # Coordinates, attributes
+        # # # Performance Window
 
-        imgui.text_colored("Coordinates, attributes", 1, 0, 0)
-        imgui.text(f"(x, y):    [{self.drag[0]:.3f}, {self.drag[1]:.3f}] => [{self.target_drag[0]:.3f}, {self.target_drag[1]:.3f}]")
-        imgui.text(f"Intensity: [{self.intensity:.2f}] => [{self.target_intensity:.2f}]")
-        imgui.text(f"Zoom:      [{self.zoom:.5f}x] => [{self.target_zoom:.5f}x]")
-        imgui.text(f"Rotation:  [{self.rotation:.3f}°] => [{self.target_rotation:.3f}°]")
-        dock_y = imgui.get_window_height()
-        imgui.end()
+        if 1:
+            # Update framerates, get info
+            self.framerate.next()
+            info = self.framerate.get_info()
 
-        # # # Messages box
+            imgui.set_next_window_position(0, dock_y)
+            imgui.set_next_window_bg_alpha(0.5)
+            imgui.begin("Performance", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE)
+            imgui.text_colored("Frametimes", 1, 0, 0)
+            precision = 2
+            imgui.plot_lines(
+                (
+                    f"Average: [{1/info['average']:.{precision}f}fps]\n"
+                    f"     1%: [{1/info['1%']:.{precision}f}fps]\n"
+                    f"   0.1%: [{1/info['0.1%']:.{precision}f}fps]\n"
+                    f"    Min: [{1/info['max']:.{precision}f}fps]\n"
+                    f"    Max: [{1/info['min']:.{precision}f}fps]\n"
+                ), info["frametimes"],
+                scale_min = 0,
+                graph_size = (0, 70)
+            )
+            dock_y += imgui.get_window_height()
+            imgui.end()
 
-        # Do have at least some message?
-        messages = [m for m in self.messages.get_contents()]
-        if len(messages) > 0: imgui.set_next_window_bg_alpha(0.2)
-        else: imgui.set_next_window_bg_alpha(0)
-        
-        # Dock window
-        imgui.set_next_window_position(0, dock_y)
+        # # # Messages window
 
-        # Yes long line, but it's just setting stuff to no title bar, resize, moving
-        imgui.begin("Messages", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE | imgui.WINDOW_NO_TITLE_BAR | imgui.WINDOW_NO_RESIZE | imgui.WINDOW_NO_MOVE | imgui.WINDOW_NO_SCROLLBAR | imgui.WINDOW_NO_SAVED_SETTINGS | imgui.WINDOW_NO_INPUTS)
+        if 1:
+            # Do have at least some message?
+            messages = [m for m in self.messages.get_contents()]
+            if len(messages) > 0: imgui.set_next_window_bg_alpha(0.2)
+            else: imgui.set_next_window_bg_alpha(0)
+            imgui.set_next_window_position(0, dock_y)
 
-        # Add messages to the window
-        for message in messages: imgui.text(message)
-        imgui.end()
+            # Yes long line, but it's just setting stuff to no title bar, resize, moving
+            imgui.begin("Messages", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE | imgui.WINDOW_NO_TITLE_BAR | imgui.WINDOW_NO_RESIZE | imgui.WINDOW_NO_MOVE | imgui.WINDOW_NO_SCROLLBAR | imgui.WINDOW_NO_SAVED_SETTINGS | imgui.WINDOW_NO_INPUTS)
+
+            # Add messages to the window
+            for message in messages: imgui.text(message)
+            imgui.end()
 
         # # # Render
 

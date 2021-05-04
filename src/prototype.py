@@ -13,7 +13,7 @@ def main():
     interface = mmv.MMVPackageInterface()
     sombrero_main = interface.get_sombrero()(mmv_interface = interface, master_shader = True)
     sombrero_main.configure(width = 1920, height = 1080, fps = FPS, ssaa = 1)
-    sombrero_main.window.configure()
+    sombrero_main.window.create()
 
     # # Layers
     FFTSIZE = 1000
@@ -74,7 +74,7 @@ def main():
         if sombrero_main.window.window_should_close: break
 
         # Vsync
-        while time.time() - start < 1 / FPS: time.sleep(1/(2*FPS))
+        while time.time() - start < 1 / FPS: time.sleep(1/(1000*FPS))
 
         # FPS
         # print("\r" + str(sombrero_main.pipeline["mFrame"]), end = "", flush = True)

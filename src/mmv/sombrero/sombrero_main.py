@@ -206,6 +206,7 @@ class SombreroMGL:
             fragment_shader = frag,
         )
         self.solve_pending_uniforms()
+        if self.master_shader: self.window.framerate.clear()
 
     # Get render instructions, do this every render because stuff like piano roll needs
     # their draw instructions to be updated
