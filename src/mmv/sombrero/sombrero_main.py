@@ -8,8 +8,7 @@ Copyright (c) 2020 - 2021,
 
 ===============================================================================
 
-Purpose: Global controller and wrapper on mapping, rendering shaders, vertex
-and geometry shaders generation.
+Purpose: Global controller and wrapper on mapping, rendering shaders.
 
 ===============================================================================
 
@@ -30,14 +29,18 @@ from mmv.sombrero.sombrero_window import SombreroWindow
 from mmv.sombrero.sombrero_constructor import *
 from mmv.sombrero.sombrero_shader import *
 from enum import Enum, auto
+from array import array
 from PIL import Image
 import numpy as np
 import moderngl
 import logging
 
 
-class FakeUniform:
+# When we don't find some element / want to ignore something
+# we .get(expected, DummyElement()) and continue
+class DummyElement:
     value = None
+    def write(self, *a, **k): pass
 
 
 def pretty_lines_counter(data):
@@ -63,6 +66,9 @@ class SombreroMGL:
         # Contents dictionary that holds instruction, other classes and all
         self.contents = {}
 
+        # Pipeline textures have name if mappend one 
+        self.writable_textures = {}
+
         # Pending uniforms to be passed values after shader is loaded
         self.pending_uniforms = []
 
@@ -86,24 +92,16 @@ class SombreroMGL:
             }
         
         self.__ever_finished = False
-    
+
+    # Create and configure one child of this class with same target stuff
     def new_child(self,):
         child = SombreroMGL(mmv_interface = self.mmv_interface, master_shader = False, gl_context = self.gl_context)
         child.configure(width = self.width, height = self.height, fps = self.fps, ssaa = self.ssaa)
         return child
 
     # # Config
-
     def configure(self, width, height, fps, ssaa = 1):
         (self.width, self.height, self.fps, self.ssaa) = (width, height, fps, ssaa)
-
-    # # Constructors
-
-    # # Mappings
-
-    def assign_content(self, dictionary):
-        self.contents[len(list(self.contents.keys()))] = dictionary
-        return dictionary
 
     # Shorthand
     def __mipmap_anisotropy_repeat_texture(self, texture, context):
@@ -112,31 +110,47 @@ class SombreroMGL:
         texture.repeat_y = context.get("repeat_y", True)
         if context.get("mipmaps", False): texture.build_mipmaps()
 
+    # Add a dictionary to the next available index of the contents attribute
+    def assign_content(self, dictionary): self.contents[len(list(self.contents.keys()))] = dictionary
+
+    # # Mappings
+
+    # Map some other SombreroMGL class as a shader of this one
+    def map_shader(self, name, sombrero_mgl):
+        uniforms = [Uniform("sampler2D", name, None)]
+        self.pending_uniforms += uniforms
+        self.assign_content(dict(
+            loader = "child_sombrero_mgl", name = name, texture = sombrero_mgl.texture, SombreroMGL = sombrero_mgl
+        ))
+        return uniforms
+
     # Image mapping as texture
     def map_image(self, name, path, repeat_x = True, repeat_y = True, mipmap = True, anisotropy = 16):
+
+        # Open image, mipmap, texture
         img = Image.open(path).convert("RGBA")
         texture = self.gl_context.texture(img.size, 4, img.tobytes())
         self.__mipmap_anisotropy_repeat_texture(texture, locals())
 
-        uniforms = [["sampler2D", name, None], ["vec2", f"{name}_resolution", img.size]]
+        # Uniforms, assign content
+        uniforms = [Uniform("sampler2D", name, None), Uniform("vec2", f"{name}_resolution", img.size)]
         self.pending_uniforms += uniforms
+        self.assign_content(dict(
+            loader = "image", name = name, texture = texture, resolution = img.size
+        )); return uniforms
 
-        self.assign_content({
-            "name": name, "loader": "image",
-            "resolution": img.size,
-            "texture": texture,
-        })
-        return [Uniform("sampler2D", name), Uniform("vec2", f"{name}_resolution")]
-    
-    def map_shader(self, name, sombrero_mgl):
-        uniforms = [["sampler2D", name, None]]
+    # Map some other SombreroMGL class as a shader of this one
+    def map_pipeline_texture(self, name, width, height, depth):
+        size = (width, height)
+        uniforms = [Uniform("sampler2D", name, None), Uniform("vec2", f"{name}_resolution", size)]
+        texture = self.gl_context.texture(size, depth, dtype = "f4")
+        texture.write(np.zeros((width, height, depth), dtype = np.float32))  # Start empty (GL context no guarantee to be clean)
+        self.writable_textures[name] = texture
         self.pending_uniforms += uniforms
-        self.assign_content({
-            "name": name, "loader": "fragment_shader",
-            "SombreroMGL": sombrero_mgl,
-            "texture": sombrero_mgl.texture,
-        })
-        return [Uniform("sampler2D", name)]
+        self.assign_content(dict(
+            loader = "pipeline_texture", name = name, texture = texture, size = size
+        ))
+        return uniforms
 
     # # GL objects
 
@@ -149,14 +163,18 @@ class SombreroMGL:
     # Get the uniform if exists, enforce tuple if isn't tuple or int and assign the value
     def set_uniform(self, name, value):
         if (not isinstance(value, float)) and (not isinstance(value, int)): value = tuple(value)
-        self.program.get(name, FakeUniform()).value = value
+        self.program.get(name, DummyElement()).value = value
         return name
+    
+    # Write to some PipelineTexture that was mapped, recursively to every child
+    def write_pipeline_texture(self, name, data):
+        self.writable_textures.get(name, DummyElement()).write(np.array(data, dtype = np.float32).tobytes())
+        for child in self.children_sombrero_mgl(): child.write_pipeline_texture(name, data)
     
     # Write uniform values on the list of pending uniforms
     def solve_pending_uniforms(self):
         for item in self.pending_uniforms:
-            name, value = item[1], item[2]
-            if value is not None: self.set_uniform(name, value)
+            if item.value is not None: self.set_uniform(item.name, item.value)
         self.pending_uniforms = []
 
     # Pipe a global pipeline
@@ -172,6 +190,7 @@ class SombreroMGL:
         # Default constructor is Fullscreen if not set
         if self.constructor is None: self.constructor = FullScreenConstructor(self)
 
+        # Add IOs to the frag shader based on constructor specifications
         self.constructor.treat_fragment_shader(self.shader)
         frag = self.shader.build()
 
@@ -188,6 +207,8 @@ class SombreroMGL:
         )
         self.solve_pending_uniforms()
 
+    # Get render instructions, do this every render because stuff like piano roll needs
+    # their draw instructions to be updated
     def get_vao(self):
         if instructions := self.constructor.vao():
             self.vao = self.gl_context.vertex_array(self.program, instructions, skip_errors = True)
@@ -242,16 +263,13 @@ class SombreroMGL:
         self.pipe_pipeline(self.pipeline)
 
         # Pipe the pipeline to child shaders and render them
-        for index, item in self.contents.items():
-            if item["loader"] == "fragment_shader":
-                item["SombreroMGL"].pipe_pipeline(pipeline)
-                item["SombreroMGL"]._render(pipeline)
+        for child in self.children_sombrero_mgl():
+            child.pipe_pipeline(pipeline)
+            child._render(pipeline)
 
         # Which FBO to use
-        if self.master_shader:
-            self.window.window.use(); self.window.window.clear()
-        else:
-            self.fbo.use(); self.fbo.clear()
+        if self.master_shader: self.window.window.use(); self.window.window.clear()
+        else: self.fbo.use(); self.fbo.clear()
 
         # Use textures at specific indexes
         for index, item in self.contents.items():
@@ -262,22 +280,39 @@ class SombreroMGL:
             
             # Where texture will be used
             item["texture"].use(location = index)
-            self.program[item["name"]] = index
+            try: self.program[item["name"]] = index
+            except KeyError: pass  # Texture was mapped but isn't used
 
         # Render the content
         # self.vao.render(mode = moderngl.TRIANGLE_STRIP)
         if nvert := self.constructor.num_vertices:
             self.vao.render(mode = moderngl.POINTS, vertices = nvert)
 
-        # Draw UI
+        # Draw UI then reset composite mode to NOTHING because imgui changes that
         if self.master_shader and (not self.window.headless) and (self.window.show_gui):
-            self.window.render_ui()
-            self.gl_context.enable_only(moderngl.NOTHING)
+            self.window.render_ui(); self.gl_context.enable_only(moderngl.NOTHING)
     
     # Read contents from window FBO, chose one
     def read(self): return self.window.window.fbo.read()
     def read_into_subprocess_stdin(self, target): target.write(self.read())
 
-    @property
+    @property # FBO size for screenshots
     def fbo_size(self): return self.window.window.fbo.size
     
+    # Generator for iterating on child SombreroMGL instances
+    def children_sombrero_mgl(self):
+        for index, item in self.contents.items():
+            if item["loader"] == "child_sombrero_mgl":
+                yield item["SombreroMGL"]
+    
+    # Return list of used variables in program
+    def get_used_variables(self) -> list:
+        info = [k for k in self.program._members.keys()]
+
+        # Call for every shader as texture loaders
+        for child in self.children_sombrero_mgl():
+            for key in child.get_used_variables(): info.append(key)
+
+        # Remove duplicates
+        return list(set(info))
+        
