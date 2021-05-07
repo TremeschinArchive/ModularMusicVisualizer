@@ -2,12 +2,14 @@ from mmv.sombrero.sombrero_constructor import *
 from mmv.sombrero.sombrero_shader import *
 from PIL import Image
 import numpy as np
+import itertools
 import random
 import time
 import mmv
 import os
 
 FPS = 60
+FRAMETIME = 1/FPS
 
 def main():
     interface = mmv.MMVPackageInterface()
@@ -62,19 +64,15 @@ def main():
     layers.append(hud)
 
     # # Alpha composite
-
     sombrero_main.macros.alpha_composite(layers, gamma_correction = True)
 
     # # Render
-    while True:
+    for iteration in itertools.count(1):
         start = time.time()
+      
         sombrero_main.write_pipeline_texture("mmv_fft", [100 * (0.3 + 0.2*np.sin(np.linspace(0, 20*2*3.1415, FFTSIZE) + time.time()))])
-
         sombrero_main.next()
-        if sombrero_main.window.window_should_close: break
-
+      
         # Vsync
-        while time.time() - start < 1 / FPS: time.sleep(1/(1000*FPS))
-
-        # FPS
-        # print("\r" + str(sombrero_main.pipeline["mFrame"]), end = "", flush = True)
+        if (t := FRAMETIME + start - time.time()) >= 0: time.sleep(t)
+        if sombrero_main.window.window_should_close: break

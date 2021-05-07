@@ -83,19 +83,22 @@ class OnScreenTextMessages:
 class FrameTimesCounter:
     def __init__(self, fps = 60, plot_seconds = 2, history = 30):
         self.fps, self.plot_seconds, self.history = fps, plot_seconds, history
-        self.size = fps * history
         self.last = time.time()
         self.counter = 0
+        self.plot_fps = 60  # Otherwise too much info
         self.clear()
     
     # Create or reset the framtimes array
     def clear(self):
-        self.frametimes = np.zeros((self.fps * self.history), dtype = np.float32)
+        self.frametimes = np.zeros((self.plot_fps * self.history), dtype = np.float32)
         self.last = time.time()
+        self.first_time = True
     
     # Update counters
     def next(self):
-        self.frametimes[self.counter % self.size] = time.time() - self.last
+        if not self.first_time:
+            self.frametimes[self.counter % self.frametimes.shape[0]] = time.time() - self.last
+        self.first_time = False
         self.last = time.time()
         self.counter += 1
 
@@ -103,7 +106,7 @@ class FrameTimesCounter:
     def get_info(self):
 
         # Cut array in wrap mode, basically where we are minus the plot_seconds target
-        plot_seconds_frametimes = self.frametimes.take(range(self.counter - (self.plot_seconds * self.fps), self.counter), mode = "wrap")
+        plot_seconds_frametimes = self.frametimes.take(range(self.counter - (self.plot_seconds * self.plot_fps), self.counter), mode = "wrap")
         plot_seconds_frametimes_no_zeros = plot_seconds_frametimes[plot_seconds_frametimes != 0]
 
         # Simple average, doesn't tel much
@@ -115,8 +118,8 @@ class FrameTimesCounter:
   
         return {
             "frametimes": plot_seconds_frametimes, "average": avg,
-            "min": min(plot_seconds_frametimes_no_zeros),
-            "max": max(plot_seconds_frametimes_no_zeros),
+            "min": min(plot_seconds_frametimes_no_zeros, default = 1),
+            "max": max(plot_seconds_frametimes_no_zeros, default = 1),
             "1%": np.mean(frametimes[0 : max(int(len(frametimes) * .01), 1)]),
             "0.1%": np.mean(frametimes[0 : max(int(len(frametimes) * .001), 1)]),
         }
@@ -125,20 +128,10 @@ class FrameTimesCounter:
 class SombreroWindow:
     LINUX_GNOME_PIXEL_SAVER_EXTENSION_WORKAROUND = False
 
-    # Defaults
-    ACTION_MESSAGE_TIMEOUT = 1.3
-
-    # Multipliers
-    INTENSITY_RESPONSIVENESS = 0.2
-    ROTATION_RESPONSIVENESS = 0.2
-    ZOOM_RESPONSIVENESS = 0.2
-    DRAG_RESPONSIVENESS = 0.3
-    DRAG_MOMENTUM = 0.6
-
-    DEVELOPER = True
-    
     def __init__(self, sombrero):
         self.sombrero = sombrero
+        print(self.sombrero.config["window"])
+        self.ACTION_MESSAGE_TIMEOUT = self.sombrero.config["window"]["action_message_timeout"]
         
         # Mouse related controls
         self.target_drag = np.array([0.0, 0.0])
@@ -284,7 +277,7 @@ class SombreroWindow:
 
     # Release everything
     def drop_textures(self):
-        self.messages.add("Dropped textures", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
+        self.messages.add("Dropped textures", self.ACTION_MESSAGE_TIMEOUT)
         for index in self.sombrero.contents.keys():
             if "shader_as_texture" in self.sombrero.contents[index].keys():
                 target = self.sombrero.contents[index]["shader_as_texture"]
@@ -312,13 +305,14 @@ class SombreroWindow:
     # the video
     def update_window(self):
         self.window.swap_buffers()
+        fix = self.sombrero._fix_ratio_due_fps
 
         # Interpolate stuff
-        self.intensity += (self.target_intensity - self.intensity) * SombreroWindow.INTENSITY_RESPONSIVENESS
-        self.rotation += (self.target_rotation - self.rotation) * SombreroWindow.ROTATION_RESPONSIVENESS
-        self.zoom += (self.target_zoom - self.zoom) * SombreroWindow.ZOOM_RESPONSIVENESS
-        self.drag += (self.target_drag - self.drag) * SombreroWindow.DRAG_RESPONSIVENESS
-        self.drag_momentum *= SombreroWindow.DRAG_MOMENTUM
+        self.intensity += (self.target_intensity - self.intensity) * fix(self.sombrero.config["window"]["intensity_responsiveness"]) 
+        self.rotation += (self.target_rotation - self.rotation) * fix(self.sombrero.config["window"]["rotation_responsiveness"])
+        self.zoom += (self.target_zoom - self.zoom) * fix(self.sombrero.config["window"]["zoom_responsiveness"])
+        self.drag += (self.target_drag - self.drag) * fix(self.sombrero.config["window"]["drag_responsiveness"])
+        self.drag_momentum *= self.sombrero.config["window"]["drag_momentum"]
 
         # Drag momentum
         if not 1 in self.mouse_buttons_pressed:
@@ -337,7 +331,7 @@ class SombreroWindow:
         # "tab" key pressed, toggle gui
         if (key == 258) and (action == 1):
             self.show_gui = not self.show_gui
-            self.messages.add(f"(TAB) Toggle GUI [{self.show_gui}]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
+            self.messages.add(f"(TAB) Toggle GUI [{self.show_gui}]", self.ACTION_MESSAGE_TIMEOUT)
             self.window.mouse_exclusivity = False
             self.framerate.clear()
 
@@ -349,30 +343,30 @@ class SombreroWindow:
         if self.imgui_io.want_capture_mouse: return
 
         if (key == 32) and (action == 1):
-            self.messages.add(f"{debug_prefix} (space) Toggle playback", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
+            self.messages.add(f"{debug_prefix} (space) Toggle playback", self.ACTION_MESSAGE_TIMEOUT)
             self.do_playback = not self.do_playback
 
         if (key == 68) and (action == 1):
-            self.messages.add(f"{debug_prefix} (d) Toggle debug", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
+            self.messages.add(f"{debug_prefix} (d) Toggle debug", self.ACTION_MESSAGE_TIMEOUT)
             self.debug_mode = not self.debug_mode
             
         # Target rotation to the nearest 360° multiple (current minus negative remainder if you think hard enough)
         if (key == 67) and (action == 1):
-            self.messages.add(f"{debug_prefix} (c) Reset rotation to [0°]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
+            self.messages.add(f"{debug_prefix} (c) Reset rotation to [0°]", self.ACTION_MESSAGE_TIMEOUT)
             self.target_rotation = self.target_rotation - (math.remainder(self.target_rotation, 360))
 
         if (key == 69) and (action == 1):
             self.mouse_exclusivity = not self.mouse_exclusivity
             self.window.mouse_exclusivity = self.mouse_exclusivity
-            self.messages.add(f"{debug_prefix} (e) Toggle mouse exclusivity [{self.mouse_exclusivity}", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
+            self.messages.add(f"{debug_prefix} (e) Toggle mouse exclusivity [{self.mouse_exclusivity}", self.ACTION_MESSAGE_TIMEOUT)
 
         if (key == 70) and (action == 1):
             self.window.fullscreen = not self.window.fullscreen
-            self.messages.add(f"{debug_prefix} (f) Toggle fullscreen [{self.window.fullscreen}]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
+            self.messages.add(f"{debug_prefix} (f) Toggle fullscreen [{self.window.fullscreen}]", self.ACTION_MESSAGE_TIMEOUT)
 
         if (key == 72) and (action == 1):
             self.window.cursor = not self.window.cursor
-            self.messages.add(f"{debug_prefix} (h) Toggle Hide Mouse [{self.window.cursor}]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
+            self.messages.add(f"{debug_prefix} (h) Toggle Hide Mouse [{self.window.cursor}]", self.ACTION_MESSAGE_TIMEOUT)
 
         if (key == 81) and (action == 1):
             logging.info(f"{debug_prefix} \"q\" key pressed, quitting")
@@ -380,11 +374,11 @@ class SombreroWindow:
 
         if (key == 82) and (action == 1):
             self.sombrero._read_shaders_from_paths_again()
-            self.messages.add(f"{debug_prefix} (r) Reloading shaders..", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
+            self.messages.add(f"{debug_prefix} (r) Reloading shaders..", self.ACTION_MESSAGE_TIMEOUT)
 
         if (key == 83) and (action == 1):
             self.sombrero.freezed_pipeline = not self.sombrero.freezed_pipeline
-            self.messages.add(f"{debug_prefix} (s) Freeze time [{self.sombrero.freezed_pipeline}]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
+            self.messages.add(f"{debug_prefix} (s) Freeze time [{self.sombrero.freezed_pipeline}]", self.ACTION_MESSAGE_TIMEOUT)
             for index in self.sombrero.contents.keys():
                 if self.sombrero.contents[index]["loader"] == "shader":
                     self.sombrero.contents[index]["shader_as_texture"].freezed_pipeline = self.sombrero.freezed_pipeline
@@ -392,18 +386,18 @@ class SombreroWindow:
         if (key == 84) and (action == 1):
             self.sombrero.pipeline["mFrame"] = 0
             self.sombrero.pipeline["mTime"] = 0
-            self.messages.add(f"{debug_prefix} (t) Set time to [0s]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
+            self.messages.add(f"{debug_prefix} (t) Set time to [0s]", self.ACTION_MESSAGE_TIMEOUT)
 
         if (key == 86) and (action == 1):
-            self.messages.add(f"{debug_prefix} (v) Reset intensity to [1]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
+            self.messages.add(f"{debug_prefix} (v) Reset intensity to [1]", self.ACTION_MESSAGE_TIMEOUT)
             self.target_intensity = 1
 
         if (key == 90) and (action == 1):
-            self.messages.add(f"{debug_prefix} (z) Reset zoom to [1x]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
+            self.messages.add(f"{debug_prefix} (z) Reset zoom to [1x]", self.ACTION_MESSAGE_TIMEOUT)
             self.target_zoom = 1
 
         if (key == 88) and (action == 1):
-            self.messages.add(f"{debug_prefix} (x) Reset drag to [0, 0]", SombreroWindow.ACTION_MESSAGE_TIMEOUT)
+            self.messages.add(f"{debug_prefix} (x) Reset drag to [0, 0]", self.ACTION_MESSAGE_TIMEOUT)
             self.target_drag = np.array([0.0, 0.0])
 
         # "p" key pressed, screenshot
@@ -413,7 +407,7 @@ class SombreroWindow:
             # Where to save
             now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             saveto = m.mmv_interface.screenshots_dir / f"{now}.jpg"
-            self.messages.add(f"{debug_prefix} (p) Screenshot save [{saveto}]", SombreroWindow.ACTION_MESSAGE_TIMEOUT * 4)
+            self.messages.add(f"{debug_prefix} (p) Screenshot save [{saveto}]", self.ACTION_MESSAGE_TIMEOUT * 4)
 
             old = self.show_gui  # Did we have GUI enabled previously?
             self.show_gui = False  # Disable for screenshot
@@ -581,7 +575,7 @@ class SombreroWindow:
             imgui.set_next_window_position(0, dock_y)
             imgui.set_next_window_bg_alpha(0.5)
             imgui.begin("Performance", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE)
-            imgui.text_colored("Frametimes", 1, 0, 0)
+            imgui.text_colored(f"Frametimes [last {self.framerate.history:.2f}s]", 1, 0, 0)
             precision = 2
             imgui.plot_lines(
                 (

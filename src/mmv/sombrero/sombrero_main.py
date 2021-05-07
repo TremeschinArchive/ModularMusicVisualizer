@@ -28,6 +28,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from mmv.sombrero.sombrero_window import SombreroWindow
 from mmv.sombrero.sombrero_constructor import *
 from mmv.sombrero.sombrero_shader import *
+from functools import lru_cache
 from enum import Enum, auto
 from array import array
 from PIL import Image
@@ -54,6 +55,7 @@ class SombreroMGL:
         # # Constructor
         self.mmv_interface = mmv_interface
         self.shaders_dir = self.mmv_interface.shaders_dir
+        self.config = self.mmv_interface.config
 
         # Do flip coordinates vertically? OpenGL context ("shared" with main class)
         self.gl_context = gl_context
@@ -103,7 +105,15 @@ class SombreroMGL:
     def configure(self, width, height, fps, ssaa = 1):
         (self.width, self.height, self.fps, self.ssaa) = (width, height, fps, ssaa)
 
-    # Shorthand
+    # # Interpolation, ratios
+
+    # If new fps < 60, ratio should be higher
+    @lru_cache(maxsize = 2048)
+    def _fix_ratio_due_fps(self, ratio):
+        return 1 - ((1 - ratio)**(60 / self.fps))
+
+    # # Shorthands
+
     def __mipmap_anisotropy_repeat_texture(self, texture, context):
         texture.anisotropy = context.get("anisotropy", 1)
         texture.repeat_x = context.get("repeat_x", True)
