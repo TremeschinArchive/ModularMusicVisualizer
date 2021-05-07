@@ -162,7 +162,8 @@ class SombreroWindow:
         self.messages = OnScreenTextMessages()
 
         # Actions
-        self.do_playback = True
+        self.target_time_factor = 1
+        self.time_factor = 1
 
     # Which "mode" to render, window loader class, msaa, ssaa, vsync, force res?
     def create(self, window_class = "glfw", msaa = 8, vsync = False, strict = False, icon = None):
@@ -312,6 +313,7 @@ class SombreroWindow:
         self.rotation += (self.target_rotation - self.rotation) * fix(self.sombrero.config["window"]["rotation_responsiveness"])
         self.zoom += (self.target_zoom - self.zoom) * fix(self.sombrero.config["window"]["zoom_responsiveness"])
         self.drag += (self.target_drag - self.drag) * fix(self.sombrero.config["window"]["drag_responsiveness"])
+        self.time_factor += (self.target_time_factor - self.time_factor) * fix(self.sombrero.config["window"]["time_responsiveness"])
         self.drag_momentum *= self.sombrero.config["window"]["drag_momentum"]
 
         # Drag momentum
@@ -343,8 +345,11 @@ class SombreroWindow:
         if self.imgui_io.want_capture_mouse: return
 
         if (key == 32) and (action == 1):
-            self.messages.add(f"{debug_prefix} (space) Toggle playback", self.ACTION_MESSAGE_TIMEOUT)
-            self.do_playback = not self.do_playback
+            self.sombrero.freezed_pipeline = not self.sombrero.freezed_pipeline
+            self.messages.add(f"{debug_prefix} (space) Freeze time [{self.sombrero.freezed_pipeline}]", self.ACTION_MESSAGE_TIMEOUT)
+            for index in self.sombrero.contents.keys():
+                if self.sombrero.contents[index]["loader"] == "shader":
+                    self.sombrero.contents[index]["shader_as_texture"].freezed_pipeline = self.sombrero.freezed_pipeline
 
         if (key == 68) and (action == 1):
             self.messages.add(f"{debug_prefix} (d) Toggle debug", self.ACTION_MESSAGE_TIMEOUT)
@@ -375,13 +380,6 @@ class SombreroWindow:
         if (key == 82) and (action == 1):
             self.sombrero._read_shaders_from_paths_again()
             self.messages.add(f"{debug_prefix} (r) Reloading shaders..", self.ACTION_MESSAGE_TIMEOUT)
-
-        if (key == 83) and (action == 1):
-            self.sombrero.freezed_pipeline = not self.sombrero.freezed_pipeline
-            self.messages.add(f"{debug_prefix} (s) Freeze time [{self.sombrero.freezed_pipeline}]", self.ACTION_MESSAGE_TIMEOUT)
-            for index in self.sombrero.contents.keys():
-                if self.sombrero.contents[index]["loader"] == "shader":
-                    self.sombrero.contents[index]["shader_as_texture"].freezed_pipeline = self.sombrero.freezed_pipeline
 
         if (key == 84) and (action == 1):
             self.sombrero.pipeline["mFrame"] = 0
@@ -543,25 +541,54 @@ class SombreroWindow:
         dock_y = 0
         imgui.push_style_var(imgui.STYLE_WINDOW_BORDERSIZE, 0.0)
         imgui.push_style_var(imgui.STYLE_WINDOW_ROUNDING, 0)
+        section_color = (0, 1, 0)
 
         # # # Info window
 
         if 1:
-            imgui.set_next_window_position(0, dock_y, imgui.ONCE)
+            imgui.set_next_window_position(0, dock_y)
             imgui.set_next_window_bg_alpha(0.5)
             imgui.begin("Info Window", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE)
 
             # Render related
-            imgui.text_colored("Render", 1, 0, 0)
+            imgui.text_colored("Render", *section_color)
+            imgui.separator()
             imgui.text(f"SSAA:       [{self.sombrero.ssaa:.3f}]")
             imgui.text(f"Resolution: [{int(self.sombrero.width)}, {int(self.sombrero.height)}] => [{int(self.sombrero.width*self.sombrero.ssaa)}, {int(self.sombrero.height*self.sombrero.ssaa)}]")
 
             # Coordinates, attributes
-            imgui.text_colored("Coordinates, attributes", 1, 0, 0)
+            imgui.separator()
+            imgui.text_colored("Coordinates, attributes", *section_color)
             imgui.text(f"(x, y):    [{self.drag[0]:.3f}, {self.drag[1]:.3f}] => [{self.target_drag[0]:.3f}, {self.target_drag[1]:.3f}]")
             imgui.text(f"Intensity: [{self.intensity:.2f}] => [{self.target_intensity:.2f}]")
             imgui.text(f"Zoom:      [{self.zoom:.5f}x] => [{self.target_zoom:.5f}x]")
             imgui.text(f"Rotation:  [{self.rotation:.3f}°] => [{self.target_rotation:.3f}°]")
+            dock_y += imgui.get_window_height()
+            imgui.end()
+
+        # # # Basic render, config settings
+
+        if 1:
+            imgui.set_next_window_position(0, dock_y)
+            imgui.set_next_window_bg_alpha(0.5)
+            imgui.begin("Config Window", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE)
+            
+            # # FPS
+            changed, value = imgui.input_int("Target FPS", self.sombrero.fps)
+            if changed: self.sombrero.change_fps(value)
+
+            # # Time
+            imgui.separator()
+            imgui.text_colored("Time", *section_color)
+            changed, value = imgui.slider_float("Multiplier", self.target_time_factor, min_value = -3, max_value = 3, power = 1)
+            if changed: self.target_time_factor = value
+
+            # Quick
+            for ratio in [-2, -1, -0.5, 0, 0.5, 1, 2]:
+                changed = imgui.button(f"x{ratio}"); imgui.same_line()
+                if changed: self.target_time_factor = ratio
+
+            imgui.separator()
             dock_y += imgui.get_window_height()
             imgui.end()
 
@@ -575,7 +602,8 @@ class SombreroWindow:
             imgui.set_next_window_position(0, dock_y)
             imgui.set_next_window_bg_alpha(0.5)
             imgui.begin("Performance", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE)
-            imgui.text_colored(f"Frametimes [last {self.framerate.history:.2f}s]", 1, 0, 0)
+            imgui.text_colored(f"Frametimes [last {self.framerate.history:.2f}s]", *section_color)
+            imgui.separator()
             precision = 2
             imgui.plot_lines(
                 (
@@ -588,6 +616,7 @@ class SombreroWindow:
                 scale_min = 0,
                 graph_size = (0, 70)
             )
+            imgui.separator()
             dock_y += imgui.get_window_height()
             imgui.end()
 

@@ -161,7 +161,7 @@ class PianoRoll:
 
         # How much seconds of content on screen
         self.visible_seconds = 5
-        self.piano_height = 0.3
+        self.piano_height = 0.2
 
         # Optimization
         self.__last_call_generate_coordinates = None
@@ -228,21 +228,21 @@ class PianoRoll:
     # Linear interpolation
     def lerp(self, p1, p2, x): return ((p2[1] - p1[1]) / (p2[0] - p1[0]))*(x - p2[0]) + p2[1]
 
-    def generate_note_coordinates(self, pipeline):
+    def generate_note_coordinates(self):
         if self.now == self.__last_call_generate_coordinates:
             return self.__last_return_generate_note_coordinates
 
         self.__last_call_generate_coordinates = self.now
 
         playing = self.get_visible_notes()
-        instructions = {"midi": [], "keys": []}
+        instructions = {"notes": [], "keys": []}
 
         for note in playing:
             this_instruction = []
             lower_boundary = -1 + self.piano_height
 
             # Get note X position
-            x = self.lerp((self.midi.min, lower_boundary), (self.midi.max, 1), note.note)
+            x = self.lerp((self.midi.min, -1), (self.midi.max, 1), note.note)
 
             # Visible stuff
             viewport = ((self.now, lower_boundary), (self.now + self.visible_seconds, 1))
@@ -267,8 +267,8 @@ class PianoRoll:
             note_attrs = [note.note, note.velocity, note.channel, int(is_playing), int(not "#" in note.name)]
 
             this_instruction += midi_coordinates
-            this_instruction += note_attrs
-            instructions["midi"].append(this_instruction)
+            # this_instruction += note_attrs
+            instructions["notes"].append(this_instruction)
 
             # # Piano key
             this_instruction = []
