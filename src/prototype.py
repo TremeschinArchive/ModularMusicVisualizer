@@ -23,7 +23,7 @@ def main():
     # layers = [blueprint, background, music_bars, rain, vignetting, hud]
     layers = []
 
-    scene = 3
+    scene = 0
 
     if scene == 0:
         blueprint = sombrero_main.new_child()
@@ -72,10 +72,16 @@ def main():
 
         pianoroll = PianoRoll(sombrero_main)
         pianoroll.load_midi(interface.assets_dir/"free_assets"/"piano_roll"/"contingency_times.mid")
+
         pianoshader = sombrero_main.new_child()
         pianoshader.constructor = PianoRollConstructor(pianoshader, pianoroll, expect = "notes")
         pianoshader.macros.load(interface.shaders_dir/"assets"/"piano_roll"/"midi_key.glsl")
         layers.append(pianoshader)
+
+        # pianokeys = sombrero_main.new_child()
+        # pianokeys.constructor = PianoRollConstructor(pianokeys, pianoroll, expect = "notes")
+        # pianokeys.macros.load(interface.shaders_dir/"assets"/"piano_roll"/"piano_key.glsl")
+        # layers.append(pianokeys)
 
 
     # # Alpha composite

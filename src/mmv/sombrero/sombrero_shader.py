@@ -134,14 +134,15 @@ class FragColor(CallableAddToParent):
 # One input or output marked variable, communication between vertex, geometry and fragment shader
 class IO(CallableAddToParent):
     def __repr__(self): return f"<IO {str(id(self))[-4:]} name:\"{self.name}\" mode:\"{self.mode}\">"
-    def __init__(self, glsltype, name, use = True, prefix = True, mode = "io"):
+    def __init__(self, glsltype, name, use = True, prefix = True, mode = "io", flat = False):
         assign_locals(locals())
         {"io": self.do_input_and_output, 'i': self.do_only_input, 'o': self.do_only_output}.get(mode, "io")()
 
     def build(self, indent = "") -> list:
         R = []
-        if "i" in self.mode: R += [f"{indent}in {self.glsltype} {self.in_name};"]
-        if "o" in self.mode: R += [f"{indent}out {self.glsltype} {self.out_name};"]
+        prefix = "flat " if self.flat else ""
+        if "i" in self.mode: R += [f"{indent}{prefix}in {self.glsltype} {self.in_name};"]
+        if "o" in self.mode: R += [f"{indent}{prefix}out {self.glsltype} {self.out_name};"]
         return R
 
     def do_only_input(self): self.mode = "i"

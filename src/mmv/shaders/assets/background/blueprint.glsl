@@ -2,7 +2,7 @@
 vec4 mainImage() {
     vec4 col = vec4(1.0);
     vec2 stuv_all = mGetSTUVAll();
-    vec2 gluv_all = mGetGLUVAll();
+    vec2 gluv_all = mGetGLUVAll(1.0);
 
     // Backgound color
     col.rgb = vec3(0.0 / 256, 38.0 / 256, 130.0 / 256);

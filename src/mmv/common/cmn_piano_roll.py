@@ -267,7 +267,7 @@ class PianoRoll:
             note_attrs = [note.note, note.velocity, note.channel, int(is_playing), int(not "#" in note.name)]
 
             this_instruction += midi_coordinates
-            # this_instruction += note_attrs
+            this_instruction += note_attrs
             instructions["notes"].append(this_instruction)
 
             # # Piano key
