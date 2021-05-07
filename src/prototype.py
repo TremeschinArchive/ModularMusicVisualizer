@@ -1,3 +1,4 @@
+from mmv.common.cmn_piano_roll import PianoRoll
 from mmv.sombrero.sombrero_constructor import *
 from mmv.sombrero.sombrero_shader import *
 from PIL import Image
@@ -9,7 +10,6 @@ import mmv
 import os
 
 FPS = 60
-FRAMETIME = 1/FPS
 
 def main():
     interface = mmv.MMVPackageInterface()
@@ -23,7 +23,7 @@ def main():
     # layers = [blueprint, background, music_bars, rain, vignetting, hud]
     layers = []
 
-    scene = 0
+    scene = 3
 
     if scene == 0:
         blueprint = sombrero_main.new_child()
@@ -51,17 +51,32 @@ def main():
 
         layers.append(tetration_pfx)
 
-    rain = sombrero_main.new_child()
-    rain.macros.load(interface.shaders_dir/"assets"/"fx"/"rain.glsl")
-    layers.append(rain)
-    
-    vignetting = sombrero_main.new_child()
-    vignetting.macros.load(interface.shaders_dir/"assets"/"pfx"/"vignetting.glsl")
-    layers.append(vignetting)
+    if scene == 0 or scene == 1:
+        rain = sombrero_main.new_child()
+        rain.macros.load(interface.shaders_dir/"assets"/"fx"/"rain.glsl")
+        layers.append(rain)
+        
+        vignetting = sombrero_main.new_child()
+        vignetting.macros.load(interface.shaders_dir/"assets"/"pfx"/"vignetting.glsl")
+        layers.append(vignetting)
 
-    hud = sombrero_main.new_child()
-    hud.macros.load(interface.shaders_dir/"sombrero"/"default_hud.glsl")
-    layers.append(hud)
+        hud = sombrero_main.new_child()
+        hud.macros.load(interface.shaders_dir/"sombrero"/"default_hud.glsl")
+        layers.append(hud)
+    
+    if scene == 3:
+        background = sombrero_main.new_child()
+        background.macros.load(interface.shaders_dir/"assets"/"background"/"moving_image.glsl")
+        background.macros.add_mapping(TextureImage(name = "background", path = interface.assets_dir/"free_assets"/"glsl_default_background.jpg"))
+        layers.append(background)
+
+        pianoroll = PianoRoll(sombrero_main)
+        pianoroll.load_midi(interface.assets_dir/"free_assets"/"piano_roll"/"contingency_times.mid")
+        pianoshader = sombrero_main.new_child()
+        pianoshader.constructor = PianoRollConstructor(pianoshader, pianoroll, expect = "notes")
+        pianoshader.macros.load(interface.shaders_dir/"assets"/"piano_roll"/"midi_key.glsl")
+        layers.append(pianoshader)
+
 
     # # Alpha composite
     sombrero_main.macros.alpha_composite(layers, gamma_correction = True)
@@ -74,5 +89,5 @@ def main():
         sombrero_main.next()
       
         # Vsync
-        if (t := FRAMETIME + start - time.time()) >= 0: time.sleep(t)
+        if (t := (1 / sombrero_main.fps) + start - time.time()) >= 0: time.sleep(t)
         if sombrero_main.window.window_should_close: break

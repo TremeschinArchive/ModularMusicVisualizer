@@ -336,7 +336,7 @@ There are a couple hotkeys and interactions with the window:
 - Pressing `c` resets rotation to 0
 - Pressing `v` resets the intensity to 1
 - Pressing `r` rebuilds the preset and reloads the shaders
-- Pressing `s` freezes the pipeline so the shader is rendered (hopefully) static, useful for debugging or screenshoting
+- Pressing `space` freezes time and the pipeline so the shader is rendered (hopefully) static, useful for debugging or screenshotting
 - Pressing `t` resets time to 0 (same as restarting MMV)
 - Pressing `f` toggles fullscreen
 - Pressing `h` hides mouse

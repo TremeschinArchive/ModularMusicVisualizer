@@ -105,6 +105,10 @@ class SombreroMGL:
     def configure(self, width, height, fps, ssaa = 1):
         (self.width, self.height, self.fps, self.ssaa) = (width, height, fps, ssaa)
 
+    def change_fps(self, new):
+        self.pipeline["mFrame"] *= (new / self.fps)
+        self.fps = new
+
     # # Interpolation, ratios
 
     # If new fps < 60, ratio should be higher
@@ -222,7 +226,8 @@ class SombreroMGL:
     # their draw instructions to be updated
     def get_vao(self):
         if instructions := self.constructor.vao():
-            self.vao = self.gl_context.vertex_array(self.program, instructions, skip_errors = True)
+            self.vao = self.gl_context.vertex_array(self.program, instructions)
+            # self.vao = self.gl_context.vertex_array(self.program, instructions, skip_errors = True)
 
     # # Render
 
@@ -240,7 +245,7 @@ class SombreroMGL:
 
         # Calculate Sombrero values
         if not self.freezed_pipeline:
-            self.pipeline["mFrame"] += 1
+            self.pipeline["mFrame"] += 1 * self.window.time_factor
             self.pipeline["mFlip"] = -1 if self.flip else 1
             self.pipeline["mTime"] = self.pipeline["mFrame"] / self.fps
 
