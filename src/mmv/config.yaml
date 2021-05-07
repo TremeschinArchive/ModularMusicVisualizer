@@ -8,6 +8,13 @@ logging:
   log_level: "info"  # critical, debug, error, info
   log_format: "pretty"  # informational, pretty, economic, onlymessage
 
+window:
+  intensity_responsiveness: 0.2
+  rotation_responsiveness: 0.2
+  zoom_responsiveness: 0.2
+  drag_responsiveness: 0.3
+  drag_momentum: 0.6
+  action_message_timeout: 1.3
 
 audio:
   sample_rate: 48000
