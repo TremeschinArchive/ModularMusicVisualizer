@@ -5,7 +5,7 @@
 
 vec4 mainImage() {
     vec4 col = vec4(0.0);
-    vec2 gluv = mGetGLUVAll();
+    vec2 gluv = mGetGLUVAll(1.0);
     
     // This point
     ComplexNumber screen_point;

@@ -2,7 +2,7 @@
 vec4 mainImage() {
     vec4 col = vec4(0.0);
     vec2 stuv_all = mGetSTUVAll();
-    vec2 gluv_all = mGetGLUVAll();
+    vec2 gluv_all = mGetGLUVAll(1.0);
 
     // Displacement stuff for organic movement
     vec2 low_freq_shake = vec2(cos(mTime*5.0/1.5), sin(mTime*8.0/1.5)) / 180.0;

@@ -163,7 +163,7 @@ class SombreroWindow:
 
         # Actions
         self.target_time_factor = 1
-        self.time_factor = 1
+        self.time_factor = 0
 
     # Which "mode" to render, window loader class, msaa, ssaa, vsync, force res?
     def create(self, window_class = "glfw", msaa = 8, vsync = False, strict = False, icon = None):
@@ -313,8 +313,11 @@ class SombreroWindow:
         self.rotation += (self.target_rotation - self.rotation) * fix(self.sombrero.config["window"]["rotation_responsiveness"])
         self.zoom += (self.target_zoom - self.zoom) * fix(self.sombrero.config["window"]["zoom_responsiveness"])
         self.drag += (self.target_drag - self.drag) * fix(self.sombrero.config["window"]["drag_responsiveness"])
-        self.time_factor += (self.target_time_factor - self.time_factor) * fix(self.sombrero.config["window"]["time_responsiveness"])
         self.drag_momentum *= self.sombrero.config["window"]["drag_momentum"]
+
+        self.time_factor += \
+            ( (int(not self.sombrero.freezed_pipeline) * self.target_time_factor) - self.time_factor) \
+            * fix(self.sombrero.config["window"]["time_responsiveness"])
 
         # Drag momentum
         if not 1 in self.mouse_buttons_pressed:
@@ -347,6 +350,7 @@ class SombreroWindow:
         if (key == 32) and (action == 1):
             self.sombrero.freezed_pipeline = not self.sombrero.freezed_pipeline
             self.messages.add(f"{debug_prefix} (space) Freeze time [{self.sombrero.freezed_pipeline}]", self.ACTION_MESSAGE_TIMEOUT)
+
             for index in self.sombrero.contents.keys():
                 if self.sombrero.contents[index]["loader"] == "shader":
                     self.sombrero.contents[index]["shader_as_texture"].freezed_pipeline = self.sombrero.freezed_pipeline
@@ -579,14 +583,21 @@ class SombreroWindow:
 
             # # Time
             imgui.separator()
-            imgui.text_colored("Time", *section_color)
+            t = f"{self.sombrero.pipeline['mTime']:.1f}s"
+            if not self.sombrero.freezed_pipeline: imgui.text_colored(f"Time [PLAYING] [{t}]", *section_color)
+            else: imgui.text_colored(f"Time [FROZEN] [{t}]", 1, 0, 0)
+
             changed, value = imgui.slider_float("Multiplier", self.target_time_factor, min_value = -3, max_value = 3, power = 1)
-            if changed: self.target_time_factor = value
+            if changed:
+                self.target_time_factor = value
+                self.previous_time_factor = self.target_time_factor
 
             # Quick
             for ratio in [-2, -1, -0.5, 0, 0.5, 1, 2]:
                 changed = imgui.button(f"x{ratio}"); imgui.same_line()
-                if changed: self.target_time_factor = ratio
+                if changed:
+                    self.target_time_factor = ratio
+                    self.previous_time_factor = self.target_time_factor
 
             imgui.separator()
             dock_y += imgui.get_window_height()

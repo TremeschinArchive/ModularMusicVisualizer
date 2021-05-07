@@ -28,7 +28,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from mmv.sombrero.sombrero_window import SombreroWindow
 from mmv.sombrero.sombrero_constructor import *
 from mmv.sombrero.sombrero_shader import *
-from functools import lru_cache
 from enum import Enum, auto
 from array import array
 from PIL import Image
@@ -112,7 +111,6 @@ class SombreroMGL:
     # # Interpolation, ratios
 
     # If new fps < 60, ratio should be higher
-    @lru_cache(maxsize = 2048)
     def _fix_ratio_due_fps(self, ratio):
         return 1 - ((1 - ratio)**(60 / self.fps))
 
@@ -226,8 +224,8 @@ class SombreroMGL:
     # their draw instructions to be updated
     def get_vao(self):
         if instructions := self.constructor.vao():
-            self.vao = self.gl_context.vertex_array(self.program, instructions)
-            # self.vao = self.gl_context.vertex_array(self.program, instructions, skip_errors = True)
+            # self.vao = self.gl_context.vertex_array(self.program, instructions)
+            self.vao = self.gl_context.vertex_array(self.program, instructions, skip_errors = True)
 
     # # Render
 
@@ -242,12 +240,11 @@ class SombreroMGL:
         self.pipeline["mRotation"] = self.window.rotation
         self.pipeline["mZoom"] = self.window.zoom
         self.pipeline["mDrag"] = self.window.drag
+        self.pipeline["mFlip"] = -1 if self.flip else 1
 
         # Calculate Sombrero values
-        if not self.freezed_pipeline:
-            self.pipeline["mFrame"] += 1 * self.window.time_factor
-            self.pipeline["mFlip"] = -1 if self.flip else 1
-            self.pipeline["mTime"] = self.pipeline["mFrame"] / self.fps
+        self.pipeline["mFrame"] += 1 * self.window.time_factor
+        self.pipeline["mTime"] = self.pipeline["mFrame"] / self.fps
 
         # GUI related
         self.pipeline["mIsDraggingMode"] = self.window.is_dragging_mode

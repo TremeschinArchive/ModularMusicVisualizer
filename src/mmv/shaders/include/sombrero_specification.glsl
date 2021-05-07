@@ -71,11 +71,11 @@ vec2 mGetSTUVAll() {
 }
 
 // OpenGL UV-like coordinates with zoom, drag applied (interactive)
-vec2 mGetGLUVAll() {
+vec2 mGetGLUVAll(float zdepth) {
     vec2 drag = mGetNormalizedDrag();
     vec2 gluv = mGetGLUV();
     mat2 rotation = mGetCoordinatesRotation();
-    return ((gluv * (mZoom * mZoom)) * rotation) + (drag * 2.0);
+    return ((gluv * (pow(mZoom * mZoom, zdepth))) * rotation) + (drag * 2.0 * zdepth);
 }
 
 // // Noise
