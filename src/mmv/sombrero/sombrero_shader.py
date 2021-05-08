@@ -262,7 +262,7 @@ class SombreroShaderMacros:
         PlaceHolder("Mappings")(shader)
         PlaceHolder("Uniforms")(shader)
         PlaceHolder("Includes")(shader)
-        Include(Path(self.sombrero_mgl.mmv_interface.shaders_dir)/"include"/"sombrero_specification.glsl")(shader)
+        Include(Path(self.sombrero_mgl.mmv_interface.shaders_dir)/"sombrero"/"include"/"sombrero_specification.glsl")(shader)
         PlaceHolder("UserShader")(shader)
 
     # Versioned, placeholders, and sombrero specification

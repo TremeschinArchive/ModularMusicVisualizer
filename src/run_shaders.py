@@ -52,12 +52,11 @@ import mmv
 class AnyModification(FileSystemEventHandler):
     def __init__(self, controller):
         self.controller = controller
-        self.reload = False
 
     def on_modified(self, event):
         debug_prefix = "[AnyModification.on_modified]"
         logging.info(f"{debug_prefix} Some modification event [{event}], reloading shaders..")
-        self.reload = True
+        self.controller.sombrero_main._want_to_reload = True
 
 
 class MMVShadersCLI:
@@ -93,6 +92,7 @@ class MMVShadersCLI:
         self._ssaa = 1.1
         self._msaa = 8
         self._multiplier = 2.0
+        self._have_audio = True
 
         # Use default preset
         self._preset_name = "default"
@@ -175,32 +175,23 @@ class MMVShadersCLI:
         ])
         self.MMV_FFTSIZE = self.audio_source.audio_processing.FFT_length
 
-    # # When the user presses "r"
-    # def __should_reload_preset(self):
-    #     self.utils.reset_dir(self.mmv_package_interface.runtime_dir)
-    #     self.__load_preset()
-
     def __load_preset(self):
         debug_prefix = "[MMVShadersCLI.__load_preset]"
 
         # # Will we load preset file or raw file shader? 
-
-        # Raw file
         if self._preset_name is None:
-            raise RuntimeError()
-
-        # Preset file
-        else:
-            preset = __import__(f"mmv.shaders.presets.{self._preset_name}", fromlist = [self._preset_name])
-            
+            raise RuntimeError()  # Raw file
+        
+        else: # Preset file
             context = DotMap(_dynamic = False)
             context.cli = self
             context.interface = self.mmv_package_interface
             context.new_shader = self.sombrero_main.new_child
             context.render_layers = self.sombrero_main.macros.alpha_composite
-
             self.sombrero_main.reset()
+            preset = __import__(f"mmv.shaders.presets.{self._preset_name}", fromlist = [self._preset_name])
             preset.generate(context)
+            self.sombrero_main.finish()
                     
     # List capture devices by index
     def list_captures(self):
@@ -235,7 +226,7 @@ class MMVShadersCLI:
         self.audio_source.configure(
             batch_size = self._audio_batch_size,
             sample_rate = self._sample_rate,
-            recorder_numframes =  None,
+            recorder_numframes = None,
             do_calculate_fft = True
         )
 
@@ -247,7 +238,7 @@ class MMVShadersCLI:
                 if index == cap:
                     self.audio_source.init(recorder_device = device)
 
-        self.__configure_audio_processing()
+        # self.__configure_audio_processing()
         self.__load_preset()
 
         # Start reading data
@@ -260,13 +251,21 @@ class MMVShadersCLI:
             "Name of the final video"
         )),
         audio: str = typer.Option(None, help = "Which audio to use as source on file?"),
+        no_audio: bool = typer.Option(False, help = "Only render the shader, please pass --seconds as well!"),
+        seconds: float = typer.Option(30, help = "Render only the shader by this much seconds"),
     ):
         debug_prefix = "[MMVShadersCLI.render]"
+        self._have_audio = not no_audio
         self.mode = "render"
 
         self._output_video = output_video
         if audio is not None:
             self._input_audio = audio
+        else:
+            if no_audio:
+                self._input_audio = None
+                self.total_steps = self._fps * seconds
+                self.duration = seconds
 
         self.__sombrero_mgl_target_render_settings()
 
@@ -279,24 +278,28 @@ class MMVShadersCLI:
         )
 
         # # Audio source File
-        self.audio_source = self.mmv_package_interface.get_audio_source_file()
+        if self._have_audio:
+            self.audio_source = self.mmv_package_interface.get_audio_source_file()
 
-        # Configure audio source
-        self.audio_source.configure(
-            target_fps = self._fps,
-            process_batch_size = self._audio_batch_size,
-            sample_rate = self._sample_rate,
-            do_calculate_fft = True,
-        )
+            # Configure audio source
+            self.audio_source.configure(
+                target_fps = self._fps,
+                process_batch_size = self._audio_batch_size,
+                sample_rate = self._sample_rate,
+                do_calculate_fft = True,
+            )
 
-        # Read source audio file
-        self.audio_source.init(audio_path = self._input_audio)
-        self.__configure_audio_processing()
+            # Read source audio file
+            self.audio_source.init(audio_path = self._input_audio)
+
+            # How much bars we'll have
+            self.MMV_FFTSIZE = self.audio_source.audio_processing.FFT_length
+            self.total_steps = self.audio_source.total_steps
+            self.duration = self.audio_source.duration
+
+        # self.__configure_audio_processing()
         self.__load_preset()
-
-        # How much bars we'll have
-        self.MMV_FFTSIZE = self.audio_source.audio_processing.FFT_length
-
+      
         # Get video encoder
         self.ffmpeg = self.mmv_package_interface.get_ffmpeg_wrapper()
 
@@ -308,10 +311,10 @@ class MMVShadersCLI:
             input_video_source = "pipe",
             output_video = self._output_video,
             framerate = self._fps,
-            preset = self.advanced_config["ffmpeg"]["preset"],
-            crf = self.advanced_config["ffmpeg"]["crf"],
-            tune = self.advanced_config["ffmpeg"]["tune"],
-            vflip = self.advanced_config["ffmpeg"]["vflip"],
+            preset = self.mmv_package_interface.config["ffmpeg"]["preset"],
+            crf = self.mmv_package_interface.config["ffmpeg"]["crf"],
+            tune = self.mmv_package_interface.config["ffmpeg"]["tune"],
+            vflip = self.mmv_package_interface.config["ffmpeg"]["vflip"],
             vcodec = "libx264",
             hwaccel = "auto",
             loglevel = "panic",
@@ -326,32 +329,21 @@ class MMVShadersCLI:
         # Main routines
         self._core_loop()
 
-    def __error_assertion(self):
-        assert os.path.exists(self._input_audio)
-
     # Common main loop for both view and render modes
     def _core_loop(self):
         debug_prefix = "[MMVShadersCLI.render]"
 
-        self.__error_assertion()
-
         # Look for file changes
         if self.watchdog:
             logging.info(f"{debug_prefix} Starting watchdog")
-
             self.any_modification_watchdog = AnyModification(controller = self)
-
             sd = self.mmv_package_interface.shaders_dir
             paths = [
-                sd / "presets", sd / "assets", sd / "include",
+                sd / "presets", sd / "assets", sd / "sombrero",
                 self.mmv_package_interface.runtime_dir,
             ]
-
             self.watchdog_observer = Observer()
-
-            for path in paths:
-                self.watchdog_observer.schedule(self.any_modification_watchdog, path = path, recursive = True)
-
+            for path in paths: self.watchdog_observer.schedule(self.any_modification_watchdog, path = path, recursive = True)
             self.watchdog_observer.start()
 
         # FPS, manual vsync dealing
@@ -368,7 +360,7 @@ class MMVShadersCLI:
 
             # Create progress bar
             self.progress_bar = tqdm(
-                total = self.audio_source.total_steps,
+                total = self.total_steps,
                 # unit_scale = True,
                 unit = " frames",
                 dynamic_ncols = True,
@@ -379,16 +371,13 @@ class MMVShadersCLI:
 
             # Set description
             self.progress_bar.set_description(
-                f"Rendering [SSAA={self._ssaa}]({int(self._width * self._ssaa)}x{int(self._height * self._ssaa)})->({self._width}x{self._height})[{self.audio_source.duration:.2f}s] MMV video"
+                f"Rendering [SSAA={self._ssaa}]({int(self._width * self._ssaa)}x{int(self._height * self._ssaa)})->({self._width}x{self._height})[{self.duration:.2f}s] MMV video"
             )
 
         # Main loop
         for step in itertools.count(start = 0):
-            if self.sombrero_main._want_to_reload: self.__load_preset()
-
-            # To reload or not to reload
-            if self.any_modification_watchdog.reload:
-                self.any_modification_watchdog.reload = False
+            if self.sombrero_main._want_to_reload:
+                self.__load_preset(); self.sombrero_main._want_to_reload = False
 
             # The time this loop is starting
             startcycle = time.time()
@@ -413,7 +402,7 @@ class MMVShadersCLI:
                 self.sombrero_main.read_into_subprocess_stdin(self.ffmpeg.subprocess.stdin)
 
                 # Looped the audio one time, exit
-                if step == self.audio_source.total_steps - 2:
+                if step == self.total_steps - 2:
                     self.ffmpeg.subprocess.stdin.close()
                     break
 

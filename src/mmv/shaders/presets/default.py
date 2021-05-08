@@ -7,7 +7,7 @@ def generate(context):
     layers = []
 
     background = context.new_shader()
-    background.macros.load(interface.shaders_dir/"assets"/"background"/"blueprint.glsl")
+    background.macros.load(interface.shaders_dir/"sombrero"/"menu.glsl")
     layers.append(background)
 
     context.render_layers(layers, gamma_correction = True, HUD = True)

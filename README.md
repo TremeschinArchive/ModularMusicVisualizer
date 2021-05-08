@@ -324,6 +324,7 @@ Example:
 There are a couple hotkeys and interactions with the window:
 
 - `Can click + drag` to translate space, scroll to zoom in / out
+- `right click + drag` to walk in time, `shift + right click + drag` for going faster, `alt + right click + drag` for changing time scaling
 - Hold `ctrl` for alignment overlay
 - `Shift + scroll` increases / decreases the intensity of effects (multiplier)
 - `Ctrl + scroll` (only when not dragging) increases / decreases the SSAA (Super Sampling Anti Aliasing), gets exponentially slower to render but gives nicer edges as explained.
@@ -331,14 +332,17 @@ There are a couple hotkeys and interactions with the window:
 - `Shift + drag` is precise zoom
 - `Alt + drag` is precise rotation
 - Pressing `Tab` toggles GUI
+- `,` and `.` changes playback speed (or manually on GUI), fine tune `shift + , .`
+- `;` multiplies time factor by `-1`
 - Pressing `z` resets zoom back to 1x
 - Pressing `x` resets dragged space back to the origin
 - Pressing `c` resets rotation to 0
 - Pressing `v` resets the intensity to 1
-- Pressing `r` rebuilds the preset and reloads the shaders
-- Pressing `space` freezes time and the pipeline so the shader is rendered (hopefully) static, useful for debugging or screenshotting
+- Pressing `r` rebuilds the preset and reloads the shaders (automatically reloads on disk modification)
+- Pressing `s` freezes the pipeline so the shader is rendered (hopefully) static, useful for debugging or screenshots
+- Pressing `space` toggles playback
 - Pressing `t` resets time to 0 (same as restarting MMV)
-- Pressing `f` toggles fullscreen
+- Pressing `f` toggles full screen
 - Pressing `h` hides mouse
 - Pressing `e` get exclusivity of mouse, ie. locks the mouse to the window, other controls also applies but won't require to click (Alt for rotation, Shift for zoom, nothing for dragging)
 - Pressing `q` quits

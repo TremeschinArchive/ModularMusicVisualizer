@@ -23,7 +23,7 @@ def main():
     # layers = [blueprint, background, music_bars, rain, vignetting, hud]
     layers = []
 
-    scene = 0
+    scene = 3
 
     if scene == 0:
         blueprint = sombrero_main.new_child()
@@ -51,23 +51,10 @@ def main():
 
         layers.append(tetration_pfx)
 
-    if scene == 0 or scene == 1:
-        rain = sombrero_main.new_child()
-        rain.macros.load(interface.shaders_dir/"assets"/"fx"/"rain.glsl")
-        layers.append(rain)
-        
-        vignetting = sombrero_main.new_child()
-        vignetting.macros.load(interface.shaders_dir/"assets"/"pfx"/"vignetting.glsl")
-        layers.append(vignetting)
-
-        hud = sombrero_main.new_child()
-        hud.macros.load(interface.shaders_dir/"sombrero"/"default_hud.glsl")
-        layers.append(hud)
     
     if scene == 3:
         background = sombrero_main.new_child()
-        background.macros.load(interface.shaders_dir/"assets"/"background"/"moving_image.glsl")
-        background.macros.add_mapping(TextureImage(name = "background", path = interface.assets_dir/"free_assets"/"glsl_default_background.jpg"))
+        background.macros.load(interface.shaders_dir/"sombrero"/"menu.glsl")
         layers.append(background)
 
         pianoroll = PianoRoll(sombrero_main)
@@ -78,11 +65,23 @@ def main():
         pianoshader.macros.load(interface.shaders_dir/"assets"/"piano_roll"/"midi_key.glsl")
         layers.append(pianoshader)
 
-        # pianokeys = sombrero_main.new_child()
-        # pianokeys.constructor = PianoRollConstructor(pianokeys, pianoroll, expect = "notes")
-        # pianokeys.macros.load(interface.shaders_dir/"assets"/"piano_roll"/"piano_key.glsl")
-        # layers.append(pianokeys)
+        pianokeys = sombrero_main.new_child()
+        pianokeys.constructor = PianoRollConstructor(pianokeys, pianoroll, expect = "keys")
+        pianokeys.macros.load(interface.shaders_dir/"assets"/"piano_roll"/"piano_key.glsl")
+        layers.append(pianokeys)
 
+
+    rain = sombrero_main.new_child()
+    rain.macros.load(interface.shaders_dir/"assets"/"fx"/"rain.glsl")
+    layers.append(rain)
+    
+    vignetting = sombrero_main.new_child()
+    vignetting.macros.load(interface.shaders_dir/"assets"/"pfx"/"vignetting.glsl")
+    layers.append(vignetting)
+
+    hud = sombrero_main.new_child()
+    hud.macros.load(interface.shaders_dir/"sombrero"/"default_hud.glsl")
+    layers.append(hud)
 
     # # Alpha composite
     sombrero_main.macros.alpha_composite(layers, gamma_correction = True)
