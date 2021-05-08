@@ -29,6 +29,11 @@ uniform bool mKeyAlt;
 float PI  = 3.14159265358979323846264338;
 float TAU = 6.28318530717958647692528676;
 
+// Utilities
+
+// float to bool
+bool f2bool(float f) { return f > 0.5; }
+
 // Rotation
 
 mat2 mRotation2D(float angle) {
@@ -71,11 +76,16 @@ vec2 mGetSTUVAll() {
 }
 
 // OpenGL UV-like coordinates with zoom, drag applied (interactive)
-vec2 mGetGLUVAll(float zdepth) {
+// and Z-depth illusion. zdepth=1 is the "base" layer
+vec2 mGetGLUVParallax(float zdepth) {
     vec2 drag = mGetNormalizedDrag();
     vec2 gluv = mGetGLUV();
     mat2 rotation = mGetCoordinatesRotation();
-    return ((gluv * (pow(mZoom * mZoom, zdepth))) * rotation) + (drag * 2.0 * zdepth);
+    return ((gluv * (mZoom * mZoom)) * rotation) + (drag * 2.0 * zdepth);
+}
+
+vec2 mGetGLUVAll() {
+    return mGetGLUVParallax(1.0);
 }
 
 // // Noise

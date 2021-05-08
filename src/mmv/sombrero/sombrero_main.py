@@ -299,6 +299,12 @@ class SombreroMGL:
 
         # Render the content
         # self.vao.render(mode = moderngl.TRIANGLE_STRIP)
+
+        self.gl_context.enable_only(moderngl.NOTHING)
+        
+        if isinstance(self.constructor, PianoRollConstructor):
+            self.gl_context.enable_only(moderngl.BLEND)
+
         if nvert := self.constructor.num_vertices:
             self.vao.render(mode = moderngl.POINTS, vertices = nvert)
 
@@ -329,4 +335,10 @@ class SombreroMGL:
 
         # Remove duplicates
         return list(set(info))
-        
+    
+    def reset(self):
+        for child in self.children_sombrero_mgl(): child.reset()
+        self.program.release()
+        self.texture.release()
+        self.fbo.release()
+        self.vao.release()

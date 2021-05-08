@@ -36,6 +36,7 @@ from watchdog.events import FileSystemEventHandler
 from mmv.sombrero.sombrero_shader import *
 from watchdog.observers import Observer
 import mmv.common.cmn_any_logger
+from dotmap import DotMap
 from pathlib import Path
 from tqdm import tqdm
 import numpy as np
@@ -71,15 +72,7 @@ class MMVShadersCLI:
         self.utils = self.mmv_package_interface.utils
 
         # Shaders interface and MGL
-        self.sombrero = self.mmv_package_interface.get_sombrero()(mmv_interface = self.mmv_package_interface, master_shader = True)
-
-        # Interpolator
-        self.interpolator = ValuesInterpolator()
-
-        # Advanced config
-        self.advanced_config = self.mmv_package_interface.utils.load_yaml(
-            self.mmv_package_interface.shaders_dir / "shaders_advanced_config.yaml"
-        )
+        self.sombrero_main = self.mmv_package_interface.get_sombrero()(mmv_interface = self.mmv_package_interface, master_shader = True)
 
         # Ensure FFmpeg on Windows
         self.mmv_package_interface.check_download_externals(target_externals = ["ffmpeg"])
@@ -89,8 +82,8 @@ class MMVShadersCLI:
         self._output_video = "rendered_shader.mkv"
 
         # Audio
-        self._audio_batch_size = int(self.advanced_config["audio"]["batch_size"])
-        self._sample_rate = int(self.advanced_config["audio"]["sample_rate"])
+        self._audio_batch_size = int(self.mmv_package_interface.config["audio"]["batch_size"])
+        self._sample_rate = int(self.mmv_package_interface.config["audio"]["sample_rate"])
         self._override_record_device = None
 
         # Resolution, rendering
@@ -114,11 +107,7 @@ class MMVShadersCLI:
         fps: float = typer.Option(60, help = "Output frame rate in Frames Per Seconds (FPS)"),
     ):
         logging.info(f"[MMVShadersCLI.resolution] Set [width={width}] [height={height}] [fps={fps}]")
-
-        # Assign values
-        self._width = int(width)
-        self._height = int(height)
-        self._fps = int(fps)
+        self._width, self._height, self._fps = int(width), int(height), int(fps)
 
     # SuperSampling AntiAliasing SSAA
     def antialiasing(self, 
@@ -131,8 +120,7 @@ class MMVShadersCLI:
         ))
     ):
         logging.info(f"[MMVShadersCLI.antialiasing] Set [ssaa={ssaa}] [msaa={msaa}]")
-        self._ssaa = float(ssaa)
-        self._msaa = int(msaa)
+        self._ssaa, self._msaa = float(ssaa), int(msaa)
 
     def load(self, 
         preset: str = typer.Option("default", help = (
@@ -151,7 +139,6 @@ class MMVShadersCLI:
         if file:
             logging.info(f"{debug_prefix} Load raw shader!! Set [preset master shader={file}]")
             self._preset_name = None
-            self._preset_master_shader = file
         else:
             logging.info(f"{debug_prefix} Execute preset file!! Set [preset={preset}]")
             self._preset_name = preset
@@ -166,12 +153,10 @@ class MMVShadersCLI:
 
     # # Running, executing
 
-    # Set MMVShaderMGL target settings
-    def __mgl_target_render_settings(self):
-        self.sombrero.configure(
-            width = self._width, height = self._height,
-            ssaa = self._ssaa, fps = self._fps,
-        )
+    # Set SombreroMGL target settings
+    def __sombrero_mgl_target_render_settings(self):
+        self.sombrero_main.configure(width = self._width, height = self._height, ssaa = self._ssaa, fps = self._fps)
+        self.sombrero_main.window.create()
 
     def __configure_audio_processing(self):
         # Configure FFT TODO: advanced config?
@@ -191,10 +176,10 @@ class MMVShadersCLI:
         ])
         self.MMV_FFTSIZE = self.audio_source.audio_processing.FFT_length
 
-    # When the user presses "r"
-    def __should_reload_preset(self):
-        self.utils.reset_dir(self.mmv_package_interface.runtime_dir)
-        self.__load_preset()
+    # # When the user presses "r"
+    # def __should_reload_preset(self):
+    #     self.utils.reset_dir(self.mmv_package_interface.runtime_dir)
+    #     self.__load_preset()
 
     def __load_preset(self):
         debug_prefix = "[MMVShadersCLI.__load_preset]"
@@ -203,60 +188,28 @@ class MMVShadersCLI:
 
         # Raw file
         if self._preset_name is None:
-            self.mgl.include_dir(self.mmv_package_interface.shaders_dir / "include")
+            raise RuntimeError()
 
         # Preset file
         else:
-            # Stuff to replace
-            replaces = {
-                "MMV_FFTSIZE": self.MMV_FFTSIZE,
-                "AUDIO_BATCH_SIZE": self._audio_batch_size,
-                "WIDTH": self._width,
-                "HEIGHT": self._height,
-            }
+            preset = __import__(f"mmv.shaders.presets.{self._preset_name}", fromlist = [self._preset_name])
+            
+            context = DotMap()
+            context.cli = self
+            context.sombrero_main = self.sombrero_main
+            context.interface = self.mmv_package_interface
+            context.new_shader = self.sombrero_main.new_child
+            context.render_layers = self.sombrero_main.macros.alpha_composite
 
-            # Directory of this preset
-            preset_file = self.mmv_package_interface.shaders_dir / "presets" / f"{self._preset_name}.py"
-            working_directory = self.mmv_package_interface.runtime_dir
-            shadermaker = self.mmv_package_interface.get_mmv_shader_maker()
-            interface = self.mmv_package_interface
-            sep = os.path.sep
-            NULL = "MMV_MGL_NULL_FRAGMENT_SHADER"
-
-            # Open and execute the file with this scope's variables
-            # Note: we can access like locals()["replaces"] from the other file!!
-            with open(preset_file, "rb") as f:
-                code = compile(f.read(), preset_file, "exec")
-
-            # We get this info dictionary back from the executed file
-            exec(code, globals(), locals())
-
-            # pylint: disable=E0602 # Disable undefined variables because this info must exist
-            logging.info(f"{debug_prefix} Got info from preset file [{preset_file}]: {info}")
-
-            self._preset_master_shader = info["master_shader"]
-
-            # Include directories
-            self.mgl.preprocessor.reset()
-            to_include = info.get("include_directories", ["default"])
-
-            # Add every directory or the default one, note first returned ones have higher priority
-            for directory in self.utils.force_list(to_include):
-
-                if directory == "default":
-                    self.mgl.include_dir(self.mmv_package_interface.shaders_dir / "include")
-                else:
-                    directory = self.utils.enforce_pathlib_Path(directory)
-                    self.mgl.include_dir(directory)
+            self.sombrero_main.reset()
+            self.sombrero_main = preset.generate(context)
                     
     # List capture devices by index
     def list_captures(self):
         debug_prefix = "[MMVShadersCLI.list_captures]"
-
         logging.info(f"{debug_prefix} Available devices to record audio:")
         for index, device in enumerate(soundcard.all_microphones(include_loopback = True)):
             logging.info(f"{debug_prefix} > ({index}) [{device.name}]")
-
         logging.info(f"{debug_prefix} :: Run [realtime] command with argument --cap N")
 
     # Display shaders real time
@@ -265,7 +218,7 @@ class MMVShadersCLI:
         cap: int = typer.Option(None, help = "Capture device index to override first loopback we find. Run command [list-captures] to see available indexes, None (empty) is to get automatically")
     ):
         debug_prefix = "[MMVShadersCLI.realtime]"
-        self.__mgl_target_render_settings()
+        self.__sombrero_mgl_target_render_settings()
         self.mode = "view"
 
         # # Audio source Real Time
@@ -321,7 +274,7 @@ class MMVShadersCLI:
         if audio is not None:
             self._input_audio = audio
 
-        self.__mgl_target_render_settings()
+        self.__sombrero_mgl_target_render_settings()
         self.mode = "render"
 
         # # Audio source File
@@ -590,43 +543,6 @@ class MMVShadersCLI:
             if (not self.mgl.window_handlers.vsync) and (self.mode == "view"):
                 while (time.time() - startcycle) < (1 / self._fps):
                     time.sleep(1 / (self._fps * 100))
-
-class ValuesInterpolator:
-    def __init__(self):
-        self.interpolaters = {}
-    
-    # Add value to interpolate
-    # Size is a np.linspace that goes from 0 to 1 (where interpolation makes sense)
-    # if fixed ratio is given then use array filled with that as ratios (ie. FFT bars)
-    def add_interpolater(self, name, size, fixed_ratio = None):
-        if fixed_ratio is None:
-            ratios = np.linspace(0, 1, size)
-        else:
-            ratios = np.zeros(size, dtype = np.float32)
-            ratios.fill(fixed_ratio)
-        
-        # Build interpolater
-        self.interpolaters[name] = {
-            "current": np.zeros(size, dtype = np.float32),
-            "target": np.zeros(size, dtype = np.float32),
-            "ratios": ratios,
-        }
-
-    def next(self, name, feed, mode = "fill"):
-        # Set new target
-        if mode == "fill":
-            self.interpolaters[name]["target"].fill(feed)
-        if mode == "replace":
-            self.interpolaters[name]["target"] = feed
-        if mode == "add":
-            self.interpolaters[name]["target"] += feed
-
-        # Apply progressive interpolation on ratios, "sc" is shortcut
-        sc = self.interpolaters[name]
-
-        # Calculate interpolation between current and target values
-        self.interpolaters[name]["current"] = (sc["current"] + ((sc["target"] - sc["current"]) * sc["ratios"]))
-
 
 # main function to use typer for CLI
 def main():

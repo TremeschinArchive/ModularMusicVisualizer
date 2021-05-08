@@ -5,17 +5,17 @@ layout (triangle_strip, max_vertices = 4) out;
 in vec2 size[];
 
 // Piano
-flat in int vert_note[];
-flat in int vert_velocity[];
-flat in int vert_channel[];
-flat in int vert_is_playing[];
-flat in int vert_is_white[];
+in float vert_note[];
+in float vert_velocity[];
+in float vert_channel[];
+in float vert_is_playing[];
+in float vert_is_white[];
 
-flat out int note;
-flat out int velocity;
-flat out int channel;
-flat out int is_playing;
-flat out int is_white;
+out float note;
+out float velocity;
+out float channel;
+out float is_playing;
+out float is_white;
 
 // Coords
 out vec2 opengl_uv;

@@ -27,7 +27,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mmv.common.cmn_functions import Functions
-from mmv.common.cmn_utils import DataUtils
 from mmv.common.cmn_fourier import Fourier
 import mmv.common.cmn_any_logger
 from tqdm import tqdm
@@ -286,7 +285,6 @@ class AudioProcessing:
 
         # Create some util classes
         self.fourier = Fourier()
-        self.datautils = DataUtils()
         self.functions = Functions()
         self.config = None
 
@@ -302,10 +300,7 @@ class AudioProcessing:
         end_freq = config_dict["end_freq"]
 
         # Get the frequencies we want and will return in the end
-        wanted_freqs = self.datautils.list_items_in_between(
-            self.piano_keys_frequencies,
-            start_freq, end_freq,
-        )
+        wanted_freqs = [x for x in self.piano_keys_frequencies if start_freq < x < end_freq]
 
         # Counter for expected frequencies on this config
         expected_N_frequencies = 0

@@ -28,10 +28,17 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from intervaltree import IntervalTree
 from intervaltree import Interval
 from functools import cache
+import fluidsynth
 import logging
 import mido
 import math
 
+
+def midi_index_to_name(note):
+    return ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'][(note + 60) % 12] + str((note // 12) - 1)
+
+@cache
+def is_white_key(note): return "#" in midi_index_to_name(note)
 
 # Attributes one Midi Note will have, the usual: which, when, how much, where
 class MidiNote:
@@ -43,7 +50,7 @@ class MidiNote:
         self.velocity = velocity  
 
     @property # Name given by offset of 60 that repeats every octave (12 notes), and the octave we are. [69 -> A4], [60 -> C4]
-    def name(self): return ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'][(self.note + 60) % 12] + str((self.note // 12) - 1)
+    def name(self): return midi_index_to_name(self.note)
 
     # Pretty string representation of the note just in case we need it
     def __repr__(self): return f"[Note |{self.name.ljust(3)}| (ch={self.channel}, vel={self.velocity}) ({self.start:.2f}:{self.end:.2f})"
@@ -135,9 +142,7 @@ class MidiFile:
             env["QT_QPA_PLATFORM"] = "offscreen"
         
         # Run command
-        subprocess.check_output(
-            command, env = env
-        )
+        subprocess.check_output(command, env = env)
 
         # Assert we were successful?
         if not os.path.exists(save_path):
@@ -148,20 +153,44 @@ class MidiFile:
         return save_path
 
 
+class FluidSynthUtils:
+    def __init__(self, platform, config):
+        self.platform = platform
+        self.config = config
+        self.fluid = fluidsynth.Synth(gain = 1)
+        self.fluid.start(driver = self.config[f"audio_backend_{platform}"])
+        self.load_sf2(self.config["soundfont"])
+    
+    def list_soundfonts(self):
+        if self.platform == "linux":
+            return os.listdir("/usr/share/soundfonts/")
+
+    def load_sf2(self, path): self.soundfont = self.fluid.sfload(path); self.select(0, 0, 0)
+    def select(self, channel, bank, preset): self.fluid.program_select(channel, self.soundfont, bank, preset)
+    def key_down(self, note, velocity, channel = 0): self.fluid.noteon(channel, note, velocity)
+    def key_up(self, note, channel = 0): self.fluid.noteoff(channel, note)
+
+
 class PianoRoll:
     def __init__(self, sombrero_main):
         self.sombrero_main = sombrero_main
         self.__scene_contents = {}
+        self.__playing_notes_fluid = []
 
         # Midi file wrapper
         self.midi = MidiFile()
+        self.synth = FluidSynthUtils(
+            platform = self.sombrero_main.mmv_interface.os,
+            config = self.sombrero_main.mmv_interface.config["fluidsynth"],
+        )
 
         # Add user pressed keys and midi file contents
         for name in ["user", "midi"]: self.__reset_scene_content(name)
 
         # How much seconds of content on screen
         self.visible_seconds = 5
-        self.piano_height = 0.2
+        self.time_draw_bleed = self.visible_seconds * 0.5
+        self.piano_height = 0.3
 
         # Optimization
         self.__last_call_generate_coordinates = None
@@ -191,6 +220,7 @@ class PianoRoll:
     # Add MidiNote class to a interval in the contents.
     # "note" can be of type MidiNote
     def add_note(self, note, start = 0, end = 0, channel = 0, velocity = 100, scene = "midi") -> None:
+        # if start == end: return
         self.__assert_scene_exists(scene)
 
         # We were given a MidiNote class
@@ -216,14 +246,14 @@ class PianoRoll:
     
     # Notes visible
     def get_visible_notes(self):
-        return self.get_playing_notes_in_range(start = self.now, end = self.now + self.visible_seconds)
+        return self.get_playing_notes_in_range(
+            start = self.now - self.time_draw_bleed, end = self.now + self.visible_seconds + self.time_draw_bleed)
 
     @property
     def now(self): return self.sombrero_main.pipeline["mTime"]
     
     # Notes being played right now 
-    def get_playing_now(self):
-        return self.get_playing_notes_at(time = self.now)
+    def get_playing_now(self): return self.get_playing_notes_at(time = self.now)
 
     # Linear interpolation
     def lerp(self, p1, p2, x): return ((p2[1] - p1[1]) / (p2[0] - p1[0]))*(x - p2[0]) + p2[1]
@@ -235,7 +265,46 @@ class PianoRoll:
         self.__last_call_generate_coordinates = self.now
 
         playing = self.get_visible_notes()
+        playing_now = self.get_playing_now()
+
+        # # Play notes
+
+        todel = []
+        for index, note in enumerate(self.__playing_notes_fluid):
+            if (not note in playing_now):
+                self.synth.key_up(note.note)#, note.channel)
+                todel.append(index)
+
+        for index in reversed(todel): del self.__playing_notes_fluid[index]
+
+        if self.sombrero_main.freezed_pipeline:
+            for note in self.__playing_notes_fluid:
+                self.synth.key_up(note.note)#, note.channel)
+                self.__playing_notes_fluid = []
+        else:
+            for note in playing_now:
+                if (not note in self.__playing_notes_fluid):
+                    self.__playing_notes_fluid.append(note)
+                    self.synth.key_down(note.note, note.velocity)#, note.channel)
+                    print("Kew down", note)
+        
+        # # Process
+
         instructions = {"notes": [], "keys": []}
+        width = (2) / (self.midi.max - self.midi.min)
+        S = 2
+
+        for note in range(self.midi.min, self.midi.max):
+            x = self.lerp((self.midi.min, -1), (self.midi.max, 1), note)
+
+            # # Piano key
+            this_instruction = []
+
+            # Coordinates
+            this_instruction += [x, (-1 + self.piano_height / 2), S*width, S*self.piano_height]
+            is_playing = any([note == playing.note for playing in playing_now])
+            this_instruction += [note, 0, 0, is_playing, not "#" in midi_index_to_name(note)]
+            instructions["keys"].append(this_instruction)
 
         for note in playing:
             this_instruction = []
@@ -247,37 +316,28 @@ class PianoRoll:
             # Visible stuff
             viewport = ((self.now, lower_boundary), (self.now + self.visible_seconds, 1))
 
+            # Start, end
             start = self.lerp(*viewport, note.start - self.now)
             end = self.lerp(*viewport, note.end - self.now)
 
-            width = 1 / (self.midi.max - self.midi.min)
+            # Width, Height
             height = end - start
 
+            # Y pos
             y = self.lerp(
                 (0, lower_boundary), (self.visible_seconds, 1),
                 note.end - self.now
             )
 
-            # Midi
-            midi_coordinates = [x, y - height/2, width, height]
-
             # If note is playing now
-            is_playing = any([note.note == playing.note for playing in self.get_playing_now()])
+            is_playing = any([note.note == playing.note for playing in playing_now])
 
+            # Attributes
             note_attrs = [note.note, note.velocity, note.channel, int(is_playing), int(not "#" in note.name)]
 
-            this_instruction += midi_coordinates
-            this_instruction += note_attrs
+            # Midi coordinate and attributes
+            this_instruction += [x, y - height/2, S*width, S*height] + note_attrs
             instructions["notes"].append(this_instruction)
-
-            # # Piano key
-            this_instruction = []
-
-            piano_keys_coordinate = [x, -1 + self.piano_height / 2, width, self.piano_height]
-
-            this_instruction += piano_keys_coordinate
-            this_instruction += note_attrs
-            instructions["keys"].append(this_instruction)
 
         self.__last_return_generate_note_coordinates = instructions
         return instructions

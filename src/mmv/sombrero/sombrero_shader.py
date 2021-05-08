@@ -256,19 +256,19 @@ class SombreroShaderMacros:
     def __init__(self, sombrero_mgl):
         self.sombrero_mgl = sombrero_mgl
 
+    def __default_placeholders_and_specification(self, shader):
+        Version("330")(shader)
+        PlaceHolder("IO")(shader)
+        PlaceHolder("Mappings")(shader)
+        PlaceHolder("Uniforms")(shader)
+        PlaceHolder("Includes")(shader)
+        Include(Path(self.sombrero_mgl.mmv_interface.shaders_dir)/"include"/"sombrero_specification.glsl")(shader)
+        PlaceHolder("UserShader")(shader)
+
     # Versioned, placeholders, and sombrero specification
     def __base_shader(self) -> SombreroShader:
         with SombreroShader() as SHADER:
-            Version("330")(SHADER)
-            PlaceHolder("IO")(SHADER)
-            PlaceHolder("Mappings")(SHADER)
-            PlaceHolder("Uniforms")(SHADER)
-            PlaceHolder("Includes")(SHADER)
-            Include(Path(self.sombrero_mgl.mmv_interface.shaders_dir)/"include"/"sombrero_specification.glsl")(SHADER)
-
-            # Add your main() and stuff from file here, mainImage() 
-            # is called after everyone since it's the final step
-            PlaceHolder("UserShader")(SHADER)
+            self.__default_placeholders_and_specification(SHADER)
 
             # Return mainImage from main function, gamma correction of sqrt
             with Function("void", "main", "")(SHADER) as main:
@@ -285,6 +285,10 @@ class SombreroShaderMacros:
             Include(Path(path).resolve())(SHADER.UserShader)
         if assign_to_parent: self.sombrero_mgl.shader = SHADER; return
         return SHADER
+    
+    # def load(self, path, assign_to_parent = True) -> SombreroShader:
+    #     with SombreroShader() as SHADER:
+    #         Version("330")(SHADER)
     
     # Some shaders most likely pfx ones require one layer layer0, two layer0 layer1 to work this is 
     # so that you chain those, please read the shader you're loading first otherwise this might do nothing.
