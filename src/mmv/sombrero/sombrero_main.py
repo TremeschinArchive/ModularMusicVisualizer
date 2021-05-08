@@ -344,3 +344,6 @@ class SombreroMGL:
         with suppress(AttributeError): self.texture.release()
         with suppress(AttributeError): self.fbo.release()
         with suppress(AttributeError): self.vao.release()
+        if isinstance(self.constructor, FullScreenConstructor):
+            self.constructor.once_returned_vao = False
+        self.contents = {}

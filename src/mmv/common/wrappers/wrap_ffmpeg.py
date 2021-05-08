@@ -197,7 +197,7 @@ class FFmpegWrapper:
             self.command += ["-i", input_video_source]
         
         # Do input audio or not
-        if not input_audio_source is None:
+        if input_audio_source is not None:
             self.command += ["-i", input_audio_source, "-c:a", "copy"]
         
         # Continue adding commands

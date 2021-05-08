@@ -162,6 +162,7 @@ class SombreroWindow:
         self.messages = OnScreenTextMessages()
 
         # Actions
+        self.playback_stopped = False
         self.target_time_factor = 1
         self.time_factor = 0
 
@@ -234,8 +235,8 @@ class SombreroWindow:
             self.imgui_io = imgui.get_io()
             self.imgui_io.ini_saving_rate = 1
 
-            # Frame Rate
-            self.framerate = FrameTimesCounter(fps = self.sombrero.fps)
+        # Frame Rate
+        self.framerate = FrameTimesCounter(fps = self.sombrero.fps)
 
         # self.window_resize(width = self.window.viewport[2], height = self.window.viewport[3])
         
@@ -297,8 +298,8 @@ class SombreroWindow:
         self.drag_momentum *= self.sombrero.config["window"]["drag_momentum"]
 
         self.time_factor += \
-            ( (int(not self.sombrero.freezed_pipeline) * self.target_time_factor) - self.time_factor) \
-            * fix(self.sombrero.config["window"]["time_responsiveness"])
+            ( (int(not self.playback_stopped) * int(not self.sombrero.freezed_pipeline) * self.target_time_factor) \
+            - self.time_factor) * fix(self.sombrero.config["window"]["time_responsiveness"]) 
 
         # Drag momentum
         if not 1 in self.mouse_buttons_pressed:
@@ -329,13 +330,9 @@ class SombreroWindow:
         if self.imgui_io.want_capture_keyboard: return
 
         if (key == 32) and (action == 1):
-            self.sombrero.freezed_pipeline = not self.sombrero.freezed_pipeline
-            self.messages.add(f"{debug_prefix} (space) Freeze time [{self.sombrero.freezed_pipeline}]", self.ACTION_MESSAGE_TIMEOUT)
-
-            for index in self.sombrero.contents.keys():
-                if self.sombrero.contents[index]["loader"] == "shader":
-                    self.sombrero.contents[index]["shader_as_texture"].freezed_pipeline = self.sombrero.freezed_pipeline
-
+            self.playback_stopped = not self.playback_stopped
+            self.messages.add(f"{debug_prefix} (space) Toggle playback [{self.playback_stopped}]", self.ACTION_MESSAGE_TIMEOUT)
+            
         if (key == 44) and (action == 1):
             if self.shift_pressed:
                 self.target_time_factor -= 0.01
@@ -385,6 +382,14 @@ class SombreroWindow:
         if (key == 82) and (action == 1):
             self.messages.add(f"{debug_prefix} (r) Reloading shaders..", self.ACTION_MESSAGE_TIMEOUT)
             self.sombrero._want_to_reload = True
+        
+        if (key == 83) and (action == 1):
+            self.sombrero.freezed_pipeline = not self.sombrero.freezed_pipeline
+            self.messages.add(f"{debug_prefix} (s) Freeze pipeline [{self.sombrero.freezed_pipeline}]", self.ACTION_MESSAGE_TIMEOUT)
+            self.time_factor = 0
+            for index in self.sombrero.contents.keys():
+                if self.sombrero.contents[index]["loader"] == "shader":
+                    self.sombrero.contents[index]["shader_as_texture"].freezed_pipeline = self.sombrero.freezed_pipeline
 
         if (key == 84) and (action == 1):
             self.sombrero.pipeline["mFrame"] = 0
@@ -487,6 +492,14 @@ class SombreroWindow:
                 self.target_rotation += dy / 20
             else:
                 self.__apply_rotated_drag(dx = dx, dy = dy, inverse = True)
+
+        if 2 in self.mouse_buttons_pressed:
+            if self.shift_pressed:
+                self.sombrero.pipeline["mFrame"] -= (dy * self.sombrero.fps) / 200
+            elif self.alt_pressed:
+                self.target_time_factor -= dy / 80
+            else:
+                self.sombrero.pipeline["mFrame"] -= (dy * self.sombrero.fps) / 800
 
     # Change SSAA
     def change_ssaa(self, value):
