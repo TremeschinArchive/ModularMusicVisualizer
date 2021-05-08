@@ -156,7 +156,6 @@ class MMVShadersCLI:
     # Set SombreroMGL target settings
     def __sombrero_mgl_target_render_settings(self):
         self.sombrero_main.configure(width = self._width, height = self._height, ssaa = self._ssaa, fps = self._fps)
-        self.sombrero_main.window.create()
 
     def __configure_audio_processing(self):
         # Configure FFT TODO: advanced config?
@@ -194,15 +193,14 @@ class MMVShadersCLI:
         else:
             preset = __import__(f"mmv.shaders.presets.{self._preset_name}", fromlist = [self._preset_name])
             
-            context = DotMap()
+            context = DotMap(_dynamic = False)
             context.cli = self
-            context.sombrero_main = self.sombrero_main
             context.interface = self.mmv_package_interface
             context.new_shader = self.sombrero_main.new_child
             context.render_layers = self.sombrero_main.macros.alpha_composite
 
             self.sombrero_main.reset()
-            self.sombrero_main = preset.generate(context)
+            preset.generate(context)
                     
     # List capture devices by index
     def list_captures(self):
@@ -219,7 +217,16 @@ class MMVShadersCLI:
     ):
         debug_prefix = "[MMVShadersCLI.realtime]"
         self.__sombrero_mgl_target_render_settings()
+        repo_dir = self.mmv_package_interface.MMV_PACKAGE_ROOT/".."/".."/"repo"
         self.mode = "view"
+
+        # Start mgl window
+        self.sombrero_main.window.create(
+            window_class = window_class,
+            msaa = self._msaa,
+            vsync = False,
+            icon = repo_dir/"icon.png"
+        )
 
         # # Audio source Real Time
         self.audio_source = self.mmv_package_interface.get_audio_source_realtime()
@@ -243,22 +250,8 @@ class MMVShadersCLI:
         self.__configure_audio_processing()
         self.__load_preset()
 
-        repo_dir = self.mmv_package_interface.MMV_PACKAGE_ROOT/".."/".."/"repo"
-
-        # Start mgl window
-        self.mgl.mode(
-            window_class = window_class,
-            vsync = False,
-            msaa = self._msaa,
-            strict = False,
-            icon = repo_dir/"icon.png"
-        )
-
-        # Load master shader
-        self.__load_master_shader()
-
         # Start reading data
-        self.audio_source.start_async()
+        # self.audio_source.start_async()
         self._core_loop()
 
     # Render config to video file
@@ -269,13 +262,21 @@ class MMVShadersCLI:
         audio: str = typer.Option(None, help = "Which audio to use as source on file?"),
     ):
         debug_prefix = "[MMVShadersCLI.render]"
+        self.mode = "render"
 
         self._output_video = output_video
         if audio is not None:
             self._input_audio = audio
 
         self.__sombrero_mgl_target_render_settings()
-        self.mode = "render"
+
+        # Set window mode to headless
+        self.sombrero_main.window.create(
+            window_class = "headless",
+            strict = True,
+            vsync = False,
+            msaa = self._msaa,
+        )
 
         # # Audio source File
         self.audio_source = self.mmv_package_interface.get_audio_source_file()
@@ -322,17 +323,6 @@ class MMVShadersCLI:
         )
         self.ffmpeg.start()
 
-        # Set window mode to headless
-        self.mgl.mode(
-            window_class = "headless",
-            strict = True,
-            vsync = False,
-            msaa = self._msaa,
-        )
-
-        # # Load shaders
-        self.__load_master_shader()
-
         # Main routines
         self._core_loop()
 
@@ -344,7 +334,6 @@ class MMVShadersCLI:
         debug_prefix = "[MMVShadersCLI.render]"
 
         self.__error_assertion()
-        self.mgl.set_reset_function(obj = self.__should_reload_preset)
 
         # Look for file changes
         if self.watchdog:
@@ -371,26 +360,8 @@ class MMVShadersCLI:
         self.frame_times = [time.time() + i / self._fps for i in range(self.fps_last_n)]
 
         # Start audio source
-        self.audio_source.start()
+        # self.audio_source.start()
         logging.info(f"{debug_prefix} Started audio source")
-
-        steps_each = 0.01 # Generate and write interpolation values 0.00, 0.01, 0.02.. 0.80, 0.81, 0.82
-        size = int(1 / steps_each)
-        audio_features = ["rms", "std"]
-
-        # Init interpolations based on name and channel yieldeds
-        for feature in audio_features:
-            for index, channel_name in enumerate("rlm"):
-                self.interpolator.add_interpolater(f"mmv_{feature}_{channel_name}", size)
-                self.interpolator.add_interpolater(f"mmv_progressive_{feature}_{channel_name}", size)
-
-        # Progressive audio amplitude
-        mmv_progressive_rms = [0, 0, 0]
-
-        # FFTs
-        self.interpolator.add_interpolater(f"mmv_fft", self.MMV_FFTSIZE, fixed_ratio = 0.2)
-        logging.info(f"{debug_prefix} Created interpolators")
-        logging.info(f"{debug_prefix} Starting main render loop")
 
         # Render mode have progress bar
         if self.mode == "render":
@@ -413,111 +384,33 @@ class MMVShadersCLI:
 
         # Main loop
         for step in itertools.count(start = 0):
+            if self.sombrero_main._want_to_reload: self.__load_preset()
 
             # To reload or not to reload
             if self.any_modification_watchdog.reload:
-                self.mgl._read_shaders_from_paths_again()
                 self.any_modification_watchdog.reload = False
 
             # The time this loop is starting
             startcycle = time.time()
 
-            # Calculate the fps
-            fps = round(self.fps_last_n / (max(self.frame_times) - min(self.frame_times)), 1)
-            
             # Next iteration of some audio reader
-            self.audio_source.next(step)
+            # self.audio_source.next(step)
 
             # Get info to pipe, and the pipelined built info
-            pipeline_info = self.audio_source.get_info()
+            # pipeline_info = self.audio_source.get_info()
             pipelined = {}
 
-            multiplier = self._multiplier * self.mgl.window_handlers.intensity
-
-            # Shader is not frozen (don't interpolate nor write stuff)
-            if not self.mgl.freezed_pipeline:
-            
-                # Interpolate values
-                for feature in audio_features:
-                    for index, channel_name in enumerate("rlm"):
-                        if f"mmv_{feature}" in pipeline_info.keys():
-                            self.interpolator.next(
-                                name = f"mmv_{feature}_{channel_name}",
-                                feed = pipeline_info[f"mmv_{feature}"][index] * multiplier
-                            )
-
-                            self.interpolator.next(
-                                name = f"mmv_progressive_{feature}_{channel_name}",
-                                feed = (pipeline_info[f"mmv_{feature}"][index] * multiplier) * 4.0,
-                                mode = "add"
-                            )
-
-                            # Add mono 
-                            if feature == "rms":
-                                mmv_progressive_rms[index] = \
-                                    mmv_progressive_rms[index] + pipeline_info[f"mmv_rms"][index] * multiplier
-
-
-                # Interpolate FFT, write to FFT texture
-                if "mmv_fft" in pipeline_info.keys():
-                    self.interpolator.next(name = f"mmv_fft", feed = pipeline_info["mmv_fft"], mode = "replace")
-
-                    data = self.interpolator.interpolaters["mmv_fft"]["current"].astype(np.float32) * multiplier
-
-                    # Write linear FFT
-                    self.mgl.write_texture_pipeline(texture_name = "mmv_linear_fft", data = data)
-
-                    # Reverse second half of array
-                    a, b = int(self.MMV_FFTSIZE / 2), self.MMV_FFTSIZE
-                    data[a:b] = data[a:b][::-1]
-
-                    # Write "radial" FFT
-                    self.mgl.write_texture_pipeline(texture_name = "mmv_radial_fft", data = data)
-
-                # Write spectrogram values
-                for v in ["mmv_raw_audio_left", "mmv_raw_audio_right"]:
-                    if v in pipeline_info.keys():
-                        audio_batch = pipeline_info[v].astype(np.float32)
-                        audio_batch_size = audio_batch.shape[0]
-
-                        side = "right" in v
-
-                        self.mgl.write_texture_pipeline(
-                            texture_name = "raw_audio",
-                            data = audio_batch,
-                            viewport = (
-                                0, side,
-                                audio_batch_size, 1
-                            )
-                        )
-
-                # Build full pipeline from the interpolator, must be tuple and only current values
-                for feature in audio_features:
-                    for n in range(size):
-                        ratio_prefix = f"{round(n * steps_each, 2):.02f}".replace(".", "_")
-
-                        # The pairs of Right, Left, Mono values vec3 mmv_rms -> mmv_rms[0] [1] [2]
-                        pipelined[f"mmv_{feature}_{ratio_prefix}"] = tuple([
-                            list(self.interpolator.interpolaters[f"mmv_{feature}_{channel_name}"]["current"])[n]
-                            for channel_name in "rlm"
-                        ])
-
-                        pipelined[f"mmv_progressive_{feature}_{ratio_prefix}"] = tuple([
-                            list(self.interpolator.interpolaters[f"mmv_progressive_{feature}_{channel_name}"]["current"])[n]
-                            for channel_name in "rlm"
-                        ])
-
-                pipelined["mmv_progressive_rms"] = tuple(mmv_progressive_rms)
+            multiplier = self._multiplier * self.sombrero_main.window.intensity
 
             # Next iteration
-            self.mgl.next(custom_pipeline = pipelined)
+            self.sombrero_main.next(custom_pipeline = pipelined)
 
             # Write current image to the video encoder
             if self.mode == "render":
                 self.progress_bar.update(1)
 
                 # Write to the FFmpeg stdin
-                self.mgl.read_into_subprocess_stdin(self.ffmpeg.subprocess.stdin)
+                self.sombrero_main.read_into_subprocess_stdin(self.ffmpeg.subprocess.stdin)
 
                 # Looped the audio one time, exit
                 if step == self.audio_source.total_steps - 2:
@@ -526,23 +419,15 @@ class MMVShadersCLI:
 
             # View mode we just update window, print fps
             elif self.mode == "view":
-                self.mgl.update_window()
 
-                print(f":: Resolution: [SSAA={self.mgl.ssaa:.2f}]({int(self.mgl.width * self.mgl.ssaa)}x{int(self.mgl.height * self.mgl.ssaa)})->({self.mgl.width}x{self.mgl.height}) Average FPS last ({self.fps_last_n} frames): [{fps}] \r", end = "", flush = True)
-                
                 # The window received close command
-                if self.mgl.window_handlers.window_should_close:
+                if self.sombrero_main.window.window_should_close:
                     self.audio_source.stop()
                     self.mmv_package_interface.thanks_message()
                     break
 
-            # Print FPS, well, kinda, the average of the last fps_last_n frames
-            self.frame_times[step % self.fps_last_n] = time.time()
-
-            # Manual vsync (yea we really need this)
-            if (not self.mgl.window_handlers.vsync) and (self.mode == "view"):
-                while (time.time() - startcycle) < (1 / self._fps):
-                    time.sleep(1 / (self._fps * 100))
+            if (not self.sombrero_main.window.vsync) and (self.mode == "view"):
+                if (t := (1 / self.sombrero_main.fps) + startcycle - time.time()) >= 0: time.sleep(t)
 
 # main function to use typer for CLI
 def main():

@@ -6,8 +6,8 @@ def generate(context):
     interface = context.interface
     layers = []
 
-    background = context.new_child()
+    background = context.new_shader()
     background.macros.load(interface.shaders_dir/"assets"/"background"/"blueprint.glsl")
     layers.append(background)
 
-    context.main.macros.render_layers(layers, gamma_correction = True)
+    context.render_layers(layers, gamma_correction = True, HUD = True)

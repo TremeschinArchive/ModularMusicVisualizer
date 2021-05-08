@@ -28,6 +28,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from mmv.sombrero.sombrero_window import SombreroWindow
 from mmv.sombrero.sombrero_constructor import *
 from mmv.sombrero.sombrero_shader import *
+from contextlib import suppress
 from enum import Enum, auto
 from array import array
 from PIL import Image
@@ -93,6 +94,7 @@ class SombreroMGL:
             }
         
         self.__ever_finished = False
+        self._want_to_reload = False
 
     # Create and configure one child of this class with same target stuff
     def new_child(self,):
@@ -168,7 +170,7 @@ class SombreroMGL:
 
     # Create one texture attached to some FBO. Depth = 4 -> RGBA
     def create_texture_fbo(self, width, height, depth = 4) -> list:
-        texture = self.gl_context.texture((width * self.ssaa, self.height * self.ssaa), depth)
+        texture = self.gl_context.texture((int(width * self.ssaa), int(self.height * self.ssaa)), depth)
         fbo = self.gl_context.framebuffer(color_attachments = [texture])
         return [texture, fbo]
 
@@ -337,8 +339,8 @@ class SombreroMGL:
         return list(set(info))
     
     def reset(self):
-        for child in self.children_sombrero_mgl(): child.reset()
-        self.program.release()
-        self.texture.release()
-        self.fbo.release()
-        self.vao.release()
+        for child in self.children_sombrero_mgl(): child.reset(); del child
+        with suppress(AttributeError): self.program.release()
+        with suppress(AttributeError): self.texture.release()
+        with suppress(AttributeError): self.fbo.release()
+        with suppress(AttributeError): self.vao.release()
