@@ -383,8 +383,8 @@ class SombreroWindow:
             self.window_should_close = True
 
         if (key == 82) and (action == 1):
-            self.sombrero._read_shaders_from_paths_again()
             self.messages.add(f"{debug_prefix} (r) Reloading shaders..", self.ACTION_MESSAGE_TIMEOUT)
+            self.sombrero._want_to_reload = True
 
         if (key == 84) and (action == 1):
             self.sombrero.pipeline["mFrame"] = 0

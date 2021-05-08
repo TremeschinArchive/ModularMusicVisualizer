@@ -309,7 +309,12 @@ class SombreroShaderMacros:
     def add_include(self, item): item(self.sombrero_mgl.shader.Includes)
 
     # Alpha composite many layers together
-    def alpha_composite(self, layers, gamma_correction = False, assign_to_parent = True) -> SombreroShader:
+    def alpha_composite(self, layers, gamma_correction = False, assign_to_parent = True, HUD = False) -> SombreroShader:
+        if HUD:
+            hud = self.sombrero_mgl.new_child()
+            hud.macros.load(self.sombrero_mgl.mmv_interface.shaders_dir/"sombrero"/"default_hud.glsl")
+            layers.append(hud)
+
         with self.__base_shader() as SHADER:
             self.__map_shader_as_textures(layers, SHADER)
 
