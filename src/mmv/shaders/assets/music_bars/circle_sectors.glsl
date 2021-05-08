@@ -7,7 +7,7 @@ vec4 mainImage() {
     vec3 mmv_rms_0_33 = vec3(0.0);
     vec3 mmv_progressive_rms = vec3(0.0);
 
-    vec2 gluv_all = mGetGLUVAll(1.3);
+    vec2 gluv_all = mGetGLUVParallax(1.3);
 
     // // Movement
 

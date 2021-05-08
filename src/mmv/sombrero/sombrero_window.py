@@ -276,25 +276,6 @@ class SombreroWindow:
             # Window viewport
             self.window.fbo.viewport = (0, 0, self.sombrero.width, self.sombrero.height)
 
-    # Release everything
-    def drop_textures(self):
-        self.messages.add("Dropped textures", self.ACTION_MESSAGE_TIMEOUT)
-        for index in self.sombrero.contents.keys():
-            if "shader_as_texture" in self.sombrero.contents[index].keys():
-                target = self.sombrero.contents[index]["shader_as_texture"]
-                target.fullscreen_buffer.release()
-                target.program.release()
-                target.texture.release()
-                target.fbo.release()
-                target.vao.release()
-            else:
-                self.sombrero.contents[index]["texture"].release()
-
-        # Delete items
-        for index in list(self.sombrero.contents.keys()):
-            del self.sombrero.contents[index]
-            gc.collect()
-
     # Close the window
     def close(self, *args, **kwargs):
         logging.info(f"[SombreroWindow.close] Window should close")
@@ -345,7 +326,7 @@ class SombreroWindow:
         if key == 341: self.ctrl_pressed = bool(action)
         if key == 342: self.alt_pressed = bool(action)
 
-        if self.imgui_io.want_capture_mouse: return
+        if self.imgui_io.want_capture_keyboard: return
 
         if (key == 32) and (action == 1):
             self.sombrero.freezed_pipeline = not self.sombrero.freezed_pipeline
@@ -354,6 +335,26 @@ class SombreroWindow:
             for index in self.sombrero.contents.keys():
                 if self.sombrero.contents[index]["loader"] == "shader":
                     self.sombrero.contents[index]["shader_as_texture"].freezed_pipeline = self.sombrero.freezed_pipeline
+
+        if (key == 44) and (action == 1):
+            if self.shift_pressed:
+                self.target_time_factor -= 0.01
+                self.messages.add(f"{debug_prefix} (,) Playback speed [-0.1] [{self.target_time_factor:.3f}]", self.ACTION_MESSAGE_TIMEOUT)
+            else:
+                self.target_time_factor -= 0.1
+                self.messages.add(f"{debug_prefix} (.) Playback speed [-0.1] [{self.target_time_factor:.3f}]", self.ACTION_MESSAGE_TIMEOUT)
+
+        if (key == 46) and (action == 1):
+            if self.shift_pressed:
+                self.target_time_factor += 0.01
+                self.messages.add(f"{debug_prefix} (,) Playback speed [+0.1] [{self.target_time_factor:.3f}]", self.ACTION_MESSAGE_TIMEOUT)
+            else:
+                self.target_time_factor += 0.1
+                self.messages.add(f"{debug_prefix} (.) Playback speed [+0.1] [{self.target_time_factor:.3f}]", self.ACTION_MESSAGE_TIMEOUT)
+
+        if (key == 47) and (action == 1):
+                self.target_time_factor *= -1
+                self.messages.add(f"{debug_prefix} (;) Reverse playback speed [{self.target_time_factor:.3f}]", self.ACTION_MESSAGE_TIMEOUT)
 
         if (key == 68) and (action == 1):
             self.messages.add(f"{debug_prefix} (d) Toggle debug", self.ACTION_MESSAGE_TIMEOUT)
@@ -581,8 +582,14 @@ class SombreroWindow:
             changed, value = imgui.input_int("Target FPS", self.sombrero.fps)
             if changed: self.sombrero.change_fps(value)
 
-            # # Time
+            # List of common fps
+            for fps in [24, 30, 60, 90, 120, 144, 240]:
+                changed = imgui.button(f"{fps}Hz")
+                if fps != 240: imgui.same_line() # Same line until last value
+                if changed: self.sombrero.change_fps(fps)
             imgui.separator()
+
+            # # Time
             t = f"{self.sombrero.pipeline['mTime']:.1f}s"
             if not self.sombrero.freezed_pipeline: imgui.text_colored(f"Time [PLAYING] [{t}]", *section_color)
             else: imgui.text_colored(f"Time [FROZEN] [{t}]", 1, 0, 0)
@@ -592,12 +599,17 @@ class SombreroWindow:
                 self.target_time_factor = value
                 self.previous_time_factor = self.target_time_factor
 
+            # # Time
+            imgui.separator()
+
             # Quick
-            for ratio in [-2, -1, -0.5, 0, 0.5, 1, 2]:
-                changed = imgui.button(f"x{ratio}"); imgui.same_line()
+            for ratio in [-2, -1, -0.5, 0, 0.1, 0.25, 0.5, 1, 2]:
+                changed = imgui.button(f"{ratio}x")
+                if ratio != 2: imgui.same_line() # Same line until last value
                 if changed:
                     self.target_time_factor = ratio
                     self.previous_time_factor = self.target_time_factor
+                    self.sombrero.freezed_pipeline = False
 
             imgui.separator()
             dock_y += imgui.get_window_height()

@@ -2,7 +2,7 @@
 vec4 mainImage() {
     vec4 col = vec4(0.0);
     vec2 stuv_all = mGetSTUVAll();
-    vec2 gluv_all = mGetGLUVAll(1.0);
+    vec2 gluv_all = mGetGLUVAll();
     vec2 fulldh_scalar = mGetFullHDScalar();
     float resratio = mGetNormalizeYratio();
 

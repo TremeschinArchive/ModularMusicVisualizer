@@ -55,6 +55,14 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
+name = "dotmap"
+version = "1.3.23"
+description = "ordered, dynamically-expandable dot-access dictionary"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "easyprocess"
 version = "0.3"
 description = "Easy to use Python subprocess interface."
@@ -234,6 +242,17 @@ description = "C parser in Python"
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+
+[[package]]
+name = "pyfluidsynth"
+version = "1.3.0"
+description = "Python bindings for FluidSynth, a MIDI synthesizer that uses SoundFont instruments"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+numpy = "*"
 
 [[package]]
 name = "pyglet"
@@ -448,7 +467,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<3.10"
-content-hash = "ff118811b583ea02a7fef86332312833aec405834a33e3d04b8afe56cc07b49c"
+content-hash = "921bd3150ebe1da09ac92111476ff48fa6fe68a2a8d463a5f2f6091357728a28"
 
 [metadata.files]
 astroid = [
@@ -509,6 +528,10 @@ click = [
 colorama = [
     {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
     {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
+]
+dotmap = [
+    {file = "dotmap-1.3.23-py3-none-any.whl", hash = "sha256:88270f02a34f42af6f760de8fa9b7080156d118bb9e252508f30633d4f21ce51"},
+    {file = "dotmap-1.3.23.tar.gz", hash = "sha256:6aaeb51052a465a5aeff47d975d12802fc5d613674fb78b2ebf09ff5ff44c843"},
 ]
 easyprocess = [
     {file = "EasyProcess-0.3-py2.py3-none-any.whl", hash = "sha256:fca26794d3ced044d0471bd4ed767d5c287391d8a1c5e9d106fc59478b732543"},
@@ -758,6 +781,10 @@ pillow = [
 pycparser = [
     {file = "pycparser-2.20-py2.py3-none-any.whl", hash = "sha256:7582ad22678f0fcd81102833f60ef8d0e57288b6b5fb00323d101be910e35705"},
     {file = "pycparser-2.20.tar.gz", hash = "sha256:2d475327684562c3a96cc71adf7dc8c4f0565175cf86b6d7a404ff4c771f15f0"},
+]
+pyfluidsynth = [
+    {file = "pyFluidSynth-1.3.0-py3-none-any.whl", hash = "sha256:7473eec5744b609c59e7685fcb2f24efe3769225db3ca2e6851a56f7586cb82e"},
+    {file = "pyFluidSynth-1.3.0.tar.gz", hash = "sha256:7d4fba5ee90459599fea1de811db695f07c8fa870e93c2151d47046ea181dd9e"},
 ]
 pyglet = [
     {file = "pyglet-1.5.16-py3-none-any.whl", hash = "sha256:37cced6f4f7e30e7ace73779d068c86b3dc26f1a28b602016d37113ae830d7f8"},

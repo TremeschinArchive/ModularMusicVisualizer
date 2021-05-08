@@ -398,13 +398,7 @@ f"""Show extension\n{"="*self.terminal_width}
         return self.utils.get_executable_with_name(binary, extra_paths = self.EXTERNALS_SEARCH_PATH)
 
     # Make sure we have some target Externals, downloads latest release for them.
-    # For forcing to download the Windows binaries for a release, send platform="windows" for overwriting
-    # otherwise it'll be set to this class's os.
-    #
-    # For FFmpeg, mpv: Linux and macOS people please install from your distro's package manager.
-    #
-    # Possible values for target are: ["ffmpeg", "mpv", "musescore"]
-    #
+    # Possible values for target are: ["ffmpeg", "musescore"]
     def check_download_externals(self, target_externals = [], platform = None):
         debug_prefix = "[MMVPackageInterface.check_download_externals]"
 
@@ -502,40 +496,6 @@ f"""Show extension\n{"="*self.terminal_width}
 
                 else:  # Already have the binary
                     logging.info(f"{debug_prefix} Already have [ffmpeg] binary in externals / system path!!")
-
-            # # MPV FIXME: deprecate future version
-
-            if external == "mpv":
-                debug_prefix = f"[MMVPackageInterface.check_download_externals({external})]"
-
-                # We're on Linux / macOS so checking ffmpeg external dependency on system's path
-                if platform in ["linux", "macos"]:
-                    self.__cant_micro_manage_external_for_you(binary = "mpv", help_fix = f"Visit [https://mpv.io/installation/]")
-                    continue
-
-                # If we don't have mpv binary on externals dir or system's path
-                if not self.find_binary("mpv"):
-
-                    mpv_7z_version = "mpv-x86_64-20201220-git-dde0189.7z"
-
-                    # Where we'll save the compressed zip of FFmpeg
-                    mpv_7z = self.downloads_dir + f"{sep}{mpv_7z_version}"
-
-                    # Download mpv build
-                    self.download.wget(
-                        f"https://sourceforge.net/projects/mpv-player-windows/files/64bit/{mpv_7z_version}/download",
-                        mpv_7z, f"MPV v=20201220-git-dde0189"
-                    )
-
-                    # Where to extract final mpv
-                    mpv_extracted_folder = f"{self.externals_dir_this_platform}{sep}" + mpv_7z_version.replace(".7z", "")
-                    self.utils.mkdir_dne(path = mpv_extracted_folder)
-
-                    # Extract the files
-                    self.download.extract_file(mpv_7z, mpv_extracted_folder)
-               
-                else:  # Already have the binary
-                    logging.info(f"{debug_prefix} Already have [mpv] binary in externals / system path!!")
 
             # # Musescore
 

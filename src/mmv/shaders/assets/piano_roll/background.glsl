@@ -5,9 +5,9 @@ vec4 mainImage() {
     vec2 gluv_all = mGetGLUVAll();
 
     // Displacement stuff for organic movement
-    vec2 low_freq_shake = vec2(cos(mTime*5.0/1.5), sin(mTime*8.0/1.5)) / 180.0;
-    vec2 high_freq_shake = vec2(cos(mTime*10.0/1.3), sin(mTime*16.0/1.3)) / 300.0;
-    vec2 offset = vec2(sin(mTime/7.135135), cos(mTime/4.523894)) / 20.0;
+    vec2 low_freq_shake = vec2(cos(mTime*5.0/10.5), sin(mTime*8.0/10.5)) / 180.0;
+    vec2 high_freq_shake = vec2(cos(mTime*10.0/10.3), sin(mTime*16.0/10.3)) / 300.0;
+    vec2 offset = vec2(sin(mTime/7.135135), cos(mTime/4.523894)) / 50.0;
 
     // Scale and angle
     float scale = 2.2;
@@ -30,5 +30,8 @@ vec4 mainImage() {
     );
 
     col.a = 3.0 - length(gluv_all);
+    if (opengl_uv.y < -0.7) {
+        col = mAlphaComposite(col, vec4(vec3(0.0), 0.8));
+    }
     return col;
 }
