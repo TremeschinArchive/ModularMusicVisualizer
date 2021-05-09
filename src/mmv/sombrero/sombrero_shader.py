@@ -272,7 +272,7 @@ class SombreroShaderMacros:
 
             # Return mainImage from main function, gamma correction of sqrt
             with Function("void", "main", "")(SHADER) as main:
-                FragColor("mainImage()")(main)
+                FragColor("mainImage(gl_FragCoord.xy)")(main)
         return SHADER
 
     # # These assign_to_parent are for automatically setting the parent SombreroMGL's .shader attribute
@@ -319,7 +319,7 @@ class SombreroShaderMacros:
             self.__map_shader_as_textures(layers, SHADER)
 
             # mainImage function
-            with Function("vec4", "mainImage", "")(SHADER.UserShader) as main:
+            with Function("vec4", "mainImage", "in vec2 fragCoord")(SHADER.UserShader) as main:
                 Variable("vec4", "col", "vec4(0.0)")(main)
 
                 # Alpha composite every layer

@@ -1,4 +1,4 @@
-vec4 mainImage() {
+vec4 mainImage(in vec2 fragCoord) {
     // ===============================================================================
 
     // This is the fallback shader when something went wrong, check console output

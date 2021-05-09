@@ -26,6 +26,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 from mmv.sombrero.sombrero_window import SombreroWindow
+from mmv.sombrero.sombrero_piano_roll import PianoRoll
 from mmv.sombrero.sombrero_constructor import *
 from mmv.sombrero.sombrero_shader import *
 from contextlib import suppress
@@ -89,12 +90,22 @@ class SombreroMGL:
         if self.master_shader:
             self.freezed_pipeline = False
             self.pipeline = {
-                "mTime": 0.0, "mFrame": 0,
+                "mTime": 0.0, "mFrame": 0, "mMouse": np.array([0, 0]),
                 "mResolution": np.array([0, 0], dtype = np.int32),
+
+                # 3D stuff
+                "m3DCameraPos": np.array([0, 0, 0]),
+                "m3DAzimuth": 0, "m3DInclination": 0, "m3DRadius": 0,
             }
         
         self.__ever_finished = False
         self._want_to_reload = False
+
+        self.piano_roll = None
+    
+    def create_piano_roll(self):
+        self.piano_roll = PianoRoll(self)
+        return self.piano_roll
 
     # Create and configure one child of this class with same target stuff
     def new_child(self,):
@@ -239,7 +250,7 @@ class SombreroMGL:
 
         # Get current window "state"
         self.pipeline["mResolution"] = (self.width * self.ssaa, self.height * self.ssaa)
-        self.pipeline["mRotation"] = self.window.rotation
+        self.pipeline["mRotation"] = self.window.uv_rotation
         self.pipeline["mZoom"] = self.window.zoom
         self.pipeline["mDrag"] = self.window.drag
         self.pipeline["mFlip"] = -1 if self.flip else 1
@@ -253,6 +264,13 @@ class SombreroMGL:
         self.pipeline["mIsDragging"] = self.window.is_dragging
         self.pipeline["mIsGuiVisible"] = self.window.show_gui
         self.pipeline["mIsDebugMode"] = self.window.debug_mode
+
+        # 3D
+        self.pipeline["m3DCameraPos"] = self.window.ThreeD_camera_pos
+        self.pipeline["m3DCameraPointing"] = self.window.ThreeD_camera_pointing
+        self.pipeline["m3DFOV"] = self.window.ThreeD_FOV
+        self.pipeline["m3DAzimuth"] = self.window.ThreeD_azimuth
+        self.pipeline["m3DInclination"] = self.window.ThreeD_inclination
 
         # Keys
         self.pipeline["mKeyCtrl"] = self.window.ctrl_pressed
