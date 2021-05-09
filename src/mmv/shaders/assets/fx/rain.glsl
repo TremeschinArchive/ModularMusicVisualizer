@@ -21,7 +21,7 @@ vec4 rain_layer(vec2 uv, float amount) {
     return col;
 }
 
-vec4 mainImage() {
+vec4 mainImage(in vec2 fragCoord) {
     vec4 col = vec4(0.0);
     int nlayers = 8;
     vec2 gluv_all = mGetGLUVParallax(1.5);

@@ -1,5 +1,5 @@
 
-vec4 mainImage() {
+vec4 mainImage(in vec2 fragCoord) {
 
     // return vec4(0, PI/3, 2*PI/3, 1) + vec4(note);
 

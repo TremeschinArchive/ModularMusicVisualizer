@@ -1,5 +1,5 @@
 
-vec4 mainImage() {
+vec4 mainImage(in vec2 fragCoord) {
     vec4 col = vec4(0.0);
     vec2 stuv_all = mGetSTUVAll();
     vec2 gluv_all = mGetGLUVAll();

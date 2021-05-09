@@ -8,12 +8,21 @@
 
 uniform int mFrame;
 uniform float mTime;
+uniform vec2 mMouse;
 uniform vec2 mResolution;
 
 uniform float mRotation;
 uniform float mZoom;
 uniform vec2 mDrag;
 uniform int mFlip;
+
+// 3D
+uniform vec3 m3DCameraPos;
+uniform vec3 m3DCameraPointing;
+uniform float m3DFOV;
+uniform float m3DAzimuth;
+uniform float m3DInclination;
+uniform float m3DRadius; 
 
 uniform bool mIsDraggingMode;
 uniform bool mIsDragging;
@@ -51,7 +60,7 @@ float mGetNormalizeYratio() { return mResolution.x / mResolution.y; }
 vec2 mGetFullHDScalar() { return vec2(mResolution.x / 1920, mResolution.y / 1080); }
 
 // How much to rotate the space on interactive mode
-mat2 mGetCoordinatesRotation() { return mRotation2D((-mRotation * PI) / 180.0); }
+mat2 mGetCoordinatesRotation() { return mRotation2D(mRotation); }
 
 // GL and ST uv based on the aspect ratio
 vec2 mGetGLUV() { vec2 gluv = opengl_uv; gluv.x *= mGetNormalizeYratio(); return gluv; }

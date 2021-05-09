@@ -187,6 +187,9 @@ class MMVShadersCLI:
             context.cli = self
             context.interface = self.mmv_package_interface
             context.new_shader = self.sombrero_main.new_child
+            context.shaders_dir = self.mmv_package_interface.shaders_dir
+            context.assets_dir = self.mmv_package_interface.assets_dir
+            context.create_piano_roll = self.sombrero_main.create_piano_roll
             context.render_layers = self.sombrero_main.macros.alpha_composite
             self.sombrero_main.reset()
             preset = __import__(f"mmv.shaders.presets.{self._preset_name}", fromlist = [self._preset_name])

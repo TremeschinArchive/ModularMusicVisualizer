@@ -1,5 +1,5 @@
 
-vec4 mainImage() {
+vec4 mainImage(in vec2 fragCoord) {
     vec4 c = vec4(0.0);
       
     if (abs(opengl_uv.x) < 0.5 && abs(opengl_uv.y) < 0.5) {

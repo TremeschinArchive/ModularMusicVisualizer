@@ -321,34 +321,47 @@ Example:
 - `poetry run shaders multiplier --value 2.0 load --preset "other_preset" realtime`
 - `poetry run shaders multiplier --value 2.0 load --file "some_shader.glsl" realtime`
 
-There are a couple hotkeys and interactions with the window:
+There are a couple hotkeys and interactions with the window and some modes.
 
-- `Can click + drag` to translate space, scroll to zoom in / out
-- `right click + drag` to walk in time, `shift + right click + drag` for going faster, `alt + right click + drag` for changing time scaling
-- Hold `ctrl` for alignment overlay
-- `Shift + scroll` increases / decreases the intensity of effects (multiplier)
-- `Ctrl + scroll` (only when not dragging) increases / decreases the SSAA (Super Sampling Anti Aliasing), gets exponentially slower to render but gives nicer edges as explained.
-- `Alt + scroll` increases / decreases rotation
-- `Shift + drag` is precise zoom
-- `Alt + drag` is precise rotation
-- Pressing `Tab` toggles GUI
-- `,` and `.` changes playback speed (or manually on GUI), fine tune `shift + , .`
+Works on all modes:
+- Pressing `t` resets time to 0 (same as restarting MMV)
+- Pressing `f` toggles full screen
+- Pressing `h` hides mouse
+- Pressing `o` freezes the pipeline so the shader is rendered (hopefully) static, useful for debugging or screenshots
+- Pressing `r` rebuilds the preset and reloads the shaders (automatically reloads on disk modification)
+- Pressing `p` takes a screenshot and saves to `src/mmv/screenshots` fodler
+- Pressing `y` enables debug mode (depends on loaded shaders)
 - `;` multiplies time factor by `-1`
+- `,` and `.` changes playback speed (or manually on GUI), fine tune `shift + , .`
+- Pressing `Tab` toggles GUI
+- Hold `ctrl` for alignment overlay id HUD shader is present
+- `right click + drag` to walk in time, `shift + right click + drag` for going faster, `alt + right click + drag` for changing time scaling
+
+Mode 2 (2D), entered by pressing the `2` key (default):
+- `Can click + drag` to translate space, scroll to zoom in / out
 - Pressing `z` resets zoom back to 1x
 - Pressing `x` resets dragged space back to the origin
 - Pressing `c` resets rotation to 0
 - Pressing `v` resets the intensity to 1
-- Pressing `r` rebuilds the preset and reloads the shaders (automatically reloads on disk modification)
-- Pressing `s` freezes the pipeline so the shader is rendered (hopefully) static, useful for debugging or screenshots
 - Pressing `space` toggles playback
-- Pressing `t` resets time to 0 (same as restarting MMV)
-- Pressing `f` toggles full screen
-- Pressing `h` hides mouse
-- Pressing `e` get exclusivity of mouse, ie. locks the mouse to the window, other controls also applies but won't require to click (Alt for rotation, Shift for zoom, nothing for dragging)
-- Pressing `q` quits
-- Pressing `d` enables debug mode
+- `Alt + drag` is precise rotation
+- `Shift + drag` is precise zoom
+- `Alt + scroll` increases / decreases rotation
+- `Shift + scroll` increases / decreases the intensity of effects (multiplier)
+
+Mode 3 (3D), entered by pressing the `3` key, only works on implemented scenes (usually ray marched ones):
+- Press `WASD` to move
+- `drag` to rotate camera
+- Pressing `space` or `shift` to go up / down
+- Pressing `z` resets FOV
+- Pressing `x` resets camera position to `(0, 0, 0)`
+- Pressing `c` resets azimuth angle to `0°` (_"horizontal rotation"_)
+- Pressing `v` resets inclination angle to `90°` (_"vertical rotation"_)
   
 And of course, all of those are smoothly animated, not too quick nor too slow, but snappy.
+
+**NOTE: NOT ALL SHADERS SUPPORT 3D MODE SO COMMANDS MIGHT DO NOTHING DEPENDING ON YOUR CONFIGURATION**
+
 
 ### Rendering
 
@@ -361,8 +374,12 @@ Example:
 - `poetry run shaders render --audio "/path/to/audio.ogg"`
 - `poetry run shaders render --audio "/path/to/audio.ogg" --output-video "this_video_contributed_to_global_warming_and_the_heat_death_of_the_universe.mp4"`
   
-<hr>
+Render without audio processing (only shader)
 
+- `poetry run shaders render --no-audio`
+- `poetry run shaders --load preset raymarching render --no-audio --seconds 40 --output-video "fun.mkv"`
+
+<hr>
 
 
 
