@@ -32,22 +32,26 @@ import quaternion
 import imgui
 import math
 
+
 # Normalize safely some vector to 1, if zero return 0
 def unit_vector(v):
     N = np.linalg.norm(v, ord = 1)
     if N == 0: N = 1
     return v / N
 
+# Angle between two vectors, used for cancelling roll on GlobalCamera mode
 def angle_between(v1, v2):
     return np.arccos( np.dot(unit_vector(v1), unit_vector(v2)) )
 
+
+# Shorthands for quaternions functions
 Qfromvec = quaternion.from_vector_part
 Qasvec = quaternion.as_vector_part
+
 
 class Camera3D:
     ModeFreeCamera = "Free Camera"
     ModeGlobal = "Global Camera"
-    Modes = [ModeGlobal, ModeFreeCamera]
     
     # Unit vectors as quaterions
     GlobalX = np.array([1, 0, 0], dtype = np.float32)
@@ -59,9 +63,12 @@ class Camera3D:
     Right = - GlobalY
     Forward = GlobalX
 
-    GlobalCanonicalBase = np.array([GlobalX, GlobalZ, GlobalY])
+    # Sorted and unsorted attributes
+    GlobalStandardBase = np.array([GlobalX, GlobalZ, GlobalY])
+    Modes = [ModeGlobal, ModeFreeCamera]
     AxisX, AxisY, AxisZ = 0, 1, 2
     
+    # Change between Camera3D.Modes
     def cycle_mode(self):
         CM = Camera3D.Modes
         self.mode = CM[(CM.index(self.mode)+1) % len(CM)]
@@ -74,8 +81,10 @@ class Camera3D:
         self.ACTION_MESSAGE_TIMEOUT = self.sombrero_window.ACTION_MESSAGE_TIMEOUT
         self.cfg = self.sombrero_mgl.config["window"]["3D"]
         self.fix_due_fps = self.sombrero_window.sombrero_mgl._fix_ratio_due_fps
-
-        # self.mode = Camera3D.ModeFreeCamera
+        self.reset()
+        
+    # # 3D Specific Info
+    def reset(self):
         self.mode = Camera3D.ModeGlobal
 
         self.target_quaternion = np.quaternion(1, 0, 0, 0)
@@ -96,14 +105,15 @@ class Camera3D:
 
         self.sensitivity = 1
 
+    # Create one quaternion from an angle and vector, note the rotation is based
+    # on the plane normal to this vector
     def _angle_vector_quaternion(self, angle, v):
         return np.quaternion( math.cos(angle/2), *((v* math.sin(angle/2)) / np.linalg.norm(v)) )
 
     @property
-    # Free camera mode we rotate the global XYZ to where we are pointing now
-    # so we have a free global->local coordinates conversion
-    def canonical_base(self):
-        R = quaternion.rotate_vectors(self.quaternion, Camera3D.GlobalCanonicalBase)
+    # Current standard base applied on where the camera is pointing
+    def standard_base(self):
+        R = quaternion.rotate_vectors(self.quaternion, Camera3D.GlobalStandardBase)
         R = quaternion.rotate_vectors(self._angle_vector_quaternion(self.roll, Camera3D.Forward), R)  # Apply roll
         return R
     
@@ -113,26 +123,29 @@ class Camera3D:
 
     # Angle: radians; Axis: Camere3D.XAxis, .YAxis, .ZAxis or just 0, 1, 2
     def apply_rotation(self, angle, axis):
-        # Get the rotation axis we'll rotate based on current basis
-        # remember this base can be global or local
-        # rot = self._angle_vector_quaternion(angle=-angle*2, v=self.canonical_base[axis])
+        # Get the rotation axis we'll rotate based on current basis, I don't know why the conjugate is
+        # really needed but it seems to be the case
         rot = self._angle_vector_quaternion(
-            angle=-angle*2, v=quaternion.rotate_vectors(self.quaternion.conj(), self.canonical_base[axis]))
+            angle=-angle*2, v=quaternion.rotate_vectors(self.quaternion.conj(), self.standard_base[axis]))
 
-        # Rotate current quaternion
+        # Rotate current quaternion, note the order of operation matters for accumulating the rotations!
         self.target_quaternion = self.target_quaternion * rot
 
-    # Rotate smoothly to target quaternion
+    # Rotate smoothly to target quaternion, call quaternion's spherical linear interpolation
     def do_slerp(self):
         self.quaternion = quaternion.slerp_evaluate(self.quaternion, self.target_quaternion, self.cfg["rotation_responsiveness"])
 
     # # Sombrero Window Functions
 
+    # Next iteration
     def next(self):
-        for index, vector in enumerate(self.canonical_base):
+
+        # Walk the camera if WASD Shift Space are pressed
+        for index, vector in enumerate(self.standard_base):
             self.target_position += vector \
                 * self.fix_due_fps(0.1 * self.want_to_walk_unit_vector[index] * self.walk_speed)
 
+        # Interpolate values
         self.position += (self.target_position - self.position) * self.fix_due_fps(self.cfg["walk_responsiveness"])
         self.walk_speed += (self.target_walk_speed - self.walk_speed) * self.fix_due_fps(self.cfg["walk_responsiveness"])
         self.fov += (self.target_fov - self.fov) * self.fix_due_fps(self.cfg["zoom_responsiveness"])
@@ -140,17 +153,19 @@ class Camera3D:
         # Apply roll
         if self.want_to_toll != 0: self.apply_rotation(self.want_to_toll, Camera3D.AxisX)
 
-        # Cancell roll relative to the camera, get angle between XY plane basically
+        # For ModeGlobal cancel roll relative to the camera, get angle between XY plane basically
         if self.mode == Camera3D.ModeGlobal:
-            a = (math.pi / 2) - angle_between(self.canonical_base[2], Camera3D.GlobalZ)
-            self.apply_rotation(a, Camera3D.AxisX)
+            a = (math.pi / 2) - angle_between(self.standard_base[2], Camera3D.GlobalZ)
+            self.apply_rotation(a/2, Camera3D.AxisX)
 
+        # Apply interpolation to target rotation, normalize current quaternion just in case
         self.do_slerp()
         self.quaternion = np.normalized(self.quaternion)
         
     def key_event(self, key, action, modifiers):
         debug_prefix = "[Camera3d.key_event]"
 
+        # Walk, rotation
         if action in [0, 1]:
             if (key == 87):  self.want_to_walk_unit_vector[0] =  action  # W
             if (key == 65):  self.want_to_walk_unit_vector[2] = -action  # A
@@ -194,8 +209,8 @@ class Camera3D:
         cp = self.pointing
         imgui.text(f"Mode: [{self.mode}]")
         imgui.text(f"Camera Pointing:   [{cp[0]:.2f}, {cp[1]:.2f}, {cp[2]:.2f}]")
-        # cb = self.canonical_base
-        # imgui.text(f"Canonical base:")
+        # cb = self.standard_base
+        # imgui.text(f"standard base:")
         # imgui.text(f" - X: [{cb[0]}]")
         # imgui.text(f" - Y: [{cb[1]}]")
         # imgui.text(f" - Z: [{cb[2]}]")

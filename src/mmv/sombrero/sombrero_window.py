@@ -49,6 +49,7 @@ import math
 import uuid
 import time
 import gc
+import os
 
 sin = math.sin
 cos = math.cos
@@ -159,6 +160,7 @@ class SombreroWindow:
 
         # Gui
         self.messages = OnScreenTextMessages()
+        self.show_menu_window = True
         self.debug_mode = False
 
         # Actions
@@ -311,20 +313,24 @@ class SombreroWindow:
         self.imgui.key_event(key, action, modifiers)
         logging.info(f"{debug_prefix} Key [{key}] Action [{action}] Modifier [{modifiers}]")
 
-        # "tab" key pressed, toggle gui
-        if (key == 258) and (action == 1):
-            self.show_gui = not self.show_gui
-            self.messages.add(f"(TAB) Toggle GUI [{self.show_gui}]", self.ACTION_MESSAGE_TIMEOUT)
-            self.window.mouse_exclusivity = False
-            self.framerate.clear()
-
-        if self.imgui_io.want_capture_keyboard: return
-
         # Shift and control
         if key == 340: self.shift_pressed = bool(action)
         if key == 341: self.ctrl_pressed = bool(action)
         if key == 342: self.alt_pressed = bool(action)
         
+        # "tab" key pressed, toggle gui
+        if (key == 258) and (action == 1):
+            if self.shift_pressed:
+                self.show_gui = not self.show_gui
+                self.messages.add(f"(TAB) Toggle All GUI [{self.show_gui}]", self.ACTION_MESSAGE_TIMEOUT)
+                self.window.mouse_exclusivity = False
+                self.framerate.clear()
+            else:
+                self.show_menu_window = not self.show_menu_window
+                self.messages.add(f"(Shift + TAB) Toggle menu GUI [{self.show_menu_window}]", self.ACTION_MESSAGE_TIMEOUT)
+
+        if self.imgui_io.want_capture_keyboard: return
+
         if self.shift_pressed:
             pass
 
@@ -498,15 +504,38 @@ class SombreroWindow:
 
     # Render the user interface
     def render_ui(self):
-        imgui.new_frame()
-        dock_y = 0
+        section_color = (0, 1, 0)
         imgui.push_style_var(imgui.STYLE_WINDOW_BORDERSIZE, 0.0)
         imgui.push_style_var(imgui.STYLE_WINDOW_ROUNDING, 0)
-        section_color = (0, 1, 0)
+        imgui.new_frame()
 
-        # # # Info window
+        # Main menu
+        if self.show_menu_window:
+            W, H = self.sombrero_mgl.width / 2, self.sombrero_mgl.height / 2
+            imgui.set_window_position(W, H)
+            imgui.begin(f"Modular Music Visualizer", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE)
+            imgui.text("-" * 30)
+            imgui.separator()
 
+            # Presets loading
+            imgui.text_colored("Load Presets", *section_color)
+            for item in os.listdir(self.sombrero_mgl.mmv_interface.shaders_dir / "presets"):
+                if ".py" in item:
+                    item = item.replace(".py", "")
+                    changed = imgui.button(f"> {item}")
+                    if changed:
+                        self.sombrero_mgl.mmv_interface.shaders_cli._preset_name = item
+                        self.sombrero_mgl.mmv_interface.shaders_cli._load_preset()
+
+            w, h = imgui.get_window_width(), imgui.get_window_height()
+            imgui.set_window_position(W - (w/2), H - (h/2))
+            imgui.end()
+
+        # # # Info window, top left anchored
+
+        dock_y = 0
         if 1:
+            imgui.set_next_window_collapsed(True, imgui.FIRST_USE_EVER)
             imgui.set_next_window_position(0, dock_y)
             imgui.set_next_window_bg_alpha(0.5)
             imgui.begin(f"Info Window", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE)
@@ -528,6 +557,7 @@ class SombreroWindow:
         # # # Basic render, config settings
 
         if 1:
+            imgui.set_next_window_collapsed(True, imgui.FIRST_USE_EVER)
             imgui.set_next_window_position(0, dock_y)
             imgui.set_next_window_bg_alpha(0.5)
             imgui.begin("Config Window", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE)
@@ -579,6 +609,7 @@ class SombreroWindow:
             self.framerate.next()
             info = self.framerate.get_info()
 
+            imgui.set_next_window_collapsed(True, imgui.FIRST_USE_EVER)
             imgui.set_next_window_position(0, dock_y)
             imgui.set_next_window_bg_alpha(0.5)
             imgui.begin("Performance", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE)

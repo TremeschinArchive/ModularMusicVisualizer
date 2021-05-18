@@ -56,7 +56,7 @@ class AnyModification(FileSystemEventHandler):
     def on_modified(self, event):
         debug_prefix = "[AnyModification.on_modified]"
         logging.info(f"{debug_prefix} Some modification event [{event}], reloading shaders..")
-        self.controller.sombrero_main._want_to_reload = True
+        self.controller.sombrero_mgl._want_to_reload = True
 
 
 class MMVShadersCLI:
@@ -68,10 +68,11 @@ class MMVShadersCLI:
 
         # MMV interface
         self.mmv_package_interface = mmv.MMVPackageInterface()
+        self.mmv_package_interface.shaders_cli = self
         self.utils = self.mmv_package_interface.utils
 
         # Shaders interface and MGL
-        self.sombrero_main = self.mmv_package_interface.get_sombrero()(mmv_interface = self.mmv_package_interface, master_shader = True)
+        self.sombrero_mgl = self.mmv_package_interface.get_sombrero()(mmv_interface = self.mmv_package_interface, master_shader = True)
 
         # Ensure FFmpeg on Windows
         self.mmv_package_interface.check_download_externals(target_externals = ["ffmpeg"])
@@ -155,7 +156,7 @@ class MMVShadersCLI:
 
     # Set SombreroMGL target settings
     def __sombrero_mgl_target_render_settings(self):
-        self.sombrero_main.configure(width = self._width, height = self._height, ssaa = self._ssaa, fps = self._fps)
+        self.sombrero_mgl.configure(width = self._width, height = self._height, ssaa = self._ssaa, fps = self._fps)
 
     def __configure_audio_processing(self):
         # Configure FFT TODO: advanced config?
@@ -175,8 +176,10 @@ class MMVShadersCLI:
         ])
         self.MMV_FFTSIZE = self.audio_source.audio_processing.FFT_length
 
-    def __load_preset(self):
-        debug_prefix = "[MMVShadersCLI.__load_preset]"
+    def _load_preset(self):
+        debug_prefix = "[MMVShadersCLI._load_preset]"
+        self.sombrero_mgl.window.camera2d.reset()
+        self.sombrero_mgl.window.camera3d.reset()
 
         # # Will we load preset file or raw file shader? 
         if self._preset_name is None:
@@ -186,16 +189,16 @@ class MMVShadersCLI:
             context = DotMap(_dynamic = False)
             context.cli = self
             context.interface = self.mmv_package_interface
-            context.new_shader = self.sombrero_main.new_child
+            context.new_shader = self.sombrero_mgl.new_child
             context.shaders_dir = self.mmv_package_interface.shaders_dir
             context.sombrero_dir = self.mmv_package_interface.sombrero_dir
             context.assets_dir = self.mmv_package_interface.assets_dir
-            context.create_piano_roll = self.sombrero_main.create_piano_roll
-            context.render_layers = self.sombrero_main.macros.alpha_composite
-            self.sombrero_main.reset()
+            context.create_piano_roll = self.sombrero_mgl.create_piano_roll
+            context.render_layers = self.sombrero_mgl.macros.alpha_composite
+            self.sombrero_mgl.reset()
             preset = __import__(f"mmv.shaders.presets.{self._preset_name}", fromlist = [self._preset_name])
             preset.generate(context)
-            self.sombrero_main.finish()
+            self.sombrero_mgl.finish()
                     
     # List capture devices by index
     def list_captures(self):
@@ -216,7 +219,7 @@ class MMVShadersCLI:
         self.mode = "view"
 
         # Start mgl window
-        self.sombrero_main.window.create(
+        self.sombrero_mgl.window.create(
             window_class = window_class,
             msaa = self._msaa,
             vsync = False,
@@ -243,7 +246,7 @@ class MMVShadersCLI:
                     self.audio_source.init(recorder_device = device)
 
         # self.__configure_audio_processing()
-        self.__load_preset()
+        self._load_preset()
 
         # Start reading data
         # self.audio_source.start_async()
@@ -274,7 +277,7 @@ class MMVShadersCLI:
         self.__sombrero_mgl_target_render_settings()
 
         # Set window mode to headless
-        self.sombrero_main.window.create(
+        self.sombrero_mgl.window.create(
             window_class = "headless",
             strict = True,
             vsync = False,
@@ -302,7 +305,7 @@ class MMVShadersCLI:
             self.duration = self.audio_source.duration
 
         # self.__configure_audio_processing()
-        self.__load_preset()
+        self._load_preset()
       
         # Get video encoder
         self.ffmpeg = self.mmv_package_interface.get_ffmpeg_wrapper()
@@ -377,8 +380,8 @@ class MMVShadersCLI:
 
         # Main loop
         for step in itertools.count(start = 0):
-            if self.sombrero_main._want_to_reload:
-                self.__load_preset(); self.sombrero_main._want_to_reload = False
+            if self.sombrero_mgl._want_to_reload:
+                self._load_preset(); self.sombrero_mgl._want_to_reload = False
 
             # The time this loop is starting
             startcycle = time.time()
@@ -390,17 +393,17 @@ class MMVShadersCLI:
             # pipeline_info = self.audio_source.get_info()
             pipelined = {}
 
-            multiplier = self._multiplier * self.sombrero_main.window.intensity
+            multiplier = self._multiplier * self.sombrero_mgl.window.intensity
 
             # Next iteration
-            self.sombrero_main.next(custom_pipeline = pipelined)
+            self.sombrero_mgl.next(custom_pipeline = pipelined)
 
             # Write current image to the video encoder
             if self.mode == "render":
                 self.progress_bar.update(1)
 
                 # Write to the FFmpeg stdin
-                self.sombrero_main.read_into_subprocess_stdin(self.ffmpeg.subprocess.stdin)
+                self.sombrero_mgl.read_into_subprocess_stdin(self.ffmpeg.subprocess.stdin)
 
                 # Looped the audio one time, exit
                 if step == self.total_steps - 2:
@@ -411,13 +414,13 @@ class MMVShadersCLI:
             elif self.mode == "view":
 
                 # The window received close command
-                if self.sombrero_main.window.window_should_close:
+                if self.sombrero_mgl.window.window_should_close:
                     self.audio_source.stop()
                     self.mmv_package_interface.thanks_message()
                     break
 
-            if (not self.sombrero_main.window.vsync) and (self.mode == "view"):
-                if (t := (1 / self.sombrero_main.fps) + startcycle - time.time()) >= 0: time.sleep(t)
+            if (not self.sombrero_mgl.window.vsync) and (self.mode == "view"):
+                if (t := (1 / self.sombrero_mgl.fps) + startcycle - time.time()) >= 0: time.sleep(t)
 
 # main function to use typer for CLI
 def main():

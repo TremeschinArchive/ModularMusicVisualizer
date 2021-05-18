@@ -278,6 +278,7 @@ f"""Show extension\n{"="*self.terminal_width}
 
         logging.info(f"{debug_prefix} Creating Download() class")
         self.download = Download()
+        self.shaders_cli = None
 
         # # Common directories between packages
 

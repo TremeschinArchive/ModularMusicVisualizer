@@ -161,6 +161,11 @@ class MidiFile:
 
 class FluidSynthUtils:
     def init(self, gain): self.fluid = fluidsynth.Synth(gain = 1)
+    def reset(self):
+        for channel in range(0, 16):
+            for note in range(0, 128):
+                self.key_up(note, channel)
+        self.fluid.delete()
     def set_audio_backend(self, audio_backend): self.fluid.start(driver = audio_backend)
     def load_sf2(self, path): self.soundfont = self.fluid.sfload(path); self.select(0, 0, 0)
     def select(self, channel, bank, preset): self.fluid.program_select(channel, self.soundfont, bank, preset)
