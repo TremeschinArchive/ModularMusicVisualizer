@@ -46,8 +46,10 @@ class Camera2D:
         self.ACTION_MESSAGE_TIMEOUT = self.sombrero_window.ACTION_MESSAGE_TIMEOUT
         self.cfg = self.sombrero_window.sombrero_mgl.config["window"]["2D"]
         self.fix_due_fps = self.sombrero_window.sombrero_mgl._fix_ratio_due_fps
-
-        # Mouse related controls
+        self.reset()
+        
+    # # 2D Specific Info
+    def reset(self):
         self.target_drag = np.array([0.0, 0.0])
         self.drag = np.array([0.0, 0.0])
 
@@ -125,7 +127,7 @@ class Camera2D:
         if (key == 88) and (action == 1):
             self.messages.add(f"{debug_prefix} [2D] (x) Reset drag to [0, 0]", self.ACTION_MESSAGE_TIMEOUT)
             self.target_drag = np.array([0.0, 0.0])
-            
+
     def mouse_drag_event(self, x, y, dx, dy):
         if self.sombrero_window.shift_pressed: self.target_zoom += (dy / 1000) * self.target_zoom
         elif self.sombrero_window.alt_pressed: self.target_uv_rotation += (dy / 80) / (2*math.pi)

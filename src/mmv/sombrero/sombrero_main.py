@@ -87,23 +87,16 @@ class SombreroMGL:
         self.shader = SombreroShader()
         self.constructor = None
 
-        # Shader defined values (GUI ones on next() method)
-        if self.master_shader:
-            self.freezed_pipeline = False
-            self.pipeline = {
-                "mTime": 0.0, "mFrame": 0, "mMouse": np.array([0, 0]),
-                "mResolution": np.array([0, 0], dtype = np.int32),
-
-                # 3D stuff
-                "m3DCameraPos": np.array([0, 0, 0]),
-                "m3DAzimuth": 0, "m3DInclination": 0, "m3DRadius": 0,
-            }
+        self.pipeline = {
+            "mTime": 0.0, "mFrame": 0,
+            "mResolution": np.array([0, 0], dtype = np.int32),
+        }
         
+        self.piano_roll = None
+        self.freezed_pipeline = False
         self.__ever_finished = False
         self._want_to_reload = False
 
-        self.piano_roll = None
-    
     def create_piano_roll(self):
         self.piano_roll = PianoRoll(self)
         return self.piano_roll
@@ -274,9 +267,9 @@ class SombreroMGL:
         self.pipeline["m2DDrag"] = self.window.camera2d.drag
 
         # 3D
-        self.pipeline["m3DCameraPos"] = self.window.camera3d.position
-        self.pipeline["m3DCameraBase"] = self.window.camera3d.canonical_base.reshape(-1)
+        self.pipeline["m3DCameraBase"] = self.window.camera3d.standard_base.reshape(-1)
         self.pipeline["m3DCameraPointing"] = self.window.camera3d.pointing
+        self.pipeline["m3DCameraPos"] = self.window.camera3d.position
         self.pipeline["m3DRoll"] = self.window.camera3d.roll
         self.pipeline["m3DFOV"] = self.window.camera3d.fov
         
@@ -284,8 +277,8 @@ class SombreroMGL:
         self.pipeline["mMouse1"] = 1 in self.window.mouse_buttons_pressed
         self.pipeline["mMouse2"] = 2 in self.window.mouse_buttons_pressed
         self.pipeline["mMouse3"] = 3 in self.window.mouse_buttons_pressed
-        self.pipeline["mKeyCtrl"] = self.window.ctrl_pressed
         self.pipeline["mKeyShift"] = self.window.shift_pressed
+        self.pipeline["mKeyCtrl"] = self.window.ctrl_pressed
         self.pipeline["mKeyAlt"] = self.window.alt_pressed
 
         # Merge the two dictionaries
@@ -368,6 +361,8 @@ class SombreroMGL:
         return list(set(info))
     
     def reset(self):
+        if self.piano_roll is not None: self.piano_roll.synth.reset()
+        self.pipeline["mFrame"] = 0
         for child in self.children_sombrero_mgl(): child.reset(); del child
         with suppress(AttributeError): self.program.release()
         with suppress(AttributeError): self.texture.release()
