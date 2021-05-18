@@ -30,6 +30,7 @@ from intervaltree import Interval
 from functools import cache
 import fluidsynth
 import logging
+import imgui
 import mido
 import math
 
@@ -42,15 +43,19 @@ def is_white_key(note): return "#" in midi_index_to_name(note)
 
 # Attributes one Midi Note will have, the usual: which, when, how much, where
 class MidiNote:
-    def __init__(self, note, start, end, channel = 0, velocity = 100):
-        self.note = note
+    def __init__(self, note, start, end, channel = 0, velocity = 100, transpose = 0):
+        self._note = note
         self.start = start
         self.end = end
         self.channel = channel
         self.velocity = velocity  
+        self.transpose = transpose
 
     @property # Name given by offset of 60 that repeats every octave (12 notes), and the octave we are. [69 -> A4], [60 -> C4]
     def name(self): return midi_index_to_name(self.note)
+
+    @property
+    def note(self): return self._note + self.transpose
 
     # Pretty string representation of the note just in case we need it
     def __repr__(self): return f"[Note |{self.name.ljust(3)}| (ch={self.channel}, vel={self.velocity}) ({self.start:.2f}:{self.end:.2f})"
@@ -62,6 +67,7 @@ class MidiFile:
         self.midi = mido.MidiFile(path, clip = True)
         self.tempo = mido.bpm2tempo(bpm)
         self.time = 0
+        self.transpose = 0
 
         # Min and max notes played
         self.min, self.max = math.inf, -math.inf
@@ -154,17 +160,8 @@ class MidiFile:
 
 
 class FluidSynthUtils:
-    def __init__(self, platform, config):
-        self.platform = platform
-        self.config = config
-        self.fluid = fluidsynth.Synth(gain = 1)
-        self.fluid.start(driver = self.config[f"audio_backend_{platform}"])
-        self.load_sf2(self.config["soundfont"])
-    
-    def list_soundfonts(self):
-        if self.platform == "linux":
-            return os.listdir("/usr/share/soundfonts/")
-
+    def init(self, gain): self.fluid = fluidsynth.Synth(gain = 1)
+    def set_audio_backend(self, audio_backend): self.fluid.start(driver = audio_backend)
     def load_sf2(self, path): self.soundfont = self.fluid.sfload(path); self.select(0, 0, 0)
     def select(self, channel, bank, preset): self.fluid.program_select(channel, self.soundfont, bank, preset)
     def key_down(self, note, velocity, channel = 0): self.fluid.noteon(channel, note, velocity)
@@ -172,17 +169,14 @@ class FluidSynthUtils:
 
 
 class PianoRoll:
-    def __init__(self, sombrero_main):
-        self.sombrero_main = sombrero_main
+    def __init__(self, sombrero_mgl):
+        self.sombrero_mgl = sombrero_mgl
         self.__scene_contents = {}
         self.__playing_notes_fluid = []
 
         # Midi file wrapper
         self.midi = MidiFile()
-        self.synth = FluidSynthUtils(
-            platform = self.sombrero_main.mmv_interface.os,
-            config = self.sombrero_main.mmv_interface.config["fluidsynth"],
-        )
+        self.synth = FluidSynthUtils()
 
         # Add user pressed keys and midi file contents
         for name in ["user", "midi"]: self.__reset_scene_content(name)
@@ -191,9 +185,35 @@ class PianoRoll:
         self.visible_seconds = 5
         self.time_draw_bleed = self.visible_seconds * 0.5
         self.piano_height = 0.3
+        self.transpose = 0
 
         # Optimization
         self.__last_call_generate_coordinates = None
+
+    def gui(self):
+        imgui.separator()
+        imgui.text_colored("Piano Roll", 0, 1, 0)
+        changed, value = imgui.slider_float("Piano Height", self.piano_height, min_value = 0, max_value = 1, power = 1)
+        if changed: self.piano_height = value
+        changed, value = imgui.slider_float("Seconds of Notes", self.visible_seconds, min_value = 0.1, max_value = 8, power = 1)
+        if changed: self.visible_seconds = value
+        
+        # # Min note
+        changed, value = imgui.slider_int("Min Note", self.midi.min, min_value = -2, max_value = self.midi.max - 1)
+        if changed: self.midi.min = value; 
+
+        # # Max note
+        changed, value = imgui.slider_int("Max Note", self.midi.max, min_value = self.midi.min + 1, max_value = 130)
+        if changed: self.midi.max = value
+
+        changed, value = imgui.slider_int("Transpose", self.transpose, min_value = -48, max_value = 48)
+        if changed:
+            self.__playing_notes_fluid = []
+            self.transpose = value
+            for note in self.get_playing_notes_in_range(0, math.inf):
+                note.transpose = value
+            
+        imgui.separator()
 
     # # Internal functions
 
@@ -250,7 +270,7 @@ class PianoRoll:
             start = self.now - self.time_draw_bleed, end = self.now + self.visible_seconds + self.time_draw_bleed)
 
     @property
-    def now(self): return self.sombrero_main.pipeline["mTime"]
+    def now(self): return self.sombrero_mgl.pipeline["mTime"]
     
     # Notes being played right now 
     def get_playing_now(self): return self.get_playing_notes_at(time = self.now)
@@ -277,7 +297,7 @@ class PianoRoll:
 
         for index in reversed(todel): del self.__playing_notes_fluid[index]
 
-        if self.sombrero_main.freezed_pipeline:
+        if self.sombrero_mgl.freezed_pipeline:
             for note in self.__playing_notes_fluid:
                 self.synth.key_up(note.note)#, note.channel)
                 self.__playing_notes_fluid = []
@@ -294,7 +314,7 @@ class PianoRoll:
         width = (2) / (self.midi.max - self.midi.min)
         S = 2
 
-        for note in range(self.midi.min, self.midi.max):
+        for note in range(self.midi.min, self.midi.max + 1):
             x = self.lerp((self.midi.min, -1), (self.midi.max, 1), note)
 
             # # Piano key

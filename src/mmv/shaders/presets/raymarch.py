@@ -5,7 +5,7 @@ def generate(context):
     layers = []
 
     background = context.new_shader()
-    background.macros.load(context.sombrero_dir/"glsl"/"menu.glsl")
+    background.macros.load(context.shaders_dir/"glsl"/"blackhole.glsl")
     layers.append(background)
 
     context.render_layers(layers, gamma_correction = True, HUD = True)

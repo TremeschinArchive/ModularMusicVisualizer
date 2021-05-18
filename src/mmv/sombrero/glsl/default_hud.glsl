@@ -21,7 +21,7 @@ vec4 mainImage(in vec2 fragCoord) {
     }
 
     // Crosshair
-    if (mIsDraggingMode) {
+    if (m2DIsDraggingMode) {
         float line_size = 0.002;
         float border = 0.001;
         float size = 0.02;
@@ -47,7 +47,7 @@ vec4 mainImage(in vec2 fragCoord) {
         }
 
         // While dragging crosshair changes color
-        if (mIsDragging) {
+        if (m2DIsDragging) {
             if (abs(opengl_uv.x) < (line_size / fulldh_scalar.y) / resratio && abs(opengl_uv.y) < size) {
                 col = mAlphaComposite(col, vec4(1, 1.0, 0.0, 1.0));
             }
@@ -84,7 +84,7 @@ vec4 mainImage(in vec2 fragCoord) {
     }
 
     // Alignment stuff while dragging and ctrl pressed
-    if (mKeyCtrl) {
+    if (mMouse3) {
 
         // Ultra thin bars across screen
         float across_screen_alpha = 0.9;

@@ -24,7 +24,7 @@ vec4 mainImage(in vec2 fragCoord) {
 
     // Add stuf, apply scaling, offset and rotate
     uv += low_freq_shake + high_freq_shake + offset;
-    uv *= mRotation2D(angle);
+    uv *= m2DRotation2D(angle);
 
     // Interesting one
     // uv *= 1.41 - log(length(opengl_uv));

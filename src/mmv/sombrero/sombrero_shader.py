@@ -262,7 +262,7 @@ class SombreroShaderMacros:
         PlaceHolder("Mappings")(shader)
         PlaceHolder("Uniforms")(shader)
         PlaceHolder("Includes")(shader)
-        Include(Path(self.sombrero_mgl.mmv_interface.shaders_dir)/"sombrero"/"include"/"sombrero_specification.glsl")(shader)
+        Include(Path(self.sombrero_mgl.sombrero_dir)/"glsl"/"include"/"sombrero_specification.glsl")(shader)
         PlaceHolder("UserShader")(shader)
 
     # Versioned, placeholders, and sombrero specification
@@ -312,7 +312,7 @@ class SombreroShaderMacros:
     def alpha_composite(self, layers, gamma_correction = False, assign_to_parent = True, HUD = False) -> SombreroShader:
         if HUD:
             hud = self.sombrero_mgl.new_child()
-            hud.macros.load(self.sombrero_mgl.mmv_interface.shaders_dir/"sombrero"/"default_hud.glsl")
+            hud.macros.load(self.sombrero_mgl.sombrero_dir/"glsl"/"default_hud.glsl")
             layers.append(hud)
 
         with self.__base_shader() as SHADER:

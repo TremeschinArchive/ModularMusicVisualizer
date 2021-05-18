@@ -39,6 +39,7 @@ import json
 import sys
 import os
 
+sys.dont_write_bytecode = True
 
 # Class that distributes MMV packages, sets up logging and behavior;
 class MMVPackageInterface:
@@ -163,7 +164,7 @@ f"""Show extension\n{"="*self.terminal_width}
         self.version = "4.0: Sombrerõ"
 
         # Where this file is located, please refer using this on the whole package
-        # Refer to it as self.mmv_skia_main.MMV_PACKAGE_ROOT at any depth in the code
+        # Refer to it as self.mmv_interface.MMV_PACKAGE_ROOT at any depth in the code
         # This deals with the case we used pyinstaller and it'll get the executable path instead
         if getattr(sys, 'frozen', True):    
             self.MMV_PACKAGE_ROOT = Path(os.path.dirname(os.path.abspath(__file__)))
@@ -290,11 +291,6 @@ f"""Show extension\n{"="*self.terminal_width}
         self.downloads_dir.mkdir(parents = True, exist_ok = True)
         logging.info(f"{debug_prefix} Downloads dir is [{self.downloads_dir}]")
 
-        # Assets dir
-        self.assets_dir = self.MMV_PACKAGE_ROOT / "assets"
-        self.assets_dir.mkdir(parents = True, exist_ok = True)
-        logging.info(f"{debug_prefix} Assets dir is [{self.assets_dir}]")
-
         # Data dir
         self.data_dir = self.MMV_PACKAGE_ROOT / "data"
         self.data_dir.mkdir(parents = True, exist_ok = True)
@@ -304,6 +300,15 @@ f"""Show extension\n{"="*self.terminal_width}
         self.shaders_dir = self.MMV_PACKAGE_ROOT / "shaders"
         self.shaders_dir.mkdir(parents = True, exist_ok = True)
         logging.info(f"{debug_prefix} Shaders dir is [{self.shaders_dir}]")
+
+        # Sombrero dir
+        self.sombrero_dir = self.MMV_PACKAGE_ROOT / "sombrero"
+        logging.info(f"{debug_prefix} Sombrero dir is [{self.sombrero_dir}]")
+
+        # Assets dir
+        self.assets_dir = self.shaders_dir / "assets"
+        self.assets_dir.mkdir(parents = True, exist_ok = True)
+        logging.info(f"{debug_prefix} Assets dir is [{self.assets_dir}]")
 
         # Screenshots dir
         self.screenshots_dir = self.MMV_PACKAGE_ROOT / "screenshots"

@@ -1,6 +1,6 @@
 // uniform vec3 mmv_rms_0_33;
 
-vec4 mainImage() {
+vec4 mainImage(in vec2 fragCoord) {
 
     // Start with empty color (so it's fully transparent everywhere)
     vec4 col = vec4(0.0);
@@ -30,7 +30,7 @@ vec4 mainImage() {
     // gluv_all (0, 0) is center of screen so we offset that by the previous vector
     vec2 bars_uv = (gluv_all - offset);
 
-    vec2 rotated_bars_uv = bars_uv * mRotation2D(angle_offset - PI/2);
+    vec2 rotated_bars_uv = bars_uv * m2DRotation2D(angle_offset - PI/2);
 
     // Current angle we are to get the FFT values from
     float angle = mAtan2(rotated_bars_uv.y, rotated_bars_uv.x);
@@ -59,15 +59,16 @@ vec4 mainImage() {
     //     proportion = 1.0 - (proportion - 0.5);
     // }
 
-    if (smooth_bars) {
-        // Get the FFT val from the mmv_radial_fft texture with a float vec2 array itself.
-        // GL will interpolate the texture for us into values in between, probably linear nearest
-        fft_val = texture(mmv_fft, vec2(proportion, 0), 0).r;
-    } else {
-        // texelFetch accepts ivec2 (integer vec2)
-        // which is the pixel itself, not filtered by GL
-        fft_val = texelFetch(mmv_fft, ivec2(int(mmv_fft_resolution[0] * proportion), 0), 0).r;
-    }
+    // if (smooth_bars) {
+    //     // Get the FFT val from the mmv_radial_fft texture with a float vec2 array itself.
+    //     // GL will interpolate the texture for us into values in between, probably linear nearest
+    //     fft_val = texture(mmv_fft, vec2(proportion, 0), 0).r;
+    // } else {
+    //     // texelFetch accepts ivec2 (integer vec2)
+    //     // which is the pixel itself, not filtered by GL
+    //     fft_val = texelFetch(mmv_fft, ivec2(int(mmv_fft_resolution[0] * proportion), 0), 0).r;
+    // }
+    fft_val = 2;
 
     // // Sizes, effect configuration
 

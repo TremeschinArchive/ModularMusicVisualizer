@@ -11,24 +11,29 @@ uniform float mTime;
 uniform vec2 mMouse;
 uniform vec2 mResolution;
 
-uniform float mRotation;
-uniform float mZoom;
-uniform vec2 mDrag;
+uniform float m2DRotation;
+uniform float m2DZoom;
+uniform vec2 m2DDrag;
 uniform int mFlip;
 
 // 3D
+uniform mat3 m3DCameraBase;
 uniform vec3 m3DCameraPos;
 uniform vec3 m3DCameraPointing;
 uniform float m3DFOV;
 uniform float m3DAzimuth;
 uniform float m3DInclination;
 uniform float m3DRadius; 
+uniform float m3DRoll;
 
-uniform bool mIsDraggingMode;
-uniform bool mIsDragging;
+uniform bool m2DIsDraggingMode;
+uniform bool m2DIsDragging;
 uniform bool mIsGuiVisible;
 uniform bool mIsDebugMode;
 
+uniform bool mMouse1;
+uniform bool mMouse2;
+uniform bool mMouse3;
 uniform bool mKeyCtrl;
 uniform bool mKeyShift;
 uniform bool mKeyAlt;
@@ -45,7 +50,7 @@ bool f2bool(float f) { return f > 0.5; }
 
 // Rotation
 
-mat2 mRotation2D(float angle) {
+mat2 m2DRotation2D(float angle) {
     float c = cos(angle);
     float s = sin(angle);
     return mat2(c, s, -s, c);
@@ -60,16 +65,16 @@ float mGetNormalizeYratio() { return mResolution.x / mResolution.y; }
 vec2 mGetFullHDScalar() { return vec2(mResolution.x / 1920, mResolution.y / 1080); }
 
 // How much to rotate the space on interactive mode
-mat2 mGetCoordinatesRotation() { return mRotation2D(mRotation); }
+mat2 mGetCoordinatesRotation() { return m2DRotation2D(m2DRotation); }
 
 // GL and ST uv based on the aspect ratio
 vec2 mGetGLUV() { vec2 gluv = opengl_uv; gluv.x *= mGetNormalizeYratio(); return gluv; }
 vec2 mGetSTUV() { vec2 stuv = shadertoy_uv; stuv.x *= mGetNormalizeYratio(); return stuv; }
 
-// Mouse drag relative to the resolution, flip etc, because mDrag is raw pixels
+// Mouse drag relative to the resolution, flip etc, because m2DDrag is raw pixels
 // we want a vec2 normalized to 1 also relative to the aspect ratio
 vec2 mGetNormalizedDrag() { 
-    vec2 drag = (mDrag / mResolution);
+    vec2 drag = (m2DDrag / mResolution);
     drag *= vec2(-1, mFlip);
     return drag;
 }
@@ -80,7 +85,7 @@ vec2 mGetSTUVAll() {
     vec2 drag = mGetNormalizedDrag();
     float resratio = mGetNormalizeYratio();
     mat2 rotation = mGetCoordinatesRotation();
-    vec2 stuv_zoom = (stuv - vec2(resratio * 0.5, 0.5)) * (mZoom * mZoom) * rotation + vec2(resratio * 0.5, 0.5);
+    vec2 stuv_zoom = (stuv - vec2(resratio * 0.5, 0.5)) * (m2DZoom * m2DZoom) * rotation + vec2(resratio * 0.5, 0.5);
     return (stuv_zoom) + (drag);
 }
 
@@ -90,7 +95,7 @@ vec2 mGetGLUVParallax(float zdepth) {
     vec2 drag = mGetNormalizedDrag();
     vec2 gluv = mGetGLUV();
     mat2 rotation = mGetCoordinatesRotation();
-    return ((gluv * (mZoom * mZoom)) * rotation) + (drag * 2.0 * zdepth);
+    return ((gluv * (m2DZoom * m2DZoom)) * rotation) + (drag * 2.0 * zdepth);
 }
 
 vec2 mGetGLUVAll() {
@@ -223,3 +228,14 @@ vec3 mHSV2RGB(vec3 hsv) {
 }
 // For vec4
 vec4 mHSV2RGB(vec4 hsva){ return vec4(mHSV2RGB(hsva.rgb), hsva.a); }
+
+// ===============================================================================
+
+// // Ray Marching
+
+vec3 mRayMarchRayOrigin(){ return m3DCameraPos.xzy; }
+vec3 mRayMarchRayDirection(){
+    vec2 uv = mGetGLUV();
+    return normalize(((m3DCameraPointing) + ((m3DCameraBase[1]*uv.y) + (m3DCameraBase[2]*uv.x)) * m3DFOV).xzy);
+}
+

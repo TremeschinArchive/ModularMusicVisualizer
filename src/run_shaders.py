@@ -188,6 +188,7 @@ class MMVShadersCLI:
             context.interface = self.mmv_package_interface
             context.new_shader = self.sombrero_main.new_child
             context.shaders_dir = self.mmv_package_interface.shaders_dir
+            context.sombrero_dir = self.mmv_package_interface.sombrero_dir
             context.assets_dir = self.mmv_package_interface.assets_dir
             context.create_piano_roll = self.sombrero_main.create_piano_roll
             context.render_layers = self.sombrero_main.macros.alpha_composite
@@ -341,10 +342,7 @@ class MMVShadersCLI:
             logging.info(f"{debug_prefix} Starting watchdog")
             self.any_modification_watchdog = AnyModification(controller = self)
             sd = self.mmv_package_interface.shaders_dir
-            paths = [
-                sd / "presets", sd / "assets", sd / "sombrero",
-                self.mmv_package_interface.runtime_dir,
-            ]
+            paths = [sd/"presets", sd/"assets", self.mmv_package_interface.sombrero_dir]
             self.watchdog_observer = Observer()
             for path in paths: self.watchdog_observer.schedule(self.any_modification_watchdog, path = path, recursive = True)
             self.watchdog_observer.start()
