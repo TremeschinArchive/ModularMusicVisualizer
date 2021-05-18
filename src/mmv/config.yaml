@@ -9,17 +9,19 @@ logging:
   log_format: "pretty"  # informational, pretty, economic, onlymessage
 
 window:
-  intensity_responsiveness: 0.2
-  rotation_responsiveness: 0.2
-  zoom_responsiveness: 0.2
-  drag_responsiveness: 0.3
-  time_responsiveness: 0.09
-  drag_momentum: 0.6
   action_message_timeout: 1.3
+  intensity_responsiveness: 0.2
+  time_responsiveness: 0.09
 
-  3d:
+  2D:
+    rotation_responsiveness: 0.2
+    zoom_responsiveness: 0.2
+    drag_responsiveness: 0.3
+    drag_momentum: 0.6
+
+  3D:
     mouse_sensitivity: 1
-    rotate_responsiveness: 0.8
+    rotation_responsiveness: 0.3
     zoom_responsiveness: 0.2
     walk_responsiveness: 0.3
 

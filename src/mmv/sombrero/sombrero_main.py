@@ -56,6 +56,7 @@ class SombreroMGL:
         # # Constructor
         self.mmv_interface = mmv_interface
         self.shaders_dir = self.mmv_interface.shaders_dir
+        self.sombrero_dir = self.mmv_interface.sombrero_dir
         self.config = self.mmv_interface.config
 
         # Do flip coordinates vertically? OpenGL context ("shared" with main class)
@@ -124,8 +125,8 @@ class SombreroMGL:
     # # Interpolation, ratios
 
     # If new fps < 60, ratio should be higher
-    def _fix_ratio_due_fps(self, ratio):
-        return 1 - ((1 - ratio)**(60 / self.fps))
+    def _fix_ratio_due_fps(self, ratio): return 1 - ((1 - ratio)**(60 / self.fps))
+    def _fix_scalar_due_fps(self, scalar): return scalar * (self.fps / 60)
 
     # # Shorthands
 
@@ -210,6 +211,7 @@ class SombreroMGL:
 
     # Load shader from this class's SombreroConstructor
     def finish(self):
+        debug_prefix = "[SombreroMGL.finish]"
         self.__ever_finished = True
 
         # Default constructor is Fullscreen if not set
@@ -219,19 +221,23 @@ class SombreroMGL:
         self.constructor.treat_fragment_shader(self.shader)
         frag = self.shader.build()
 
-        for pretty in pretty_lines_counter(frag): print(pretty)
 
         # The FBO and texture so we can use on parent shaders, master shader doesn't require since it haves window fbo
         if not self.master_shader:
             self.texture, self.fbo = self.create_texture_fbo(width = self.width * self.ssaa, height = self.height * self.ssaa)
 
-        self.program = self.gl_context.program(
-            vertex_shader = self.constructor.vertex_shader,
-            geometry_shader = self.constructor.geometry_shader,
-            fragment_shader = frag,
-        )
-        self.solve_pending_uniforms()
-        if self.master_shader: self.window.framerate.clear()
+        try:
+            self.program = self.gl_context.program(
+                vertex_shader = self.constructor.vertex_shader,
+                geometry_shader = self.constructor.geometry_shader,
+                fragment_shader = frag,
+            )
+            self.solve_pending_uniforms()
+            if self.master_shader: self.window.framerate.clear()
+
+        except moderngl.error.Error as e:
+            logging.error(f"{debug_prefix} {e}")
+            for pretty in pretty_lines_counter(frag): print(pretty)
 
     # Get render instructions, do this every render because stuff like piano roll needs
     # their draw instructions to be updated
@@ -250,9 +256,6 @@ class SombreroMGL:
 
         # Get current window "state"
         self.pipeline["mResolution"] = (self.width * self.ssaa, self.height * self.ssaa)
-        self.pipeline["mRotation"] = self.window.uv_rotation
-        self.pipeline["mZoom"] = self.window.zoom
-        self.pipeline["mDrag"] = self.window.drag
         self.pipeline["mFlip"] = -1 if self.flip else 1
 
         # Calculate Sombrero values
@@ -260,19 +263,27 @@ class SombreroMGL:
         self.pipeline["mTime"] = self.pipeline["mFrame"] / self.fps
 
         # GUI related
-        self.pipeline["mIsDraggingMode"] = self.window.is_dragging_mode
-        self.pipeline["mIsDragging"] = self.window.is_dragging
         self.pipeline["mIsGuiVisible"] = self.window.show_gui
         self.pipeline["mIsDebugMode"] = self.window.debug_mode
 
-        # 3D
-        self.pipeline["m3DCameraPos"] = self.window.ThreeD_camera_pos
-        self.pipeline["m3DCameraPointing"] = self.window.ThreeD_camera_pointing
-        self.pipeline["m3DFOV"] = self.window.ThreeD_FOV
-        self.pipeline["m3DAzimuth"] = self.window.ThreeD_azimuth
-        self.pipeline["m3DInclination"] = self.window.ThreeD_inclination
+        # 2D
+        self.pipeline["m2DIsDraggingMode"] = 1 in self.window.mouse_buttons_pressed
+        self.pipeline["m2DIsDragging"] = self.window.camera2d.is_dragging
+        self.pipeline["m2DRotation"] = self.window.camera2d.uv_rotation
+        self.pipeline["m2DZoom"] = self.window.camera2d.zoom
+        self.pipeline["m2DDrag"] = self.window.camera2d.drag
 
+        # 3D
+        self.pipeline["m3DCameraPos"] = self.window.camera3d.position
+        self.pipeline["m3DCameraBase"] = self.window.camera3d.canonical_base.reshape(-1)
+        self.pipeline["m3DCameraPointing"] = self.window.camera3d.pointing
+        self.pipeline["m3DRoll"] = self.window.camera3d.roll
+        self.pipeline["m3DFOV"] = self.window.camera3d.fov
+        
         # Keys
+        self.pipeline["mMouse1"] = 1 in self.window.mouse_buttons_pressed
+        self.pipeline["mMouse2"] = 2 in self.window.mouse_buttons_pressed
+        self.pipeline["mMouse3"] = 3 in self.window.mouse_buttons_pressed
         self.pipeline["mKeyCtrl"] = self.window.ctrl_pressed
         self.pipeline["mKeyShift"] = self.window.shift_pressed
         self.pipeline["mKeyAlt"] = self.window.alt_pressed

@@ -35,7 +35,7 @@ vec4 mainImage(in vec2 fragCoord) {
     
         // Offset
         vec2 offset = vec2(100*i, 200*i) + vec2(sin(mTime * i * 5.0), cos(mTime * (1.0 - i) * 8.0)) / 80.0;
-        luv *= mRotation2D(radians(-30 + 15 * i + sin(mTime*i) / 2.0));
+        luv *= m2DRotation2D(radians(-30 + 15 * i + sin(mTime*i) / 2.0));
         luv += offset + vec2(0.0, mTime * (10.0 + 30.0 * i));
 
         col.a *= 0.4 + 0.6 * i;
