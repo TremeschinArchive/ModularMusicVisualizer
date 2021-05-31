@@ -1,4 +1,7 @@
 
+// ===============================================================================
+// // Complex Numbers
+
 // Code adapted from http://paulbourke.net/fractals/tetration
 //
 // - http://paulbourke.net/fractals/tetration/tetrationlibrary.h
@@ -43,3 +46,5 @@ ComplexNumber ComplexNumberPower(ComplexNumber w, ComplexNumber z) {
 float ComplexNumberLength(ComplexNumber n) {
     return sqrt(n.x*n.x + n.y*n.y);
 }
+
+// ===============================================================================

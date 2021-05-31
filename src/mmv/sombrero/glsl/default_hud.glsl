@@ -37,6 +37,14 @@ vec4 mainImage(in vec2 fragCoord) {
             }
         }
 
+        if (abs(opengl_uv.x) < ((line_size + border) / fulldh_scalar.y) / resratio && abs(opengl_uv.y) < size) {
+            col = mAlphaComposite(col, vec4(0.0, 0.0, 0.0, 0.8));
+        }
+
+        if (abs(opengl_uv.y) < (line_size + border) / fulldh_scalar.y && abs(opengl_uv.x) < size / resratio) {
+            col = mAlphaComposite(col, vec4(0.0, 0.0, 0.0, 0.8));
+        }
+
         // Draw center cross
         if (abs(opengl_uv.x) < (line_size / fulldh_scalar.y) / resratio && abs(opengl_uv.y) < size) {
             col = mAlphaComposite(col, vec4(1, 1, 1, 1.0));
@@ -46,39 +54,25 @@ vec4 mainImage(in vec2 fragCoord) {
             col = mAlphaComposite(col, vec4(1, 1, 1, 1.0));
         }
 
+        // Zoom marker
+        if (mKeyShift) {
+            if (abs(opengl_uv.x) < ((5*border*line_size) / fulldh_scalar.y) / resratio && abs(opengl_uv.y) < size) {
+                col = mAlphaComposite(col, vec4(1.0, 0.0, 0.0, 1.0));
+            }
+
+            if (abs(opengl_uv.y) < (5*border*line_size) / fulldh_scalar.y && abs(opengl_uv.x) < size / resratio) {
+                col = mAlphaComposite(col, vec4(1.0, 0.0, 0.0, 1.0));
+            }
+        }
+
         // While dragging crosshair changes color
         if (m2DIsDragging) {
             if (abs(opengl_uv.x) < (line_size / fulldh_scalar.y) / resratio && abs(opengl_uv.y) < size) {
-                col = mAlphaComposite(col, vec4(1, 1.0, 0.0, 1.0));
+                col = mAlphaComposite(col, vec4(1.0, 1.0, 0.0, 1.0));
             }
 
             if (abs(opengl_uv.y) < line_size / fulldh_scalar.y && abs(opengl_uv.x) < size / resratio) {
-                col = mAlphaComposite(col, vec4(1.0, 1.0, 0, 1.0));
-            }
-        }
-
-        // Draw border
-        line_size += border;
-
-        if (abs(opengl_uv.x) < (line_size / fulldh_scalar.y) / resratio && abs(opengl_uv.y) < size) {
-            col = mAlphaComposite(vec4(0.0, 0.0, 0.0, 0.8), col);
-        }
-
-        if (abs(opengl_uv.y) < line_size / fulldh_scalar.y && abs(opengl_uv.x) < size / resratio) {
-            col = mAlphaComposite(vec4(0.0, 0.0, 0.0, 0.8), col);
-        }
-
-        // Markers
-        line_size += 4 * border;
-
-        // Zoom marker
-        if (mKeyShift) {
-            if (abs(opengl_uv.x) < (line_size / fulldh_scalar.y) / resratio && abs(opengl_uv.y) < size) {
-                col = mAlphaComposite(vec4(1.0, 0.0, 0.0, 1.0), col);
-            }
-
-            if (abs(opengl_uv.y) < line_size / fulldh_scalar.y && abs(opengl_uv.x) < size / resratio) {
-                col = mAlphaComposite(vec4(1.0, 0.0, 0.0, 1.0), col);
+                col = mAlphaComposite(col, vec4(1.0, 1.0, 0.0, 1.0));
             }
         }
     }
@@ -111,6 +105,7 @@ vec4 mainImage(in vec2 fragCoord) {
     if (mIsGuiVisible) {
         // col = mAlphaComposite(col, vec4(0.0, 0.0, 0.0, 0.486));
     }
+    // col.a = 1.0;
 
     return col;
 }

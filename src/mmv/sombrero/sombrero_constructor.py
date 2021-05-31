@@ -7,10 +7,11 @@ import numpy as np
 class FullScreenConstructor:
     def __init__(self, sombrero_mgl):
         self.sombrero_mgl = sombrero_mgl
+        self.context = self.sombrero_mgl.context
         self.vertex_shader = Path(self.sombrero_mgl.sombrero_dir/"glsl"/"constructors"/"rectangles_vertex.glsl").read_text()
         self.geometry_shader = Path(self.sombrero_mgl.sombrero_dir/"glsl"/"constructors"/"rectangles_geometry.glsl").read_text()
         self.num_vertices = 4
-        self.buffer = self.sombrero_mgl.gl_context.buffer(reserve = 16)
+        self.buffer = self.context.gl_context.buffer(reserve = 16)
         self.buffer.write(array("f", [0, 0, 2, 2]))
         self.once_returned_vao = False
     
@@ -33,11 +34,12 @@ class FullScreenConstructor:
 class PianoRollConstructor:
     def __init__(self, sombrero_mgl, piano_roll, expect, maxkeys = 500):
         self.sombrero_mgl = sombrero_mgl
+        self.context = self.sombrero_mgl.context
         self.piano_roll = piano_roll
         self.expect = expect
         self.vertex_shader = Path(self.sombrero_mgl.sombrero_dir/"glsl"/"constructors"/"piano_vertex.glsl").read_text()
         self.geometry_shader = Path(self.sombrero_mgl.sombrero_dir/"glsl"/"constructors"/"piano_geometry.glsl").read_text()
-        self.buffer = self.sombrero_mgl.gl_context.buffer(reserve = 9 * 4 * maxkeys)
+        self.buffer = self.context.gl_context.buffer(reserve = 9 * 4 * maxkeys)
     
     def treat_fragment_shader(self, sombrero_shader):
         io_placeholder = sombrero_shader.IOPlaceHolder

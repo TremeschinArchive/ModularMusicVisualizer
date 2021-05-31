@@ -9,6 +9,7 @@
 *.mp4
 *.exe
 .vscode
+*.clbin
 
 imgui.ini
 
@@ -33,7 +34,8 @@ src/mmv/externals
 src/mmv/release
 src/mmv/runtime
 
-unused/*
+unused
+src/unused
 
 # # MMV GLSL Shader
 

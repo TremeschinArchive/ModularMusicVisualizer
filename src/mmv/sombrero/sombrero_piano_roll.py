@@ -176,6 +176,7 @@ class FluidSynthUtils:
 class PianoRoll:
     def __init__(self, sombrero_mgl):
         self.sombrero_mgl = sombrero_mgl
+        self.context = self.sombrero_mgl.context
         self.__scene_contents = {}
         self.__playing_notes_fluid = []
 
@@ -245,7 +246,7 @@ class PianoRoll:
     # Add MidiNote class to a interval in the contents.
     # "note" can be of type MidiNote
     def add_note(self, note, start = 0, end = 0, channel = 0, velocity = 100, scene = "midi") -> None:
-        # if start == end: return
+        if note.start == note.end: return
         self.__assert_scene_exists(scene)
 
         # We were given a MidiNote class
@@ -302,7 +303,7 @@ class PianoRoll:
 
         for index in reversed(todel): del self.__playing_notes_fluid[index]
 
-        if self.sombrero_mgl.freezed_pipeline:
+        if self.context.freezed_pipeline:
             for note in self.__playing_notes_fluid:
                 self.synth.key_up(note.note)#, note.channel)
                 self.__playing_notes_fluid = []

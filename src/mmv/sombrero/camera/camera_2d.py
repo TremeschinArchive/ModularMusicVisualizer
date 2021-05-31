@@ -41,11 +41,13 @@ class Camera2D:
 
     def __init__(self, sombrero_window):
         self.sombrero_window = sombrero_window
+        self.context = self.sombrero_window.context
         self.messages = self.sombrero_window.messages
         self.sombrero_mgl = self.sombrero_window.sombrero_mgl
+
         self.ACTION_MESSAGE_TIMEOUT = self.sombrero_window.ACTION_MESSAGE_TIMEOUT
-        self.cfg = self.sombrero_window.sombrero_mgl.config["window"]["2D"]
-        self.fix_due_fps = self.sombrero_window.sombrero_mgl._fix_ratio_due_fps
+        self.cfg = self.context.config["window"]["2D"]
+        self.fix_due_fps = self.context._fix_ratio_due_fps
         self.reset()
         
     # # 2D Specific Info
@@ -78,8 +80,8 @@ class Camera2D:
         square_current_zoom = (self.sombrero_mgl.pipeline["m2DZoom"] ** 2)
 
         # dx and dy on zoom and SSAA
-        dx = (dx * square_current_zoom) * self.sombrero_mgl.ssaa
-        dy = (dy * square_current_zoom) * self.sombrero_mgl.ssaa
+        dx = (dx * square_current_zoom) * self.context.ssaa
+        dy = (dy * square_current_zoom) * self.context.ssaa
 
         # Cosine and sine
         c = cos(self.uv_rotation)
@@ -92,7 +94,7 @@ class Camera2D:
         ]) * howmuch * inverse
 
         # Normalize dx step due aspect ratio
-        drag_rotated[0] *= self.sombrero_mgl.width / self.sombrero_mgl.height 
+        drag_rotated[0] *= self.context.width / self.context.height
 
         # Add to target drag the dx, dy relative to current zoom and SSAA level
         self.target_drag += drag_rotated
@@ -110,7 +112,7 @@ class Camera2D:
         self.is_dragging = not np.allclose(self.target_drag, self.drag, rtol = 0.003)
 
         # Drag momentum
-        if not 1 in self.sombrero_window.mouse_buttons_pressed: self.target_drag += self.drag_momentum
+        if not 1 in self.context.mouse_buttons_pressed: self.target_drag += self.drag_momentum
 
     def key_event(self, key, action, modifiers):
         debug_prefix = "[Camera2D.key_event]"
@@ -129,12 +131,12 @@ class Camera2D:
             self.target_drag = np.array([0.0, 0.0])
 
     def mouse_drag_event(self, x, y, dx, dy):
-        if self.sombrero_window.shift_pressed: self.target_zoom += (dy / 1000) * self.target_zoom
-        elif self.sombrero_window.alt_pressed: self.target_uv_rotation += (dy / 80) / (2*math.pi)
+        if self.context.shift_pressed: self.target_zoom += (dy / 1000) * self.target_zoom
+        elif self.context.alt_pressed: self.target_uv_rotation += (dy / 80) / (2*math.pi)
         else: self.apply_rotated_drag(dx = dx, dy = dy, inverse = True)
     
     def gui(self):
-        imgui.text_colored("Coordinates, attributes", 0, 1, 0)
+        imgui.text_colored("Camera 2D", 0, 1, 0)
         imgui.text(f"(x, y):    [{self.drag[0]:.3f}, {self.drag[1]:.3f}] => [{self.target_drag[0]:.3f}, {self.target_drag[1]:.3f}]")
         imgui.text(f"Intensity: [{self.intensity:.2f}] => [{self.target_intensity:.2f}]")
         imgui.text(f"Zoom:      [{self.zoom:.5f}x] => [{self.target_zoom:.5f}x]")
@@ -142,13 +144,13 @@ class Camera2D:
         imgui.separator()
 
     def mouse_scroll_event(self, x_offset, y_offset):
-        if self.sombrero_window.shift_pressed:
+        if self.context.shift_pressed:
             self.target_intensity += y_offset / 10
-        elif self.sombrero_window.ctrl_pressed and (not self.is_dragging_mode):
-            change_to = self.sombrero_mgl.ssaa + ((y_offset / 20) * self.sombrero_mgl.ssaa)
+        elif self.context.ctrl_pressed and (not self.is_dragging_mode):
+            change_to = self.context.ssaa + ((y_offset / 20) * self.context.ssaa)
             self.change_ssaa(change_to)
-        elif self.sombrero_window.alt_pressed:
-            self.camera2d;target_uv_rotation -= y_offset * 5
+        elif self.context.alt_pressed:
+            self.target_uv_rotation -= y_offset * (math.pi) / (180 / 5)
         else:
             self.target_zoom -= (y_offset * 0.05) * self.target_zoom
         

@@ -105,6 +105,10 @@ class Version(CallableAddToParent):
     def __init__(self, number): self.number = number
     def build(self, indent = "") -> list: return [f"#version {self.number}"]
 
+class Define(CallableAddToParent):
+    def __init__(self, what): self.what = what
+    def build(self, indent = "") -> list: return [f"#define {self.what}"]
+
 class Include(CallableAddToParent):
     def __init__(self, file): self.file = file
     def build(self, indent = "") -> list:
@@ -160,13 +164,17 @@ class IO(CallableAddToParent):
 
 # Alpha composite function from sombrero specification
 class AlphaComposite(CallableAddToParent):
-    def __init__(self, new, old, target): assign_locals(locals())
-    def build(self, indent = "") -> list: return [f"{indent}{self.target} = mAlphaComposite({self.new}, {self.old});"]
+    def __init__(self, old, new, target): assign_locals(locals())
+    def build(self, indent = "") -> list: return [f"{indent}{self.target} = mAlphaComposite({self.old}, {self.new});"]
 
 class GammaCorrection(CallableAddToParent):
     def __init__(self, assign, who, gamma): assign_locals(locals())
     def build(self, indent = ""): return [f"{indent}{self.assign} = pow({self.who}, vec4(1.0 / {self.gamma}));"]
  
+# Define something on your own!
+class CustomLine(CallableAddToParent):
+    def __init__(self, content): self.content = content
+    def build(self, indent = "") -> list: return [f"{indent}{self.content};"]
 
 # Incomplete statement, meant to be used alongside some other one. They also return strings
 # when called inside fstrings, makes sense since we want to just f"something {partialstatement}"
@@ -249,6 +257,8 @@ class SombreroShader(Searchable, SimpleBuildableChilds, SimpleEnterable):
     def IOPlaceHolder(self): return self.search_placeholder("IO")[0]
     @property
     def Includes(self): return self.search_placeholder("Includes")[0]
+    @property
+    def Defines(self): return self.search_placeholder("Defines")[0]
 
 
 # Here is what all this jazz is about
@@ -259,10 +269,12 @@ class SombreroShaderMacros:
     def __default_placeholders_and_specification(self, shader):
         Version("330")(shader)
         PlaceHolder("IO")(shader)
+        PlaceHolder("Defines")(shader)
         PlaceHolder("Mappings")(shader)
         PlaceHolder("Uniforms")(shader)
         PlaceHolder("Includes")(shader)
-        Include(Path(self.sombrero_mgl.sombrero_dir)/"glsl"/"include"/"sombrero_specification.glsl")(shader)
+        for name in ["uniforms", "constants", "utils", "colors", "complex", "noise", "coordinates", "dynamic", "ray_marching"]:
+            Include(Path(self.sombrero_mgl.sombrero_dir)/"glsl"/"include"/f"{name}.glsl")(shader)
         PlaceHolder("UserShader")(shader)
 
     # Versioned, placeholders, and sombrero specification
@@ -309,7 +321,7 @@ class SombreroShaderMacros:
     def add_include(self, item): item(self.sombrero_mgl.shader.Includes)
 
     # Alpha composite many layers together
-    def alpha_composite(self, layers, gamma_correction = False, assign_to_parent = True, HUD = False) -> SombreroShader:
+    def alpha_composite(self, layers, gamma_correction = False, assign_to_parent = True, HUD = False, gamma_val = 2.0) -> SombreroShader:
         if HUD:
             hud = self.sombrero_mgl.new_child()
             hud.macros.load(self.sombrero_mgl.sombrero_dir/"glsl"/"default_hud.glsl")
@@ -328,7 +340,7 @@ class SombreroShaderMacros:
                     AlphaComposite("col", Texture(f"layer{index}", "shadertoy_uv"), "col")(main)
 
                 # Gamma correction
-                if gamma_correction: GammaCorrection("col", "col", 2.0)(main)
+                if gamma_correction: GammaCorrection("col", "col", gamma_val)(main)
                 Return("col")(main)
         if assign_to_parent: self.sombrero_mgl.shader = SHADER; return
         return SHADER

@@ -1,13 +1,61 @@
-# This configuration file loads up before any MMV related stuff is set
-# and it doesn't change anything on the final video, this file is mostly
-# for configurations such as logging, namely Python stuff or QOL, let
-# you name it.
+# This configuration file for MMV
 
 logging:
   log_to_file: true
   log_level: "info"  # critical, debug, error, info
   log_format: "pretty"  # informational, pretty, economic, onlymessage
 
+render:
+  # Is final export? enable some juicy x264 flags; WILL use ~ 3 GB RAM for 1080p and probably 100% CPU 
+  #  consider using "h264_nvenc" on ffmpeg:vcodec if you have NVIDIA GPU, though final file won't be
+  #  as compressed and good looking than CPU encodes but it'll definitely be faster.
+  # Outputs more compressed video (less file size) and probably better looking
+  #  final_ssaa overrides SSAA for some better quality.
+  # To see what changes and what doesn't, see render_config.py file, very technical options and settings
+  #  and since I'm no expert feel free suggesting changes for a better final export.
+  final: true
+  final_ssaa: 2  # See SSAA below, this overrides that one
+  output_video: auto  # Name something like "out.mkv"; "auto" generates some name for the video
+  output_to_render_directory: true  # Set to false and put full directory on output_video
+
+  #     Resolution, common values:
+  # 16:9:
+  #   "4k":    3840x2160 (2160p)
+  #   Quad HD: 2560x1440 (1440p)
+  #   Full HD: 1920x1080 (1080p)
+  #   HD SD:   1280x720  (720p)
+  #
+  # 21:9 (ultrawide) 
+  #   Full HD: 2560x1080 (1080p UW)  (fun fact: 2560/1080 isn't 21/9)
+  #   
+  width: 1920
+  height: 1080
+
+  #     Frame rate
+  #  You know what this is, common values are 24, 30, 60, 120, 144
+  #  No really a need to go over 60, maybe only if you need to slow down some footage
+  # like for using a rendered shader on school project for demoing something
+  fps: 60
+
+  #  Super Sampling Anti Aliasing (real time mode), renders in a resolution multiplied by this
+  # factor, for example, SSAA=2 on Full HD will render in 4k and downscale to 1080p.
+  #  Expensive way of getting anti aliasing, final exports benefit a lot from this as we don't
+  # care much for encoding times and want max quality
+  ssaa: 1.2
+
+  # Only render this much seconds if audio is not given
+  no_audio_duration: 20
+  audio: null
+
+  # Basic FFmpeg config, "advanced" mode see render_config.py
+  ffmpeg:
+    preset: slow
+    vcodec: libx264
+    crf: 18
+    tune: film
+    motionblur: false
+
+# Interactive options
 window:
   action_message_timeout: 1.3
   intensity_responsiveness: 0.2
@@ -34,8 +82,3 @@ audio:
   sample_rate: 48000
   batch_size: 4096
 
-ffmpeg:
-  preset: slow
-  crf: 18
-  tune: film
-  vflip: True
