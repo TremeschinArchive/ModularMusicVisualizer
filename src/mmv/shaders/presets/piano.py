@@ -3,6 +3,7 @@ from mmv.sombrero.sombrero_shader import *
 
 def generate(context):
     layers = []
+    base = context.shaders_dir/"packs"/"base"
 
     # Background
     background = context.new_shader()
@@ -21,13 +22,13 @@ def generate(context):
     # Midi keys
     pianomidi = context.new_shader()
     pianomidi.constructor = PianoRollConstructor(pianomidi, pianoroll, expect = "notes")
-    pianomidi.macros.load(context.shaders_dir/"glsl"/"piano_roll"/"midi_key.glsl")
+    pianomidi.macros.load(base/"piano_roll"/"midi_key.glsl")
     layers.append(pianomidi)
 
     # Piano keys
     pianokeys = context.new_shader()
     pianokeys.constructor = PianoRollConstructor(pianokeys, pianoroll, expect = "keys")
-    pianokeys.macros.load(context.shaders_dir/"glsl"/"piano_roll"/"piano_key.glsl")
+    pianokeys.macros.load(base/"piano_roll"/"piano_key.glsl")
     layers.append(pianokeys)
     
     context.render_layers(layers, gamma_correction = True, HUD = True)

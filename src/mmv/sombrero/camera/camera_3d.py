@@ -76,11 +76,13 @@ class Camera3D:
     def __repr__(self): return f"Camera3D: {self.__pointing()}"
     def __init__(self, sombrero_window):
         self.sombrero_window = sombrero_window
+        self.context = self.sombrero_window.context
         self.messages = self.sombrero_window.messages
         self.sombrero_mgl = self.sombrero_window.sombrero_mgl
+
         self.ACTION_MESSAGE_TIMEOUT = self.sombrero_window.ACTION_MESSAGE_TIMEOUT
-        self.cfg = self.sombrero_mgl.config["window"]["3D"]
-        self.fix_due_fps = self.sombrero_window.sombrero_mgl._fix_ratio_due_fps
+        self.cfg = self.context.config["window"]["3D"]
+        self.fix_due_fps = self.context._fix_ratio_due_fps
         self.reset()
         
     # # 3D Specific Info
@@ -201,27 +203,22 @@ class Camera3D:
             self.target_fov = 1
 
     def mouse_drag_event(self, x, y, dx, dy):
-        if self.sombrero_window.ctrl_pressed: self.target_fov += (dy * 0.05) * self.target_fov
-        if self.sombrero_window.alt_pressed: self.apply_rotation( self.fix_due_fps(dy/800), Camera3D.AxisX)
+        if self.context.ctrl_pressed: self.target_fov += (dy * 0.05) * self.target_fov
+        if self.context.alt_pressed: self.apply_rotation( self.fix_due_fps(dy/800), Camera3D.AxisX)
 
     def gui(self):
-        imgui.text_colored("3D Related", 0, 1, 0)
+        imgui.text_colored("Camera 3D", 0, 1, 0)
         cp = self.pointing
         imgui.text(f"Mode: [{self.mode}]")
         imgui.text(f"Camera Pointing:   [{cp[0]:.2f}, {cp[1]:.2f}, {cp[2]:.2f}]")
-        # cb = self.standard_base
-        # imgui.text(f"standard base:")
-        # imgui.text(f" - X: [{cb[0]}]")
-        # imgui.text(f" - Y: [{cb[1]}]")
-        # imgui.text(f" - Z: [{cb[2]}]")
         imgui.text(f"Quaternion: [{self.quaternion.w:.3f}, {self.quaternion.x:.3f}, {self.quaternion.y:.3f}, {self.quaternion.z:.3f}]")
-        imgui.text(f"Position:   [{self.target_position[0]:.3f}, {self.target_position[1]:.3f}, {self.target_position[2]:.3f}]")
+        imgui.text(f"Position:   [{self.position[0]:.3f}, {self.position[1]:.3f}, {self.position[2]:.3f}]")
         imgui.text(f"Walk speed: [{self.walk_speed:.3f}]")
         imgui.text(f"Roll: [{self.roll:.3f}]")
 
     def mouse_scroll_event(self, x_offset, y_offset):
-        if self.sombrero_window.alt_pressed: self.target_fov -= (y_offset * 0.05) * self.target_fov
-        elif self.sombrero_window.ctrl_pressed: self.cfg["mouse_sensitivity"] += (y_offset * 0.05) * self.cfg["mouse_sensitivity"]
+        if self.context.alt_pressed: self.target_fov -= (y_offset * 0.05) * self.target_fov
+        elif self.context.ctrl_pressed: self.cfg["mouse_sensitivity"] += (y_offset * 0.05) * self.cfg["mouse_sensitivity"]
         else: self.target_walk_speed += (y_offset * 0.05) * self.target_walk_speed
 
     def mouse_position_event(self, x, y, dx, dy):

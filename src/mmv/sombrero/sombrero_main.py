@@ -25,6 +25,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
+from mmv.sombrero.sombrero_context import SombreroContext
 from mmv.sombrero.sombrero_window import SombreroWindow
 from mmv.sombrero.sombrero_piano_roll import PianoRoll
 from mmv.sombrero.sombrero_constructor import *
@@ -36,6 +37,7 @@ from PIL import Image
 import numpy as np
 import moderngl
 import logging
+import sys
 
 
 # When we don't find some element / want to ignore something
@@ -51,7 +53,7 @@ def pretty_lines_counter(data):
 
 
 class SombreroMGL:
-    def __init__(self, mmv_interface, master_shader = False, gl_context = None, flip = False):
+    def __init__(self, mmv_interface, master_shader = False, flip = False, context = None):
 
         # # Constructor
         self.mmv_interface = mmv_interface
@@ -60,66 +62,39 @@ class SombreroMGL:
         self.config = self.mmv_interface.config
 
         # Do flip coordinates vertically? OpenGL context ("shared" with main class)
-        self.gl_context = gl_context
         self.flip = flip
 
         # # Standard attributes
-
         self.master_shader = master_shader
 
         # Contents dictionary that holds instruction, other classes and all
-        self.contents = {}
-
         # Pipeline textures have name if mappend one 
-        self.writable_textures = {}
-
         # Pending uniforms to be passed values after shader is loaded
+        # Variables pipeline
+        self.contents = {}
+        self.writable_textures = {}
         self.pending_uniforms = []
+        self.pipeline = {}
 
-        # SuperSampling Anti Aliasing
-        self.ssaa = 1
-
-        # Class that deals with window creation etc
-        self.window = SombreroWindow(sombrero = self)
-
-        # Fragment Shader related, geometry is done via constructor
+        # Modules
+        if self.master_shader: self.context = SombreroContext(self)
+        else: self.context = context
+        self.window = SombreroWindow(sombrero_mgl = self)
         self.macros = SombreroShaderMacros(self)
         self.shader = SombreroShader()
         self.constructor = None
-
-        self.pipeline = {
-            "mTime": 0.0, "mFrame": 0,
-            "mResolution": np.array([0, 0], dtype = np.int32),
-        }
         
-        self.piano_roll = None
-        self.freezed_pipeline = False
-        self.__ever_finished = False
         self._want_to_reload = False
-
+        self.__ever_finished = False
+    
     def create_piano_roll(self):
         self.piano_roll = PianoRoll(self)
         return self.piano_roll
 
     # Create and configure one child of this class with same target stuff
     def new_child(self,):
-        child = SombreroMGL(mmv_interface = self.mmv_interface, master_shader = False, gl_context = self.gl_context)
-        child.configure(width = self.width, height = self.height, fps = self.fps, ssaa = self.ssaa)
+        child = SombreroMGL(mmv_interface = self.mmv_interface, master_shader = False, context = self.context)
         return child
-
-    # # Config
-    def configure(self, width, height, fps, ssaa = 1):
-        (self.width, self.height, self.fps, self.ssaa) = (width, height, fps, ssaa)
-
-    def change_fps(self, new):
-        self.pipeline["mFrame"] *= (new / self.fps)
-        self.fps = new
-
-    # # Interpolation, ratios
-
-    # If new fps < 60, ratio should be higher
-    def _fix_ratio_due_fps(self, ratio): return 1 - ((1 - ratio)**(60 / self.fps))
-    def _fix_scalar_due_fps(self, scalar): return scalar * (self.fps / 60)
 
     # # Shorthands
 
@@ -139,7 +114,8 @@ class SombreroMGL:
         uniforms = [Uniform("sampler2D", name, None)]
         self.pending_uniforms += uniforms
         self.assign_content(dict(
-            loader = "child_sombrero_mgl", name = name, texture = sombrero_mgl.texture, SombreroMGL = sombrero_mgl
+            loader = "child_sombrero_mgl", name = name, texture = sombrero_mgl.texture, SombreroMGL = sombrero_mgl,
+            dynamic = True
         ))
         return uniforms
 
@@ -148,7 +124,7 @@ class SombreroMGL:
 
         # Open image, mipmap, texture
         img = Image.open(path).convert("RGBA")
-        texture = self.gl_context.texture(img.size, 4, img.tobytes())
+        texture = self.context.gl_context.texture(img.size, 4, img.tobytes())
         self.__mipmap_anisotropy_repeat_texture(texture, locals())
 
         # Uniforms, assign content
@@ -162,7 +138,7 @@ class SombreroMGL:
     def map_pipeline_texture(self, name, width, height, depth):
         size = (width, height)
         uniforms = [Uniform("sampler2D", name, None), Uniform("vec2", f"{name}_resolution", size)]
-        texture = self.gl_context.texture(size, depth, dtype = "f4")
+        texture = self.context.gl_context.texture(size, depth, dtype = "f4")
         texture.write(np.zeros((width, height, depth), dtype = np.float32))  # Start empty (GL context no guarantee to be clean)
         self.writable_textures[name] = texture
         self.pending_uniforms += uniforms
@@ -175,8 +151,8 @@ class SombreroMGL:
 
     # Create one texture attached to some FBO. Depth = 4 -> RGBA
     def create_texture_fbo(self, width, height, depth = 4) -> list:
-        texture = self.gl_context.texture((int(width * self.ssaa), int(self.height * self.ssaa)), depth)
-        fbo = self.gl_context.framebuffer(color_attachments = [texture])
+        texture = self.context.gl_context.texture((int(width), int(height)), depth)
+        fbo = self.context.gl_context.framebuffer(color_attachments = [texture])
         return [texture, fbo]
 
     # Get the uniform if exists, enforce tuple if isn't tuple or int and assign the value
@@ -202,8 +178,13 @@ class SombreroMGL:
     
     # # Load
 
+    def _create_assing_texture_fbo_render_buffer(self):
+        self.texture, self.fbo = self.create_texture_fbo(
+            width  = self.context.width  * self.context.ssaa,
+            height = self.context.height * self.context.ssaa)
+
     # Load shader from this class's SombreroConstructor
-    def finish(self):
+    def finish(self, _give_up_if_any_errors = False):
         debug_prefix = "[SombreroMGL.finish]"
         self.__ever_finished = True
 
@@ -214,13 +195,12 @@ class SombreroMGL:
         self.constructor.treat_fragment_shader(self.shader)
         frag = self.shader.build()
 
-
         # The FBO and texture so we can use on parent shaders, master shader doesn't require since it haves window fbo
         if not self.master_shader:
-            self.texture, self.fbo = self.create_texture_fbo(width = self.width * self.ssaa, height = self.height * self.ssaa)
-
+            self._create_assing_texture_fbo_render_buffer()
+            
         try:
-            self.program = self.gl_context.program(
+            self.program = self.context.gl_context.program(
                 vertex_shader = self.constructor.vertex_shader,
                 geometry_shader = self.constructor.geometry_shader,
                 fragment_shader = frag,
@@ -229,57 +209,66 @@ class SombreroMGL:
             if self.master_shader: self.window.framerate.clear()
 
         except moderngl.error.Error as e:
-            logging.error(f"{debug_prefix} {e}")
+            self.reset()
             for pretty in pretty_lines_counter(frag): print(pretty)
+            logging.error(f"{debug_prefix} {e}")
+            if _give_up_if_any_errors: sys.exit()
+            self.constructor = FullScreenConstructor(self)
+            self.shader = SombreroShader()
+            self.macros.load(self.mmv_interface.sombrero_dir/"glsl"/"missing_texture.glsl")
+            self.finish(_give_up_if_any_errors = True)
 
     # Get render instructions, do this every render because stuff like piano roll needs
     # their draw instructions to be updated
     def get_vao(self):
         if instructions := self.constructor.vao():
-            # self.vao = self.gl_context.vertex_array(self.program, instructions)
-            self.vao = self.gl_context.vertex_array(self.program, instructions, skip_errors = True)
+            self.vao = self.context.gl_context.vertex_array(self.program, instructions, skip_errors = True)
 
     # # Render
 
     # Next iteration, also render
     def next(self, custom_pipeline = {}):
         if not self.__ever_finished: self.finish()
+        if custom_pipeline is None: custom_pipeline = {}
 
         # # Update pipeline
 
         # Get current window "state"
-        self.pipeline["mResolution"] = (self.width * self.ssaa, self.height * self.ssaa)
+        self.pipeline["mResolution"] = (self.context.width * self.context.ssaa, self.context.height * self.context.ssaa)
         self.pipeline["mFlip"] = -1 if self.flip else 1
 
-        # Calculate Sombrero values
-        self.pipeline["mFrame"] += 1 * self.window.time_factor
-        self.pipeline["mTime"] = self.pipeline["mFrame"] / self.fps
+        # Render related
+        self.pipeline["quality"] = self.context.quality
+
+        # Time related
+        self.pipeline["mFrame"] = self.pipeline.get("mFrame", 0) + self.context.time_speed
+        self.pipeline["mTime"] = self.pipeline["mFrame"] / self.context.fps
 
         # GUI related
-        self.pipeline["mIsGuiVisible"] = self.window.show_gui
-        self.pipeline["mIsDebugMode"] = self.window.debug_mode
+        self.pipeline["mIsGuiVisible"] = self.context.show_gui
+        self.pipeline["mIsDebugMode"] = self.context.debug_mode
 
         # 2D
-        self.pipeline["m2DIsDraggingMode"] = 1 in self.window.mouse_buttons_pressed
-        self.pipeline["m2DIsDragging"] = self.window.camera2d.is_dragging
-        self.pipeline["m2DRotation"] = self.window.camera2d.uv_rotation
-        self.pipeline["m2DZoom"] = self.window.camera2d.zoom
-        self.pipeline["m2DDrag"] = self.window.camera2d.drag
+        self.pipeline["m2DIsDraggingMode"] = 1 in self.context.mouse_buttons_pressed
+        self.pipeline["m2DIsDragging"] = self.context.camera2d.is_dragging
+        self.pipeline["m2DRotation"] = self.context.camera2d.uv_rotation
+        self.pipeline["m2DZoom"] = self.context.camera2d.zoom
+        self.pipeline["m2DDrag"] = self.context.camera2d.drag
 
         # 3D
-        self.pipeline["m3DCameraBase"] = self.window.camera3d.standard_base.reshape(-1)
-        self.pipeline["m3DCameraPointing"] = self.window.camera3d.pointing
-        self.pipeline["m3DCameraPos"] = self.window.camera3d.position
-        self.pipeline["m3DRoll"] = self.window.camera3d.roll
-        self.pipeline["m3DFOV"] = self.window.camera3d.fov
+        self.pipeline["m3DCameraBase"] = self.context.camera3d.standard_base.reshape(-1)
+        self.pipeline["m3DCameraPointing"] = self.context.camera3d.pointing
+        self.pipeline["m3DCameraPos"] = self.context.camera3d.position
+        self.pipeline["m3DRoll"] = self.context.camera3d.roll
+        self.pipeline["m3DFOV"] = self.context.camera3d.fov
         
         # Keys
-        self.pipeline["mMouse1"] = 1 in self.window.mouse_buttons_pressed
-        self.pipeline["mMouse2"] = 2 in self.window.mouse_buttons_pressed
-        self.pipeline["mMouse3"] = 3 in self.window.mouse_buttons_pressed
-        self.pipeline["mKeyShift"] = self.window.shift_pressed
-        self.pipeline["mKeyCtrl"] = self.window.ctrl_pressed
-        self.pipeline["mKeyAlt"] = self.window.alt_pressed
+        self.pipeline["mMouse1"] = 1 in self.context.mouse_buttons_pressed
+        self.pipeline["mMouse2"] = 2 in self.context.mouse_buttons_pressed
+        self.pipeline["mMouse3"] = 3 in self.context.mouse_buttons_pressed
+        self.pipeline["mKeyShift"] = self.context.shift_pressed
+        self.pipeline["mKeyCtrl"] = self.context.ctrl_pressed
+        self.pipeline["mKeyAlt"] = self.context.alt_pressed
 
         # Merge the two dictionaries
         for key, value in custom_pipeline.values():
@@ -317,28 +306,31 @@ class SombreroMGL:
                 raise NotImplementedError("Video TODO")
             
             # Where texture will be used
-            item["texture"].use(location = index)
+            try: item["texture"].use(location = index)
+            except Exception as e: print(e)
             try: self.program[item["name"]] = index
             except KeyError: pass  # Texture was mapped but isn't used
 
         # Render the content
         # self.vao.render(mode = moderngl.TRIANGLE_STRIP)
 
-        self.gl_context.enable_only(moderngl.NOTHING)
+        self.context.gl_context.enable_only(moderngl.NOTHING)
         
         if isinstance(self.constructor, PianoRollConstructor):
-            self.gl_context.enable_only(moderngl.BLEND)
+            self.context.gl_context.enable_only(moderngl.BLEND)
 
         if nvert := self.constructor.num_vertices:
             self.vao.render(mode = moderngl.POINTS, vertices = nvert)
-
+        
         # Draw UI then reset composite mode to NOTHING because imgui changes that
-        if self.master_shader and (not self.window.headless) and (self.window.show_gui):
-            self.window.render_ui(); self.gl_context.enable_only(moderngl.NOTHING)
-    
+        if self.master_shader and (not self.context.window_headless) and (self.context.show_gui):
+            self.window.render_ui()
+            
+        self.context.gl_context.enable_only(moderngl.NOTHING)
+
     # Read contents from window FBO, chose one
     def read(self): return self.window.window.fbo.read()
-    def read_into_subprocess_stdin(self, target): target.write(self.read())
+    def stdout(self, target): target.write(self.read())
 
     @property # FBO size for screenshots
     def fbo_size(self): return self.window.window.fbo.size
@@ -360,9 +352,14 @@ class SombreroMGL:
         # Remove duplicates
         return list(set(info))
     
+    def time_zero(self): self.pipeline["mFrame"] = 0
+
     def reset(self):
-        if self.piano_roll is not None: self.piano_roll.synth.reset()
-        self.pipeline["mFrame"] = 0
+        if self.context.piano_roll is not None:
+            self.context.piano_roll.synth.reset()
+            del self.context.piano_roll; self.context.piano_roll = None
+        self.context.camera2d.reset()
+        self.context.camera3d.reset()
         for child in self.children_sombrero_mgl(): child.reset(); del child
         with suppress(AttributeError): self.program.release()
         with suppress(AttributeError): self.texture.release()
