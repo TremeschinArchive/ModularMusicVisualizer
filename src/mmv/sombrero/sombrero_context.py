@@ -26,23 +26,33 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+# Are we realtime or rendering? We need to block some functionality
+# if we're rendering like not listening to joystick events
+class ExecutionMode:
+    RealTime = "realtime"
+    Render = "render"
+
 # Real Time (Live) interactive modes
-class LiveModes:
+class RealTimeModes:
     ModeNone = "KB Mode None"
     Mode2D = "KB Mode 2D"
     Mode3D = "KB Mode 3D"
     AllModes = [ModeNone, Mode2D, Mode3D]
 
-    @staticmethod # Cycle the mode, do like: mode = LiveModes.cycle_mode(mode)
-    def cycle_mode(mode): M=LiveModes.AllModes; return M[(M.index(mode)+1)%len(M)]
+    @staticmethod # Cycle the mode, do like: mode = RealTimeModes.cycle_mode(mode)
+    def cycle_mode(mode): M=RealTimeModes.AllModes; return M[(M.index(mode)+1)%len(M)]
 
 class SombreroContext:
     def __init__(self, sombrero_mgl):
         self.sombrero_mgl = sombrero_mgl
         self.config = self.sombrero_mgl.config
 
+        # Easy access outside
+        self.ExecutionMode = ExecutionMode
+        self.RealTimeModes = RealTimeModes
+
         # Can be "reatime" or "render"
-        self.mode = "realtime"
+        self.mode = ExecutionMode.RealTime
 
         # Window basics
         self.window_vsync = False
@@ -94,7 +104,7 @@ class SombreroContext:
         self.window_class = "glfw"
         self.window_headless = False
         self.window_strict = True
-        self.live_mode = LiveModes.Mode2D
+        self.live_mode = RealTimeModes.Mode2D
 
     # # Technical functions
 

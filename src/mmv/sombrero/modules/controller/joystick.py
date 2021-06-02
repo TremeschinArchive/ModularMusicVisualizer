@@ -27,7 +27,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 from mmv.sombrero.modules.base_module import BaseModule
-from mmv.sombrero.sombrero_context import LiveModes
+from mmv.sombrero.sombrero_context import RealTimeModes
 import pygame
 import imgui
 
@@ -65,7 +65,7 @@ class Joysticks(BaseModule):
 
             # Select button toggle context modes
             if (event.type == pygame.JOYBUTTONDOWN) and (event.button == 6):
-                self.context.live_mode = LiveModes.cycle_mode(self.context.live_mode)
+                self.context.live_mode = RealTimeModes.cycle_mode(self.context.live_mode)
                 self.context.window_show_menu = False
 
             # Right axis press, cycle camera 3d mode
@@ -78,14 +78,14 @@ class Joysticks(BaseModule):
             c3d = self.context.camera3d
 
             # Joystick -> Camera2D
-            if self.context.live_mode == LiveModes.Mode2D:
+            if self.context.live_mode == RealTimeModes.Mode2D:
                 c2d.apply_rotated_drag(0, 3*self.axis[1], inverse = True)
                 c2d.apply_rotated_drag(3*self.axis[0], 0, inverse = True)
                 c2d.zoom += (self.axis[4] / 100) * c2d.zoom.value
                 c2d.rotation += (self.axis[3] / 100)
 
             # Joystick -> Camera3D
-            if self.context.live_mode == LiveModes.Mode3D:
+            if self.context.live_mode == RealTimeModes.Mode3D:
                 c3d.want_to_walk_unit_vector[0] = -self.axis[1]
                 c3d.want_to_walk_unit_vector[2] =  self.axis[0]
                 c3d.want_to_walk_unit_vector[1] =  ((self.axis[5] + 1) / 2) - ((self.axis[2] + 1) / 2)
