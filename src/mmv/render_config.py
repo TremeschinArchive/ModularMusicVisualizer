@@ -56,8 +56,8 @@ def setup(ctx):
 	if expect.output == "auto":
 		s = random_sentence.bare_bone_with_adjective().capitalize()
 		s = ' '.join([word.capitalize() for word in s.split(' ')]).replace(".", "")
-		t = datetime.datetime.now().strftime("%Y-%m-%d-_%H-%M-%S")
-		expect.output = f"{s} | {t}.mkv"
+		t = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+		expect.output = f"{t} | {s}.mkv"
 
 	# Set output to render directory
 	if ctx.config["render"]["output_to_render_directory"]:

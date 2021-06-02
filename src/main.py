@@ -127,7 +127,7 @@ class MMVMain:
             self.sombrero_mgl.next(custom_pipeline = self.preset_custom_pipeline(self.ctx))
 
             # Write into FFmpeg stdin for rendering final video
-            if self.context.mode == "render":
+            if self.context.mode == self.context.ExecutionMode.Render:
                 self.sombrero_mgl.stdout(self.expect.ffmpeg.stdin)
                 self.expect.progress_bar.update()
 
@@ -143,7 +143,7 @@ class MMVMain:
                     break
 
             # Manual VSYNC
-            if (not self.context.window_vsync) and (self.context.mode == "realtime"):
+            if (not self.context.window_vsync) and (self.context.mode == self.context.ExecutionMode.RealTime):
                 if (t := (1 / self.context.fps) + start_cycle - time.time()) >= 0: time.sleep(t)
 def main():
     app = typer.Typer(chain = True)
