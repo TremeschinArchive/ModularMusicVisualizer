@@ -28,7 +28,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from intervaltree import IntervalTree
 from intervaltree import Interval
 from functools import cache
-import fluidsynth
 import logging
 import imgui
 import mido
@@ -160,7 +159,9 @@ class MidiFile:
 
 
 class FluidSynthUtils:
-    def init(self, gain): self.fluid = fluidsynth.Synth(gain = 1)
+    def init(self, gain):
+        import fluidsynth
+        self.fluid = fluidsynth.Synth(gain = 1)
     def reset(self):
         for channel in range(0, 16):
             for note in range(0, 128):

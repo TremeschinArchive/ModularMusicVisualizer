@@ -251,16 +251,16 @@ class SombreroMGL:
         # 2D
         self.pipeline["m2DIsDraggingMode"] = 1 in self.context.mouse_buttons_pressed
         self.pipeline["m2DIsDragging"] = self.context.camera2d.is_dragging
-        self.pipeline["m2DRotation"] = self.context.camera2d.uv_rotation
-        self.pipeline["m2DZoom"] = self.context.camera2d.zoom
-        self.pipeline["m2DDrag"] = self.context.camera2d.drag
+        self.pipeline["m2DRotation"] = self.context.camera2d.rotation.value
+        self.pipeline["m2DZoom"] = self.context.camera2d.zoom.value
+        self.pipeline["m2DDrag"] = self.context.camera2d.drag.value
 
         # 3D
         self.pipeline["m3DCameraBase"] = self.context.camera3d.standard_base.reshape(-1)
         self.pipeline["m3DCameraPointing"] = self.context.camera3d.pointing
-        self.pipeline["m3DCameraPos"] = self.context.camera3d.position
-        self.pipeline["m3DRoll"] = self.context.camera3d.roll
-        self.pipeline["m3DFOV"] = self.context.camera3d.fov
+        self.pipeline["m3DCameraPos"] = self.context.camera3d.position.value
+        self.pipeline["m3DRoll"] = self.context.camera3d.roll.value
+        self.pipeline["m3DFOV"] = self.context.camera3d.fov.value
         
         # Keys
         self.pipeline["mMouse1"] = 1 in self.context.mouse_buttons_pressed

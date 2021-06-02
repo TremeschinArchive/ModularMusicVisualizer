@@ -25,6 +25,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
+from mmv.sombrero.abstractions.interpolation import SmoothVariable
+from mmv.sombrero.modules.base_module import BaseModule
 from enum import Enum, auto
 from math import sin, cos
 import numpy as np
@@ -49,7 +51,7 @@ Qfromvec = quaternion.from_vector_part
 Qasvec = quaternion.as_vector_part
 
 
-class Camera3D:
+class Camera3D(BaseModule):
     ModeFreeCamera = "Free Camera"
     ModeGlobal = "Global Camera"
     
@@ -75,12 +77,7 @@ class Camera3D:
 
     def __repr__(self): return f"Camera3D: {self.__pointing()}"
     def __init__(self, sombrero_window):
-        self.sombrero_window = sombrero_window
-        self.context = self.sombrero_window.context
-        self.messages = self.sombrero_window.messages
-        self.sombrero_mgl = self.sombrero_window.sombrero_mgl
-
-        self.ACTION_MESSAGE_TIMEOUT = self.sombrero_window.ACTION_MESSAGE_TIMEOUT
+        self.init(sombrero_window)
         self.cfg = self.context.config["window"]["3D"]
         self.fix_due_fps = self.context._fix_ratio_due_fps
         self.reset()
@@ -92,20 +89,15 @@ class Camera3D:
         self.target_quaternion = np.quaternion(1, 0, 0, 0)
         self.quaternion = np.quaternion(1, 0, 0, 0)
 
-        self.want_to_toll = 0
-        self.roll = 0
-
+        # Direction we'll walk or roll, kinda like a joystick config
         self.want_to_walk_unit_vector = np.array([0, 0, 0], dtype = np.float32)
-        self.target_position = np.array([0, 0, 0], dtype = np.float32)
-        self.position = np.array([0, 0, 0], dtype = np.float32)
+        self.want_to_roll = 0
 
-        self.target_walk_speed = 1
-        self.walk_speed = 1
-
-        self.target_fov = 1
-        self.fov = 1
-
-        self.sensitivity = 1
+        self.position = SmoothVariable(np.array([0, 0, 0], dtype = np.float32))
+        self.sensitivity = SmoothVariable(1.0)
+        self.speed = SmoothVariable(1.0)
+        self.roll = SmoothVariable(0)
+        self.fov = SmoothVariable(1)
 
     # Create one quaternion from an angle and vector, note the rotation is based
     # on the plane normal to this vector
@@ -116,7 +108,7 @@ class Camera3D:
     # Current standard base applied on where the camera is pointing
     def standard_base(self):
         R = quaternion.rotate_vectors(self.quaternion, Camera3D.GlobalStandardBase)
-        R = quaternion.rotate_vectors(self._angle_vector_quaternion(self.roll, Camera3D.Forward), R)  # Apply roll
+        R = quaternion.rotate_vectors(self._angle_vector_quaternion(self.roll.value, Camera3D.Forward), R)  # Apply roll
         return R
     
     @property
@@ -144,16 +136,18 @@ class Camera3D:
 
         # Walk the camera if WASD Shift Space are pressed
         for index, vector in enumerate(self.standard_base):
-            self.target_position += vector \
-                * self.fix_due_fps(0.1 * self.want_to_walk_unit_vector[index] * self.walk_speed)
+            self.position += vector \
+                * self.fix_due_fps(0.1 * self.want_to_walk_unit_vector[index] * self.speed.value)
 
         # Interpolate values
-        self.position += (self.target_position - self.position) * self.fix_due_fps(self.cfg["walk_responsiveness"])
-        self.walk_speed += (self.target_walk_speed - self.walk_speed) * self.fix_due_fps(self.cfg["walk_responsiveness"])
-        self.fov += (self.target_fov - self.fov) * self.fix_due_fps(self.cfg["zoom_responsiveness"])
+        self.position.next(ratio = self.fix_due_fps(self.cfg["walk_responsiveness"]))
+        self.speed.next(ratio = self.fix_due_fps(self.cfg["walk_responsiveness"]))
+        self.fov.next(ratio = self.fix_due_fps(self.cfg["zoom_responsiveness"]))
 
         # Apply roll
-        if self.want_to_toll != 0: self.apply_rotation(self.want_to_toll, Camera3D.AxisX)
+        if self.want_to_roll != 0:
+            self.apply_rotation(self.want_to_roll, Camera3D.AxisX)
+            self.want_to_roll = 0
 
         # For ModeGlobal cancel roll relative to the camera, get angle between XY plane basically
         if self.mode == Camera3D.ModeGlobal:
@@ -165,7 +159,7 @@ class Camera3D:
         self.quaternion = np.normalized(self.quaternion)
         
     def key_event(self, key, action, modifiers):
-        debug_prefix = "[Camera3d.key_event]"
+        debug_prefix = "[Camera3D.key_event]"
 
         # Walk, rotation
         if action in [0, 1]:
@@ -175,8 +169,8 @@ class Camera3D:
             if (key == 68):  self.want_to_walk_unit_vector[2] =  action  # D
             if (key == 32):  self.want_to_walk_unit_vector[1] =  action  # Space
             if (key == 340): self.want_to_walk_unit_vector[1] = -action  # Shift
-            if (key == 81):  self.want_to_toll = -self.fix_due_fps(action / 200)  # q
-            if (key == 69):  self.want_to_toll =  self.fix_due_fps(action / 200)  # e
+            if (key == 81):  self.want_to_roll = -self.fix_due_fps(action / 200)  # q
+            if (key == 69):  self.want_to_roll =  self.fix_due_fps(action / 200)  # e
         
         if (key == 77) and (action == 1):
             self.messages.add(f"{debug_prefix} (m) Cycle modes", self.ACTION_MESSAGE_TIMEOUT * 4)
@@ -196,32 +190,33 @@ class Camera3D:
 
         if (key == 88) and (action == 1):
             self.messages.add(f"{debug_prefix} (x) Reset camera to (0, 0, 0)", self.ACTION_MESSAGE_TIMEOUT)
-            self.target_position = np.array([0.0, 0.0, 0.0], dtype = np.float32)
+            self.position.set_target(np.array([0.0, 0.0, 0.0], dtype = np.float32))
 
         if (key == 90) and (action == 1):
             self.messages.add(f"{debug_prefix} (z) Reset FOV to [1x]", self.ACTION_MESSAGE_TIMEOUT)
-            self.target_fov = 1
+            self.fov.set_target(1)
 
     def mouse_drag_event(self, x, y, dx, dy):
-        if self.context.ctrl_pressed: self.target_fov += (dy * 0.05) * self.target_fov
+        if self.context.ctrl_pressed: self.fov += (dy * 0.05) * self.fov.value
         if self.context.alt_pressed: self.apply_rotation( self.fix_due_fps(dy/800), Camera3D.AxisX)
 
     def gui(self):
+        imgui.separator()
         imgui.text_colored("Camera 3D", 0, 1, 0)
         cp = self.pointing
         imgui.text(f"Mode: [{self.mode}]")
         imgui.text(f"Camera Pointing:   [{cp[0]:.2f}, {cp[1]:.2f}, {cp[2]:.2f}]")
         imgui.text(f"Quaternion: [{self.quaternion.w:.3f}, {self.quaternion.x:.3f}, {self.quaternion.y:.3f}, {self.quaternion.z:.3f}]")
-        imgui.text(f"Position:   [{self.position[0]:.3f}, {self.position[1]:.3f}, {self.position[2]:.3f}]")
-        imgui.text(f"Walk speed: [{self.walk_speed:.3f}]")
-        imgui.text(f"Roll: [{self.roll:.3f}]")
+        imgui.text(f"Position:   [{self.position.value[0]:.3f}, {self.position.value[1]:.3f}, {self.position.value[2]:.3f}]")
+        imgui.text(f"Walk speed: [{self.speed.value:.3f}]")
+        imgui.text(f"Roll: [{self.roll.value:.3f}]")
 
     def mouse_scroll_event(self, x_offset, y_offset):
-        if self.context.alt_pressed: self.target_fov -= (y_offset * 0.05) * self.target_fov
+        if self.context.alt_pressed: self.fov -= (y_offset * 0.05) * self.fov.value
         elif self.context.ctrl_pressed: self.cfg["mouse_sensitivity"] += (y_offset * 0.05) * self.cfg["mouse_sensitivity"]
-        else: self.target_walk_speed += (y_offset * 0.05) * self.target_walk_speed
+        else: self.speed += (y_offset * 0.05) * self.speed.value
 
     def mouse_position_event(self, x, y, dx, dy):
-        self.apply_rotation((-dx/500) * self.fov, Camera3D.AxisY)
-        self.apply_rotation((-dy/500) * self.fov, Camera3D.AxisZ)
+        self.apply_rotation((-dx/500) * self.fov.value, Camera3D.AxisY)
+        self.apply_rotation((-dy/500) * self.fov.value, Camera3D.AxisZ)
     

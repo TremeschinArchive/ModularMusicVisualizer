@@ -28,9 +28,10 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 from mmv.sombrero.sombrero_window_utils import FrameTimesCounter, OnScreenTextMessages
 from moderngl_window.integrations.imgui import ModernglWindowRenderer
+from mmv.sombrero.modules.controller.joystick import Joysticks
+from mmv.sombrero.modules.camera.camera_2d import Camera2D
+from mmv.sombrero.modules.camera.camera_3d import Camera3D
 from mmv.sombrero.sombrero_context import KeyboardModes
-from mmv.sombrero.camera.camera_2d import Camera2D
-from mmv.sombrero.camera.camera_3d import Camera3D
 from moderngl_window.conf import settings
 from moderngl_window import resources
 from datetime import datetime
@@ -66,6 +67,7 @@ class SombreroWindow:
         self.messages = OnScreenTextMessages()
         self.context.camera3d = Camera3D(self)
         self.context.camera2d = Camera2D(self)
+        self.context.joysticks = Joysticks(self)
         self.framerate = FrameTimesCounter(fps = self.context.fps)
         self.window_should_close = False
 
@@ -120,8 +122,10 @@ class SombreroWindow:
 
         # We need to do some sort of change of basis between drag numbers when we change resolutions because
         # drag itself is absolute, not related 
-        self.context.camera2d.target_drag *= np.array([width, height]) / np.array([self.context.width, self.context.height])
-        self.context.camera2d.drag = self.context.camera2d.target_drag.copy()
+        self.context.camera2d.drag.set_target(
+            self.context.camera2d.drag.value * (np.array([width, height]) / np.array([self.context.width, self.context.height]))
+        )
+        self.context.camera2d.drag._target_is_current_value()
 
         # Set width and height
         self.context.width = int(width)
@@ -154,9 +158,9 @@ class SombreroWindow:
         self.window.swap_buffers()
         cfg = self.sombrero_mgl.config["window"]
 
-        # 3D smooth interpolation
-        if self.context.keyboard_mode == KeyboardModes.Mode3D: self.context.camera3d.next()
+        self.context.joysticks.next()
         if self.context.keyboard_mode == KeyboardModes.Mode2D: self.context.camera2d.next()
+        if self.context.keyboard_mode == KeyboardModes.Mode3D: self.context.camera3d.next()
 
         # TODO: move to context
         # self.context.intensity += (self.target_intensity - self.context.intensity) * cfg["intensity_responsiveness"]
@@ -200,12 +204,14 @@ class SombreroWindow:
                 self.messages.add(f"{debug_prefix} (2) Set 2D (default) mode", self.ACTION_MESSAGE_TIMEOUT)
                 self.window.mouse_exclusivity = False
                 self.context.keyboard_mode = KeyboardModes.Mode2D
+                self.context.window_show_menu = False
 
             if (key == 51) and (action == 1):
                 self.messages.add(f"{debug_prefix} (3) Set 3D mode", self.ACTION_MESSAGE_TIMEOUT)
                 self.ThreeD_want_to_walk_unit_vector = np.array([0, 0, 0])
                 self.window.mouse_exclusivity = True
                 self.context.keyboard_mode = KeyboardModes.Mode3D
+                self.context.window_show_menu = False
 
         # Mode
         if self.context.keyboard_mode == KeyboardModes.Mode2D:
@@ -350,7 +356,7 @@ class SombreroWindow:
 
     def unicode_char_entered(self, char):
         self.imgui.unicode_char_entered(char)
-    
+
 
     # # # # GUI, somewhat intensive and weird code that can't be really simplified
 
@@ -393,16 +399,16 @@ class SombreroWindow:
             imgui.begin(f"Info Window", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE)
 
             # Render related
-            imgui.text_colored("Render", *section_color)
             imgui.separator()
+            imgui.text_colored("Render", *section_color)
             imgui.text(f"SSAA:       [{self.context.ssaa:.3f}]")
             imgui.text(f"Resolution: [{int(self.context.width)}, {int(self.context.height)}] => [{int(self.context.width*self.context.ssaa)}, {int(self.context.height*self.context.ssaa)}]")
-            imgui.separator()
 
             # Camera stats
             if self.context.keyboard_mode == KeyboardModes.Mode2D: self.context.camera2d.gui()
             if self.context.keyboard_mode == KeyboardModes.Mode3D: self.context.camera3d.gui()
             if self.context.piano_roll is not None: self.context.piano_roll.gui()
+            if self.context.joysticks is not None: self.context.joysticks.gui()
 
             dock_y += imgui.get_window_height()
             imgui.end()
@@ -433,8 +439,7 @@ class SombreroWindow:
 
             changed, value = imgui.slider_float("Multiplier", self.target_time_factor, min_value = -3, max_value = 3, power = 1)
             if changed:
-                self.target_time_factor = value
-                self.previous_time_factor = self.target_time_factor
+                self.context.time_speed = value
 
             # # Time
             imgui.separator()
@@ -444,8 +449,7 @@ class SombreroWindow:
                 changed = imgui.button(f"{ratio}x")
                 if ratio != 2: imgui.same_line() # Same line until last value
                 if changed:
-                    self.target_time_factor = ratio
-                    self.previous_time_factor = self.target_time_factor
+                    self.context.time_speed = ratio
                     self.context.freezed_pipeline = False
             imgui.separator()
 

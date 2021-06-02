@@ -84,6 +84,8 @@ class MMVMain:
         self.preset = __import__(f"mmv.shaders.presets.{name}", fromlist = [name])
         self.preset = reload(self.preset)  # Reload if file has changed
         self.preset.generate(self.__get_ctx())
+        if hasattr(self.preset, "pipeline"): self.preset_custom_pipeline = self.preset.pipeline
+        else: self.preset_custom_pipeline = lambda _: {}
         self.sombrero_mgl.finish()
 
     # Reload shaders (reload preset without resetting time)
@@ -113,10 +115,8 @@ class MMVMain:
         debug_prefix = "[MMVMain._core_loop]"
         self.__get_ctx()
         self.sombrero_mgl.window.create()
-        self.load_preset("potential")
+        self.load_preset("default")
 
-        if hasattr(self.preset, "pipeline"): self.preset_custom_pipeline = self.preset.pipeline
-        else: self.preset_custom_pipeline = lambda _: {}
         self.true_start = time.time()
 
         for step in itertools.count(start = 0):
