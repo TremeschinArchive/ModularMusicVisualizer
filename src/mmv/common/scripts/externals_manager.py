@@ -222,31 +222,6 @@ class ExternalsManager:
                 else:  # Already have the binary
                     logging.info(f"{debug_prefix} Already have [ffmpeg] binary in externals / system path!!")
 
-            # # Musescore
-
-            if external == "musescore":
-                debug_prefix = f"[MMVPackageInterface.check_download_externals({external})]"
-
-                # We're on Linux / macOS so checking ffmpeg external dependency on system's path
-                if platform in ["linux", "macos"]:
-                    self.__cant_micro_manage_external_for_you(binary = "musescore", help_fix = f"Go to [https://musescore.org/en/download] and install for your platform")
-                    continue
-                
-                # If we don't have musescore binary on externals dir or system's path
-                if not self.find_binary("musescore"):
-
-                    # Version we want
-                    musescore_version = "v3.5.2/MuseScorePortable-3.5.2.311459983-x86.paf.exe"
-
-                    # Download musescore
-                    self.download.wget(
-                        f"https://cdn.jsdelivr.net/musescore/{musescore_version}",
-                        f"{self.externals_dir_this_platform}{sep}musescore.exe", f"Musescore Portable v=[{musescore_version}]"
-                    )
-                    
-                else:  # Already have the binary
-                    logging.info(f"{debug_prefix} Already have [musescore] binary in externals / system path!!")
-
             # Update the externals search path because we downloaded stuff
             self.update_externals_search_path()
 

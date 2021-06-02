@@ -119,9 +119,10 @@ class BetterFFmpegWrapper:
         else: self.x264_params.append(new)
         return self
 
-    # Build
+    # Build the command, returns list of arguments to be called
     def _build_command(self):
-        if any(["265" in item for item in self.encoder]): self.tune = []
+        for banned in ["265", "nvenc"]: # NVENC doens't accept tune
+            if any([banned in item for item in self.encoder]): self.tune = []
         cmd = [self.ffmpeg_bin]
         cmd += self.before_inputs
         cmd += self.inputs

@@ -25,14 +25,18 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
-from enum import Enum, auto
 
+class KeyboardModes:
+    ModeNone = "KB Mode None"
+    Mode2D = "KB Mode 2D"
+    Mode3D = "KB Mode 3D"
+    AllModes = [ModeNone, Mode2D, Mode3D]
 
-class KeyboardModes(Enum):
-    ModeNone = auto()
-    Mode2D = auto()
-    Mode3D = auto()
-
+    # Cycle the mode, do like: mode = KeyboardModes.cycle_mode(mode)
+    @staticmethod
+    def cycle_mode(mode):
+        M = KeyboardModes.AllModes
+        return M[(M.index(mode)+1) % len(M)]
 
 class SombreroContext:
     def __init__(self, sombrero_mgl):

@@ -25,44 +25,35 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
+from mmv.sombrero.abstractions.interpolation import SmoothVariable
+from mmv.sombrero.modules.base_module import BaseModule
 from enum import Enum, auto
 from math import sin, cos
 import numpy as np
 import logging
+import pygame
 import imgui
 import math
 
-
-class Camera2D:
+class Camera2D(BaseModule):
     GlobalX = np.array([1, 0], dtype = np.float32)
     GlobalY = np.array([0, 1], dtype = np.float32)
     GlobalCanonicalBase = np.array([GlobalX, GlobalY])
     AxisX, AxisY = 0, 1
 
     def __init__(self, sombrero_window):
+        self.init(sombrero_window)
         self.sombrero_window = sombrero_window
-        self.context = self.sombrero_window.context
-        self.messages = self.sombrero_window.messages
-        self.sombrero_mgl = self.sombrero_window.sombrero_mgl
-
-        self.ACTION_MESSAGE_TIMEOUT = self.sombrero_window.ACTION_MESSAGE_TIMEOUT
         self.cfg = self.context.config["window"]["2D"]
         self.fix_due_fps = self.context._fix_ratio_due_fps
         self.reset()
         
     # # 2D Specific Info
     def reset(self):
-        self.target_drag = np.array([0.0, 0.0])
-        self.drag = np.array([0.0, 0.0])
-
-        self.target_intensity = 1
-        self.intensity = 1
-
-        self.target_uv_rotation = 0
-        self.uv_rotation = 0
-
-        self.target_zoom = 1
-        self.zoom = 1
+        self.drag = SmoothVariable(np.array([0.0, 0.0]))
+        self.intensity = SmoothVariable(1)
+        self.rotation = SmoothVariable(0)
+        self.zoom = SmoothVariable(1)
 
         # Multiplier on top of multiplier, configurable real time
         self.drag_momentum = np.array([0.0, 0.0])
@@ -83,36 +74,36 @@ class Camera2D:
         dx = (dx * square_current_zoom) * self.context.ssaa
         dy = (dy * square_current_zoom) * self.context.ssaa
 
-        # Cosine and sine
-        c = cos(self.uv_rotation)
-        s = sin(self.uv_rotation)
+        # Cosine and sine, calculate once
+        c = cos(self.rotation.value)
+        s = sin(self.rotation.value)
 
         # mat2 rotation times the dx, dy vector
         drag_rotated = np.array([
             (dx * c) + (dy * -s),
-            (dx * s) + (dy * c)
+            (dx * s) + (dy *  c),
         ]) * howmuch * inverse
 
         # Normalize dx step due aspect ratio
         drag_rotated[0] *= self.context.width / self.context.height
 
         # Add to target drag the dx, dy relative to current zoom and SSAA level
-        self.target_drag += drag_rotated
+        self.drag += drag_rotated
         self.drag_momentum += drag_rotated
 
     def next(self):
-
+    
         # Interpolate stuff
-        self.uv_rotation += (self.target_uv_rotation - self.uv_rotation) * self.fix_due_fps(self.cfg["rotation_responsiveness"])
-        self.zoom += (self.target_zoom - self.zoom) * self.fix_due_fps(self.cfg["zoom_responsiveness"])
-        self.drag += (self.target_drag - self.drag) * self.fix_due_fps(self.cfg["drag_responsiveness"])
+        self.rotation.next(ratio = self.fix_due_fps(self.cfg["rotation_responsiveness"]))
+        self.zoom.next(ratio = self.fix_due_fps(self.cfg["zoom_responsiveness"]))
+        self.drag.next(ratio = self.fix_due_fps(self.cfg["drag_responsiveness"]))
         self.drag_momentum *= self.cfg["drag_momentum"]
 
         # If we're still iterating towards target drag then we're dragging
-        self.is_dragging = not np.allclose(self.target_drag, self.drag, rtol = 0.003)
+        self.is_dragging = not np.allclose(self.drag.target, self.drag.value, rtol = 0.003)
 
         # Drag momentum
-        if not 1 in self.context.mouse_buttons_pressed: self.target_drag += self.drag_momentum
+        if not 1 in self.context.mouse_buttons_pressed: self.drag.target += self.drag_momentum
 
     def key_event(self, key, action, modifiers):
         debug_prefix = "[Camera2D.key_event]"
@@ -120,39 +111,42 @@ class Camera2D:
         # Target rotation to the nearest 360° multiple (current minus negative remainder if you think hard enough)
         if (key == 67) and (action == 1):
             self.messages.add(f"{debug_prefix} [2D] (c) Reset rotation to [0°]", self.ACTION_MESSAGE_TIMEOUT)
-            self.target_uv_rotation = self.target_uv_rotation - (math.remainder(self.target_uv_rotation, 360))
+            self.rotation.set_target(self.rotation() - (math.remainder(self.rotation(), 360)))
 
         if (key == 90) and (action == 1):
             self.messages.add(f"{debug_prefix} [2D] (z) Reset zoom to [1x]", self.ACTION_MESSAGE_TIMEOUT)
-            self.target_zoom = 1
+            self.zoom.set_target(1)
 
         if (key == 88) and (action == 1):
             self.messages.add(f"{debug_prefix} [2D] (x) Reset drag to [0, 0]", self.ACTION_MESSAGE_TIMEOUT)
-            self.target_drag = np.array([0.0, 0.0])
+            self.drag.set_target(np.array([0.0, 0.0]))
 
     def mouse_drag_event(self, x, y, dx, dy):
-        if self.context.shift_pressed: self.target_zoom += (dy / 1000) * self.target_zoom
-        elif self.context.alt_pressed: self.target_uv_rotation += (dy / 80) / (2*math.pi)
+        if self.context.shift_pressed: self.zoom += (dy / 1000) * self.zoom.value
+        elif self.context.alt_pressed: self.rotation += (dy / 80) / (2*math.pi)
         else: self.apply_rotated_drag(dx = dx, dy = dy, inverse = True)
     
     def gui(self):
-        imgui.text_colored("Camera 2D", 0, 1, 0)
-        imgui.text(f"(x, y):    [{self.drag[0]:.3f}, {self.drag[1]:.3f}] => [{self.target_drag[0]:.3f}, {self.target_drag[1]:.3f}]")
-        imgui.text(f"Intensity: [{self.intensity:.2f}] => [{self.target_intensity:.2f}]")
-        imgui.text(f"Zoom:      [{self.zoom:.5f}x] => [{self.target_zoom:.5f}x]")
-        imgui.text(f"UV Rotation:  [{math.degrees(self.uv_rotation):.3f}°] => [{math.degrees(self.target_uv_rotation):.3f}°]")
         imgui.separator()
+        imgui.text_colored("Camera 2D", 0, 1, 0)
+        imgui.text(f"(x, y):    [{self.drag.value[0]:.3f}, {self.drag.value[1]:.3f}] => [{self.drag.target[0]:.3f}, {self.drag.target[1]:.3f}]")
+        imgui.text(f"Intensity: [{self.intensity.value:.2f}] => [{self.intensity.target:.2f}]")
+        imgui.text(f"Zoom:      [{self.zoom.value:.5f}x] => [{self.zoom.target:.5f}x]")
+        imgui.text(f"UV Rotation:  [{math.degrees(self.rotation.value):.3f}°] => [{math.degrees(self.rotation.target):.3f}°]")
 
     def mouse_scroll_event(self, x_offset, y_offset):
         if self.context.shift_pressed:
-            self.target_intensity += y_offset / 10
+            self.intensity += y_offset / 10
+
         elif self.context.ctrl_pressed and (not self.is_dragging_mode):
             change_to = self.context.ssaa + ((y_offset / 20) * self.context.ssaa)
             self.change_ssaa(change_to)
+
         elif self.context.alt_pressed:
-            self.target_uv_rotation -= y_offset * (math.pi) / (180 / 5)
+            self.rotation -= y_offset * (math.pi) / (180 / 5)
+
         else:
-            self.target_zoom -= (y_offset * 0.05) * self.target_zoom
+            self.zoom -= (y_offset * 0.05) * self.zoom.value
         
     def mouse_position_event(self, x, y, dx, dy):
         pass
