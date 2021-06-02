@@ -26,17 +26,15 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-class KeyboardModes:
+# Real Time (Live) interactive modes
+class LiveModes:
     ModeNone = "KB Mode None"
     Mode2D = "KB Mode 2D"
     Mode3D = "KB Mode 3D"
     AllModes = [ModeNone, Mode2D, Mode3D]
 
-    # Cycle the mode, do like: mode = KeyboardModes.cycle_mode(mode)
-    @staticmethod
-    def cycle_mode(mode):
-        M = KeyboardModes.AllModes
-        return M[(M.index(mode)+1) % len(M)]
+    @staticmethod # Cycle the mode, do like: mode = LiveModes.cycle_mode(mode)
+    def cycle_mode(mode): M=LiveModes.AllModes; return M[(M.index(mode)+1)%len(M)]
 
 class SombreroContext:
     def __init__(self, sombrero_mgl):
@@ -96,7 +94,7 @@ class SombreroContext:
         self.window_class = "glfw"
         self.window_headless = False
         self.window_strict = True
-        self.keyboard_mode = KeyboardModes.Mode2D
+        self.live_mode = LiveModes.Mode2D
 
     # # Technical functions
 

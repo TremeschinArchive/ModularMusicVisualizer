@@ -31,7 +31,7 @@ from moderngl_window.integrations.imgui import ModernglWindowRenderer
 from mmv.sombrero.modules.controller.joystick import Joysticks
 from mmv.sombrero.modules.camera.camera_2d import Camera2D
 from mmv.sombrero.modules.camera.camera_3d import Camera3D
-from mmv.sombrero.sombrero_context import KeyboardModes
+from mmv.sombrero.sombrero_context import LiveModes
 from moderngl_window.conf import settings
 from moderngl_window import resources
 from datetime import datetime
@@ -68,7 +68,7 @@ class SombreroWindow:
         self.context.camera3d = Camera3D(self)
         self.context.camera2d = Camera2D(self)
         self.context.joysticks = Joysticks(self)
-        self.framerate = FrameTimesCounter(fps = self.context.fps)
+        self.context.framerate = FrameTimesCounter(fps = self.context.fps)
         self.window_should_close = False
 
         # TODO move to context
@@ -79,10 +79,8 @@ class SombreroWindow:
 
         # Headless we disable vsync because we're rendering only..?
         # And also force aspect ratio just in case (strict option)
-        if self.context.window_headless:
-            settings.WINDOW["aspect_ratio"] = self.context.width / self.context.height
-        else:
-            settings.WINDOW["aspect_ratio"] = None
+        if self.context.window_headless: settings.WINDOW["aspect_ratio"] = self.context.width / self.context.height
+        else: settings.WINDOW["aspect_ratio"] = None
 
         # Assign the function arguments
         settings.WINDOW["class"] = f"moderngl_window.context.{self.context.window_class}.Window"
@@ -159,8 +157,8 @@ class SombreroWindow:
         cfg = self.sombrero_mgl.config["window"]
 
         self.context.joysticks.next()
-        if self.context.keyboard_mode == KeyboardModes.Mode2D: self.context.camera2d.next()
-        if self.context.keyboard_mode == KeyboardModes.Mode3D: self.context.camera3d.next()
+        if self.context.live_mode == LiveModes.Mode2D: self.context.camera2d.next()
+        if self.context.live_mode == LiveModes.Mode3D: self.context.camera3d.next()
 
         # TODO: move to context
         # self.context.intensity += (self.target_intensity - self.context.intensity) * cfg["intensity_responsiveness"]
@@ -183,13 +181,13 @@ class SombreroWindow:
             if self.context.shift_pressed:
                 self.context.show_gui = not self.context.show_gui
                 self.messages.add(f"(Shift + TAB) Toggle All GUI [{self.context.show_gui}]", self.ACTION_MESSAGE_TIMEOUT)
-                self.framerate.clear()
+                self.context.framerate.clear()
             else:
                 self.context.window_show_menu = not self.context.window_show_menu
                 self.messages.add(f"(TAB) Toggle menu GUI [{self.context.window_show_menu}]", self.ACTION_MESSAGE_TIMEOUT)
                 if self.context.window_show_menu: self.window.mouse_exclusivity = False
                 else:
-                    if self.context.keyboard_mode == KeyboardModes.Mode3D: self.window.mouse_exclusivity = True
+                    if self.context.live_mode == LiveModes.Mode3D: self.window.mouse_exclusivity = True
 
         if self.imgui_io.want_capture_keyboard: return
 
@@ -203,26 +201,26 @@ class SombreroWindow:
             if (key == 50) and (action == 1):
                 self.messages.add(f"{debug_prefix} (2) Set 2D (default) mode", self.ACTION_MESSAGE_TIMEOUT)
                 self.window.mouse_exclusivity = False
-                self.context.keyboard_mode = KeyboardModes.Mode2D
+                self.context.live_mode = LiveModes.Mode2D
                 self.context.window_show_menu = False
 
             if (key == 51) and (action == 1):
                 self.messages.add(f"{debug_prefix} (3) Set 3D mode", self.ACTION_MESSAGE_TIMEOUT)
                 self.ThreeD_want_to_walk_unit_vector = np.array([0, 0, 0])
                 self.window.mouse_exclusivity = True
-                self.context.keyboard_mode = KeyboardModes.Mode3D
+                self.context.live_mode = LiveModes.Mode3D
                 self.context.window_show_menu = False
 
         # Mode
-        if self.context.keyboard_mode == KeyboardModes.Mode2D:
+        if self.context.live_mode == LiveModes.Mode2D:
             self.context.camera2d.key_event(key = key, action = action, modifiers = modifiers)
-        if self.context.keyboard_mode == KeyboardModes.Mode3D:
+        if self.context.live_mode == LiveModes.Mode3D:
             self.context.camera3d.key_event(key = key, action = action, modifiers = modifiers)
                 
         # # # # Generic
         
         # Escape
-        if (key == 256) and (action == 1) and (self.context.keyboard_mode == KeyboardModes.Mode3D):
+        if (key == 256) and (action == 1) and (self.context.live_mode == LiveModes.Mode3D):
             self.window_should_close = True
 
         if (key == 44) and (action == 1):
@@ -304,8 +302,8 @@ class SombreroWindow:
     def mouse_position_event(self, x, y, dx, dy):
         self.sombrero_mgl.pipeline["mMouse"] = np.array([x, y])
         if self.imgui_io.want_capture_mouse: return
-        if self.context.keyboard_mode == KeyboardModes.Mode2D: self.context.camera2d.mouse_position_event(x, y, dx, dy)
-        if self.context.keyboard_mode == KeyboardModes.Mode3D: self.context.camera3d.mouse_position_event(x, y, dx, dy)
+        if self.context.live_mode == LiveModes.Mode2D: self.context.camera2d.mouse_position_event(x, y, dx, dy)
+        if self.context.live_mode == LiveModes.Mode3D: self.context.camera3d.mouse_position_event(x, y, dx, dy)
         
     # Mouse drag, add to pipeline drag
     def mouse_drag_event(self, x, y, dx, dy):
@@ -317,10 +315,10 @@ class SombreroWindow:
             elif self.context.alt_pressed: self.target_time_factor -= dy / 80
             else: self.sombrero_mgl.pipeline["mFrame"] -= (dy * self.context.fps) / 800
         else:
-            if self.context.keyboard_mode == KeyboardModes.Mode2D:
+            if self.context.live_mode == LiveModes.Mode2D:
                 self.context.camera2d.mouse_drag_event(x = x, y = y, dx = dx, dy = dy)
                 self.window.mouse_exclusivity = True
-            if self.context.keyboard_mode == KeyboardModes.Mode3D:
+            if self.context.live_mode == LiveModes.Mode3D:
                 self.context.camera3d.mouse_drag_event(x = x, y = y, dx = dx, dy = dy)
 
     # Change SSAA
@@ -335,8 +333,8 @@ class SombreroWindow:
         debug_prefix = "[SombreroWindow.mouse_scroll_event]"
         self.imgui.mouse_scroll_event(x_offset, y_offset)
         if self.imgui_io.want_capture_mouse: return
-        if self.context.keyboard_mode == KeyboardModes.Mode2D: self.context.camera2d.mouse_scroll_event(x_offset = x_offset, y_offset = y_offset)
-        if self.context.keyboard_mode == KeyboardModes.Mode3D: self.context.camera3d.mouse_scroll_event(x_offset = x_offset, y_offset = y_offset)
+        if self.context.live_mode == LiveModes.Mode2D: self.context.camera2d.mouse_scroll_event(x_offset = x_offset, y_offset = y_offset)
+        if self.context.live_mode == LiveModes.Mode3D: self.context.camera3d.mouse_scroll_event(x_offset = x_offset, y_offset = y_offset)
 
     def mouse_press_event(self, x, y, button):
         debug_prefix = "[SombreroWindow.mouse_press_event]"
@@ -352,7 +350,7 @@ class SombreroWindow:
         self.imgui.mouse_release_event(x, y, button)
         if button in self.context.mouse_buttons_pressed: self.context.mouse_buttons_pressed.remove(button)
         if self.imgui_io.want_capture_mouse: return
-        if not self.context.keyboard_mode == KeyboardModes.Mode3D: self.window.mouse_exclusivity = False
+        if not self.context.live_mode == LiveModes.Mode3D: self.window.mouse_exclusivity = False
 
     def unicode_char_entered(self, char):
         self.imgui.unicode_char_entered(char)
@@ -405,8 +403,8 @@ class SombreroWindow:
             imgui.text(f"Resolution: [{int(self.context.width)}, {int(self.context.height)}] => [{int(self.context.width*self.context.ssaa)}, {int(self.context.height*self.context.ssaa)}]")
 
             # Camera stats
-            if self.context.keyboard_mode == KeyboardModes.Mode2D: self.context.camera2d.gui()
-            if self.context.keyboard_mode == KeyboardModes.Mode3D: self.context.camera3d.gui()
+            if self.context.live_mode == LiveModes.Mode2D: self.context.camera2d.gui()
+            if self.context.live_mode == LiveModes.Mode3D: self.context.camera3d.gui()
             if self.context.piano_roll is not None: self.context.piano_roll.gui()
             if self.context.joysticks is not None: self.context.joysticks.gui()
 
@@ -467,14 +465,14 @@ class SombreroWindow:
 
         if 1:
             # Update framerates, get info
-            self.framerate.next()
-            info = self.framerate.get_info()
+            self.context.framerate.next()
+            info = self.context.framerate.get_info()
 
             imgui.set_next_window_collapsed(True, imgui.FIRST_USE_EVER)
             imgui.set_next_window_position(0, dock_y)
             imgui.set_next_window_bg_alpha(0.5)
             imgui.begin("Performance", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE)
-            imgui.text_colored(f"Frametimes [last {self.framerate.history:.2f}s]", *section_color)
+            imgui.text_colored(f"Frametimes [last {self.context.framerate.history:.2f}s]", *section_color)
             imgui.separator()
             precision = 2
             imgui.plot_lines(
