@@ -45,6 +45,9 @@ class BetterFFmpegWrapper:
 
     # "Global"
     def hwaccel_auto(self): self.before_inputs += ["-hwaccel", "auto"]; return self
+    def hwaccel_manual(self, what): self.before_inputs += ["-hwaccel", what]; return self
+    def before_inputs_manual(self, what): self.before_inputs += what; return self
+    def before_output_manual(self, what): self.before_output += what; return self
     def crf(self, crf): self._crf = ["-crf", f"{crf}"]; return self
     def vf(self, what): self.video_filters.append(what); return self
     def hide_banner(self): self.before_inputs += ["-hide_banner"]; return self
@@ -63,14 +66,14 @@ class BetterFFmpegWrapper:
         if path: self.inputs += ["-i", path]
         return self
     def input_pipe(self): self.inputs += ["-f", "rawvideo", "-i", "-"]; return self
-    def input_framerate(self, n): self.before_inputs += ["-r", f"{n}"]; return self
+    def input_framerate(self, n): self.before_inputs += ["-framerate", f"{n}"]; return self
     def input_resolution(self, width, height): self.before_inputs += ["-s", f"{width}x{height}"]; return self
     def input_pixel_format(self, f): self.before_inputs += ["-pix_fmt", f]; return self
 
     # Output
     def output(self, path): self._output = path; return self
     def output_stdout(self): self._output = "-"; return self
-    def output_framerate(self, n): self.before_output += ["-r", f"{n}"]; return self
+    def output_framerate(self, n): self.before_output += ["-framerate", f"{n}"]; return self
     def output_resolution(self, width, height): self.before_output += ["-s", f"{width}x{height}"]; return self
     def output_pixel_format(self, f): self.before_output += ["-pix_fmt", f]; return self
     def output_format(self, f): self.before_output += ["-f", f]; return self
@@ -98,6 +101,7 @@ class BetterFFmpegWrapper:
     # Profiles
     def profile_main(self): self.profile = ["-profile:v", "main"]; return self
     def profile_baseline(self): self.profile = ["-profile:v", "baseline"]; return self
+    def profile_manual(self, what): self.profile = ["-profile:v", what]; return self
 
     # Preset to encode
     def preset_ultrafast(self): self.preset = ["-preset", "ultrafast"]; return self
@@ -134,7 +138,13 @@ class BetterFFmpegWrapper:
         cmd += self.preset or []
         cmd += self._crf or []
         cmd += self.profile or []
-        if self.x264_params: cmd += ["-x264-params", ":".join(self.x264_params)]
+
+        # Add 264 or 265 flags
+        if any(["264" in item for item in self.encoder]):
+            if self.x264_params: cmd += ["-x264-params", ":".join(self.x264_params)]
+        if any([("265" in item or "hevc" in item) for item in self.encoder]):
+            if self.x264_params: cmd += ["-x265-params", ":".join(self.x264_params)]
+        
         if self.video_filters: cmd += ["-vf", ",".join(self.video_filters)]
         cmd += self.before_output
         cmd += [self._output]

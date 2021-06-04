@@ -35,6 +35,7 @@ render:
   #  You know what this is, common values are 24, 30, 60, 120, 144
   #  No really a need to go over 60, maybe only if you need to slow down some footage
   # like for using a rendered shader on school project for demoing something
+  # NVENC looks like produces gibberish with fps not 60
   fps: 60
 
   #  Super Sampling Anti Aliasing (real time mode), renders in a resolution multiplied by this
@@ -49,10 +50,27 @@ render:
 
   # Basic FFmpeg config, "advanced" mode see render_config.py
   ffmpeg:
-    preset: slow
+    
+    # [CPU]
+    #   - libx264: preferred, most compatible
+    #   - libx265: "new", HEVC
+    # [NVENC] (NVIDIA only)  quite fast not as compresse
+    #   - h264_nvenc: preferred, most compatible
+    #   - hevc_nvenc: "new", HEVC
     vcodec: libx264
-    crf: 18
+
+    # [CPU] libx264 / libx265, see https://trac.ffmpeg.org/wiki/Encode/H.264
+    profile: main 
+    preset: slow 
     tune: film
+    crf: 18
+
+    # [NVENC] See ffmpeg -hide_banner -h encoder=h264_nvenc
+    nvenc_profile: main # 264: baseline, main, high, high444p; hevc: main, main10, rext
+    nvenc_preset: slow
+    nvenc_tune: hq # High Quality
+
+    # Extra / experimental
     motionblur: false
 
 # Interactive options

@@ -39,25 +39,37 @@ def setup(ctx):
 
 	# # FFmpeg
 
+	expect.encoder = ctx.config["render"]["ffmpeg"]["vcodec"]
+
+	# Using h264_nvenc or hevc_nvenc?
+	# For more info: ffmpeg -hide_banner -h encoder=h264_nvenc
+	nvenc = "nvenc" in expect.encoder
+
 	expect.audio = ctx.get("input_audio", None)
 	expect.width = ctx.config["render"]["width"]
 	expect.height = ctx.config["render"]["height"]
 	expect.ssaa = ctx.config["render"]["ssaa"]
 	expect.final_ssaa = ctx.config["render"]["final_ssaa"]
 	expect.crf = ctx.config["render"]["ffmpeg"]["crf"]
-	expect.encoder = ctx.config["render"]["ffmpeg"]["vcodec"]
 	expect.tune = ctx.config["render"]["ffmpeg"]["tune"]
-	expect.preset = ctx.config["render"]["ffmpeg"]["preset"]
 	expect.motionblur = ctx.config["render"]["ffmpeg"]["motionblur"]
 	expect.fps = ctx.config["render"]["fps"]
 	expect.final = ctx.config["render"]["final"]
+
+	# Preset if nvenc or not
+	if nvenc:
+		expect.preset = ctx.config["render"]["ffmpeg"]["nvenc_preset"]
+		expect.profile = ctx.config["render"]["ffmpeg"]["nvenc_profile"]
+	else:
+		expect.preset = ctx.config["render"]["ffmpeg"]["preset"]
+		expect.profile = ctx.config["render"]["ffmpeg"]["profile"]
 
 	expect.output = ctx.config["render"]["output_video"]
 	if expect.output == "auto":
 		s = random_sentence.bare_bone_with_adjective().capitalize()
 		s = ' '.join([word.capitalize() for word in s.split(' ')]).replace(".", "")
 		t = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-		expect.output = f"{t} | {s}.mkv"
+		expect.output = f"{t}_{s}.mkv"
 
 	# Set output to render directory
 	if ctx.config["render"]["output_to_render_directory"]:
@@ -76,9 +88,12 @@ def setup(ctx):
 	expect.ffmpeg = ctx.interface.get_ffmpeg_wrapper()
 	if not expect.audio: expect.ffmpeg.duration(expect.duration)
 
-	# Base FFmpeg
+	# # Base FFmpeg
+
+	expect.ffmpeg.hwaccel_auto()
+
+	# "Standard" configuration
 	expect.ffmpeg \
-		.hwaccel_auto() \
 		.loglevel("info") \
 		.nostats() \
 		.override() \
@@ -89,17 +104,24 @@ def setup(ctx):
 		.input_pixel_format("rgb24") \
 		.input(expect.audio) \
 		.encoder_manual(expect.encoder) \
-		.tune_manual(expect.tune) \
-		.crf(expect.crf) \
-		.profile_main() \
 		.preset_manual(expect.preset) \
+
+	# Nvenc doesn't accept crf
+	if not nvenc:
+		expect.ffmpeg \
+		.tune_manual(expect.tune) \
+		.crf(expect.crf) 
+
+	expect.ffmpeg \
+		.profile_manual(expect.profile) \
 		.vf("vflip") \
 		.vf("format=yuv420p") \
 		.output_framerate(expect.fps) \
 		.output(str(expect.output)) \
 		.output_resolution(expect.width, expect.height) \
 
-	# Juicy x264 flags for final export
+	# Juicy x264 flags for final export, these will adjust to -x265 params
+	# if hevc or libx265 is detected
 	if expect.final:
 		ctx.context.ssaa = expect.final_ssaa
 		expect.ffmpeg \
