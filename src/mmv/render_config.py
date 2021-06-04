@@ -31,7 +31,6 @@ from tqdm import tqdm
 import datetime
 
 
-
 def setup(ctx):
 	expect = DotMap(_dynamic = False)
 	ctx.interface.externals.check_download_externals(target_externals = ["ffmpeg"])

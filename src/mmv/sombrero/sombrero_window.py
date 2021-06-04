@@ -423,7 +423,7 @@ class SombreroWindow:
             
             # # FPS
             changed, value = imgui.input_int("Target FPS", self.context.fps)
-            if changed: self.sombrero_mgl.change_fps(value)
+            if changed: self.context.change_fps(value)
 
             # List of common fps
             for fps in [24, 30, 60, 90, 120, 144, 240]:
