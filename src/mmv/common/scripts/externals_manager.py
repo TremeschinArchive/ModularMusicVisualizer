@@ -28,8 +28,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 import logging
+import json
 import sys
-
 import os
 
 
@@ -191,18 +191,20 @@ class ExternalsManager:
 
                         # Expected stuff
                         is_lgpl = "lgpl" in name
+                        is_zip = ".zip" in name
                         is_shared = "shared" in name
                         have_vulkan = "vulkan" in name
                         from_master = "N" in name
 
                         # Log what we expect
+                        logging.info(f"{debug_prefix} - :: Is ZIP file:               [{is_zip:<1}] (expect: 1)")
                         logging.info(f"{debug_prefix} - :: Is LGPL:                   [{is_lgpl:<1}] (expect: 0)")
                         logging.info(f"{debug_prefix} - :: Is Shared:                 [{is_shared:<1}] (expect: 0)")
                         logging.info(f"{debug_prefix} - :: Have Vulkan:               [{have_vulkan:<1}] (expect: 0)")
                         logging.info(f"{debug_prefix} - :: Master branch (N in name): [{from_master:<1}] (expect: 0)")
 
                         # We have a match!
-                        if not (is_lgpl + is_shared + have_vulkan + from_master):
+                        if not (is_lgpl + is_shared + have_vulkan + from_master + (not is_zip)):
                             logging.info(f"{debug_prefix} - >> :: We have a match!!")
                             download_url = item["browser_download_url"]
                             break
@@ -211,7 +213,7 @@ class ExternalsManager:
                     logging.info(f"{debug_prefix} Download URL: [{download_url}]")
 
                     # Where we'll save the compressed zip of FFmpeg
-                    ffmpeg_zip = self.downloads_dir + f"{sep}{name}"
+                    ffmpeg_zip = self.downloads_dir / name
 
                     # Download FFmpeg build
                     self.download.wget(download_url, ffmpeg_zip, f"FFmpeg v={name}")
