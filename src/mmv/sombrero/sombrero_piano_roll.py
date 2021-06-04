@@ -27,7 +27,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 from intervaltree import IntervalTree
 from intervaltree import Interval
-from functools import cache
 import logging
 import imgui
 import mido
@@ -37,7 +36,6 @@ import math
 def midi_index_to_name(note):
     return ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'][(note + 60) % 12] + str((note // 12) - 1)
 
-@cache
 def is_white_key(note): return "#" in midi_index_to_name(note)
 
 # Attributes one Midi Note will have, the usual: which, when, how much, where
