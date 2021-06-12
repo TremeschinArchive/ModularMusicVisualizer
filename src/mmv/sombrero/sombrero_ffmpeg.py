@@ -31,7 +31,7 @@ import logging
 PIPE = subprocess.PIPE
 
 
-class BetterFFmpegWrapper:
+class SombreroFFmpegWrapper:
     def __init__(self, ffmpeg_bin):
         self.ffmpeg_bin = ffmpeg_bin
         self.inputs = []
@@ -66,14 +66,14 @@ class BetterFFmpegWrapper:
         if path: self.inputs += ["-i", path]
         return self
     def input_pipe(self): self.inputs += ["-f", "rawvideo", "-i", "-"]; return self
-    def input_framerate(self, n): self.before_inputs += ["-framerate", f"{n}"]; return self
+    def input_framerate(self, n): self.before_inputs += ["-r", f"{n}"]; return self
     def input_resolution(self, width, height): self.before_inputs += ["-s", f"{width}x{height}"]; return self
     def input_pixel_format(self, f): self.before_inputs += ["-pix_fmt", f]; return self
 
     # Output
     def output(self, path): self._output = path; return self
     def output_stdout(self): self._output = "-"; return self
-    def output_framerate(self, n): self.before_output += ["-framerate", f"{n}"]; return self
+    def output_framerate(self, n): self.before_output += ["-r", f"{n}"]; return self
     def output_resolution(self, width, height): self.before_output += ["-s", f"{width}x{height}"]; return self
     def output_pixel_format(self, f): self.before_output += ["-pix_fmt", f]; return self
     def output_format(self, f): self.before_output += ["-f", f]; return self
@@ -84,18 +84,9 @@ class BetterFFmpegWrapper:
     def audio_samplerate(self, n): self.ar = ["-ar", f"{n}"]; return self
 
     # Encoder codecs
-    def encoder_libx264(self): self.encoder = ["-c:v", "libx264"]; return self
-    def encoder_libx265(self): self.encoder = ["-c:v", "libx265"]; return self
-    def encoder_h264_nvenc(self): self.encoder = ["-c:v", "h264_nvenc"]; return self
-    def encoder_h265_nvenc(self): self.encoder = ["-c:v", "h265_nvenc"]; return self
     def encoder_manual(self, encoder): self.encoder = ["-c:v", encoder]; return self
 
     # Tune
-    def tune_animation(self): self.tune = ["-tune", "animation"]; return self
-    def tune_film(self): self.tune = ["-tune", "film"]; return self
-    def tune_grain(self): self.tune = ["-tune", "grain"]; return self
-    def tune_stillimage(self): self.tune = ["-tune", "stillimage"]; return self
-    def tune_fastdecode(self): self.tune = ["-tune", "fastdecode"]; return self
     def tune_manual(self, tune): self.tune = ["-tune", tune]; return self
 
     # Profiles
@@ -104,16 +95,6 @@ class BetterFFmpegWrapper:
     def profile_manual(self, what): self.profile = ["-profile:v", what]; return self
 
     # Preset to encode
-    def preset_ultrafast(self): self.preset = ["-preset", "ultrafast"]; return self
-    def preset_superfast(self): self.preset = ["-preset", "superfast"]; return self
-    def preset_veryfast(self): self.preset = ["-preset", "veryfast"]; return self
-    def preset_faster(self): self.preset = ["-preset", "faster"]; return self
-    def preset_fast(self): self.preset = ["-preset", "fast"]; return self
-    def preset_medium(self): self.preset = ["-preset", "medium"]; return self
-    def preset_slow(self): self.preset = ["-preset", "slow"]; return self
-    def preset_slower(self): self.preset = ["-preset", "slower"]; return self
-    def preset_veryslow(self): self.preset = ["-preset", "veryslow"]; return self
-    def preset_placebo(self): self.preset = ["-preset", "placebo"]; return self
     def preset_manual(self, p): self.preset = ["-preset", p]; return self
 
     # Add a advanced x264 parameter
@@ -152,7 +133,7 @@ class BetterFFmpegWrapper:
 
     def run(self):
         cmd = self._build_command()
-        logging.info(f"[BetterFFmpegWrapper.run] Run command is: [" + '" "'.join(cmd) + "]")
+        logging.info(f"[SombreroFFmpegWrapper.run] Run command is: [" + '" "'.join(cmd) + "]")
         self.subprocess = subprocess.Popen(cmd, stdin = PIPE, stdout = PIPE)
         self.stdin = self.subprocess.stdin
         self.stdout = self.subprocess.stdout
@@ -160,7 +141,7 @@ class BetterFFmpegWrapper:
 
 # Test
 if __name__ == "__main__":
-    f = BetterFFmpegWrapper("/usr/bin/ffmpeg")
+    f = SombreroFFmpegWrapper("/usr/bin/ffmpeg")
     f \
     .loglevel("panic") \
     .hide_banner() \
@@ -173,7 +154,7 @@ if __name__ == "__main__":
 
     print("\n" + "-"*120 + "\n")
 
-    f = BetterFFmpegWrapper("/usr/bin/ffmpeg")
+    f = SombreroFFmpegWrapper("/usr/bin/ffmpeg")
     f \
     .hwaccel_auto() \
     .loglevel("panic") \

@@ -68,7 +68,7 @@ class Download:
             print(debug_prefix, f"Download file already exists, skipping")
             return
 
-        wget.download(url, str(save), bar=self.wget_progress_bar)
+        wget.download(url, save, bar=self.wget_progress_bar)
         print()
     
     # Get html content

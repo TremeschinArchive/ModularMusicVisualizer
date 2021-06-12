@@ -258,6 +258,8 @@ class SombreroShader(Searchable, SimpleBuildableChilds, SimpleEnterable):
     @property
     def Includes(self): return self.search_placeholder("Includes")[0]
     @property
+    def AfterIncludes(self): return self.search_placeholder("AfterIncludes")[0]
+    @property
     def Defines(self): return self.search_placeholder("Defines")[0]
 
 
@@ -272,10 +274,11 @@ class SombreroShaderMacros:
         PlaceHolder("Defines")(shader)
         PlaceHolder("Mappings")(shader)
         PlaceHolder("Uniforms")(shader)
-        PlaceHolder("Includes")(shader)
         for name in ["uniforms", "constants", "utils", "colors", "complex", "noise", "coordinates", "dynamic", "ray_marching"]:
             Include(Path(self.sombrero_mgl.sombrero_dir)/"glsl"/"include"/f"{name}.glsl")(shader)
+        PlaceHolder("Includes")(shader)
         PlaceHolder("UserShader")(shader)
+        PlaceHolder("AfterIncludes")(shader)
 
     # Versioned, placeholders, and sombrero specification
     def __base_shader(self) -> SombreroShader:

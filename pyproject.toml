@@ -32,14 +32,22 @@ intervaltree = "^3.1.0"
 wonderwords = "^2.2.0"
 numba = "^0.53.1"
 pygame = "^2.0.1"
+librosa = "^0.8.1"
+dearpygui = "^0.6.415"
+Cython = "^0.29.23"
+pyFFTW = "^0.12.0"
+cryptography = "^3.4.7"
+playsound = "^1.2.2"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.7.2"
+isort = "^5.8.0"
 
 [tool.poetry.scripts]
 jumpcutter = "src.run_jumpcutter:_"
 prototype = "src.prototype:main"
 shaders = "src.main:main"
+node = "src.editor.nodetest:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

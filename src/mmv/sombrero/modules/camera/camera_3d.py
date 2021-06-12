@@ -25,7 +25,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
-from mmv.sombrero.abstractions.interpolation import SmoothVariable
+from mmv.sombrero.utils.interpolation import SmoothVariable
 from mmv.sombrero.modules.base_module import BaseModule
 from enum import Enum, auto
 from math import sin, cos
