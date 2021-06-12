@@ -11,6 +11,7 @@ float mProportion(float a, float b, float c) {
 
 // Alpha composite new and old layers
 vec4 mAlphaComposite(vec4 old, vec4 new) {
+    return mix(old, new, new.a);
     vec4 src = new;
     vec4 dst = old;
 
@@ -34,6 +35,8 @@ float mAtan2(in float y, in float x) {
         return atan(y, x);
     }
 }
+
+float mAtan2(in vec2 v) { return mAtan2(v.x, v.y); }
 
 // float to bool
 bool f2bool(float f) { return f > 0.5; }

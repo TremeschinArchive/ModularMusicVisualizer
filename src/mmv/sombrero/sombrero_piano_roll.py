@@ -117,44 +117,6 @@ class MidiFile:
         self.max += 2
         self.min -= 2
 
-    # Converts this midi file set previously to audio
-    def convert_to_audio(self, source_path, save_path, musescore_binary, bitrate = 300000):
-        debug_prefix = "[MidiFile.convert_to_audio]"
-        print(f"{debug_prefix} Converting [{source_path}] -> [{save_path}]")
-        
-        # If there is already a file by the save_path name, don't convert
-        if os.path.exists(save_path):
-            print(f"{debug_prefix} Save path [{save_path}] already exists, not converting to audio and overwriting..")
-            return
-
-        # Command for converting midi -> audio
-        command = [
-            musescore_binary,
-            "-i", source_path,
-            "-o", save_path,
-            "-b", str(bitrate),  
-        ]
-
-        # Log for debug and info
-        print(f"{debug_prefix} Command to run for converting midi to audio: {command}")
-        print(f"{debug_prefix} This might take a while, be patient..")
-
-        # Don't try opening gui on headless ?
-        env = os.environ.copy()
-        if False:  # FIXME: workaround?
-            env["QT_QPA_PLATFORM"] = "offscreen"
-        
-        # Run command
-        subprocess.check_output(command, env = env)
-
-        # Assert we were successful?
-        if not os.path.exists(save_path):
-            print(f"{debug_prefix} Target save path don't exist after converting to audio [{save_path}]")
-            sys.exit(-1)
-
-        # Return
-        return save_path
-
 
 class FluidSynthUtils:
     def init(self, gain):

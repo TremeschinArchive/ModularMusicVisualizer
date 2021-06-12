@@ -25,7 +25,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
-from mmv.sombrero.abstractions.interpolation import SmoothVariable
+from mmv.sombrero.utils.interpolation import SmoothVariable
 from mmv.sombrero.modules.base_module import BaseModule
 from enum import Enum, auto
 from math import sin, cos
@@ -111,7 +111,7 @@ class Camera2D(BaseModule):
         # Target rotation to the nearest 360° multiple (current minus negative remainder if you think hard enough)
         if (key == 67) and (action == 1):
             self.messages.add(f"{debug_prefix} [2D] (c) Reset rotation to [0°]", self.ACTION_MESSAGE_TIMEOUT)
-            self.rotation.set_target(self.rotation.value - (math.remainder(self.rotation(), 360)))
+            self.rotation.set_target(self.rotation.value - (math.remainder(self.rotation.value, 360)))
 
         if (key == 90) and (action == 1):
             self.messages.add(f"{debug_prefix} [2D] (z) Reset zoom to [1x]", self.ACTION_MESSAGE_TIMEOUT)

@@ -25,20 +25,21 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
-from mmv.common.scripts.externals_manager import ExternalsManager
+import json
+import logging
+import math
+import os
+import shutil
+import struct
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+import toml
 from mmv.common.cmn_download import Download
 from mmv.common.cmn_utils import Utils
-from pathlib import Path
-import subprocess
-import tempfile
-import logging
-import struct
-import shutil
-import toml
-import math
-import json
-import sys
-import os
+from mmv.common.externals_manager import ExternalsManager
 
 sys.dont_write_bytecode = True
 
@@ -132,9 +133,9 @@ f"""Show extension\n{"="*self.terminal_width}
     # Return one (usually required) setting up encoder unless using preview window
     def get_ffmpeg_wrapper(self):
         debug_prefix = "[MMVPackageInterface.get_ffmpeg_wrapper]"
-        from mmv.common.wrappers.better_ffmpeg import BetterFFmpegWrapper
-        logging.info(f"{debug_prefix} Return BetterFFmpegWrapper")
-        return BetterFFmpegWrapper(ffmpeg_bin = self.externals.find_binary("ffmpeg"))
+        from mmv.sombrero.sombrero_ffmpeg import SombreroFFmpegWrapper
+        logging.info(f"{debug_prefix} Return SombreroFFmpegWrapper")
+        return SombreroFFmpegWrapper(ffmpeg_bin = self.externals.find_binary("ffmpeg"))
     
     # # Audio sources
 

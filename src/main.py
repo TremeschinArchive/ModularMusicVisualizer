@@ -55,6 +55,7 @@ class MMVMain:
         self.context = self.sombrero_mgl.context 
         self.context.mmv_main = self
         self.current_preset = None   
+        self.preset_to_load = "default"
         self.step = 0
 
     # "Secondary" context with easier bindings
@@ -73,8 +74,13 @@ class MMVMain:
         self.ctx = ctx
         return ctx
 
-    # Load some preset directly by name # TODO: accept file
     def load_preset(self,
+            name: str = typer.Option("default", help = "Preset name to load"),
+        ):
+        self.preset_to_load = name
+
+    # Load some preset directly by name # TODO: accept file
+    def _load_preset(self,
             name: str = typer.Option("default", help = "Preset name to load"),
             reset_time = True
         ):
@@ -89,7 +95,7 @@ class MMVMain:
         self.sombrero_mgl.finish()
 
     # Reload shaders (reload preset without resetting time)
-    def reload_shaders(self): self.load_preset(self.current_preset, reset_time = False)
+    def reload_shaders(self): self._load_preset(self.current_preset, reset_time = False)
 
     # 
     def realtime(self):
@@ -115,8 +121,7 @@ class MMVMain:
         debug_prefix = "[MMVMain._core_loop]"
         self.__get_ctx()
         self.sombrero_mgl.window.create()
-        self.load_preset("default")
-
+        self._load_preset(self.preset_to_load)
         self.true_start = time.time()
 
         for step in itertools.count(start = 0):

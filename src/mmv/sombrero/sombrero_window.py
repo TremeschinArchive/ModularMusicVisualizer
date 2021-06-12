@@ -29,9 +29,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from mmv.sombrero.utils.sombrero_window_utils import FrameTimesCounter, OnScreenTextMessages
 from moderngl_window.integrations.imgui import ModernglWindowRenderer
 from mmv.sombrero.modules.controller.joystick import Joysticks
+from mmv.sombrero.utils.glfw_keyboard_keys import KeyboardKey
 from mmv.sombrero.modules.camera.camera_2d import Camera2D
 from mmv.sombrero.modules.camera.camera_3d import Camera3D
-from mmv.sombrero.utils.keyboard_keys import KeyboardKey
 from mmv.sombrero.sombrero_context import RealTimeModes
 from moderngl_window.conf import settings
 from moderngl_window import resources
@@ -383,7 +383,7 @@ class SombreroWindow:
                     item = item.replace(".py", "")
                     changed = imgui.button(f"> {item}")
                     if changed:
-                        self.sombrero_mgl.mmv_interface.main.load_preset(item)
+                        self.sombrero_mgl.mmv_interface.main._load_preset(item)
 
             w, h = imgui.get_window_width(), imgui.get_window_height()
             imgui.set_window_position(W - (w/2), H - (h/2))
