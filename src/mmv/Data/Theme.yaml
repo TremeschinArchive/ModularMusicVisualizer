@@ -1,0 +1,48 @@
+Global:
+  mvStyleVar_WindowBorderSize: 1
+  mvThemeCol_Border: [60,60,60]
+  mvThemeCol_Separator: [60,60,60]
+
+  mvStyleVar_ScrollbarRounding: 12
+  mvStyleVar_WindowRounding: 6
+  mvStyleVar_FrameRounding: 5
+  mvStyleVar_TabRounding: 6
+
+  mvStyleVar_WindowPadding: [4, 1]
+  mvStyleVar_CellPadding: [2, 2]
+
+  mvStyleVar_WindowTitleAlign: [0.5, 0.5]
+  mvStyleVar_ScrollbarSize: 11
+  mvStyleVar_ItemSpacing: [4, 2]
+
+  mvNodeStyleVar_NodeCornerRounding: 6
+  mvNodeStyleVar_NodeBorderThickness: 0
+  mvNodeStyleVar_GridSpacing: 60
+  mvNodeStyleVar_LinkThickness: 8
+  mvNodeStyleVar_PinCircleRadius: 1
+  mvNodeStyleVar_PinLineThickness: 8
+  mvNodeStyleVar_PinOffset: 0
+  mvNodeStyleVar_LinkLineSegmentsPerLength: 20
+
+  mvThemeCol_Tab: [80, 80, 80]
+  mvThemeCol_TabActive: [80,80,255]
+  mvThemeCol_TabHovered: [0,0,255]
+
+  mvNodeCol_NodeOutline: [0,0,0,0]
+  mvNodeCol_TitleBar: [29,151,236]
+  mvNodeCol_TitleBarHovered: [120,120,120]
+  mvNodeCol_TitleBarSelected: [150,150,150]
+
+Nodes:
+  Shader:
+    mvNodeCol_TitleBar: [255,0,0]
+    mvNodeCol_Link: [255,0,0,150]
+    mvNodeCol_Pin: [255,0,0]
+  Source:
+    mvNodeCol_TitleBar: [0,0,255]
+    mvNodeCol_Link: [0,0,255,150]
+    mvNodeCol_Pin: [0,0,255]
+  Number:
+    mvNodeCol_TitleBar: [0,255,0]
+    mvNodeCol_Link: [0,255,0,150]
+    mvNodeCol_Pin: [0,255,0]

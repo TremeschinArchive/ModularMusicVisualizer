@@ -25,14 +25,12 @@ venvs
 # # MMV Skia
 
 # Assets, externals, release
-src/mmv/assets/user_assets
-src/mmv/assets/generated
-!src/mmv/assets/free_assets/*
-
-src/mmv/screenshots
-src/mmv/externals
-src/mmv/release
-src/mmv/runtime
+src/mmv/Editor/zone
+src/mmv/Screenshots
+src/mmv/Externals
+src/mmv/Release
+src/mmv/Runtime
+src/Releases
 
 unused
 src/unused
