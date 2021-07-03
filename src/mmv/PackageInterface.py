@@ -163,8 +163,10 @@ f"""Show extension\n{"="*self.terminal_width}
         if globals().get("__compiled__", None) is not None:
             self.DIR = Path(sys.argv[0]).resolve().parent
             print(f"{dpfx} Running from Nuitka compiled binary")
+            self.IS_RELEASE = True
         else:
             self.DIR = Path(os.path.dirname(os.path.abspath(__file__)))
+            self.IS_RELEASE = False
             print(f"{dpfx} Running directly from source code")
 
         print(f"{dpfx} Modular Music Visualizer Python package [__init__.py] or executable located at [{self.DIR}]")
@@ -270,9 +272,12 @@ f"""Show extension\n{"="*self.terminal_width}
         self.AssetsDir      = self.ShadersDir/"Assets"
         self.DownloadsDir   = self.Externals.ExternalsDir/"Downloads"
 
+        ONLY_IF_RELEASES = ["ScreenshotsDir", "RuntimeDir", "DownloadsDir"]
+
         # mkdirs, print where they are
         for key, value in self.__dict__.items():
             if key.endswith("Dir"):
+                if (self.IS_RELEASE) and (not key in ONLY_IF_RELEASES): continue
                 logging.info(f"{dpfx} {key} is [{value}]")
                 getattr(self, key).mkdir(parents=True, exist_ok=True)
 

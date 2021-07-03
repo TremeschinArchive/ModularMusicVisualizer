@@ -57,7 +57,8 @@ class MakeRelease:
         self.PackageInterface = mmv.mmvPackageInterface()
 
         # Releases dir
-        self.DIR = Path(os.path.dirname(os.path.abspath(__file__)))
+        # self.DIR = Path(os.path.dirname(os.path.abspath(__file__)))
+        self.DIR = self.PackageInterface.DIR
         self.ReleasesDir = self.DIR/"Releases"
         self.ReleasesDirLinux = self.ReleasesDir/"Linux"
         self.ReleasesDirWindows = self.ReleasesDir/"Windows"
@@ -72,7 +73,7 @@ class MakeRelease:
             if path.exists(): shutil.rmtree(str(path), ignore_errors=True)
             path.mkdir(exist_ok=True)
 
-        self.Target = self.DIR/"RunEditor.py"
+        self.Target = self.DIR/".."/"RunEditor.py"
         self.TargetBasename = "RunEditor"
         self.Now = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         self.Commit = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).decode("utf-8").strip().upper()
@@ -215,12 +216,12 @@ class MakeRelease:
 
         # Rename the binary to the target final one
         self.CopyRebaseDirToRelease(self.PackageInterface.DataDir)
-        self.CopyRebaseDirToRelease(self.PackageInterface.EditorDir/"Nodes")
+        self.CopyRebaseDirToRelease(self.PackageInterface.DataDir/"Nodes")
 
         if platform == "Linux":
-            os.rename(self.CurrentMaking/(self.TargetBasename+".bin"), self.CurrentMaking/"Modular Editor.AppImage")
+            os.rename(self.CurrentMaking/(self.TargetBasename+".bin"), self.CurrentMaking/"ModularEditor.AppImage")
         elif platform == "Windows":
-            os.rename(self.CurrentMaking/(self.TargetBasename+".exe"), self.CurrentMaking/"Modular Editor.exe")
+            os.rename(self.CurrentMaking/(self.TargetBasename+".exe"), self.CurrentMaking/"ModularEditor.exe")
 
         # Zip
         self.Finish(

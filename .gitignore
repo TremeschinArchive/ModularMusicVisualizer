@@ -28,9 +28,8 @@ venvs
 src/mmv/Editor/zone
 src/mmv/Screenshots
 src/mmv/Externals
-src/mmv/Release
+src/mmv/Releases
 src/mmv/Runtime
-src/Releases
 
 unused
 src/unused
