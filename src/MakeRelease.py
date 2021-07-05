@@ -155,7 +155,7 @@ class MakeRelease:
             PYVERSION = "3.9.5"
             PythonInstaller = self.PackageInterface.Download.wget(
                 f"https://www.python.org/ftp/python/{PYVERSION}/python-{PYVERSION}-amd64.exe",
-                str(self.PackageInterface.Externals.ExternalsDownloadDir/f"Python-{PYVERSION}-AMD64.exe"),
+                str(self.PackageInterface.Externals.ExternalsDirDownloads/f"Python-{PYVERSION}-AMD64.exe"),
                 "Python 3.9.5 Windows 64 bits")
             
             # Install Python

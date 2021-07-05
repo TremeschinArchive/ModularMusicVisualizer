@@ -38,6 +38,7 @@ from mmv.Common.Utils import Utils
 
 class AvailableExternals:
     FFmpeg = "FFmpeg"
+    ListOfAll = [FFmpeg]
 
 
 class ExternalsManager:
@@ -46,24 +47,19 @@ class ExternalsManager:
         self.__dict__ = PackageInterface.__dict__
 
         # Directories
-        self.ExternalsDir         = self.DIR/"Externals"
-        self.ExternalsDownloadDir = self.ExternalsDir/"Downloads"
-        self.ExternalsDirLinux    = self.ExternalsDir/"Linux"
-        self.ExternalsDirWindows  = self.ExternalsDir/"Windows"
-        self.ExternalsDirMacOS    = self.ExternalsDir/"MacOS"
-        self.AvailableExternals = AvailableExternals
+        self.ExternalsDir          = self.DIR/"Externals"
+        self.ExternalsDirDownloads = self.ExternalsDir/"Downloads"
+        self.ExternalsDirLinux     = self.ExternalsDir/"Linux"
+        self.ExternalsDirWindows   = self.ExternalsDir/"Windows"
+        self.ExternalsDirMacOS     = self.ExternalsDir/"MacOS"
 
         # mkdirs, print where they are
         for key, value in self.__dict__.items():
-            if key.endswith("Dir") and key.startswith("Externals"):
+            if key.startswith("ExternalsDir"):
                 logging.info(f"{dpfx} {key} is [{value}]")
                 getattr(self, key).mkdir(parents=True, exist_ok=True)
 
-        # Windoe juuuust in case
-        if self.os == "Windows":
-            logging.info(f"{dpfx} Appending the Externals directory to system path juuuust in case...")
-            sys.path.append(self.ExternalsDir)
-
+        self.AvailableExternals = AvailableExternals
         self.AssertExternalsInPath()
 
     # Add externals directory to PATH recursively
@@ -81,7 +77,7 @@ class ExternalsManager:
         }.get(self.os)
 
     # Download a external from somewhere, extract, put on right path
-    def DownloadInstallExternal(self, TargetExternals=[]):
+    def DownloadInstallExternal(self, TargetExternals=[], _ForceNotFound=False):
         dpfx = "[ExternalsManager.DownloadInstallExternal]"
         TargetExternals = Utils.ForceList(TargetExternals)
 
@@ -90,12 +86,12 @@ class ExternalsManager:
             logging.info(f"{dpfx} Managing external [{TargetExternal}]")
 
             if TargetExternal == AvailableExternals.FFmpeg:
-                if not Utils.FindBinary("ffmpeg"):
+                if not Utils.FindBinary("ffmpeg") or _ForceNotFound:
                     if self.os == "MacOS": raise RuntimeError("Please install [ffmpeg] package from Homebrew.")
                     Info = (
                         "We are downloading FFmpeg, (\"A complete, cross-platform solution to record, "
                         "convert and stream audio and video.\", https://ffmpeg.org/). it is responsible "
-                        "for encoding the final videos, reading audio file streams. Fundamental for MMV"
+                        "for encoding the final videos, reading audio file streams. Fundamental for MMV")
                     logging.info(f"{dpfx} {Info}")
 
                     # BtbN FFmpeg build FTW!!
@@ -109,7 +105,7 @@ class ExternalsManager:
                         WantInName = ["lgpl", "N"]
                         DontWantInName = ["shared"]
 
-                        if self.os == "Linux": WantInName += ["linux64", ".tar.xz"]
+                        if self.os == "Linux": WantInName += ["linux64"]
                         if self.os == "Windows": WantInName += ["win64", ".zip"]
                         DownloadURL = None
 
@@ -125,7 +121,7 @@ class ExternalsManager:
                     if DownloadURL is None: raise RuntimeError("Couldn't match a version of FFmpeg to download")
                             
                     # Download the ZIP, extract
-                    FFmpegZIP = str(self.ExternalsDownloadDir/AssetName)
+                    FFmpegZIP = str(self.ExternalsDirDownloads/AssetName)
                     Download.DownloadFile(URL=DownloadURL, SavePath=FFmpegZIP, Name=f"FFmpeg v={AssetName}", Info=Info)
                     Download.ExtractFile(FFmpegZIP, self.ExternalsDirThisPlatform)
 
