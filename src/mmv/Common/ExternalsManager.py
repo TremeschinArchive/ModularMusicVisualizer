@@ -32,214 +32,102 @@ import logging
 import os
 import sys
 
+from mmv.Common.Download import Download
+from mmv.Common.Utils import Utils
+
+
+class AvailableExternals:
+    FFmpeg = "FFmpeg"
+
 
 class ExternalsManager:
-    def __init__(self, mmv_package_interface):
+    def __init__(self, PackageInterface):
         dpfx = "[ExternalsManager.__init__]"
-        self.mmv_package_interface = mmv_package_interface
-        self.__dict__ = self.mmv_package_interface.__dict__
+        self.__dict__ = PackageInterface.__dict__
 
-        # Externals
-        self.ExternalsDir = self.DIR/"Externals"
-        self.ExternalsDir.mkdir(parents = True, exist_ok = True)
-        logging.info(f"{dpfx} Externals dir is [{self.ExternalsDir}]")
-
-        # # External dependencies where to append for PATH
-
-        # Externals directory for Linux
+        # Directories
+        self.ExternalsDir         = self.DIR/"Externals"
         self.ExternalsDownloadDir = self.ExternalsDir/"Downloads"
-        self.ExternalsDownloadDir.mkdir(parents=True, exist_ok=True)
+        self.ExternalsDirLinux    = self.ExternalsDir/"Linux"
+        self.ExternalsDirWindows  = self.ExternalsDir/"Windows"
+        self.ExternalsDirMacOS    = self.ExternalsDir/"MacOS"
+        self.AvailableExternals = AvailableExternals
 
-        # Externals directory for Linux
-        self.ExternalsDirLinux = self.ExternalsDir/"Linux"
-        if self.os == "linux":
-            logging.info(f"{dpfx} Externals directory for Linux OS is [{self.ExternalsDirLinux}]")
-            self.ExternalsDirLinux.mkdir(parents = True, exist_ok = True)
-
-        # Externals directory for Windows
-        self.ExternalsDirWindows = self.ExternalsDir/"Windows"
-        if self.os == "windows":
-            logging.info(f"{dpfx} Externals directory for Windows OS is [{self.ExternalsDirWindows}]")
-            self.ExternalsDirWindows.mkdir(parents = True, exist_ok = True)
-
-        # Externals directory for macOS
-        self.ExternalsDirMacOS = self.ExternalsDir/"MacOS"
-        if self.os == "macos":
-            logging.info(f"{dpfx} Externals directory for Darwin OS (macOS) is [{self.ExternalsDirMacOS}]")
-            self.ExternalsDirMacOS.mkdir(parents = True, exist_ok = True)
-
-        # # This native platform externals dir
-        self.ExternalsDir_this_platform = self.__get_platform_external_dir(self.os)
-        logging.info(f"{dpfx} This platform externals directory is: [{self.ExternalsDir_this_platform}]")
+        # mkdirs, print where they are
+        for key, value in self.__dict__.items():
+            if key.endswith("Dir") and key.startswith("Externals"):
+                logging.info(f"{dpfx} {key} is [{value}]")
+                getattr(self, key).mkdir(parents=True, exist_ok=True)
 
         # Windoe juuuust in case
-        if self.os == "windows":
+        if self.os == "Windows":
             logging.info(f"{dpfx} Appending the Externals directory to system path juuuust in case...")
             sys.path.append(self.ExternalsDir)
 
-        # Update the externals search path (create one in this case)
-        self.update_externals_search_path()
+        self.AssertExternalsInPath()
+
+    # Add externals directory to PATH recursively
+    def AssertExternalsInPath(self):
+        for dir in Utils.AllSubdirectories(self.ExternalsDirThisPlatform):
+            if not str(dir) in sys.path: sys.path.append(str(dir))
 
     # Get the target externals dir for this platform
-    def __get_platform_external_dir(self, platform):
-        dpfx = "[mmvPackageInterface.__get_platform_external_dir]"
+    @property
+    def ExternalsDirThisPlatform(self):
+        return {
+            "Linux": self.ExternalsDirLinux,
+            "Windows": self.ExternalsDirWindows,
+            "MacOS": self.ExternalsDirMacOS,
+        }.get(self.os)
 
-        # # This platform externals dir
-        ExternalsDir = {
-            "linux": self.ExternalsDirLinux,
-            "windows": self.ExternalsDirWindows,
-            "macos": self.ExternalsDirMacOS,
-        }.get(platform)
+    # Download a external from somewhere, extract, put on right path
+    def DownloadInstallExternal(self, TargetExternals=[]):
+        dpfx = "[ExternalsManager.DownloadInstallExternal]"
+        TargetExternals = Utils.ForceList(TargetExternals)
 
-        # mkdir dne just in case cause we asked for this?
-        ExternalsDir.mkdir(parents = True, exist_ok = True)
+        # Iterate on stuff we want to download
+        for TargetExternal in TargetExternals:
+            logging.info(f"{dpfx} Managing external [{TargetExternal}]")
 
-        # log action
-        logging.info(f"{dpfx} Return external dir for platform [{platform}] -> [{ExternalsDir}]")
-        return ExternalsDir
+            if TargetExternal == AvailableExternals.FFmpeg:
+                if not Utils.FindBinary("ffmpeg"):
+                    if self.os == "MacOS": raise RuntimeError("Please install [ffmpeg] package from Homebrew.")
+                    Info = (
+                        "We are downloading FFmpeg, (\"A complete, cross-platform solution to record, "
+                        "convert and stream audio and video.\", https://ffmpeg.org/). it is responsible "
+                        "for encoding the final videos, reading audio file streams. Fundamental for MMV"
+                    logging.info(f"{dpfx} {Info}")
 
-    # Update the self.EXTERNALS_SEARCH_PATH to every recursive subdirectory on the platform's externals dir
-    def update_externals_search_path(self):
-        dpfx = "[mmvPackageInterface.update_externals_search_path]"
-
-        # The subdirectories on this platform externals folder
-        externals_subdirs = self.utils.get_recursively_all_subdirectories(self.ExternalsDir_this_platform)
-
-        # When using some function like Utils.get_executable_with_name, it have an argument
-        # called extra_paths, add this for searching for the full externals directory.
-        # Preferably use this interface methods like FindBinary instead
-        self.EXTERNALS_SEARCH_PATH = [self.ExternalsDir_this_platform]
-
-        # If we do have subdirectories on this platform externals then append to it
-        if externals_subdirs: self.EXTERNALS_SEARCH_PATH += externals_subdirs
-
-    # Search for something in system's PATH, also searches for the externals folder
-    # Don't append the extra .exe because Linux, macOS doesn't have these, returns False if no binary was found
-    def FindBinary(self, binary):
-        dpfx = "[mmvPackageInterface.FindBinary]"
-
-        # Append .exe for Windows
-        if (self.os == "windows") and (not binary.endswith(".exe")):
-            binary += ".exe"
-
-        # Log action
-        logging.info(f"{dpfx} Finding binary in PATH and EXTERNALS directories: [{binary}]")
-        return self.utils.get_executable_with_name(binary, extra_paths = self.EXTERNALS_SEARCH_PATH)
-
-    # Make sure we have some target Externals, downloads latest release for them.
-    # Possible values for target are: ["ffmpeg", "musescore"]
-    def check_download_externals(self, target_externals = [], platform = None):
-        dpfx = "[mmvPackageInterface.check_download_externals]"
-
-        # Overwrite os if user set to a specific one
-        if platform is None:
-            platform = self.os
-        else:
-            # Error assertion, only allow linux, macos or windows target os
-            valid = ["linux", "macos", "windows"]
-            if not platform in valid:
-                err = f"Target os [{platform}] not valid: should be one of {valid}"
-                logging.error(f"{dpfx} {err}")
-                raise RuntimeError(err)
-
-        # Force the externals argument to be a list
-        target_externals = self.utils.force_list(target_externals)
-
-        # Log action
-        logging.info(f"{dpfx} Checking externals {target_externals} for os = [{platform}]")
-
-        # Short hand
-        sep = os.path.sep
-        
-        # The target externals dir for this platform, it must be windows if we're here..
-        target_ExternalsDir = self.__get_platform_external_dir(platform)
-
-        # For each target external
-        for external in target_externals:
-            dpfx = "[mmvPackageInterface.check_download_externals]"
-            logging.info(f"{dpfx} Checking / downloading external: [{external}] for platform [{platform}]")
-            
-            # # FFmpeg / FFprobe
-
-            if external == "ffmpeg":
-                dpfx = f"[mmvPackageInterface.check_download_externals({external})]"
-
-                # We're on Linux / macOS so checking ffmpeg external dependency on system's path
-                if platform in ["linux", "macos"]:
-                    self.__cant_micro_manage_external_for_you(binary = "ffmpeg")
-                    continue
-                
-                # If we don't have FFmpeg binary on externals dir
-                if not self.FindBinary("ffmpeg.exe"):
-
-                    # Get the latest release number of ffmpeg
-                    repo = "https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest"
-                    logging.info(f"{dpfx} Getting latest release info on repository: [{repo}]")
-                    ffmpeg_release = json.loads(self.Download.get_html_content(repo))
-
-                    # The assets (downloadable stuff)
-                    assets = ffmpeg_release["assets"]
-                    logging.info(f"{dpfx} Available assets to download (checking for non shared, gpl, non vulkan release):")
+                    # BtbN FFmpeg build FTW!!
+                    FFmpegBuilds = json.loads(Download.GetHTMLContent(
+                        "https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest"))
 
                     # Parsing the version we target and want
-                    for item in assets:
+                    for Asset in FFmpegBuilds["assets"]:
+                        AssetName = Asset["name"]
 
-                        # The name of the 
-                        name = item["name"]
-                        logging.info(f"{dpfx} - [{name}]")
+                        WantInName = ["lgpl", "N"]
+                        DontWantInName = ["shared"]
 
-                        # Expected stuff
-                        is_lgpl = "lgpl" in name
-                        is_zip = ".zip" in name
-                        is_shared = "shared" in name
-                        have_vulkan = "vulkan" in name
-                        from_master = "N" in name
+                        if self.os == "Linux": WantInName += ["linux64", ".tar.xz"]
+                        if self.os == "Windows": WantInName += ["win64", ".zip"]
+                        DownloadURL = None
 
-                        # Log what we expect
-                        logging.info(f"{dpfx} - :: Is ZIP file:               [{is_zip:<1}] (expect: 1)")
-                        logging.info(f"{dpfx} - :: Is LGPL:                   [{is_lgpl:<1}] (expect: 0)")
-                        logging.info(f"{dpfx} - :: Is Shared:                 [{is_shared:<1}] (expect: 0)")
-                        logging.info(f"{dpfx} - :: Have Vulkan:               [{have_vulkan:<1}] (expect: 0)")
-                        logging.info(f"{dpfx} - :: Master branch (N in name): [{from_master:<1}] (expect: 0)")
+                        WantOK = all([thing in AssetName for thing in WantInName])
+                        DontWantOK = not all([thing in AssetName for thing in DontWantInName])
 
                         # We have a match!
-                        if not (is_lgpl + is_shared + have_vulkan + from_master + (not is_zip)):
-                            logging.info(f"{dpfx} - >> :: We have a match!!")
-                            download_url = item["browser_download_url"]
+                        if WantOK and DontWantOK:
+                            logging.info(f"{dpfx} We have a match, [{AssetName}]")
+                            DownloadURL = Asset["browser_download_url"]
                             break
 
-                    # Where we'll download from
-                    logging.info(f"{dpfx} Download URL: [{download_url}]")
+                    if DownloadURL is None: raise RuntimeError("Couldn't match a version of FFmpeg to download")
+                            
+                    # Download the ZIP, extract
+                    FFmpegZIP = str(self.ExternalsDownloadDir/AssetName)
+                    Download.DownloadFile(URL=DownloadURL, SavePath=FFmpegZIP, Name=f"FFmpeg v={AssetName}", Info=Info)
+                    Download.ExtractFile(FFmpegZIP, self.ExternalsDirThisPlatform)
 
-                    # Where we'll save the compressed zip of FFmpeg
-                    ffmpeg_zip = str(self.ExternalsDownloadDir/name)
-
-                    # Download FFmpeg build
-                    self.Download.wget(download_url, ffmpeg_zip, f"FFmpeg v={name}")
-
-                    # Extract the files
-                    self.Download.extract_zip(ffmpeg_zip, target_ExternalsDir)
-
-                else:  # Already have the binary
-                    logging.info(f"{dpfx} Already have [ffmpeg] binary in externals / system path!!")
-
-            # Update the externals search path because we downloaded stuff
-            self.update_externals_search_path()
-
-    # Ensure we have an external dependency we can't micro manage because too much entropy
-    def __cant_micro_manage_external_for_you(self, binary, help_fix = None):
-        dpfx = "[mmvPackageInterface.__cant_micro_manage_external_for_you]"
-
-        logging.warning(f"{dpfx} You are using Linux or macOS, please make sure you have [{binary}] package binary installed on your distro or on homebrew, we'll just check for it now, can't continue if you don't have it..")
-        
-        # Can't continue
-        if not self.FindBinary(binary):
-            logging.error(f"{dpfx} Couldn't find lowercase [{binary}] binary on PATH, install from your Linux distro package manager / macOS homebrew, please install it")
-
-            # Log any extra help we give the user
-            if help_fix is not None:
-                logging.error(f"{dpfx} {help_fix}")
-
-            # Exit with non zero error code
-            sys.exit(-1)
-    
+        # Update the externals search path because we downloaded stuff
+        self.AssertExternalsInPath()

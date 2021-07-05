@@ -81,6 +81,9 @@ class SombreroWindow:
     def create(self):
         dpfx = "[SombreroWindow.create]"
 
+        # On Wayland one must use XWayland because ModernGL haven't implemented EGL yet
+        if self.mmv_interface.os == "linux": os.environ["XDG_SESSION_TYPE"] = "x11"
+
         # Headless we disable vsync because we're rendering only..?
         # And also force aspect ratio just in case (strict option)
         if self.context.window_headless: settings.WINDOW["aspect_ratio"] = self.context.width / self.context.height

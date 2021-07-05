@@ -29,12 +29,13 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
 import sys
+import tarfile
 import time
 import zipfile
+from pathlib import Path
 
 import requests
-import wget
-from pyunpack import Archive
+from dotmap import DotMap
 from tqdm import tqdm
 
 import mmv.Common.AnyLogger
@@ -42,54 +43,76 @@ import mmv.Common.AnyLogger
 
 class Download:
 
-    def wget_progress_bar(self, current, total, width=80):
-        # current         \propto time.time() - startdownload 
-        # total - current \propto eta
-        # eta = (total-current)*(time.time()-startdownload)) / current
+    @staticmethod
+    def GetHTMLContent(URL):
+        logging.info(f"[Download.GetHTMLContent] Getting content from [{URL}]")
+        return requests.get(URL).text
 
-        try: # div by zero
-            eta = int(( (time.time() - self.start) * (total - current) ) / current)
-        except Exception:
-            eta = 0
+    # Download some file to a SavePath (file).
+    def DownloadFile(URL, SavePath, Name="Downloading File", CheckSizes=True, Callback=lambda _:_, ChunkSize=32768, Info=""):
 
-        avgdown = ( current / (time.time() - self.start) ) / 1024
+        # Set up save path
+        SavePath = Path(SavePath).expanduser().resolve()
+        SavePath.parent.mkdir(exist_ok=True)
 
-        currentpercentage = int(current / total * 100)
-        
-        print("\r Downloading file [{}]: [{}%] [{:.2f} MB / {:.2f} MB] ETA: [{} sec] AVG: [{:.2f} kB/s]".format(self.download_name, currentpercentage, current/1024/1024, total/1024/1024, eta, avgdown), end='', flush=True)
+        logging.info(f"[Download.DownloadFile] Downloading [{Name}]: [{URL}] => [{SavePath}]")
 
-    def wget(self, url, save, name="Undefined"):
-        dpfx = "[Download.wget]"
+        if not CheckSizes:
+            if SavePath.exists():
+                return SavePath
 
-        self.download_name = name
-        self.start = time.time()
+        # Get info on download, we gotta make sure its target size is the same as already downloaded
+        # one if the file existed prior to this, this means incomplete download
+        DownloadStream = requests.get(URL, stream=True)
+        FileSize = int(DownloadStream.headers.get('content-length', 0))
 
-        print(dpfx, f"Get file from URL [{url}] saving to [{save}]")
+        if SavePath.exists():
+            DownloadedSize = SavePath.stat().st_size
+            if DownloadedSize == FileSize:
+                logging.info(f"[Download.DownloadFile] Download [{Name}] Already exists [{SavePath}]")
+                return SavePath
+            else:
+                logging.info(f"[Download.DownloadFile] Download [{Name}] Existed in [{SavePath}] but sizes differ [{DownloadedSize}/{FileSize}], redownloading..")
+            
+        # Progress bar in bits scale
+        ProgressBar = tqdm(desc=f"Downloading [{Name}]", total=FileSize, unit='iB', unit_scale=True)
 
-        if os.path.exists(save):
-            print(dpfx, f"Download file already exists, skipping")
-            return save
+        # Context status
+        Status = DotMap(_dynamic=False)
+        Status.FileSize = FileSize
+        Status.SavePath = SavePath
+        Status.Downloaded = 0
+        Status.Name = Name
+        Status.Info = Info
 
-        wget.download(url, save, bar=self.wget_progress_bar)
-        print()
-        return save
-    
-    # Get html content
-    def get_html_content(self, url):
-        dpfx = "[Download.get_html_content]"
+        # Open, keep reading
+        with open(SavePath, 'wb') as DownloadedFile:
+            for NewDataChunk in DownloadStream.iter_content(ChunkSize):
+                Status.Downloaded += len(NewDataChunk)
+                ProgressBar.update(len(NewDataChunk))
+                DownloadedFile.write(NewDataChunk)
+                Callback(Status)
 
-        print(dpfx, f"Getting content from [{url}]")
+        ProgressBar.close()
+        return SavePath
 
-        r = requests.get(url)
-        return r.text
+    # Extract one zip, tar file to a target directory, more like attempt to do so
+    def ExtractFile(PackedFile, UnpackDir):
+        logging.info(f"[Download.ExtractFile] Extract file [{PackedFile}] => [{UnpackDir}]")
 
-    # Extract a compressed file
-    def extract_file(self, src, dst):
-        dpfx = "[Download.extract_file]"
-        print(dpfx, f"Extracing [{src}] -> [{dst}]")
+        # Is it a zip?
+        try:
+            with zipfile.ZipFile(PackedFile, 'r') as ZippedFile:
+                ZippedFile.extractall(UnpackDir)
+            return
+        except zipfile.BadZipFile: pass
 
-        Archive(src).extractall(dst)
-    
-    def extract_zip(self, src, dst):
-        with zipfile.ZipFile(src, 'r') as zipped:
-            zipped.extractall(dst)
+        # Is it a tar?
+        try:
+            with tarfile.open(PackedFile) as TarFile:
+                TarFile.extractall(UnpackDir)
+            return
+        except Exception: pass
+
+        raise RuntimeError(f"No idea how to extract [{PackedFile}]")
+

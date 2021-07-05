@@ -47,10 +47,35 @@ import mmv.Common.AnyLogger
 
 
 class Utils:
+    # Get the desired name from a dict matching against os.name
+    @staticmethod
+    def GetOS():
+        return {
+            "posix": "Linux",
+            "nt": "Windows",
+            "darwin": "MacOS"
+        }.get(os.name)
+
+    @staticmethod
+    def AllSubdirectories(path):
+        return [item for item in Path(path).rglob("*") if item.is_dir]
+
     @staticmethod
     def AssignLocals(data):
         for key, value in data.items():
             if key != "self": data["self"].__dict__[key] = value
+
+    @staticmethod
+    def FindBinary(binary, platform="Linux"):
+        if (platform == "Windows") and (not binary.endswith(".exe")):
+            binary += ".exe"
+        return shutil.which(binary)
+
+    @staticmethod
+    def ForceList(data):
+        if not isinstance(data, list):
+            data = [data]
+        return data
 
     # # "Old" / to rewrite
 
@@ -102,30 +127,7 @@ class Utils:
 
         return r
     
-    # The name says it all, given a path get all of its subdirectories
-    # Returns empty list "None" --> [] if there is no directory
-    def get_recursively_all_subdirectories(self, path, silent = False):
-        dpfx = "[Utils.get_recursive_subdirectories]"
-
-        # Log action
-        if not silent:
-            logging.info(f"{dpfx} Get recursively all subdirectories of path [{path}]")
-
-        # The subdirectories we find
-        subdirectories = []
-
-        # Walk on the path
-        for root, directories, files in os.walk(path):
-            
-            # Append the root + subdir for every subdir (if there is any)
-            for directory in directories:
-                subdirectories.append(os.path.join(root, directory))
-        
-        # Hard debug
-        if not silent:
-            logging.debug(f"{dpfx} Return subdirectories {subdirectories}")
-
-        return subdirectories
+    
 
     # Get operating system we're running on
     # FIXME: Need testing / get edge cases like:

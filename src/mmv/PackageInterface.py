@@ -43,6 +43,7 @@ from mmv.Common.ExternalsManager import ExternalsManager
 from mmv.Common.Utils import Utils
 from mmv.Editor import mmvEditor
 from mmv.Sombrero.SombreroFFmpeg import SombreroFFmpegWrapper
+
 # from mmv.Sombrero.SombreroMain import SombreroMGL
 
 sys.dont_write_bytecode = True
@@ -142,8 +143,8 @@ f"""Show extension\n{"="*self.terminal_width}
         return SombreroFFmpegWrapper(ffmpeg_bin = self.FFmpegBinary)
 
     # Main interface class, mainly sets up root dirs, get config, distributes classes
-    # Send platform = "windows", "macos", "linux" for forcing a specific one
-    def __init__(self, platform = None, **kwargs) -> None:
+    # Send ForcePlatform = "Windows", "MacOS", "Linux" for forcing a specific one
+    def __init__(self, ForcePlatform=None, **kwargs) -> None:
         dpfx = "[mmvPackageInterface.__init__]"
         self.VersionNumber = "4.1"
         self.Version = f"{self.VersionNumber}: Node Editor"
@@ -171,9 +172,6 @@ f"""Show extension\n{"="*self.terminal_width}
 
         print(f"{dpfx} Modular Music Visualizer Python package [__init__.py] or executable located at [{self.DIR}]")
 
-        # Classes
-        self.utils = Utils()
-
         # # # Logging 
 
         # Get logger and empty the list
@@ -195,7 +193,7 @@ f"""Show extension\n{"="*self.terminal_width}
 
         # Hard coded where the log file will be located
         # this is only valid for the last time we run this software
-        self.LOG_FILE = self.DIR / "LastLog.log"
+        self.LOG_FILE = self.DIR / "LastLog.txt"
 
         # Reset the log file
         self.LOG_FILE.write_text("")
@@ -238,49 +236,38 @@ f"""Show extension\n{"="*self.terminal_width}
         # # The operating system we're on, one of "linux", "windows", "macos"
 
         # Get the desired name from a dict matching against os.name
-        if platform is None:
-            self.os = {
-                "posix": "linux",
-                "nt": "windows",
-                "darwin": "macos"
-            }.get(os.name)
+        if ForcePlatform is None:
+            self.os = Utils.GetOS()
         else:
-            logging.info(f"{dpfx} Overriding platform OS to = [{platform}]")
-            self.os = platform
+            logging.info(f"{dpfx} Overriding platform OS to = [{ForcePlatform}]")
+            self.os = ForcePlatform
 
         # Log which OS we're running
         logging.info(f"{dpfx} Running Modular Music Visualizer on Operating System: [{self.os}]")
-
-        # # Create interface's classes
-        self.Download = Download()
 
         # # Directories
 
         # NOTE: Extend this package interface with the externals manager
         self.Externals = ExternalsManager(self)
+        self.Download = Download
 
         # Set up directories
         self.DataDir        = self.DIR/"Data"
-        self.ShadersDir     = self.DIR/"Data"
-        self.EditorDir      = self.DIR/"Editor"
-        self.SombreroDir    = self.DIR/"Sombrero"
         self.ScreenshotsDir = self.DIR/"Screenshots"
         self.RendersDir     = self.DIR/"Renders"
         self.RuntimeDir     = self.DIR/"Runtime"
         self.NodesDir       = self.DataDir/"Nodes"
         self.ImageDir       = self.DataDir/"Image"
-        self.AssetsDir      = self.ShadersDir/"Assets"
+        self.ShadersDir     = self.DataDir/"Shaders"
+        self.AssetsDir      = self.DataDir/"Assets"
         self.DownloadsDir   = self.Externals.ExternalsDir/"Downloads"
-
-        ONLY_IF_RELEASES = ["ScreenshotsDir", "RuntimeDir", "DownloadsDir"]
 
         # mkdirs, print where they are
         for key, value in self.__dict__.items():
             if key.endswith("Dir"):
-                if (self.IS_RELEASE) and (not key in ONLY_IF_RELEASES): continue
                 logging.info(f"{dpfx} {key} is [{value}]")
                 getattr(self, key).mkdir(parents=True, exist_ok=True)
 
         # Get the binaries
-        self.FFmpegBinary = self.Externals.FindBinary("ffmpeg")
-        self.FFplayBinary = self.Externals.FindBinary("ffplay")
+        self.FFmpegBinary = Utils.FindBinary("ffmpeg")
+        self.FFplayBinary = Utils.FindBinary("ffplay")

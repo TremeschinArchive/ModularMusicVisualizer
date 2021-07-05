@@ -8,20 +8,20 @@ Copyright (c) 2020 - 2021,
 
 ===============================================================================
 
-Purpose: Make a MMV release binary targeting a certain platform.
+Purpose: Make a MMV release binary targeting a certain TargetPlatform.
 
     Host (the one who makes the release):
         Linux:
-            - [x] Linux (native, AppImage)
-            - [x] Windows (wine, winetricks)
-            - [ ] MacOS (prob won't happen)
+            - [x] Linux (Native, AppImage)
+            - [x] Windows (uses wine, winetricks)
+            - [ ] MacOS (Maybe with DarlingHQ)
         Windows:
             - [ ] Windows (TODO)
-            - [ ] Linux (Maybe with WSL)
-            - [ ] MacOS (lol)
-        MacOS:
-            - [ ] Windows (maybe wine, untested)
-            - [ ] Linux
+            - [-] Linux (Nah, Maybe with WSL)
+            - [-] MacOS (lol)
+        MacOS (releases not really supported):
+            - [?] Windows (maybe wine, untested)
+            - [?] Linux
             - [ ] MacOS (could work, don't have equip to test)
 
 ===============================================================================
@@ -40,6 +40,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 import datetime
+import logging
 import os
 import shutil
 import subprocess
@@ -49,6 +50,7 @@ from pathlib import Path
 from subprocess import PIPE
 
 import mmv
+from mmv.Common.Utils import Utils
 
 sys.dont_write_bytecode = True
 
@@ -63,7 +65,8 @@ class MakeRelease:
         self.ReleasesDirLinux = self.ReleasesDir/"Linux"
         self.ReleasesDirWindows = self.ReleasesDir/"Windows"
         self.ReleasesDirMacOS = self.ReleasesDir/"MacOS"
-        self.WineprefixDir = Path("~/.mmv").expanduser().resolve()
+        self.WineprefixDir = Path("~/.mmv-wine").expanduser().resolve()
+        self.DarlingprefixDir = Path("~/.mmv-darling").expanduser().resolve()
 
         # Make Releases dir
         self.ReleasesDir.mkdir(exist_ok=True)
@@ -104,32 +107,38 @@ class MakeRelease:
         # self.SubprocessRun(["/bin/zip", "-r", "-9", str(final_zip), str(to_compress)])
 
     # Needs:
-    #   git, wine, winetricks
+    #   LinuxHost:   python, git, wine, winetricks, ccache, chrpath
+    #   WindowsHost: python, vcrun2006
     #
     # Must NOT be in some activated venv when making for Windows
     # Please execute a plain Python bin in this file, if run from poetry it'll always reinstall the deps
     #
     # For making releases for Windows, find a 64bit "mfc42.dll" and put on Externals dir
     #
-    def Make(self, platform):
-        if platform == "MacOS": raise NotImplementedError("MacOS builds not supported")
+    def Make(self, TargetPlatform, HostPlatform, NJobs=6):
         dpfx = "[MakeRelease.Make]"
         self.CurrentMaking = {
             "Linux": self.ReleasesDirLinux,
             "Windows": self.ReleasesDirWindows,
             "MacOS": self.ReleasesDirMacOS
-        }[platform]
+        }[TargetPlatform]
+
+        if (HostPlatform == "MacOS") or (TargetPlatform == "MacOS"):
+            raise RuntimeError("MacOS releases not supported, run directly from source and pray.")
+        if (HostPlatform == "Windows") and (TargetPlatform == "Linux"):
+            raise RuntimeError("Consider using WSL, though better to go native Linux anyways..")
 
         self.cwd = self.DIR.parent
 
-        command_prefix = []
+        # This is for like, if making for Windows under a Linux Host, we run through wine
+        CommandPrefix = []
         python = "python"
         
-        # Windows specific "bootstrap"
-        if platform == "Windows":
+        # Windows specific "bootstrap" on Linux Host
+        if (HostPlatform == "Linux") and (TargetPlatform == "Windows"):
             WINE = ["wine"]
             WINETRICKS = ["winetricks"]
-            command_prefix = WINE
+            CommandPrefix = WINE
             python = "python.exe"
 
             # Disable MONO, set WINEPREFIX
@@ -144,46 +153,51 @@ class MakeRelease:
 
             # Download Python
             PYVERSION = "3.9.5"
-            python_installer = self.PackageInterface.Download.wget(
+            PythonInstaller = self.PackageInterface.Download.wget(
                 f"https://www.python.org/ftp/python/{PYVERSION}/python-{PYVERSION}-amd64.exe",
                 str(self.PackageInterface.Externals.ExternalsDownloadDir/f"Python-{PYVERSION}-AMD64.exe"),
                 "Python 3.9.5 Windows 64 bits")
             
             # Install Python
-            print(f"{dpfx} Python installed located at [{python_installer}], installing..")
-            self.SubprocessRun(WINE + [python_installer, "/quiet", "InstallAllUsers=1", "PrependPath=1"])
+            print(f"{dpfx} Python installed located at [{PythonInstaller}], installing..")
+            self.SubprocessRun(WINE + [PythonInstaller, "/quiet", "InstallAllUsers=1", "PrependPath=1"])
 
-            self.SubprocessRun(WINETRICKS + ["--unattended", "mfc42"])
+            # Install winetricks deps
+            for stuff in ["mfc42", "vcrun6", "vcrun6sp6"]:
+                self.SubprocessRun(WINETRICKS + ["--unattended", stuff])
             self.SubprocessRun(WINETRICKS + ["win7"])
 
         # Install poetry
-        self.SubprocessRun(command_prefix + [python, "-m", "pip", "install", "--upgrade", "pip"])
-        self.SubprocessRun(command_prefix + [python, "-m", "pip", "install", "poetry", "wheel"])
+        self.SubprocessRun(CommandPrefix + [python, "-m", "pip", "install", "--upgrade", "pip"])
+        self.SubprocessRun(CommandPrefix + [python, "-m", "pip", "install", "poetry", "wheel"])
 
         # Create venv, install deps
-        POETRY = command_prefix + [python, "-m", "poetry"]
+        POETRY = CommandPrefix + [python, "-m", "poetry"]
         self.SubprocessRun(POETRY + ["install"])
 
         # Get python binary
-        if platform == "Windows": 
+        if (HostPlatform == "Linux") and (TargetPlatform == "Windows"): 
             C = self.WineprefixDir/"drive_c"
             shutil.copy(self.PackageInterface.DownloadsDir/"mfc42.dll", C/"windows"/"system32"/"mfc42.dll")
 
+        # Commands
         PYTHON = POETRY + ["run", "python"]
-
-        print(f"{dpfx} Python is {PYTHON}")
         NUITKA = PYTHON + ["-m", "nuitka"]
         PIP = PYTHON + ["-m", "pip"]
 
         # Install Nuitka
+        self.SubprocessRun(PIP + ["install", "--upgrade", "pip"])
         self.SubprocessRun(PIP + ["install", "--upgrade", "nuitka", "scons", "imageio"])
 
+        # Icon file of the final binary
         icon = self.PackageInterface.DataDir/"Image"/"mmvLogoWhite.png"
+
+        # Change working directory
         self.cwd = self.CurrentMaking
         
         # Nuitka command for final export
-        nuitka_cmd = NUITKA + [
-            "--standalone", "--onefile", "--jobs", "6", 
+        CompileCommand = NUITKA + [
+            "--standalone", "--onefile", "--jobs", str(NJobs), 
             "--linux-onefile-icon", icon,
             "--file-reference-choice=runtime",
             # "--nofollow-imports",
@@ -208,7 +222,7 @@ class MakeRelease:
         ]
 
         # Make the .bin
-        self.SubprocessRun(nuitka_cmd)
+        self.SubprocessRun(CompileCommand)
 
         # Remove build directories
         for suffix in [".build", ".dist", ".onefile-build"]:
@@ -216,28 +230,47 @@ class MakeRelease:
 
         # Rename the binary to the target final one
         self.CopyRebaseDirToRelease(self.PackageInterface.DataDir)
-        self.CopyRebaseDirToRelease(self.PackageInterface.DataDir/"Nodes")
+        # self.CopyRebaseDirToRelease(self.PackageInterface.DataDir/"Nodes")
 
-        if platform == "Linux":
+        if (TargetPlatform == "Linux"):
             os.rename(self.CurrentMaking/(self.TargetBasename+".bin"), self.CurrentMaking/"ModularEditor.AppImage")
-        elif platform == "Windows":
+        elif (TargetPlatform == "Windows"):
             os.rename(self.CurrentMaking/(self.TargetBasename+".exe"), self.CurrentMaking/"ModularEditor.exe")
 
         # Zip
         self.Finish(
-            final_zip=self.ReleasesDir/(self.ReleaseName + f" [{platform}].zip"),
+            final_zip=self.ReleasesDir/(self.ReleaseName + f" [{TargetPlatform}].zip"),
             path=self.CurrentMaking,
         )
         self.Clear()
 
+    # "Redirect" the target path to the current release we are making
     def CopyRebaseDirToRelease(self, target):
         rebased = str(target).replace( str(self.PackageInterface.DIR), str(self.CurrentMaking) )
         copy_tree(target, rebased)
 
+# MakeRelease.py LinuxHost TargetWindows
+# MakeRelease.py LinuxHost TargetLinux
 def main():
+    dpfx = "[MakeRelease.main]"
     rm = MakeRelease()
-    for target in ["Linux", "Windows", "MacOS"]:
-        if target in sys.argv: rm.Make(target)
+
+    # Get host
+    HostPlatform = Utils.GetOS()
+    for host in ["Linux", "Windows", "MacOS"]:
+        if f"{host}Host" in sys.argv:
+            HostPlatform = host; break
+    
+    logging.info(f"{dpfx} Host making the release is [{HostPlatform}]")
+
+    # Iterate on target releases
+    for TargetPlatform in ["TargetLinux", "TargetWindows", "TargetMacOS"]:
+        if TargetPlatform in sys.argv:
+            logging.info(f"{dpfx} Making release for [{TargetPlatform}]")
+            rm.Make(
+                TargetPlatform=TargetPlatform.replace("Target",""),
+                HostPlatform=HostPlatform
+            )
 
 if __name__ == "__main__":
     main()
