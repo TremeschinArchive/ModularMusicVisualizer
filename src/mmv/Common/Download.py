@@ -49,17 +49,26 @@ class Download:
         return requests.get(URL).text
 
     # Download some file to a SavePath (file).
-    def DownloadFile(URL, SavePath, Name="Downloading File", CheckSizes=True, Callback=lambda _:_, ChunkSize=32768, Info=""):
+    def DownloadFile(URL, SavePath, Name="Downloading File", CheckSizes=True, Callback=None, ChunkSize=32768, Info=""):
+        if Callback is None: Callback = lambda _:_
 
         # Set up save path
         SavePath = Path(SavePath).expanduser().resolve()
         SavePath.parent.mkdir(exist_ok=True)
 
+        Status = DotMap(_dynamic=False)
+        Status.SavePath = SavePath
+        Status.Downloaded = 0
+        Status.Completed = 0
+        Status.Name = Name
+        Status.Info = Info
+
         logging.info(f"[Download.DownloadFile] Downloading [{Name}]: [{URL}] => [{SavePath}]")
+        Status.Info = f"Downloading [{Name}]"; Callback(Status)
 
         if not CheckSizes:
             if SavePath.exists():
-                return SavePath
+                return SavePath, Status
 
         # Get info on download, we gotta make sure its target size is the same as already downloaded
         # one if the file existed prior to this, this means incomplete download
@@ -70,31 +79,34 @@ class Download:
             DownloadedSize = SavePath.stat().st_size
             if DownloadedSize == FileSize:
                 logging.info(f"[Download.DownloadFile] Download [{Name}] Already exists [{SavePath}]")
-                return SavePath
+                Status.Info = f"Download already exists and looks good!! Extracting again.."
+                Status.Completed = 1; Callback(Status)
+                return SavePath, Status
             else:
+                Status.Info = f"Incomplete Download, need redownload"; Callback(Status)
                 logging.info(f"[Download.DownloadFile] Download [{Name}] Existed in [{SavePath}] but sizes differ [{DownloadedSize}/{FileSize}], redownloading..")
             
         # Progress bar in bits scale
         ProgressBar = tqdm(desc=f"Downloading [{Name}]", total=FileSize, unit='iB', unit_scale=True)
 
         # Context status
-        Status = DotMap(_dynamic=False)
         Status.FileSize = FileSize
-        Status.SavePath = SavePath
-        Status.Downloaded = 0
-        Status.Name = Name
-        Status.Info = Info
 
         # Open, keep reading
         with open(SavePath, 'wb') as DownloadedFile:
             for NewDataChunk in DownloadStream.iter_content(ChunkSize):
-                Status.Downloaded += len(NewDataChunk)
-                ProgressBar.update(len(NewDataChunk))
+                N = len(NewDataChunk)
+                Status.Downloaded += N
+                Status.Completed = Status.Downloaded/Status.FileSize
+                Status.Info = f"Progress [{Status.Downloaded/1024/1024:.2f}M/{Status.FileSize/1024/1024:.2f}M] [{Status.Completed*100:.2f}%]"
+                ProgressBar.update(N)
                 DownloadedFile.write(NewDataChunk)
                 Callback(Status)
-
+        Status.Completed = 1
+        Status.Completed = 1
+        Callback(Status)
         ProgressBar.close()
-        return SavePath
+        return SavePath, Status
 
     # Extract one zip, tar file to a target directory, more like attempt to do so
     def ExtractFile(PackedFile, UnpackDir):

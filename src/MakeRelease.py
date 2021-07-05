@@ -251,7 +251,7 @@ class MakeRelease:
 
 # MakeRelease.py LinuxHost TargetWindows
 # MakeRelease.py LinuxHost TargetLinux
-def main():
+def Main():
     dpfx = "[MakeRelease.main]"
     rm = MakeRelease()
 
@@ -273,4 +273,4 @@ def main():
             )
 
 if __name__ == "__main__":
-    main()
+    Main()

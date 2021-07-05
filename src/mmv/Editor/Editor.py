@@ -48,7 +48,6 @@ from mmv.Common.Utils import Utils
 from mmv.Editor.BaseNode import BaseNode
 from mmv.Editor.Scene import mmvEditorScene
 from mmv.Editor.UI.AddNodeUI import mmvEditorAddNodeUI
-from mmv.Editor.UI.ExternalsUI import mmvEditorExternalsUI
 from mmv.Editor.UI.MenuBarUI import mmvEditorMenuBarUI
 
 
@@ -59,6 +58,8 @@ class DotMapPersistentSetter:
     def Set(self, key, value):
         print(f"[DotMapPersistentSetter.Set] {key} => {value}")
         self.dotmap[key] = value
+    def ToggleBool(self, key):
+        self.Set(key, not self.dotmap.get(key, False))
 
 
 class EnterContainerStack:
@@ -93,8 +94,8 @@ def CenteredWindow(Context, **k):
 
 
 class PayloadTypes:
-    Image  = "image"
-    Shader = "shader"
+    Image  = "Image"
+    Shader = "Shader"
     Number = "Number"
 
 
@@ -113,7 +114,6 @@ class mmvEditor:
         self.LogoImage = self.PackageInterface.ImageDir/"mmvLogoWhite.png"
         self.LoadLastConfig()
         self.MenuBarUI = mmvEditorMenuBarUI(self)
-        self.ExternalsUI = mmvEditorExternalsUI(self)
         self.AddNodeUI = mmvEditorAddNodeUI(self)
         self.Scene = mmvEditorScene(self)
 
@@ -135,6 +135,9 @@ class mmvEditor:
         self.ViewportX = 0
         self.ViewportY = 0
 
+        self.LoadingIndicatorConfigIdleDict = dict(radius=1.4, color=(0,0,0,0), secondary_color=(0,0,0,0), speed=2, circle_count=10)
+        self.LoadingIndicatorConfigLoadingDict = dict(radius=1.4, color=(255,51,55,255), secondary_color=(29,151,236,100), speed=2, circle_count=10)
+
     # Attempt to load last Context configuration if it existed
     def LoadLastConfig(self, defaults = False):
         self.USER_CONFIG_FILE = self.PackageInterface.RuntimeDir/"UserEditorConfig.pickle.zlib"
@@ -152,7 +155,7 @@ class mmvEditor:
         self.ContextSafeSetVar("FIRST_TIME", True)
         self.ContextSafeSetVar("WINDOW_SIZE", [1280, 720])
         self.ContextSafeSetVar("BUILTIN_WINDOW_DECORATORS", True)
-        self.ContextSafeSetVar("STARTUP_MAXIMIZE", True)
+        self.ContextSafeSetVar("START_MAXIMIZED", False)
         self.ContextSafeSetVar("UI_SOUNDS", True)
         self.ContextSafeSetVar("UI_VOLUME", 40)
         self.ContextSafeSetVar("UI_FONT", "DejaVuSans-Bold.ttf")
@@ -352,7 +355,7 @@ class mmvEditor:
                     with dear.tab(label="Performance") as self.DPG_PERFORMANCE_TAB: ...
             
             dear.add_separator()
-            self.DPG_LOADING_INDICATOR_GLOBAL = dear.add_loading_indicator(radius=1.4, color=(0,0,0,0), secondary_color=(0,0,0,0), speed=2, circle_count=10)
+            self.DPG_LOADING_INDICATOR_GLOBAL = dear.add_loading_indicator(**self.LoadingIndicatorConfigIdleDict)
             self.ToggleLoadingIndicator()
             dear.add_same_line()
             dear.add_text(f"MMV v{self.PackageInterface.VersionNumber}", color = (230,70,75))
@@ -379,11 +382,14 @@ class mmvEditor:
     # Toggle the loading indicator on the main screen to show we are doing something
     def ToggleLoadingIndicator(self, force: bool = None):
         if not hasattr(self, "_ToggleLoadingIndicator"): self._ToggleLoadingIndicator = False
-        P, S, NO = (255,51,55,255), (29,151,236,100), (0,0,0,0)
         if force: self._ToggleLoadingIndicator = force
         if not hasattr(self, "DPG_LOADING_INDICATOR_GLOBAL"): return
-        if self._ToggleLoadingIndicator: dear.configure_item(self.DPG_LOADING_INDICATOR_GLOBAL, color=P, secondary_color=S)
-        else: dear.configure_item(self.DPG_LOADING_INDICATOR_GLOBAL, color=NO, secondary_color=NO)
+        Config = {
+            True: self.LoadingIndicatorConfigLoadingDict,
+            False: self.LoadingIndicatorConfigIdleDict,
+        }.get(self._ToggleLoadingIndicator)
+
+        if self._ToggleLoadingIndicator: dear.configure_item(self.DPG_LOADING_INDICATOR_GLOBAL, **Config)
         self._ToggleLoadingIndicator = not self._ToggleLoadingIndicator
 
     # Handler when window was resized
@@ -396,7 +402,7 @@ class mmvEditor:
 
     def MainLoop(self):
         logging.info(f"[mmvEditor.MainLoop] Enter MainLoop, start MMV")
-        self.__Stop = False
+        self._Stop = False
         self.Viewport = dear.create_viewport(
             title="Modular Music Visualizer Editor",
             caption=not self.Context.BUILTIN_WINDOW_DECORATORS,
@@ -405,10 +411,10 @@ class mmvEditor:
         dear.setup_dearpygui(viewport=self.Viewport)
         dear.show_viewport(self.Viewport)
         with dear.texture_registry() as self.TextureRegistry: ...
-        # if self.Context.STARTUP_MAXIMIZE: dear.maximize_viewport()
+        if self.Context.START_MAXIMIZED: dear.maximize_viewport()
         try:
             for iteration in itertools.count(1):
-                if (self.__Stop) or (not dear.is_dearpygui_running()): break
+                if (self._Stop) or (not dear.is_dearpygui_running()): break
                 self.Next(iteration)
                 dear.render_dearpygui_frame()
         except KeyboardInterrupt: pass
@@ -418,8 +424,9 @@ class mmvEditor:
         if iteration == 3:
             self.FirstTimeWarning()
 
-    def Exit(self): self.__Stop = True
+    def Exit(self): self._Stop = True
     def __True_Exit(self):
+        self.Exit()
         logging.info(f"[mmvEditor.AddNodeFile] Exiting [Modular Music Visualizer Editor] *Safely*")
         self.Context = PackUnpack.Pack(self.Context, self.USER_CONFIG_FILE)
         dear.cleanup_dearpygui()

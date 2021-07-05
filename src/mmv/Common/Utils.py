@@ -69,7 +69,8 @@ class Utils:
     def FindBinary(binary, platform="Linux"):
         if (platform == "Windows") and (not binary.endswith(".exe")):
             binary += ".exe"
-        return shutil.which(binary)
+        PATH = os.environ.get("PATH") + ":".join(sys.path)
+        return shutil.which(binary, path=PATH)
 
     @staticmethod
     def ForceList(data):

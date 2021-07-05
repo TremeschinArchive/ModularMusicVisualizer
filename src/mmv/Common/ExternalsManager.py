@@ -27,7 +27,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
-import json
+from dotmap import DotMap
+import ujson as json
 import logging
 import os
 import sys
@@ -77,53 +78,54 @@ class ExternalsManager:
         }.get(self.os)
 
     # Download a external from somewhere, extract, put on right path
-    def DownloadInstallExternal(self, TargetExternals=[], _ForceNotFound=False):
+    def DownloadInstallExternal(self, TargetExternal, Callback=None, _ForceNotFound=False):
         dpfx = "[ExternalsManager.DownloadInstallExternal]"
-        TargetExternals = Utils.ForceList(TargetExternals)
+        logging.info(f"{dpfx} Managing external [{TargetExternal}]")
 
-        # Iterate on stuff we want to download
-        for TargetExternal in TargetExternals:
-            logging.info(f"{dpfx} Managing external [{TargetExternal}]")
+        if TargetExternal == AvailableExternals.FFmpeg:
+            if not Utils.FindBinary("ffmpeg") or _ForceNotFound:
+                if self.os == "MacOS": raise RuntimeError("Please install [ffmpeg] package from Homebrew.")
+                Info = (
+                    "We are downloading FFmpeg, (\"A complete, cross-platform solution to record, "
+                    "convert and stream audio and video.\", https://ffmpeg.org/). it is responsible "
+                    "for encoding the final videos, reading audio file streams. Fundamental for MMV")
+                logging.info(f"{dpfx} {Info}")
 
-            if TargetExternal == AvailableExternals.FFmpeg:
-                if not Utils.FindBinary("ffmpeg") or _ForceNotFound:
-                    if self.os == "MacOS": raise RuntimeError("Please install [ffmpeg] package from Homebrew.")
-                    Info = (
-                        "We are downloading FFmpeg, (\"A complete, cross-platform solution to record, "
-                        "convert and stream audio and video.\", https://ffmpeg.org/). it is responsible "
-                        "for encoding the final videos, reading audio file streams. Fundamental for MMV")
-                    logging.info(f"{dpfx} {Info}")
+                # BtbN FFmpeg build FTW!!
+                FFmpegBuilds = json.loads(Download.GetHTMLContent(
+                    "https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest"))
 
-                    # BtbN FFmpeg build FTW!!
-                    FFmpegBuilds = json.loads(Download.GetHTMLContent(
-                        "https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest"))
+                # Parsing the version we target and want
+                for Asset in FFmpegBuilds["assets"]:
+                    AssetName = Asset["name"]
 
-                    # Parsing the version we target and want
-                    for Asset in FFmpegBuilds["assets"]:
-                        AssetName = Asset["name"]
+                    WantInName = ["lgpl", "N"]
+                    DontWantInName = ["shared"]
 
-                        WantInName = ["lgpl", "N"]
-                        DontWantInName = ["shared"]
+                    if self.os == "Linux": WantInName += ["linux64"]
+                    if self.os == "Windows": WantInName += ["win64", ".zip"]
+                    DownloadURL = None
 
-                        if self.os == "Linux": WantInName += ["linux64"]
-                        if self.os == "Windows": WantInName += ["win64", ".zip"]
-                        DownloadURL = None
+                    WantOK = all([thing in AssetName for thing in WantInName])
+                    DontWantOK = not all([thing in AssetName for thing in DontWantInName])
 
-                        WantOK = all([thing in AssetName for thing in WantInName])
-                        DontWantOK = not all([thing in AssetName for thing in DontWantInName])
+                    # We have a match!
+                    if WantOK and DontWantOK:
+                        logging.info(f"{dpfx} We have a match, [{AssetName}]")
+                        DownloadURL = Asset["browser_download_url"]
+                        break
 
-                        # We have a match!
-                        if WantOK and DontWantOK:
-                            logging.info(f"{dpfx} We have a match, [{AssetName}]")
-                            DownloadURL = Asset["browser_download_url"]
-                            break
-
-                    if DownloadURL is None: raise RuntimeError("Couldn't match a version of FFmpeg to download")
-                            
-                    # Download the ZIP, extract
-                    FFmpegZIP = str(self.ExternalsDirDownloads/AssetName)
-                    Download.DownloadFile(URL=DownloadURL, SavePath=FFmpegZIP, Name=f"FFmpeg v={AssetName}", Info=Info)
-                    Download.ExtractFile(FFmpegZIP, self.ExternalsDirThisPlatform)
+                if DownloadURL is None: raise RuntimeError("Couldn't match a version of FFmpeg to download")
+                        
+                # Download the ZIP, extract
+                FFmpegZIP = str(self.ExternalsDirDownloads/AssetName)
+                SavePath, Status = Download.DownloadFile(URL=DownloadURL, SavePath=FFmpegZIP, Name=f"FFmpeg v={AssetName}", Info=Info, Callback=Callback)
+                Status.Info = "Extracting file.."
+                Callback(Status)
+                Download.ExtractFile(FFmpegZIP, self.ExternalsDirThisPlatform)
+            else:
+                logging.info(f"{dpfx} Already have external [{TargetExternal}]!!")
 
         # Update the externals search path because we downloaded stuff
         self.AssertExternalsInPath()
+        return True

@@ -268,6 +268,9 @@ f"""Show extension\n{"="*self.terminal_width}
                 logging.info(f"{dpfx} {key} is [{value}]")
                 getattr(self, key).mkdir(parents=True, exist_ok=True)
 
+        self.FindExternals()
+        
+    def FindExternals(self):
         # Get the binaries
         self.FFmpegBinary = Utils.FindBinary("ffmpeg")
         self.FFplayBinary = Utils.FindBinary("ffplay")

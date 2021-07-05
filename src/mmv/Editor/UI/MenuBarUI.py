@@ -61,10 +61,11 @@ class mmvEditorMenuBarUI:
             with dear.menu(label="Preferences"):
                 dear.add_slider_float(label="User Interface FX Volume", default_value=40, min_value=0,max_value=100, callback=lambda s,d,a,b,c,f:print(d,s,a,b,c,f))
                 dear.add_checkbox(label="Builtin Window Decorators [Needs Restart]", callback=lambda d,s: self.ToggleBuiltinWindowDecorator(), default_value=self.Editor.Context.BUILTIN_WINDOW_DECORATORS)
+                dear.add_checkbox(label="Start Maximized", callback=lambda d,s: self.ToggleStartMaximized(), default_value=self.Editor.Context.START_MAXIMIZED)
                 dear.add_separator()
                 dear.add_menu_item(label="Advanced")
             
-            dear.add_menu_item(label="Downloads", callback=lambda s,d:self.About())
+            dear.add_menu_item(label="Downloads", callback=lambda s,d:self.ExternalsManagerUI())
 
             with dear.menu(label="Help"):
                 dear.add_menu_item(label="Telegram Channel", callback=lambda s,d:webbrowser.open("https://t.me/modular_music_visualizer"))
@@ -84,10 +85,13 @@ class mmvEditorMenuBarUI:
             # dear.add_text("Modular Music Visualizer Editor", color=(150,150,150))
     
     def ToggleBuiltinWindowDecorator(self):
-        self.Editor.ContextSafeSetVar.Set("BUILTIN_WINDOW_DECORATORS", not self.Editor.Context.BUILTIN_WINDOW_DECORATORS)
+        self.Editor.ContextSafeSetVar.ToggleBool("BUILTIN_WINDOW_DECORATORS", not self.Editor.Context.BUILTIN_WINDOW_DECORATORS)
         # dear.configure_viewport(self.Editor.Viewport, caption=self.Editor.Context.BUILTIN_WINDOW_DECORATORS)
         # dear.setup_dearpygui(viewport=self.Editor.Viewport)
         # dear.show_viewport(self.Editor.Viewport)
+
+    def ToggleStartMaximized(self):
+        self.Editor.ContextSafeSetVar.ToggleBool("START_MAXIMIZED")
 
     def About(self):
         logging.info(f"[mmvEditorMenuBarUI.About] Show About window")
@@ -101,3 +105,57 @@ class mmvEditorMenuBarUI:
             dear.add_separator()
             dear.add_button(label="About DearPyGui", callback=lambda:dear.show_tool(dear.mvTool_About))
  
+    # # Ui to manage externals
+
+    def ExternalsManagerUI(self):
+        logging.info(f"[mmvEditorMenuBarUI.ExternalsManagerUI] Show About window")
+
+        def DownloadSomething(TargetExternal, _ForceNotFound=False):
+
+            with self.Editor.CenteredWindow(self.Editor.Context, width=600, height=200, no_close=True) as DownloadWindow:
+                dear.add_text(f"Downloading [{TargetExternal}]")
+                dear.add_same_line();
+                dear.add_loading_indicator(**self.Editor.LoadingIndicatorConfigLoadingDict)
+                ProgressBar = dear.add_progress_bar(width=600)
+                CurrentInfo = dear.add_text(f"Requesting Download Info..")
+
+            def KeepUpdatingProgressBar(Status):
+                dear.configure_item(ProgressBar,
+                    label=Status.Name,
+                    default_value=Status.Completed
+                )
+                dear.configure_item(CurrentInfo, default_value=Status.Info)
+
+            self.Editor.PackageInterface.Externals.DownloadInstallExternal(
+                TargetExternal=TargetExternal,
+                Callback=KeepUpdatingProgressBar,
+                _ForceNotFound=_ForceNotFound,
+            )
+
+            dear.delete_item(DownloadWindow)
+            self.Editor.PackageInterface.FindExternals()
+            self.ExternalsManagerUI()
+
+        with self.Editor.CenteredWindow(self.Editor.Context, width=200, height=200) as ExternalsWindow:
+            dear.add_text(f"Externals Manager", color = (0,255,0))
+
+            dear.add_text("FFmpeg: ")
+            dear.add_same_line()
+            HaveFFmpeg = not self.Editor.PackageInterface.FFmpegBinary is None
+            
+            if HaveFFmpeg:
+                dear.add_text("Yes", color=(0,255,0))
+                Action = "Reinstall"
+            else:
+                dear.add_text("No", color=(255,0,0))
+                Action = "Download"
+
+            dear.add_same_line()
+            dear.add_button(label=Action, callback=
+                lambda s,d: DownloadSomething(
+                    self.Editor.PackageInterface.Externals.AvailableExternals.FFmpeg,
+                    _ForceNotFound=HaveFFmpeg
+                )
+            )
+
+

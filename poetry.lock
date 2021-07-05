@@ -44,22 +44,6 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "easyprocess"
-version = "0.3"
-description = "Easy to use Python subprocess interface."
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
-name = "entrypoint2"
-version = "0.2.4"
-description = "easy to use command-line interface for python modules"
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "glcontext"
 version = "2.3.4"
 description = "Portable OpenGL Context"
@@ -255,18 +239,6 @@ multipledispatch = "*"
 numpy = "*"
 
 [[package]]
-name = "pyunpack"
-version = "0.2.2"
-description = "unpack archive files"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-easyprocess = "*"
-entrypoint2 = "*"
-
-[[package]]
 name = "pyyaml"
 version = "5.4.1"
 description = "YAML parser and emitter for Python"
@@ -395,14 +367,6 @@ python-versions = ">=3.6"
 watchmedo = ["PyYAML (>=3.10)", "argh (>=0.24.1)"]
 
 [[package]]
-name = "wget"
-version = "3.2"
-description = "pure python download utility"
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "wonderwords"
 version = "2.2.0"
 description = "A python package for random words and sentences in the english language"
@@ -416,7 +380,7 @@ cli = ["rich (==9.10.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<3.10"
-content-hash = "84ced9835df1cbac55e52b6f81eedcc1f58b49f487262cba9c815163a6ba3347"
+content-hash = "4e832e5777d167428e90bb1c5342dd968e12dfb82884d59240fa05049dbc048a"
 
 [metadata.files]
 certifi = [
@@ -448,14 +412,6 @@ dearpygui = [
 dotmap = [
     {file = "dotmap-1.3.23-py3-none-any.whl", hash = "sha256:88270f02a34f42af6f760de8fa9b7080156d118bb9e252508f30633d4f21ce51"},
     {file = "dotmap-1.3.23.tar.gz", hash = "sha256:6aaeb51052a465a5aeff47d975d12802fc5d613674fb78b2ebf09ff5ff44c843"},
-]
-easyprocess = [
-    {file = "EasyProcess-0.3-py2.py3-none-any.whl", hash = "sha256:fca26794d3ced044d0471bd4ed767d5c287391d8a1c5e9d106fc59478b732543"},
-    {file = "EasyProcess-0.3.tar.gz", hash = "sha256:fb948daac01f64c1e49750752711253614846c6fc7e5692a718a7408f2ffb984"},
-]
-entrypoint2 = [
-    {file = "entrypoint2-0.2.4-py3-none-any.whl", hash = "sha256:47a64379a9c5d9f0f3a3857a79f99c21809ce8d554704cb565a7c977b7d67ff7"},
-    {file = "entrypoint2-0.2.4.tar.gz", hash = "sha256:4770c3afcf3865c606a6e5f7cfcc5c59212f555fcee9b2540270399149c1dde3"},
 ]
 glcontext = [
     {file = "glcontext-2.3.4-cp36-cp36m-macosx_10_14_x86_64.whl", hash = "sha256:1af3314f20c97fa2a8fc6d2b68d597463066416a7cc3c1ea4f05b4ecb0fc3e9c"},
@@ -738,10 +694,6 @@ pyrr = [
     {file = "pyrr-0.10.3-py3-none-any.whl", hash = "sha256:d8af23fb9bb29262405845e1c98f7339fbba5e49323b98528bd01160a75c65ac"},
     {file = "pyrr-0.10.3.tar.gz", hash = "sha256:3c0f7b20326e71f706a610d58f2190fff73af01eef60c19cb188b186f0ec7e1d"},
 ]
-pyunpack = [
-    {file = "pyunpack-0.2.2-py2.py3-none-any.whl", hash = "sha256:c5754ff2178951aacd554df7d8a128cb6fb2513a8fa46a7f184920faf7411e6a"},
-    {file = "pyunpack-0.2.2.tar.gz", hash = "sha256:8db8d350e3329ad06fa0aa00aa28295f5babf8c1249ce26292c026e875ba2436"},
-]
 pyyaml = [
     {file = "PyYAML-5.4.1-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:3b2b1824fe7112845700f815ff6a489360226a5609b96ec2190a45e62a9fc922"},
     {file = "PyYAML-5.4.1-cp27-cp27m-win32.whl", hash = "sha256:129def1b7c1bf22faffd67b8f3724645203b79d8f4cc81f674654d9902cb4393"},
@@ -867,9 +819,6 @@ watchdog = [
     {file = "watchdog-2.1.3-py3-none-win_amd64.whl", hash = "sha256:44acad6f642996a2b50bb9ce4fb3730dde08f23e79e20cd3d8e2a2076b730381"},
     {file = "watchdog-2.1.3-py3-none-win_ia64.whl", hash = "sha256:0bcdf7b99b56a3ae069866c33d247c9994ffde91b620eaf0306b27e099bd1ae0"},
     {file = "watchdog-2.1.3.tar.gz", hash = "sha256:e5236a8e8602ab6db4b873664c2d356c365ab3cac96fbdec4970ad616415dd45"},
-]
-wget = [
-    {file = "wget-3.2.zip", hash = "sha256:35e630eca2aa50ce998b9b1a127bb26b30dfee573702782aa982f875e3f16061"},
 ]
 wonderwords = [
     {file = "wonderwords-2.2.0-py3-none-any.whl", hash = "sha256:65fc665f1f5590e98f6d9259414ea036bf1b6dd83e51aa6ba44473c99ca92da1"},

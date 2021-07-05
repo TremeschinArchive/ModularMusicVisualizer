@@ -32,12 +32,23 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import mmv
+import time
 
 
-def main():
-    interface = mmv.mmvPackageInterface()
-    editor = interface.GetEditor()
-    editor.InitMainWindow()
+def Main():
+    PackageInterface = mmv.mmvPackageInterface()
+    Editor = PackageInterface.GetEditor()
+    Editor.InitMainWindow()
+
+    while True: 
+        try: time.sleep(0.5)
+        except KeyboardInterrupt:
+            Editor.Exit(); break
+
+        if Editor._Stop: break
+
+    sys.exit(0)
+
 
 if __name__ == "__main__":
-    main()
+    Main()
