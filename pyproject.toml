@@ -33,6 +33,10 @@ requests = "^2.25.1"
 dearpygui = "^0.8.14"
 
 [tool.poetry.dev-dependencies]
+Nuitka = "^0.6.16"
+scons = "^4.1.0"
+imageio = "^2.9.0"
+zstandard = "^0.15.2"
 
 [tool.poetry.scripts]
 release = "src.MakeRelease:Main"

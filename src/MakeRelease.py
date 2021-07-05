@@ -51,6 +51,7 @@ from subprocess import PIPE
 
 import mmv
 from mmv.Common.Utils import Utils
+from mmv.Common.Download import Download
 
 sys.dont_write_bytecode = True
 
@@ -65,15 +66,14 @@ class MakeRelease:
         self.ReleasesDirLinux = self.ReleasesDir/"Linux"
         self.ReleasesDirWindows = self.ReleasesDir/"Windows"
         self.ReleasesDirMacOS = self.ReleasesDir/"MacOS"
-        self.WineprefixDir = Path("~/.mmv-wine").expanduser().resolve()
-        self.DarlingprefixDir = Path("~/.mmv-darling").expanduser().resolve()
+        self.WineprefixDir = Path("~/.mmv/WinePrefix").expanduser().resolve()
+        self.DarlingprefixDir = Path("~/.mmv/DarlingPrefix").expanduser().resolve()
 
         # Make Releases dir
         self.ReleasesDir.mkdir(exist_ok=True)
 
         # Reset paths
         for path in [self.ReleasesDirLinux, self.ReleasesDirWindows, self.ReleasesDirMacOS]:
-            if path.exists(): shutil.rmtree(str(path), ignore_errors=True)
             path.mkdir(exist_ok=True)
 
         self.Target = self.DIR/".."/"RunEditor.py"
@@ -86,12 +86,13 @@ class MakeRelease:
 
     def Clear(self):
         # Subprocess vars, env vars
-        self.cwd = self.DIR
+        self.CurrentWorkingDirectory = self.DIR
         self.env = os.environ
     
-    def SubprocessRun(self, command):
-        print(f"[MakeRelease.SubprocessRun] Run {command}")
-        subprocess.run(command, env=self.env, cwd=self.cwd)
+    def SubprocessRun(self, Command):
+        Command = [str(item) for item in Command]
+        print(f"[MakeRelease.SubprocessRun] Run {Command}")
+        subprocess.run(Command, env=self.env, cwd=self.CurrentWorkingDirectory)
 
     def Rmdir(self, path):
         print(f"[MakeRelease.Rmdir] Remove path [{path}]")
@@ -115,20 +116,28 @@ class MakeRelease:
     #
     # For making releases for Windows, find a 64bit "mfc42.dll" and put on Externals dir
     #
-    def Make(self, TargetPlatform, HostPlatform, NJobs=6):
+    def Make(self, TargetPlatform, HostPlatform, NJobs=10):
         dpfx = "[MakeRelease.Make]"
-        self.CurrentMaking = {
-            "Linux": self.ReleasesDirLinux,
-            "Windows": self.ReleasesDirWindows,
-            "MacOS": self.ReleasesDirMacOS
-        }[TargetPlatform]
 
         if (HostPlatform == "MacOS") or (TargetPlatform == "MacOS"):
             raise RuntimeError("MacOS releases not supported, run directly from source and pray.")
         if (HostPlatform == "Windows") and (TargetPlatform == "Linux"):
             raise RuntimeError("Consider using WSL, though better to go native Linux anyways..")
 
-        self.cwd = self.DIR.parent
+        # CurrentWorkingDirectory is one folder above all MMV components
+        self.CurrentWorkingDirectory = self.DIR.parent
+
+        # The target directory we are building to based on TargetPlatform   
+        self.CurrentMakingReleaseDir = {
+            "Linux": self.ReleasesDirLinux,
+            "Windows": self.ReleasesDirWindows,
+            "MacOS": self.ReleasesDirMacOS
+        }[TargetPlatform]
+
+        # Clean build directory, keep other platforms intact
+        if self.CurrentMakingReleaseDir.exists():
+            shutil.rmtree(str(self.CurrentMakingReleaseDir), ignore_errors=True)
+            self.CurrentMakingReleaseDir.mkdir(exist_ok=True)
 
         # This is for like, if making for Windows under a Linux Host, we run through wine
         CommandPrefix = []
@@ -153,10 +162,10 @@ class MakeRelease:
 
             # Download Python
             PYVERSION = "3.9.5"
-            PythonInstaller = self.PackageInterface.Download.wget(
-                f"https://www.python.org/ftp/python/{PYVERSION}/python-{PYVERSION}-amd64.exe",
-                str(self.PackageInterface.Externals.ExternalsDirDownloads/f"Python-{PYVERSION}-AMD64.exe"),
-                "Python 3.9.5 Windows 64 bits")
+            PythonInstaller, Status = Download.DownloadFile(
+                URL=f"https://www.python.org/ftp/python/{PYVERSION}/python-{PYVERSION}-amd64.exe",
+                SavePath=str(self.PackageInterface.Externals.ExternalsDirDownloads/f"Python-{PYVERSION}-AMD64.exe"),
+                Name=f"Python {PYVERSION} Windows 64 bits")
             
             # Install Python
             print(f"{dpfx} Python installed located at [{PythonInstaller}], installing..")
@@ -185,17 +194,13 @@ class MakeRelease:
         NUITKA = PYTHON + ["-m", "nuitka"]
         PIP = PYTHON + ["-m", "pip"]
 
-        # Install Nuitka
-        self.SubprocessRun(PIP + ["install", "--upgrade", "pip"])
-        self.SubprocessRun(PIP + ["install", "--upgrade", "nuitka", "scons", "imageio"])
-
         # Icon file of the final binary
         icon = self.PackageInterface.DataDir/"Image"/"mmvLogoWhite.png"
 
         # Change working directory
-        self.cwd = self.CurrentMaking
+        self.CurrentWorkingDirectory = self.CurrentMakingReleaseDir
         
-        # Nuitka command for final export
+        # Nuitka Command for final export
         CompileCommand = NUITKA + [
             "--standalone", "--onefile", "--jobs", str(NJobs), 
             "--linux-onefile-icon", icon,
@@ -209,7 +214,7 @@ class MakeRelease:
             "--plugin-enable=pkg-resources",
 
             # Windoe
-            "--windows-disable-console",
+            # "--windows-disable-console",
             "--windows-file-description", "The Interactive Shader Render Platform",
             "--windows-product-version", self.PackageInterface.VersionNumber,
             "--windows-file-version", str(self.PackageInterface.VersionNumber),
@@ -226,27 +231,27 @@ class MakeRelease:
 
         # Remove build directories
         for suffix in [".build", ".dist", ".onefile-build"]:
-            self.Rmdir( self.CurrentMaking/(self.TargetBasename+suffix) )
+            self.Rmdir( self.CurrentMakingReleaseDir/(self.TargetBasename+suffix) )
 
         # Rename the binary to the target final one
         self.CopyRebaseDirToRelease(self.PackageInterface.DataDir)
         # self.CopyRebaseDirToRelease(self.PackageInterface.DataDir/"Nodes")
 
         if (TargetPlatform == "Linux"):
-            os.rename(self.CurrentMaking/(self.TargetBasename+".bin"), self.CurrentMaking/"ModularEditor.AppImage")
+            os.rename(self.CurrentMakingReleaseDir/(self.TargetBasename+".bin"), self.CurrentMakingReleaseDir/"ModularEditor.AppImage")
         elif (TargetPlatform == "Windows"):
-            os.rename(self.CurrentMaking/(self.TargetBasename+".exe"), self.CurrentMaking/"ModularEditor.exe")
+            os.rename(self.CurrentMakingReleaseDir/(self.TargetBasename+".exe"), self.CurrentMakingReleaseDir/"ModularEditor.exe")
 
         # Zip
         self.Finish(
             final_zip=self.ReleasesDir/(self.ReleaseName + f" [{TargetPlatform}].zip"),
-            path=self.CurrentMaking,
+            path=self.CurrentMakingReleaseDir,
         )
         self.Clear()
 
     # "Redirect" the target path to the current release we are making
     def CopyRebaseDirToRelease(self, target):
-        rebased = str(target).replace( str(self.PackageInterface.DIR), str(self.CurrentMaking) )
+        rebased = str(target).replace( str(self.PackageInterface.DIR), str(self.CurrentMakingReleaseDir) )
         copy_tree(target, rebased)
 
 # MakeRelease.py LinuxHost TargetWindows

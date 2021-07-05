@@ -295,9 +295,6 @@ class mmvEditor:
             height=int(self.Context.WINDOW_SIZE[1]),
             on_close=self.Exit, no_scrollbar=True
         ) as self.DPG_MAIN_WINDOW:
-            # Main Loop thread
-            threading.Thread(target=self.MainLoop).start()
-
             dear.set_primary_window(self.DPG_MAIN_WINDOW, True)
             # dear.add_resize_handler(self.DPG_MAIN_WINDOW, callback=self.MainWindowResized)
             dear.configure_item(self.DPG_MAIN_WINDOW, menubar=True)
@@ -379,6 +376,9 @@ class mmvEditor:
         logging.getLogger().addHandler(logging.StreamHandler(
             stream=UpdateUINotificationDPGTextHandler(mmv_editor=self)))
     
+        # Main Loop thread
+        threading.Thread(target=self.MainLoop).start()
+
     # Toggle the loading indicator on the main screen to show we are doing something
     def ToggleLoadingIndicator(self, force: bool = None):
         if not hasattr(self, "_ToggleLoadingIndicator"): self._ToggleLoadingIndicator = False
@@ -393,7 +393,7 @@ class mmvEditor:
         self._ToggleLoadingIndicator = not self._ToggleLoadingIndicator
 
     # Handler when window was resized
-    def ViewportResized(self, _, Data):
+    def ViewportResized(self, _, Data, __ignore=0, *a,**b):
         self.Context.WINDOW_SIZE = Data[0], Data[1]
         # dear.configure_item(self.DPG_MAIN_WINDOW, max_size=self.Context.WINDOW_SIZE)
 

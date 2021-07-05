@@ -85,7 +85,7 @@ class mmvEditorMenuBarUI:
             # dear.add_text("Modular Music Visualizer Editor", color=(150,150,150))
     
     def ToggleBuiltinWindowDecorator(self):
-        self.Editor.ContextSafeSetVar.ToggleBool("BUILTIN_WINDOW_DECORATORS", not self.Editor.Context.BUILTIN_WINDOW_DECORATORS)
+        self.Editor.ContextSafeSetVar.ToggleBool("BUILTIN_WINDOW_DECORATORS")
         # dear.configure_viewport(self.Editor.Viewport, caption=self.Editor.Context.BUILTIN_WINDOW_DECORATORS)
         # dear.setup_dearpygui(viewport=self.Editor.Viewport)
         # dear.show_viewport(self.Editor.Viewport)
@@ -147,7 +147,7 @@ class mmvEditorMenuBarUI:
                 dear.add_text("Yes", color=(0,255,0))
                 Action = "Reinstall"
             else:
-                dear.add_text("No", color=(255,0,0))
+                dear.add_text("No, required for exporting videos", color=(255,0,0))
                 Action = "Download"
 
             dear.add_same_line()
