@@ -70,6 +70,16 @@ class EnterContainerStack:
         Dear.pop_container_stack()
 
 
+# Send __dict__ and get the attribute from yourself in a safe manner,
+# if it doesn't exist return the Default
+def GetAttrSafe(InternalDict, Key, Default):
+    return InternalDict.get(Key, Default)
+
+# Toggle one bool from __dict__ safely, creates if doesn't exist
+def ToggleAttrSafe(InternalDict, Key, Default=True):
+    InternalDict[Key] = not GetAttrSafe(InternalDict, Key, Default)
+
+
 @contextmanager
 def CenteredWindow(Context, **k):
     try:
@@ -122,6 +132,8 @@ class mmvEditor:
         self.PayloadTypes = PayloadTypes
         self.CenteredWindow = CenteredWindow
         self.AssignLocals = Utils.AssignLocals
+        self.GetAttrSafe = GetAttrSafe
+        self.ToggleAttrSafe = ToggleAttrSafe
 
         # Watch for Nodes directory changes
         self.WatchdogNodeDir = Observer()
@@ -381,17 +393,12 @@ class mmvEditor:
         threading.Thread(target=self.MainLoop).start()
 
     # Toggle the loading indicator on the main screen to show we are doing something
-    def ToggleLoadingIndicator(self, force: bool = None):
-        if not hasattr(self, "_ToggleLoadingIndicator"): self._ToggleLoadingIndicator = False
-        if force: self._ToggleLoadingIndicator = force
+    def ToggleLoadingIndicator(self, force=False):
+        self.ToggleAttrSafe(self.__dict__, "_ToggleLoadingIndicator")
         if not hasattr(self, "DPG_LOADING_INDICATOR_GLOBAL"): return
-        Config = {
-            True: self.LoadingIndicatorConfigLoadingDict,
-            False: self.LoadingIndicatorConfigIdleDict,
-        }.get(self._ToggleLoadingIndicator)
-
-        if self._ToggleLoadingIndicator: Dear.configure_item(self.DPG_LOADING_INDICATOR_GLOBAL, **Config)
-        self._ToggleLoadingIndicator = not self._ToggleLoadingIndicator
+        print("Toggle", self._ToggleLoadingIndicator)
+        Dear.configure_item(self.DPG_LOADING_INDICATOR_GLOBAL,
+            **[self.LoadingIndicatorConfigIdleDict, self.LoadingIndicatorConfigLoadingDict][int(self._ToggleLoadingIndicator)])
 
     # Handler when window was resized
     def ViewportResized(self, _, Data, __ignore=0, *a,**b):

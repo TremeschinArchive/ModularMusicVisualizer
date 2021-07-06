@@ -111,6 +111,7 @@ class mmvEditorMenuBarUI:
         logging.info(f"[mmvEditorMenuBarUI.ExternalsManagerUI] Show About window")
 
         def DownloadSomething(TargetExternal, _ForceNotFound=False):
+            self.Editor.ToggleLoadingIndicator()
 
             with self.Editor.CenteredWindow(self.Editor.Context, width=600, height=200, no_close=True) as DownloadWindow:
                 Dear.add_text(f"Downloading [{TargetExternal}]")
@@ -135,6 +136,7 @@ class mmvEditorMenuBarUI:
             Dear.delete_item(DownloadWindow)
             self.Editor.PackageInterface.FindExternals()
             self.ExternalsManagerUI()
+            self.Editor.ToggleLoadingIndicator()
 
         with self.Editor.CenteredWindow(self.Editor.Context, width=200, height=200) as ExternalsWindow:
             Dear.add_text(f"Externals Manager", color = (0,255,0))
