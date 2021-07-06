@@ -27,7 +27,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 import logging
 
-import dearpygui.dearpygui as dear
+import dearpygui.dearpygui as Dear
 from dotmap import DotMap
 
 from mmv.Common.PackUnpack import PackUnpack

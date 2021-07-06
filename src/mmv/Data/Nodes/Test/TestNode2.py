@@ -1,20 +1,20 @@
-import dearpygui.dearpygui as dear
+import dearpygui.dearpygui as Dear
 
 
 def GetNode(BaseNode):
     class TestNode(BaseNode):
-        BaseNode.name = "TestNoderrre"
-        BaseNode.category = "Source"
+        def Config(self):
+            self.Name = "TestNode2"
+            self.Category = "Shader"
 
         def Render(self, parent):
-            with dear.node(label="TestNodde", parent=parent) as self.DPG_NODE:
+            with Dear.node(label=f"{self.Name} | ({self.Category})", parent=parent) as self.DPG_NODE:
                 self.AddNodeDecorator()
                 
-                with dear.node_attribute() as A:
-                    dear.add_text("Hello World" + f"  |  [{A}]" * int(self.Editor.Context.DEBUG_SHOW_IDS))
+                with Dear.node_attribute() as A:
+                    Dear.add_text("Hello World" + f"  |  [{A}]" * int(self.Editor.Context.DEBUG_SHOW_IDS))
 
-                with dear.node_attribute(attribute_type=dear.mvNode_Attr_Output):
-                    dear.add_slider_float(label="Output Number", width=150)
-
-            dear.set_item_theme(self.DPG_NODE, self.DPG_THEME)
-    return TestNode
+                with Dear.node_attribute(attribute_type=Dear.mvNode_Attr_Output):
+                    Dear.add_slider_float(label="Output Number", width=150)
+            self.ApplyTheme()
+    return TestNode()

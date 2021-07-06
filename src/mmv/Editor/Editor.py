@@ -35,7 +35,7 @@ import webbrowser
 from contextlib import contextmanager
 from pathlib import Path
 
-import dearpygui.dearpygui as dear
+import dearpygui.dearpygui as Dear
 import numpy as np
 import yaml
 from dotmap import DotMap
@@ -64,10 +64,10 @@ class DotMapPersistentSetter:
 
 class EnterContainerStack:
     def __init__(self, dpg_id):
-        dear.push_container_stack(dpg_id)
+        Dear.push_container_stack(dpg_id)
     def __enter__(self): ...
     def __exit__(self, *args, **kwargs):
-        dear.pop_container_stack()
+        Dear.pop_container_stack()
 
 
 @contextmanager
@@ -81,16 +81,16 @@ def CenteredWindow(Context, **k):
             k[item] = k.get(item, value)
 
         # Add centered window
-        window = dear.add_window(**k)
-        dear.push_container_stack(window)
-        dear.set_item_pos(
+        window = Dear.add_window(**k)
+        Dear.push_container_stack(window)
+        Dear.set_item_pos(
             item=window,
             pos=[
                 ( Context.WINDOW_SIZE[0] - k.get("width", 0) - k.get("offx",0) ) / 2,
                 ( Context.WINDOW_SIZE[1] - k.get("height",0) - k.get("offy",0) ) / 2,
             ])
         yield window
-    finally: dear.pop_container_stack()
+    finally: Dear.pop_container_stack()
 
 
 class PayloadTypes:
@@ -181,8 +181,8 @@ class mmvEditor:
         img = img.resize((int(size*ratio), int(size)), resample=Image.LANCZOS)
         width, height = img.size
         data = np.array(img).reshape(-1)
-        tex = dear.add_dynamic_texture(width, height, list(data/256), parent=self.TextureRegistry)
-        dpg_widget = dear.add_image(tex)
+        tex = Dear.add_dynamic_texture(width, height, list(data/256), parent=self.TextureRegistry)
+        dpg_widget = Dear.add_image(tex)
         self.ToggleLoadingIndicator()
         return original_image_data, dpg_widget
 
@@ -198,9 +198,18 @@ class mmvEditor:
     def AddNodeFile(self, path):
         path = Path(path).resolve(); assert path.exists
         node = self.ImportFileFromPath(path).GetNode(BaseNode)
-        node.hash = hashlib.sha256(Path(path).read_text().encode()).hexdigest()
-        logging.info(f"[mmvEditor.AddNodeFile] Add node [{node.name}] category [{node.category}] from [{path}]")
-        self.Scene.AvailableNodes[node.category][node.name] = node
+        node.Config()
+        node.Hash = hashlib.sha256(Path(path).read_text().encode()).hexdigest()
+        # logging.info(f"[mmvEditor.AddNodeFile] Add node [{node.Name}] category [{node.Category}] from [{path}]")
+        self.Scene.AvailableNodes[node.Category][node.Name] = node
+    
+    # user_data is "pointer" to some Node class
+    def AddNodeToEditor(self, sender, app_data, node, *a,**k):
+        self._log_sender_data(sender, app_data, node)
+        node.Config()
+        node.Init(InheritedNode=node, Editor=self)
+        self.Scene.Nodes.append(node)
+        node.Render(parent=self.DPG_NODE_EDITOR)
 
     # Re-read the node files from NodeDir, add (replace) them.
     # Also resets the NodeUI items and redisplays the ones we have
@@ -215,20 +224,12 @@ class mmvEditor:
     def _log_sender_data(self, sender, app_data, user_data=None):
         logging.info(f"[mmvEditor Event Log] Sender: [{sender}] | App Data: [{app_data}] | User Data: [{user_data}]")
     
-    # user_data is "pointer" to some Node class
-    def AddNodeToEditor(self, sender, app_data, node, *a,**k):
-        print("ADDD", a, k)
-        self._log_sender_data(sender, app_data, node)
-        node.Init(self)
-        self.Scene.Nodes.append(node)
-        node.Render(parent=self.DPG_NODE_EDITOR)
-    
     # Some Node was linked
     def NodeLinked(self, sender, app_data):
         dpfx = f"[mmvEditor.NodeLinked] [Sender: {sender}]"
         logging.info(f"{dpfx} Link {app_data}")
         N1, N2 = app_data
-        dear.add_node_link(N1, N2, parent=sender)
+        Dear.add_node_link(N1, N2, parent=sender)
         if not N1 in self.Scene.Links: self.Scene.Links[N1] = []
         if not N2 in self.Scene.Links[N1]: self.Scene.Links[N1] += [N2]
         logging.info(f"{dpfx} Links: {self.Scene.Links}")
@@ -238,7 +239,7 @@ class mmvEditor:
     # Some Node was delinked
     def NodeDelinked(self, sender, app_data):
         logging.info(f"[mmvEditor.NodeLinked] [Sender: {sender}] Delink {app_data}")
-        dear.delete_item(app_data)
+        Dear.delete_item(app_data)
         self.NodeLinksDebug()
 
     # [Debug] Show Node connections
@@ -251,13 +252,13 @@ class mmvEditor:
     def InitMainWindowAsync(self):
         self.MainThread = threading.Thread(target=self.InitMainWindow, daemon=True).start()
 
-    # Wrapper for calling dear.add_theme_color or dear.add_theme_style inputting a string
+    # Wrapper for calling Dear.add_theme_color or Dear.add_theme_style inputting a string
     def SetDearPyGuiThemeString(self, key, value):
-        target = dear.__dict__[key]
+        target = Dear.__dict__[key]
         if not isinstance(value, list): value = [value]
         category = 2 if "Node" in key else 0
-        if "Col_" in key: dear.add_theme_color(target, value, category=category)
-        if "StyleVar_" in key: dear.add_theme_style(target, *value, category=category)
+        if "Col_" in key: Dear.add_theme_color(target, value, category=category)
+        if "StyleVar_" in key: Dear.add_theme_style(target, *value, category=category)
 
     # # Loops, Layout
 
@@ -269,107 +270,107 @@ class mmvEditor:
         self.AddNodeFilesDataDirRecursive(render=False)
   
         # Load theme YAML, set values
-        with dear.theme(default_theme=True) as self.DPG_THEME:
+        with Dear.theme(default_theme=True) as self.DPG_THEME:
             self.ThemeYaml = DotMap( yaml.load(Path(self.PackageInterface.DataDir/"Theme.yaml").read_text(), Loader = yaml.FullLoader) )
             for key, value in self.ThemeYaml.Global.items():
                 logging.info(f"{dpfx} Customize Theme [{key}] => [{value}]")
                 self.SetDearPyGuiThemeString(key, value)
                 
         # Load font, add circles unicode
-        with dear.font_registry() as self.DPG_FONT_REGISTRY:
+        with Dear.font_registry() as self.DPG_FONT_REGISTRY:
             logging.info(f"{dpfx} Loading Interface font")
-            self.DPG_UI_FONT = dear.add_font(
+            self.DPG_UI_FONT = Dear.add_font(
                 self.PackageInterface.DataDir/"Fonts"/self.Context.UI_FONT, self.Context.UI_FONT_SIZE, default_font=True)
-            dear.add_font_chars([
+            Dear.add_font_chars([
                 0x2B24, # ⬤ Large Black Circle
                 0x25CF, # ●  Black Circle
             ], parent=self.DPG_UI_FONT)
 
         # Handler
-        with dear.handler_registry() as self.DPG_HANDLER_REGISTRY: ...
-            # dear.add_mouse_drag_handler(0, callback=self._MouseWentDrag)
+        with Dear.handler_registry() as self.DPG_HANDLER_REGISTRY: ...
+            # Dear.add_mouse_drag_handler(0, callback=self._MouseWentDrag)
 
         # Creating main window
-        with dear.window(
+        with Dear.window(
             width=int(self.Context.WINDOW_SIZE[0]),
             height=int(self.Context.WINDOW_SIZE[1]),
             on_close=self.Exit, no_scrollbar=True
         ) as self.DPG_MAIN_WINDOW:
-            dear.set_primary_window(self.DPG_MAIN_WINDOW, True)
-            # dear.add_resize_handler(self.DPG_MAIN_WINDOW, callback=self.MainWindowResized)
-            dear.configure_item(self.DPG_MAIN_WINDOW, menubar=True)
-            dear.configure_item(self.DPG_MAIN_WINDOW, no_resize=True)
-            dear.configure_item(self.DPG_MAIN_WINDOW, no_resize=True)
+            Dear.set_primary_window(self.DPG_MAIN_WINDOW, True)
+            # Dear.add_resize_handler(self.DPG_MAIN_WINDOW, callback=self.MainWindowResized)
+            Dear.configure_item(self.DPG_MAIN_WINDOW, menubar=True)
+            Dear.configure_item(self.DPG_MAIN_WINDOW, no_resize=True)
+            Dear.configure_item(self.DPG_MAIN_WINDOW, no_resize=True)
 
             # # Render stuff
             self.MenuBarUI.Render()
 
-            with dear.child(border = False, height = -28):
-                with dear.tab_bar() as self.DPG_MAIN_TAB_BAR:
-                    with dear.tab(label="Node Editor") as self.DPG_NODE_EDITOR_TAB:
+            with Dear.child(border = False, height = -28):
+                with Dear.tab_bar() as self.DPG_MAIN_TAB_BAR:
+                    with Dear.tab(label="Node Editor") as self.DPG_NODE_EDITOR_TAB:
 
-                        with dear.table(header_row=False, no_clip=True, precise_widths=True):
-                            dear.add_table_column(width_fixed=False)
+                        with Dear.table(header_row=False, no_clip=True, precise_widths=True):
+                            Dear.add_table_column(width_fixed=False)
 
-                            with dear.table(header_row=False, no_clip=True, precise_widths=True):
-                                dear.add_table_column()
+                            with Dear.table(header_row=False, no_clip=True, precise_widths=True):
+                                Dear.add_table_column()
                                 
-                                dear.add_button(label="A")
-                                dear.add_same_line()
-                                dear.add_button(label="B")
-                                dear.add_same_line()
-                                dear.add_button(label="C")
-                                dear.add_same_line()
-                                dear.add_button(label="D")
-                                dear.add_same_line()
-                                dear.add_button(label="E")
-                                dear.add_same_line()
-                                dear.add_button(label="F")
-                                dear.add_same_line()
+                                Dear.add_button(label="A")
+                                Dear.add_same_line()
+                                Dear.add_button(label="B")
+                                Dear.add_same_line()
+                                Dear.add_button(label="C")
+                                Dear.add_same_line()
+                                Dear.add_button(label="D")
+                                Dear.add_same_line()
+                                Dear.add_button(label="E")
+                                Dear.add_same_line()
+                                Dear.add_button(label="F")
+                                Dear.add_same_line()
 
-                                dear.add_table_next_column()
-                                with dear.table(header_row=False, no_clip=True, precise_widths=True):
-                                    dear.add_table_column(width_fixed=True)
-                                    dear.add_table_column()
-                                    dear.add_table_column(width_fixed=True)
+                                Dear.add_table_next_column()
+                                with Dear.table(header_row=False, no_clip=True, precise_widths=True):
+                                    Dear.add_table_column(width_fixed=True)
+                                    Dear.add_table_column()
+                                    Dear.add_table_column(width_fixed=True)
                                     
                                     self.AddNodeUI.Here()
                                     self.AddNodeUI.Render()
 
-                                    dear.add_table_next_column()
-                                    with dear.child(border = False, height = -14):
-                                        with dear.node_editor(callback=self.NodeLinked, delink_callback=self.NodeDelinked) as self.DPG_NODE_EDITOR: ...
+                                    Dear.add_table_next_column()
+                                    with Dear.child(border = False, height = -14):
+                                        with Dear.node_editor(callback=self.NodeLinked, delink_callback=self.NodeDelinked) as self.DPG_NODE_EDITOR: ...
 
-                                    dear.add_table_next_column()
-                                    dear.add_text("Hello I'll be toolbar")
-                                    dear.add_table_next_column()
+                                    Dear.add_table_next_column()
+                                    Dear.add_text("Hello I'll be toolbar")
+                                    Dear.add_table_next_column()
                             # # Footer
-                            dear.add_table_next_column()
-                            dear.add_same_line()
+                            Dear.add_table_next_column()
+                            Dear.add_same_line()
 
-                    with dear.tab(label="Live Config") as self.DPG_LIVE_CONFIG_TAB: ...
-                    with dear.tab(label="Export") as self.DPG_EXPORT_TAB: ...
-                    with dear.tab(label="Performance") as self.DPG_PERFORMANCE_TAB: ...
+                    with Dear.tab(label="Live Config") as self.DPG_LIVE_CONFIG_TAB: ...
+                    with Dear.tab(label="Export") as self.DPG_EXPORT_TAB: ...
+                    with Dear.tab(label="Performance") as self.DPG_PERFORMANCE_TAB: ...
             
-            dear.add_separator()
-            self.DPG_LOADING_INDICATOR_GLOBAL = dear.add_loading_indicator(**self.LoadingIndicatorConfigIdleDict)
+            Dear.add_separator()
+            self.DPG_LOADING_INDICATOR_GLOBAL = Dear.add_loading_indicator(**self.LoadingIndicatorConfigIdleDict)
             self.ToggleLoadingIndicator()
-            dear.add_same_line()
-            dear.add_text(f"MMV v{self.PackageInterface.VersionNumber}", color = (230,70,75))
-            dear.add_same_line()
-            dear.add_text(f" | ", color = (80,80,80))
-            dear.add_same_line()
-            self.DPG_CURRENT_PRESET_TEXT = dear.add_text(f"\"{self.Scene.PresetName}\"")
-            dear.add_same_line()
-            dear.add_text(f" | ", color = (80,80,80))
-            dear.add_same_line()
-            self.DPG_NOTIFICATION_TEXT = dear.add_text("", color=(140,140,140))
+            Dear.add_same_line()
+            Dear.add_text(f"MMV v{self.PackageInterface.VersionNumber}", color = (230,70,75))
+            Dear.add_same_line()
+            Dear.add_text(f" | ", color = (80,80,80))
+            Dear.add_same_line()
+            self.DPG_CURRENT_PRESET_TEXT = Dear.add_text(f"\"{self.Scene.PresetName}\"")
+            Dear.add_same_line()
+            Dear.add_text(f" | ", color = (80,80,80))
+            Dear.add_same_line()
+            self.DPG_NOTIFICATION_TEXT = Dear.add_text("", color=(140,140,140))
 
         # # Custom StreamHandler logging class for updating the DPG text to show latest
         # notifications on the UI for the user
         class UpdateUINotificationDPGTextHandler(logging.StreamHandler):
             def __init__(self, mmv_editor): self.mmv_editor = mmv_editor
-            def write(self, message): dear.configure_item(self.mmv_editor.DPG_NOTIFICATION_TEXT, default_value=f"{message}")
+            def write(self, message): Dear.configure_item(self.mmv_editor.DPG_NOTIFICATION_TEXT, default_value=f"{message}")
             def flush(self, *args, **kwargs): ...
 
         # Add the handler
@@ -389,34 +390,34 @@ class mmvEditor:
             False: self.LoadingIndicatorConfigIdleDict,
         }.get(self._ToggleLoadingIndicator)
 
-        if self._ToggleLoadingIndicator: dear.configure_item(self.DPG_LOADING_INDICATOR_GLOBAL, **Config)
+        if self._ToggleLoadingIndicator: Dear.configure_item(self.DPG_LOADING_INDICATOR_GLOBAL, **Config)
         self._ToggleLoadingIndicator = not self._ToggleLoadingIndicator
 
     # Handler when window was resized
     def ViewportResized(self, _, Data, __ignore=0, *a,**b):
         self.Context.WINDOW_SIZE = Data[0], Data[1]
-        # dear.configure_item(self.DPG_MAIN_WINDOW, max_size=self.Context.WINDOW_SIZE)
+        # Dear.configure_item(self.DPG_MAIN_WINDOW, max_size=self.Context.WINDOW_SIZE)
 
     # def MainWindowResized(self, _, Data):
-    #     dear.configure_viewport(self.Viewport, width=Data[0], height=Data[1])
+    #     Dear.configure_viewport(self.Viewport, width=Data[0], height=Data[1])
 
     def MainLoop(self):
         logging.info(f"[mmvEditor.MainLoop] Enter MainLoop, start MMV")
         self._Stop = False
-        self.Viewport = dear.create_viewport(
+        self.Viewport = Dear.create_viewport(
             title="Modular Music Visualizer Editor",
             caption=not self.Context.BUILTIN_WINDOW_DECORATORS,
             resizable=True, border=False)
-        dear.set_viewport_resize_callback(self.ViewportResized)
-        dear.setup_dearpygui(viewport=self.Viewport)
-        dear.show_viewport(self.Viewport)
-        with dear.texture_registry() as self.TextureRegistry: ...
-        if self.Context.START_MAXIMIZED: dear.maximize_viewport()
+        Dear.set_viewport_resize_callback(self.ViewportResized)
+        Dear.setup_dearpygui(viewport=self.Viewport)
+        Dear.show_viewport(self.Viewport)
+        with Dear.texture_registry() as self.TextureRegistry: ...
+        if self.Context.START_MAXIMIZED: Dear.maximize_viewport()
         try:
             for iteration in itertools.count(1):
-                if (self._Stop) or (not dear.is_dearpygui_running()): break
+                if (self._Stop) or (not Dear.is_dearpygui_running()): break
                 self.Next(iteration)
-                dear.render_dearpygui_frame()
+                Dear.render_dearpygui_frame()
         except KeyboardInterrupt: pass
         self.__True_Exit()
 
@@ -429,7 +430,7 @@ class mmvEditor:
         self.Exit()
         logging.info(f"[mmvEditor.AddNodeFile] Exiting [Modular Music Visualizer Editor] *Safely*")
         self.Context = PackUnpack.Pack(self.Context, self.USER_CONFIG_FILE)
-        dear.cleanup_dearpygui()
+        Dear.cleanup_dearpygui()
 
 
 
@@ -437,13 +438,13 @@ class mmvEditor:
 
 
     # First time opening MMV warning
-    def __FirstTimeWarningOK(self, _): self.ContextSafeSetVar.Set("FIRST_TIME", False); dear.delete_item(_)
+    def __FirstTimeWarningOK(self, _): self.ContextSafeSetVar.Set("FIRST_TIME", False); Dear.delete_item(_)
     def FirstTimeWarning(self):
         if self.Context.FIRST_TIME:
             with self.CenteredWindow(self.Context, width=400, height=100) as _:
-                dear.add_text((
+                Dear.add_text((
                     "Hello first time user!!\n\n"
                     "Modular Music Visualizer is Free Software\n"
                     "distributed under the GPLv3 License.\n\n"
                 ))
-                dear.add_button(label='Close', callback=lambda d,s: self.__FirstTimeWarningOK(_))
+                Dear.add_button(label='Close', callback=lambda d,s: self.__FirstTimeWarningOK(_))

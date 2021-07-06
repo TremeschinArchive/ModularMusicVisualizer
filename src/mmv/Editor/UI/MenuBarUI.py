@@ -28,7 +28,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 import logging
 import webbrowser
 
-import dearpygui.dearpygui as dear
+import dearpygui.dearpygui as Dear
 
 
 class mmvEditorMenuBarUI:
@@ -37,58 +37,58 @@ class mmvEditorMenuBarUI:
         self.isLoading = False
     
     def SetLoadingIndicator(self, state: bool):
-        dear.configure_item
+        Dear.configure_item
 
     def Render(self):
-        with dear.menu_bar() as MenuBar:
+        with Dear.menu_bar() as MenuBar:
             if self.Editor.Context.BUILTIN_WINDOW_DECORATORS:
-                dear.add_clicked_handler(dear.add_text("⬤", color=(255,0,0)), callback=lambda s,d:self.Editor.Exit())
-                dear.add_clicked_handler(dear.add_text("⬤", color=(255,255,0)), callback=lambda s,d:dear.minimize_viewport())
-                dear.add_clicked_handler(dear.add_text("⬤", color=(0,255,0)), callback=lambda s,d:dear.maximize_viewport())
-            with dear.menu(label="File"):
-                dear.add_menu_item(label="New")
-                dear.add_menu_item(label="Open")
-                dear.add_menu_item(label="Open Recent")
-                dear.add_menu_item(label="Save")
-                dear.add_menu_item(label="Save As")
-                dear.add_separator()
-                dear.add_menu_item(label="Exit", callback=lambda s,d: self.Editor.Exit())
-            with dear.menu(label="Edit"):
-                dear.add_menu_item(label="Undo", callback=lambda s,d: self.Editor.EventBus.Undo())
-                dear.add_menu_item(label="Redo", callback=lambda s,d: self.Editor.EventBus.Redo())
-            with dear.menu(label="View"):
-                dear.add_menu_item(label="Something")
-            with dear.menu(label="Preferences"):
-                dear.add_slider_float(label="User Interface FX Volume", default_value=40, min_value=0,max_value=100, callback=lambda s,d,a,b,c,f:print(d,s,a,b,c,f))
-                dear.add_checkbox(label="Builtin Window Decorators [Needs Restart]", callback=lambda d,s: self.ToggleBuiltinWindowDecorator(), default_value=self.Editor.Context.BUILTIN_WINDOW_DECORATORS)
-                dear.add_checkbox(label="Start Maximized", callback=lambda d,s: self.ToggleStartMaximized(), default_value=self.Editor.Context.START_MAXIMIZED)
-                dear.add_separator()
-                dear.add_menu_item(label="Advanced")
+                Dear.add_clicked_handler(Dear.add_text("⬤", color=(255,0,0)), callback=lambda s,d:self.Editor.Exit())
+                Dear.add_clicked_handler(Dear.add_text("⬤", color=(255,255,0)), callback=lambda s,d:Dear.minimize_viewport())
+                Dear.add_clicked_handler(Dear.add_text("⬤", color=(0,255,0)), callback=lambda s,d:Dear.maximize_viewport())
+            with Dear.menu(label="File"):
+                Dear.add_menu_item(label="New")
+                Dear.add_menu_item(label="Open")
+                Dear.add_menu_item(label="Open Recent")
+                Dear.add_menu_item(label="Save")
+                Dear.add_menu_item(label="Save As")
+                Dear.add_separator()
+                Dear.add_menu_item(label="Exit", callback=lambda s,d: self.Editor.Exit())
+            with Dear.menu(label="Edit"):
+                Dear.add_menu_item(label="Undo", callback=lambda s,d: self.Editor.EventBus.Undo())
+                Dear.add_menu_item(label="Redo", callback=lambda s,d: self.Editor.EventBus.Redo())
+            with Dear.menu(label="View"):
+                Dear.add_menu_item(label="Something")
+            with Dear.menu(label="Preferences"):
+                Dear.add_slider_float(label="User Interface FX Volume", default_value=40, min_value=0,max_value=100, callback=lambda s,d,a,b,c,f:print(d,s,a,b,c,f))
+                Dear.add_checkbox(label="Builtin Window Decorators [Needs Restart]", callback=lambda d,s: self.ToggleBuiltinWindowDecorator(), default_value=self.Editor.Context.BUILTIN_WINDOW_DECORATORS)
+                Dear.add_checkbox(label="Start Maximized", callback=lambda d,s: self.ToggleStartMaximized(), default_value=self.Editor.Context.START_MAXIMIZED)
+                Dear.add_separator()
+                Dear.add_menu_item(label="Advanced")
             
-            dear.add_menu_item(label="Downloads", callback=lambda s,d:self.ExternalsManagerUI())
+            Dear.add_menu_item(label="Downloads", callback=lambda s,d:self.ExternalsManagerUI())
 
-            with dear.menu(label="Help"):
-                dear.add_menu_item(label="Telegram Channel", callback=lambda s,d:webbrowser.open("https://t.me/modular_music_visualizer"))
-                dear.add_menu_item(label="GitHub Issues", callback=lambda s,d:webbrowser.open("https://github.com/Tremeschin/modular-music-visualizer/issues"))
+            with Dear.menu(label="Help"):
+                Dear.add_menu_item(label="Telegram Channel", callback=lambda s,d:webbrowser.open("https://t.me/modular_music_visualizer"))
+                Dear.add_menu_item(label="GitHub Issues", callback=lambda s,d:webbrowser.open("https://github.com/Tremeschin/modular-music-visualizer/issues"))
 
-            with dear.menu(label="Developer"):
-                dear.add_menu_item(label="Toggle Loading Indicator", callback=lambda s,d:self.Editor.ToggleLoadingIndicator())
-                dear.add_menu_item(label="DearPyGui Style Editor", callback=lambda s,d:dear.show_tool(dear.mvTool_Style))
-                dear.add_menu_item(label="DearPyGui Metrics", callback=lambda:dear.show_tool(dear.mvTool_Metrics))
-                dear.add_menu_item(label="DearPyGui Documentation", callback=lambda:dear.show_tool(dear.mvTool_Doc))
-                dear.add_menu_item(label="DearPyGui Debug", callback=lambda:dear.show_tool(dear.mvTool_Debug))
-                dear.add_menu_item(label="DearPyGui Style Editor", callback=lambda:dear.show_tool(dear.mvTool_Style))
-                dear.add_menu_item(label="DearPyGui Font Manager", callback=lambda:dear.show_tool(dear.mvTool_Font))
-                dear.add_menu_item(label="DearPyGui Item Registry", callback=lambda:dear.show_tool(dear.mvTool_ItemRegistry))
+            with Dear.menu(label="Developer"):
+                Dear.add_menu_item(label="Toggle Loading Indicator", callback=lambda s,d:self.Editor.ToggleLoadingIndicator())
+                Dear.add_menu_item(label="DearPyGui Style Editor", callback=lambda s,d:Dear.show_tool(Dear.mvTool_Style))
+                Dear.add_menu_item(label="DearPyGui Metrics", callback=lambda:Dear.show_tool(Dear.mvTool_Metrics))
+                Dear.add_menu_item(label="DearPyGui Documentation", callback=lambda:Dear.show_tool(Dear.mvTool_Doc))
+                Dear.add_menu_item(label="DearPyGui Debug", callback=lambda:Dear.show_tool(Dear.mvTool_Debug))
+                Dear.add_menu_item(label="DearPyGui Style Editor", callback=lambda:Dear.show_tool(Dear.mvTool_Style))
+                Dear.add_menu_item(label="DearPyGui Font Manager", callback=lambda:Dear.show_tool(Dear.mvTool_Font))
+                Dear.add_menu_item(label="DearPyGui Item Registry", callback=lambda:Dear.show_tool(Dear.mvTool_ItemRegistry))
 
-            dear.add_menu_item(label="About", callback=lambda s,d:self.About())
-            # dear.add_text("Modular Music Visualizer Editor", color=(150,150,150))
+            Dear.add_menu_item(label="About", callback=lambda s,d:self.About())
+            # Dear.add_text("Modular Music Visualizer Editor", color=(150,150,150))
     
     def ToggleBuiltinWindowDecorator(self):
         self.Editor.ContextSafeSetVar.ToggleBool("BUILTIN_WINDOW_DECORATORS")
-        # dear.configure_viewport(self.Editor.Viewport, caption=self.Editor.Context.BUILTIN_WINDOW_DECORATORS)
-        # dear.setup_dearpygui(viewport=self.Editor.Viewport)
-        # dear.show_viewport(self.Editor.Viewport)
+        # Dear.configure_viewport(self.Editor.Viewport, caption=self.Editor.Context.BUILTIN_WINDOW_DECORATORS)
+        # Dear.setup_dearpygui(viewport=self.Editor.Viewport)
+        # Dear.show_viewport(self.Editor.Viewport)
 
     def ToggleStartMaximized(self):
         self.Editor.ContextSafeSetVar.ToggleBool("START_MAXIMIZED")
@@ -97,13 +97,13 @@ class mmvEditorMenuBarUI:
         logging.info(f"[mmvEditorMenuBarUI.About] Show About window")
         with self.Editor.CenteredWindow(self.Editor.Context, width=200, height=200) as AboutWindow:
             self.Editor.AddImageWidget(path=self.Editor.LogoImage, size=190)
-            dear.add_text(f"Modular Music Visualizer", color = (0,255,0))
-            dear.add_text(f"Version {self.Editor.PackageInterface.Version}", color=(150,150,150))
-            dear.add_separator()
-            dear.add_button(label="Website", callback=lambda s,d:webbrowser.open("http://mmvproject.gitlab.io/website"))
-            dear.add_button(label="GitHub Page", callback=lambda s,d:webbrowser.open("https://github.com/Tremeschin/modular-music-visualizer"))
-            dear.add_separator()
-            dear.add_button(label="About DearPyGui", callback=lambda:dear.show_tool(dear.mvTool_About))
+            Dear.add_text(f"Modular Music Visualizer", color = (0,255,0))
+            Dear.add_text(f"Version {self.Editor.PackageInterface.Version}", color=(150,150,150))
+            Dear.add_separator()
+            Dear.add_button(label="Website", callback=lambda s,d:webbrowser.open("http://mmvproject.gitlab.io/website"))
+            Dear.add_button(label="GitHub Page", callback=lambda s,d:webbrowser.open("https://github.com/Tremeschin/modular-music-visualizer"))
+            Dear.add_separator()
+            Dear.add_button(label="About DearPyGui", callback=lambda:Dear.show_tool(Dear.mvTool_About))
  
     # # Ui to manage externals
 
@@ -113,18 +113,18 @@ class mmvEditorMenuBarUI:
         def DownloadSomething(TargetExternal, _ForceNotFound=False):
 
             with self.Editor.CenteredWindow(self.Editor.Context, width=600, height=200, no_close=True) as DownloadWindow:
-                dear.add_text(f"Downloading [{TargetExternal}]")
-                dear.add_same_line();
-                dear.add_loading_indicator(**self.Editor.LoadingIndicatorConfigLoadingDict)
-                ProgressBar = dear.add_progress_bar(width=600)
-                CurrentInfo = dear.add_text(f"Requesting Download Info..")
+                Dear.add_text(f"Downloading [{TargetExternal}]")
+                Dear.add_same_line();
+                Dear.add_loading_indicator(**self.Editor.LoadingIndicatorConfigLoadingDict)
+                ProgressBar = Dear.add_progress_bar(width=600)
+                CurrentInfo = Dear.add_text(f"Requesting Download Info..")
 
             def KeepUpdatingProgressBar(Status):
-                dear.configure_item(ProgressBar,
+                Dear.configure_item(ProgressBar,
                     label=Status.Name,
                     default_value=Status.Completed
                 )
-                dear.configure_item(CurrentInfo, default_value=Status.Info)
+                Dear.configure_item(CurrentInfo, default_value=Status.Info)
 
             self.Editor.PackageInterface.Externals.DownloadInstallExternal(
                 TargetExternal=TargetExternal,
@@ -132,26 +132,26 @@ class mmvEditorMenuBarUI:
                 _ForceNotFound=_ForceNotFound,
             )
 
-            dear.delete_item(DownloadWindow)
+            Dear.delete_item(DownloadWindow)
             self.Editor.PackageInterface.FindExternals()
             self.ExternalsManagerUI()
 
         with self.Editor.CenteredWindow(self.Editor.Context, width=200, height=200) as ExternalsWindow:
-            dear.add_text(f"Externals Manager", color = (0,255,0))
+            Dear.add_text(f"Externals Manager", color = (0,255,0))
 
-            dear.add_text("FFmpeg: ")
-            dear.add_same_line()
+            Dear.add_text("FFmpeg: ")
+            Dear.add_same_line()
             HaveFFmpeg = not self.Editor.PackageInterface.FFmpegBinary is None
             
             if HaveFFmpeg:
-                dear.add_text("Yes", color=(0,255,0))
+                Dear.add_text("Yes", color=(0,255,0))
                 Action = "Reinstall"
             else:
-                dear.add_text("No, required for exporting videos", color=(255,0,0))
+                Dear.add_text("No, required for exporting videos", color=(255,0,0))
                 Action = "Download"
 
-            dear.add_same_line()
-            dear.add_button(label=Action, callback=
+            Dear.add_same_line()
+            Dear.add_button(label=Action, callback=
                 lambda s,d: DownloadSomething(
                     self.Editor.PackageInterface.Externals.AvailableExternals.FFmpeg,
                     _ForceNotFound=HaveFFmpeg

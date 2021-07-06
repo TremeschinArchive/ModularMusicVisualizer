@@ -25,7 +25,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
-import dearpygui.dearpygui as dear
+import dearpygui.dearpygui as Dear
 
 
 class mmvEditorAddNodeUI:
@@ -33,24 +33,24 @@ class mmvEditorAddNodeUI:
         self.Editor = Editor
     
     def Here(self):
-        with dear.group() as self.AddNodesGroup: ...
+        with Dear.group() as self.AddNodesGroup: ...
     
     def Reset(self):
-        dear.delete_item(self.AddNodesGroup, children_only=True)
+        Dear.delete_item(self.AddNodesGroup, children_only=True)
 
     def Render(self):
         with self.Editor.EnterContainerStack(self.AddNodesGroup):
-            dear.add_separator()
-            dear.add_text("Add Nodes", color = (0, 255, 0))
+            Dear.add_separator()
+            Dear.add_text("Add Nodes", color = (0, 255, 0))
             AN = self.Editor.Scene.AvailableNodes
 
             for category in sorted(AN):
-                dear.add_text(f":: {category}", color=(140,140,140))
+                Dear.add_text(f":: {category}", color=(140,140,140))
                 cat = AN[category]
 
                 for name in cat:
                     node = cat[name]
-                    dear.add_button(
+                    Dear.add_button(
                         label=name,
                         callback=self.Editor.AddNodeToEditor,
                         user_data=node
