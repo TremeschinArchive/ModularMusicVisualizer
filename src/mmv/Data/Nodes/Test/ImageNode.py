@@ -8,7 +8,7 @@ def GetNode(BaseNode):
             self.Category = "Sources"
 
         def Render(self, parent):
-            with Dear.node(label=f"{self.Name} | ({self.Category})", parent=parent) as self.DPG_NODE:
+            with Dear.node(label=f"{self.Name} | ({self.Category})", parent=parent) as self.DPG_NODE_ID:
                 self.AddNodeDecorator()
                 
                 with Dear.node_attribute() as A:

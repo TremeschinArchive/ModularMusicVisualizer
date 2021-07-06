@@ -25,13 +25,15 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
-from watchdog.events import PatternMatchingEventHandler
-from mmv.Common.PackUnpack import PackUnpack
-from contextlib import contextmanager
-import dearpygui.dearpygui as Dear
-from dotmap import DotMap
 import logging
 import uuid
+from contextlib import contextmanager
+
+import dearpygui.dearpygui as Dear
+from dotmap import DotMap
+from watchdog.events import PatternMatchingEventHandler
+
+from mmv.Common.PackUnpack import PackUnpack
 
 
 # Enter a DPG container Stack using "with", it pushes then pops after exiting
@@ -100,10 +102,13 @@ def AssignLocals(data):
 def ToggleAttrSafe(InternalDict, Key, Default=True):
     InternalDict[Key] = not InternalDict.get(Key, Default)
 
+class EmptyCallable:
+    def __init__(self): ...
+    def __call__(self): ...
 
 # # ExtendedDotMap
 class ExtendedDotMap:
-    def __init__(self, OldSelf=None, SetCallback=lambda _:_):
+    def __init__(self, OldSelf=None, SetCallback=EmptyCallable()):
         AssignLocals(locals())
         self.DotMap = DotMap(_dynamic=False)
         self.Digest("Hash", NewHash())
@@ -120,6 +125,12 @@ class ExtendedDotMap:
     def ForceSet(self, Key, Value):
         logging.info(f"[ExtendedDotMap.ForceSet] {Key} => {Value}")
         self.DotMap[Key] = Value
+        self.SetCallback()
+
+    # Get one attribute if it exists, if it doesn't set to default
+    def SetDNE(self, Key, Default):
+        logging.info(f"[ExtendedDotMap.SetDNE] {Key} => {Default}")
+        self.DotMap[Key] = self.DotMap.get(Key, Default)
         self.SetCallback()
 
     # Toggle one boolean on this DotMap safely

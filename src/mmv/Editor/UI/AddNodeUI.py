@@ -52,6 +52,6 @@ class mmvEditorAddNodeUI:
                     node = cat[name]
                     Dear.add_button(
                         label=name,
-                        callback=self.Editor.AddNodeToEditor,
+                        callback=self.Editor.Scene.AddNodeToEditor,
                         user_data=node
                     )

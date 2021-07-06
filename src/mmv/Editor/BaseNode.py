@@ -15,6 +15,7 @@ class BaseNode:
     def Init(self, InheritedNode, Editor):
         dpfx = "[BaseNode.Init]"
         self.Editor = Editor
+        self.Config()
 
         # Create this node's theme based on the Theme.yaml
         with Dear.theme() as self.DPG_THIS_NODE_THEME:
@@ -49,7 +50,7 @@ class BaseNode:
 
     # Apply theme to a DearPyGui Node
     def ApplyTheme(self):
-        Dear.set_item_theme(self.DPG_NODE, self.DPG_THIS_NODE_THEME)
+        Dear.set_item_theme(self.DPG_NODE_ID, self.DPG_THIS_NODE_THEME)
 
     @abstractmethod
     def Render(self, parent): ...
@@ -59,7 +60,7 @@ class BaseNode:
 
     # Node methods / Functionality
     def Delete(self):
-        logging.info(f"[BaseNode] Delete Node [{self.DPG_NODE}]")
-        Dear.delete_item(self.DPG_NODE)
+        logging.info(f"[BaseNode] Delete Node [{self.DPG_NODE_ID}]")
+        Dear.delete_item(self.DPG_NODE_ID)
 
     def Clone(self): pass

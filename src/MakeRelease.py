@@ -50,8 +50,8 @@ from pathlib import Path
 from subprocess import PIPE
 
 import mmv
-from mmv.Common.Utils import Utils
 from mmv.Common.Download import Download
+from mmv.Common.Utils import Utils
 
 sys.dont_write_bytecode = True
 
@@ -202,7 +202,7 @@ class MakeRelease:
         
         # Nuitka Command for final export
         CompileCommand = NUITKA + [
-            "--standalone", "--onefile", "--jobs", str(NJobs), 
+            "--standalone", "--onefile", "--jobs", str(NJobs),
             "--linux-onefile-icon", icon,
             "--file-reference-choice=runtime",
             # "--nofollow-imports",

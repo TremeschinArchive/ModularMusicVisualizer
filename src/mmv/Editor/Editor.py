@@ -44,25 +44,17 @@ from watchdog.observers import Observer
 from mmv.Common.PackUnpack import PackUnpack
 from mmv.Common.Utils import Utils
 from mmv.Editor.BaseNode import BaseNode
+from mmv.Editor.EditorUtils import (AssignLocals, CenteredWindow,
+                                    EnterContainerStack, ExtendedDotMap,
+                                    NewHash, PayloadTypes, ToggleAttrSafe,
+                                    WatchdogTemplate)
 from mmv.Editor.Scene import mmvEditorScene
 from mmv.Editor.UI.AddNodeUI import mmvEditorAddNodeUI
 from mmv.Editor.UI.MenuBarUI import mmvEditorMenuBarUI
-from mmv.Editor.EditorUtils import (
-    EnterContainerStack,ToggleAttrSafe, CenteredWindow,
-    PayloadTypes, WatchdogTemplate,
-    NewHash, AssignLocals, ExtendedDotMap
-)
-
 
 
 class mmvEditor:
     def __init__(self, PackageInterface):
-        self.PackageInterface = PackageInterface
-        self.LogoImage = self.PackageInterface.ImageDir/"mmvLogoWhite.png"
-        self.LoadLastConfig()
-        self.MenuBarUI = mmvEditorMenuBarUI(self)
-        self.AddNodeUI = mmvEditorAddNodeUI(self)
-        self.Scene = mmvEditorScene(self)
 
         # Stuff we can access
         self.EnterContainerStack = EnterContainerStack
@@ -72,6 +64,14 @@ class mmvEditor:
         self.ToggleAttrSafe = ToggleAttrSafe
         self.NewHash = NewHash
         self.ExtendedDotMap = ExtendedDotMap
+
+        # "True" init
+        self.PackageInterface = PackageInterface
+        self.LogoImage = self.PackageInterface.ImageDir/"mmvLogoWhite.png"
+        self.LoadLastConfig()
+        self.MenuBarUI = mmvEditorMenuBarUI(self)
+        self.AddNodeUI = mmvEditorAddNodeUI(self)
+        self.Scene = mmvEditorScene(self)
 
         # Watch for Nodes directory changes
         self.WatchdogNodeDir = Observer()
@@ -115,10 +115,10 @@ class mmvEditor:
 
     # Play some sound from a file (usually UI FX, info, notification)
     def PlaySound(self, file):
-        if self.Context.UI_SOUNDS:
+        if self.Context.DotMap.UI_SOUNDS:
             subprocess.Popen([
                 self.PackageInterface.FFplayBinary, "-loglevel", "panic",
-                "-hide_banner", "-volume", f"{self.Context.UI_VOLUME}", 
+                "-hide_banner", "-volume", f"{self.Context.DotMap.UI_VOLUME}", 
                 "-nodisp", "-autoexit", Path(file).resolve()], stdout=subprocess.DEVNULL)
 
     # Adds a image on current DPG stack, returns the raw numpy array of its content and the
@@ -154,14 +154,6 @@ class mmvEditor:
         # logging.info(f"[mmvEditor.AddNodeFile] Add node [{node.Name}] category [{node.Category}] from [{path}]")
         self.Scene.AvailableNodes[node.Category][node.Name] = node
     
-    # user_data is "pointer" to some Node class
-    def AddNodeToEditor(self, sender, app_data, node, *a,**k):
-        self._log_sender_data(sender, app_data, node)
-        node.Config()
-        node.Init(InheritedNode=node, Editor=self)
-        self.Scene.Nodes.append(node)
-        node.Render(parent=self.DPG_NODE_EDITOR)
-
     # Re-read the node files from NodeDir, add (replace) them.
     # Also resets the NodeUI items and redisplays the ones we have
     def AddNodeFilesDataDirRecursive(self, render=True):
@@ -175,29 +167,6 @@ class mmvEditor:
     def _log_sender_data(self, sender, app_data, user_data=None):
         logging.info(f"[mmvEditor Event Log] Sender: [{sender}] | App Data: [{app_data}] | User Data: [{user_data}]")
     
-    # Some Node was linked
-    def NodeLinked(self, sender, app_data):
-        dpfx = f"[mmvEditor.NodeLinked] [Sender: {sender}]"
-        logging.info(f"{dpfx} Link {app_data}")
-        N1, N2 = app_data
-        Dear.add_node_link(N1, N2, parent=sender)
-        if not N1 in self.Scene.Links: self.Scene.Links[N1] = []
-        if not N2 in self.Scene.Links[N1]: self.Scene.Links[N1] += [N2]
-        logging.info(f"{dpfx} Links: {self.Scene.Links}")
-        self.NodeLinksDebug()
-        self.PlaySound(self.PackageInterface.DataDir/"Sound"/"connect.ogg")
-    
-    # Some Node was delinked
-    def NodeDelinked(self, sender, app_data):
-        logging.info(f"[mmvEditor.NodeLinked] [Sender: {sender}] Delink {app_data}")
-        Dear.delete_item(app_data)
-        self.NodeLinksDebug()
-
-    # [Debug] Show Node connections
-    def NodeLinksDebug(self):
-        logging.info(f"[mmvEditor.NodeLinksDebug] Connections:")
-        for line in yaml.dump(self.Scene.Links, default_flow_style=True, width=50, indent=2).split("\n"):
-            if line: logging.info(f"[mmvEditor.NodeLinksDebug] {line}")
 
     # Init the main Window but Async
     def InitMainWindowAsync(self):
@@ -290,7 +259,10 @@ class mmvEditor:
 
                                     Dear.add_table_next_column()
                                     with Dear.child(border = False, height = -14):
-                                        with Dear.node_editor(callback=self.NodeLinked, delink_callback=self.NodeDelinked) as self.DPG_NODE_EDITOR: ...
+                                        with Dear.node_editor(
+                                            callback=self.Scene.NodeLinked,
+                                            delink_callback=self.Scene.NodeDelinked
+                                        ) as self.DPG_NODE_EDITOR: ...
 
                                     Dear.add_table_next_column()
                                     Dear.add_text("Hello I'll be toolbar")

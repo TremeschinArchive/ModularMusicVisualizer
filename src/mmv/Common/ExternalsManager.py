@@ -27,11 +27,12 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
-from dotmap import DotMap
-import ujson as json
 import logging
 import os
 import sys
+
+import ujson as json
+from dotmap import DotMap
 
 from mmv.Common.Download import Download
 from mmv.Common.Utils import Utils
