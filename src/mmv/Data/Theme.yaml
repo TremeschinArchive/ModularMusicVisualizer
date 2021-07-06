@@ -34,20 +34,27 @@ Global:
   mvNodeCol_TitleBar: [29,151,236]
   mvNodeCol_TitleBarHovered: [120,120,120]
   mvNodeCol_TitleBarSelected: [150,150,150]
+  mvNodeCol_NodeBackground         : [30, 30, 30, 40]
+  
+  # Hover / Select nodes
+  mvNodeCol_NodeBackgroundSelected : [30, 30, 30, 100]
+  mvNodeCol_TitleBarSelected       : [255,255,255, 90]
+  mvNodeCol_NodeBackgroundHovered  : [30, 30, 30, 180]
+  mvNodeCol_TitleBarHovered        : [255,255,255, 40]
 
 Nodes:
-  Shader:
-    mvNodeCol_NodeOutline: [255,0,0]
-    mvNodeCol_TitleBar: [255,0,0]
+  Shaders:
+    mvNodeCol_NodeOutline: [255,0,0,90]
+    mvNodeCol_TitleBar: [255,0,0,70]
     mvNodeCol_Link: [255,0,0,150]
     mvNodeCol_Pin: [255,0,0]
-  Source:
-    mvNodeCol_NodeOutline: [0,0,255]
-    mvNodeCol_TitleBar: [0,0,255]
+  Sources:
+    mvNodeCol_NodeOutline: [0,0,255,90]
+    mvNodeCol_TitleBar: [0,0,255,70]
     mvNodeCol_Link: [0,0,255,150]
     mvNodeCol_Pin: [0,0,255]
-  Number:
-    mvNodeCol_NodeOutline: [0,255,0]
-    mvNodeCol_TitleBar: [0,255,0]
+  Numbers:
+    mvNodeCol_NodeOutline: [0,255,0,90]
+    mvNodeCol_TitleBar: [0,255,0,70]
     mvNodeCol_Link: [0,255,0,150]
     mvNodeCol_Pin: [0,255,0]
