@@ -396,7 +396,6 @@ class mmvEditor:
     def ToggleLoadingIndicator(self, force=False):
         self.ToggleAttrSafe(self.__dict__, "_ToggleLoadingIndicator")
         if not hasattr(self, "DPG_LOADING_INDICATOR_GLOBAL"): return
-        print("Toggle", self._ToggleLoadingIndicator)
         Dear.configure_item(self.DPG_LOADING_INDICATOR_GLOBAL,
             **[self.LoadingIndicatorConfigIdleDict, self.LoadingIndicatorConfigLoadingDict][int(self._ToggleLoadingIndicator)])
 

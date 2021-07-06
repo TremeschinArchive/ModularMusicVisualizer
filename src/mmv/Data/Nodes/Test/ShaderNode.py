@@ -4,8 +4,8 @@ import dearpygui.dearpygui as Dear
 def GetNode(BaseNode):
     class TestNode(BaseNode):
         def Config(self):
-            self.Name = "TestNode"
-            self.Category = "Source"
+            self.Name = "Shader Node"
+            self.Category = "Shaders"
 
         def Render(self, parent):
             with Dear.node(label=f"{self.Name} | ({self.Category})", parent=parent) as self.DPG_NODE:

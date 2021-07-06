@@ -5,7 +5,7 @@ def GetNode(BaseNode):
     class TestNode(BaseNode):
         def Config(self):
             self.Name = "Number Node"
-            self.Category = "Number"
+            self.Category = "Numbers"
 
         def Render(self, parent):
             with Dear.node(label=f"{self.Name} | ({self.Category})", parent=parent) as self.DPG_NODE:
