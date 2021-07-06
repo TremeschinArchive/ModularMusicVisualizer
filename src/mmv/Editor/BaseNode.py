@@ -22,23 +22,6 @@ class BaseNode:
                 logging.info(f"{dpfx} Found theme [{InheritedNode.Category}] in Theme YAML, assigning: [{theme}]")
                 for key, value in theme.items():
                     self.Editor.SetDearPyGuiThemeString(key, value)
-    
-    # Apply theme to a DearPyGui Node
-    def ApplyTheme(self):
-        Dear.set_item_theme(self.DPG_NODE, self.DPG_THIS_NODE_THEME)
-
-    @abstractmethod
-    def Render(self, parent): ...
-
-    @abstractmethod
-    def Digest(self): ...
-
-    # Node methods / Functionality
-    def Delete(self):
-        logging.info(f"[BaseNode] Delete Node [{self.DPG_NODE}]")
-        Dear.delete_item(self.DPG_NODE)
-
-    def Clone(self): pass
 
     # Node title bar
     def AddNodeDecorator(self):
@@ -63,3 +46,20 @@ class BaseNode:
             )
             Dear.add_same_line()
             Dear.add_text("Clone   ", color=text_color)
+
+    # Apply theme to a DearPyGui Node
+    def ApplyTheme(self):
+        Dear.set_item_theme(self.DPG_NODE, self.DPG_THIS_NODE_THEME)
+
+    @abstractmethod
+    def Render(self, parent): ...
+
+    @abstractmethod
+    def Digest(self): ...
+
+    # Node methods / Functionality
+    def Delete(self):
+        logging.info(f"[BaseNode] Delete Node [{self.DPG_NODE}]")
+        Dear.delete_item(self.DPG_NODE)
+
+    def Clone(self): pass

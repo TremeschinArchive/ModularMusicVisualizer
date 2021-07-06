@@ -32,7 +32,6 @@ import logging
 import subprocess
 import threading
 import webbrowser
-from contextlib import contextmanager
 from pathlib import Path
 
 import dearpygui.dearpygui as Dear
@@ -40,7 +39,6 @@ import numpy as np
 import yaml
 from dotmap import DotMap
 from PIL import Image, JpegImagePlugin, PngImagePlugin
-from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
 
 from mmv.Common.PackUnpack import PackUnpack
@@ -49,73 +47,12 @@ from mmv.Editor.BaseNode import BaseNode
 from mmv.Editor.Scene import mmvEditorScene
 from mmv.Editor.UI.AddNodeUI import mmvEditorAddNodeUI
 from mmv.Editor.UI.MenuBarUI import mmvEditorMenuBarUI
+from mmv.Editor.EditorUtils import (
+    EnterContainerStack,ToggleAttrSafe, CenteredWindow,
+    PayloadTypes, WatchdogTemplate,
+    NewHash, AssignLocals, ExtendedDotMap
+)
 
-
-class DotMapPersistentSetter:
-    def __init__(self, dotmap): self.dotmap = dotmap
-    def __call__(self, name, default_value):
-        self.dotmap[name] = self.dotmap.get(name, default_value)
-    def Set(self, key, value):
-        print(f"[DotMapPersistentSetter.Set] {key} => {value}")
-        self.dotmap[key] = value
-    def ToggleBool(self, key):
-        self.Set(key, not self.dotmap.get(key, False))
-
-
-class EnterContainerStack:
-    def __init__(self, dpg_id):
-        Dear.push_container_stack(dpg_id)
-    def __enter__(self): ...
-    def __exit__(self, *args, **kwargs):
-        Dear.pop_container_stack()
-
-
-# Send __dict__ and get the attribute from yourself in a safe manner,
-# if it doesn't exist return the Default
-def GetAttrSafe(InternalDict, Key, Default):
-    return InternalDict.get(Key, Default)
-
-# Toggle one bool from __dict__ safely, creates if doesn't exist
-def ToggleAttrSafe(InternalDict, Key, Default=True):
-    InternalDict[Key] = not GetAttrSafe(InternalDict, Key, Default)
-
-
-@contextmanager
-def CenteredWindow(Context, **k):
-    try:
-        # Default values
-        for item, value in [
-            ("modal",True), ("no_move",True),
-            ("autosize",True), ("label","")
-        ]:
-            k[item] = k.get(item, value)
-
-        # Add centered window
-        window = Dear.add_window(**k)
-        Dear.push_container_stack(window)
-        Dear.set_item_pos(
-            item=window,
-            pos=[
-                ( Context.WINDOW_SIZE[0] - k.get("width", 0) - k.get("offx",0) ) / 2,
-                ( Context.WINDOW_SIZE[1] - k.get("height",0) - k.get("offy",0) ) / 2,
-            ])
-        yield window
-    finally: Dear.pop_container_stack()
-
-
-class PayloadTypes:
-    Image  = "Image"
-    Shader = "Shader"
-    Number = "Number"
-
-
-def WatchdogTemplate():
-    T = PatternMatchingEventHandler(["*"], None, False, True)
-    T.on_created  = lambda *args: None
-    T.on_deleted  = lambda *args: None
-    T.on_modified = lambda *args: None
-    T.on_moved    = lambda *args: None
-    return T
 
 
 class mmvEditor:
@@ -132,8 +69,9 @@ class mmvEditor:
         self.PayloadTypes = PayloadTypes
         self.CenteredWindow = CenteredWindow
         self.AssignLocals = Utils.AssignLocals
-        self.GetAttrSafe = GetAttrSafe
         self.ToggleAttrSafe = ToggleAttrSafe
+        self.NewHash = NewHash
+        self.ExtendedDotMap = ExtendedDotMap
 
         # Watch for Nodes directory changes
         self.WatchdogNodeDir = Observer()
@@ -151,28 +89,29 @@ class mmvEditor:
         self.LoadingIndicatorConfigLoadingDict = dict(radius=1.4, color=(255,51,55,255), secondary_color=(29,151,236,100), speed=2, circle_count=10)
 
     # Attempt to load last Context configuration if it existed
-    def LoadLastConfig(self, defaults = False):
+    def LoadLastConfig(self, ForceDefaults=False):
         self.USER_CONFIG_FILE = self.PackageInterface.RuntimeDir/"UserEditorConfig.pickle.zlib"
         if self.USER_CONFIG_FILE.exists():
-            self.Context = PackUnpack.Unpack(self.USER_CONFIG_FILE)
+            self.Context = ExtendedDotMap(
+                OldSelf=PackUnpack.Unpack(self.USER_CONFIG_FILE),
+                SetCallback=self.SaveCurrentConfig )
             logging.info(f"[mmvEditor.LoadLastConfig] Unpacked last config: [{self.Context}]")
-        else: defaults = True
+        else: ForceDefaults = True
         
         # Create brand new Context DotMap
-        if defaults: 
+        if ForceDefaults: 
             logging.info(f"[mmvEditor.LoadLastConfig] Reset to default config")
-            self.Context = DotMap(_dynamic=False)
+            self.Context = ExtendedDotMap(SetCallback=self.SaveCurrentConfig)
 
-        self.ContextSafeSetVar = DotMapPersistentSetter(self.Context)
-        self.ContextSafeSetVar("FIRST_TIME", True)
-        self.ContextSafeSetVar("WINDOW_SIZE", [1280, 720])
-        self.ContextSafeSetVar("BUILTIN_WINDOW_DECORATORS", True)
-        self.ContextSafeSetVar("START_MAXIMIZED", False)
-        self.ContextSafeSetVar("UI_SOUNDS", True)
-        self.ContextSafeSetVar("UI_VOLUME", 40)
-        self.ContextSafeSetVar("UI_FONT", "DejaVuSans-Bold.ttf")
-        self.ContextSafeSetVar("UI_FONT_SIZE", 16)
-        self.ContextSafeSetVar("DEBUG_SHOW_IDS", True)
+        self.Context.Digest("FIRST_TIME", True)
+        self.Context.Digest("WINDOW_SIZE", [1280, 720])
+        self.Context.Digest("BUILTIN_WINDOW_DECORATORS", True)
+        self.Context.Digest("START_MAXIMIZED", False)
+        self.Context.Digest("UI_SOUNDS", True)
+        self.Context.Digest("UI_VOLUME", 40)
+        self.Context.Digest("UI_FONT", "DejaVuSans-Bold.ttf")
+        self.Context.Digest("UI_FONT_SIZE", 16)
+        self.Context.Digest("DEBUG_SHOW_IDS", True)
 
     # Play some sound from a file (usually UI FX, info, notification)
     def PlaySound(self, file):
@@ -292,7 +231,7 @@ class mmvEditor:
         with Dear.font_registry() as self.DPG_FONT_REGISTRY:
             logging.info(f"{dpfx} Loading Interface font")
             self.DPG_UI_FONT = Dear.add_font(
-                self.PackageInterface.DataDir/"Fonts"/self.Context.UI_FONT, self.Context.UI_FONT_SIZE, default_font=True)
+                self.PackageInterface.DataDir/"Fonts"/self.Context.DotMap.UI_FONT, self.Context.DotMap.UI_FONT_SIZE, default_font=True)
             Dear.add_font_chars([
                 0x2B24, # ⬤ Large Black Circle
                 0x25CF, # ●  Black Circle
@@ -304,8 +243,8 @@ class mmvEditor:
 
         # Creating main window
         with Dear.window(
-            width=int(self.Context.WINDOW_SIZE[0]),
-            height=int(self.Context.WINDOW_SIZE[1]),
+            width=int(self.Context.DotMap.WINDOW_SIZE[0]),
+            height=int(self.Context.DotMap.WINDOW_SIZE[1]),
             on_close=self.Exit, no_scrollbar=True
         ) as self.DPG_MAIN_WINDOW:
             Dear.set_primary_window(self.DPG_MAIN_WINDOW, True)
@@ -401,8 +340,8 @@ class mmvEditor:
 
     # Handler when window was resized
     def ViewportResized(self, _, Data, __ignore=0, *a,**b):
-        self.Context.WINDOW_SIZE = Data[0], Data[1]
-        # Dear.configure_item(self.DPG_MAIN_WINDOW, max_size=self.Context.WINDOW_SIZE)
+        self.Context.DotMap.WINDOW_SIZE = Data[0], Data[1]
+        # Dear.configure_item(self.DPG_MAIN_WINDOW, max_size=self.Context.DotMap.WINDOW_SIZE)
 
     # def MainWindowResized(self, _, Data):
     #     Dear.configure_viewport(self.Viewport, width=Data[0], height=Data[1])
@@ -412,13 +351,13 @@ class mmvEditor:
         self._Stop = False
         self.Viewport = Dear.create_viewport(
             title="Modular Music Visualizer Editor",
-            caption=not self.Context.BUILTIN_WINDOW_DECORATORS,
+            caption=not self.Context.DotMap.BUILTIN_WINDOW_DECORATORS,
             resizable=True, border=False)
         Dear.set_viewport_resize_callback(self.ViewportResized)
         Dear.setup_dearpygui(viewport=self.Viewport)
         Dear.show_viewport(self.Viewport)
         with Dear.texture_registry() as self.TextureRegistry: ...
-        if self.Context.START_MAXIMIZED: Dear.maximize_viewport()
+        if self.Context.DotMap.START_MAXIMIZED: Dear.maximize_viewport()
         try:
             for iteration in itertools.count(1):
                 if (self._Stop) or (not Dear.is_dearpygui_running()): break
@@ -432,21 +371,23 @@ class mmvEditor:
             self.FirstTimeWarning()
 
     def Exit(self): self._Stop = True
+
+    def SaveCurrentConfig(self): self.Context.Pack(self.USER_CONFIG_FILE)
+
     def __True_Exit(self):
         self.Exit()
         logging.info(f"[mmvEditor.AddNodeFile] Exiting [Modular Music Visualizer Editor] *Safely*")
-        self.Context = PackUnpack.Pack(self.Context, self.USER_CONFIG_FILE)
+        self.SaveCurrentConfig()
         Dear.cleanup_dearpygui()
 
 
 
 
 
-
     # First time opening MMV warning
-    def __FirstTimeWarningOK(self, _): self.ContextSafeSetVar.Set("FIRST_TIME", False); Dear.delete_item(_)
+    def __FirstTimeWarningOK(self, _): self.Context.ForceSet("FIRST_TIME", False); Dear.delete_item(_)
     def FirstTimeWarning(self):
-        if self.Context.FIRST_TIME:
+        if self.Context.DotMap.FIRST_TIME:
             with self.CenteredWindow(self.Context, width=400, height=100) as _:
                 Dear.add_text((
                     "Hello first time user!!\n\n"

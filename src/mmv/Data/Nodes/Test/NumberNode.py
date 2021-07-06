@@ -12,7 +12,7 @@ def GetNode(BaseNode):
                 self.AddNodeDecorator()
                 
                 with Dear.node_attribute() as A:
-                    Dear.add_text("Hello World" + f"  |  [{A}]" * int(self.Editor.Context.DEBUG_SHOW_IDS))
+                    Dear.add_text("Hello World" + f"  |  [{A}]" * int(self.Editor.Context.DotMap.DEBUG_SHOW_IDS))
 
                 for _ in range(random.randint(3, 6)):
                     with Dear.node_attribute(attribute_type=Dear.mvNode_Attr_Output):

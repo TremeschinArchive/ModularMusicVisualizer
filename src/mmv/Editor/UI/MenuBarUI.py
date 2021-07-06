@@ -41,7 +41,7 @@ class mmvEditorMenuBarUI:
 
     def Render(self):
         with Dear.menu_bar() as MenuBar:
-            if self.Editor.Context.BUILTIN_WINDOW_DECORATORS:
+            if self.Editor.Context.DotMap.BUILTIN_WINDOW_DECORATORS:
                 Dear.add_clicked_handler(Dear.add_text("⬤", color=(255,0,0)), callback=lambda s,d:self.Editor.Exit())
                 Dear.add_clicked_handler(Dear.add_text("⬤", color=(255,255,0)), callback=lambda s,d:Dear.minimize_viewport())
                 Dear.add_clicked_handler(Dear.add_text("⬤", color=(0,255,0)), callback=lambda s,d:Dear.maximize_viewport())
@@ -60,8 +60,8 @@ class mmvEditorMenuBarUI:
                 Dear.add_menu_item(label="Something")
             with Dear.menu(label="Preferences"):
                 Dear.add_slider_float(label="User Interface FX Volume", default_value=40, min_value=0,max_value=100, callback=lambda s,d,a,b,c,f:print(d,s,a,b,c,f))
-                Dear.add_checkbox(label="Builtin Window Decorators [Needs Restart]", callback=lambda d,s: self.ToggleBuiltinWindowDecorator(), default_value=self.Editor.Context.BUILTIN_WINDOW_DECORATORS)
-                Dear.add_checkbox(label="Start Maximized", callback=lambda d,s: self.ToggleStartMaximized(), default_value=self.Editor.Context.START_MAXIMIZED)
+                Dear.add_checkbox(label="Builtin Window Decorators [Needs Restart]", callback=lambda d,s: self.ToggleBuiltinWindowDecorator(), default_value=self.Editor.Context.DotMap.BUILTIN_WINDOW_DECORATORS)
+                Dear.add_checkbox(label="Start Maximized", callback=lambda d,s: self.ToggleStartMaximized(), default_value=self.Editor.Context.DotMap.START_MAXIMIZED)
                 Dear.add_separator()
                 Dear.add_menu_item(label="Advanced")
             
@@ -85,13 +85,13 @@ class mmvEditorMenuBarUI:
             # Dear.add_text("Modular Music Visualizer Editor", color=(150,150,150))
     
     def ToggleBuiltinWindowDecorator(self):
-        self.Editor.ContextSafeSetVar.ToggleBool("BUILTIN_WINDOW_DECORATORS")
-        # Dear.configure_viewport(self.Editor.Viewport, caption=self.Editor.Context.BUILTIN_WINDOW_DECORATORS)
+        self.Editor.Context.ToggleBool("BUILTIN_WINDOW_DECORATORS")
+        # Dear.configure_viewport(self.Editor.Viewport, caption=self.Editor.Context.DotMap.BUILTIN_WINDOW_DECORATORS)
         # Dear.setup_dearpygui(viewport=self.Editor.Viewport)
         # Dear.show_viewport(self.Editor.Viewport)
 
     def ToggleStartMaximized(self):
-        self.Editor.ContextSafeSetVar.ToggleBool("START_MAXIMIZED")
+        self.Editor.Context.ToggleBool("START_MAXIMIZED")
 
     def About(self):
         logging.info(f"[mmvEditorMenuBarUI.About] Show About window")
