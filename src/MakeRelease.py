@@ -202,7 +202,7 @@ class MakeRelease:
         
         # Nuitka Command for final export
         CompileCommand = NUITKA + [
-            "--standalone", "--onefile", "--jobs", str(NJobs),
+            "--standalone", "--onefile", "--jobs", str(NJobs), # "--lto",
             "--linux-onefile-icon", icon,
             "--file-reference-choice=runtime",
             # "--nofollow-imports",

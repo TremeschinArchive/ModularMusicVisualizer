@@ -27,12 +27,15 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 import copy
 import logging
+import hashlib
 
 import dearpygui.dearpygui as Dear
 import yaml
 from dotmap import DotMap
+from pathlib import Path
 
 from mmv.Common.PackUnpack import PackUnpack
+from mmv.Editor.BaseNode import BaseNode
 
 
 class mmvEditorScene:
@@ -56,20 +59,39 @@ class mmvEditorScene:
                 return Node
         return None
 
+    # Add some Node file to the Editor
+    def AddNodeFile(self, path):
+        path = Path(path).resolve(); assert path.exists
+        node = self.Editor.ImportFileFromPath(path).GetNode(BaseNode)
+        node.Config()
+        node.SourceFileHash = hashlib.sha256(Path(path).read_text().encode()).hexdigest()
+        logging.info(f"[mmvEditor.AddNodeFile] Add node [{node.Name}] category [{node.Category}] from [{path}]")
+        self.AvailableNodes[node.Category][node.Name] = node
+    
+    # Re-read the node files from NodeDir, add (replace) them.
+    # Also resets the NodeUI items and redisplays the ones we have
+    def AddNodeFilesDataDirRecursive(self, render=True):
+        logging.info("[mmvEditor.AddNodeFilesDataDirRecursive] Reloading..")
+        self.Editor.ToggleLoadingIndicator()
+        self.ClearAvailableNodes()
+        for candidate in self.Editor.PackageInterface.NodesDir.rglob("**/*.py"): self.AddNodeFile(candidate)
+        if render: self.AddNodeUI.Reset(); self.AddNodeUI.Render()
+        self.Editor.ToggleLoadingIndicator()
+
     # user_data is "pointer" to some Node class
-    def AddNodeToEditor(self, sender, app_data, node, *a, **k):
+    def AddNodeToScene(self, sender, app_data, node, *a, **k):
         self.Editor._log_sender_data(sender, app_data, node)
         node.Init(InheritedNode=node, Editor=self.Editor)
         node.Render(parent=self.Editor.DPG_NODE_EDITOR)
         self.Nodes.append(node)
 
     # Some Node was linked
-    def NodeLinked(self, sender, app_data):
-        dpfx = f"[mmvEditorScene.NodeLinked]"
+    def NodeAttributeLinked(self, sender, app_data):
+        dpfx = f"[mmvEditorScene.NodeAttributeLinked]"
         N1, N2 = app_data
         Dear.add_node_link(N1, N2, parent=sender)
         logging.info(f"{dpfx} Link [{N1=}, {N2=}]")
-        # N1, N2 = self.FindNode(N1), self.FindNode(N2)
+        N1, N2 = self.FindNode(N1), self.FindNode(N2)
         self.Links.SetDNE(N1, [])
         self.Links.DotMap[N1] += [N2]
         logging.info(f"{dpfx} Links: {self.Links.DotMap}")

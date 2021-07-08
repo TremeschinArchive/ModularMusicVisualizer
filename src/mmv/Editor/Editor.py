@@ -43,7 +43,6 @@ from watchdog.observers import Observer
 
 from mmv.Common.PackUnpack import PackUnpack
 from mmv.Common.Utils import Utils
-from mmv.Editor.BaseNode import BaseNode
 from mmv.Editor.EditorUtils import (AssignLocals, CenteredWindow,
                                     EnterContainerStack, ExtendedDotMap,
                                     NewHash, PayloadTypes, ToggleAttrSafe,
@@ -67,7 +66,8 @@ class mmvEditor:
 
         # "True" init
         self.PackageInterface = PackageInterface
-        self.LogoImage = self.PackageInterface.ImageDir/"mmvLogoWhite.png"
+        self.DefaultResourcesLogoImage = self.PackageInterface.ImageDir/"mmvLogoWhite.png"
+        # self.DefaultResourcesIcon = self.PackageInterface.ImageDir/"mmvLogoWhite.ico"
         self.LoadLastConfig()
         self.MenuBarUI = mmvEditorMenuBarUI(self)
         self.AddNodeUI = mmvEditorAddNodeUI(self)
@@ -76,7 +76,7 @@ class mmvEditor:
         # Watch for Nodes directory changes
         self.WatchdogNodeDir = Observer()
         T = WatchdogTemplate()
-        T.on_modified = lambda *args: self.AddNodeFilesDataDirRecursive()
+        T.on_modified = lambda *args: self.Scene.AddNodeFilesDataDirRecursive()
         self.WatchdogNodeDir.schedule(T, self.PackageInterface.NodesDir, recursive=True)
         self.WatchdogNodeDir.start()
 
@@ -84,9 +84,6 @@ class mmvEditor:
         self.MouseDown = False
         self.ViewportX = 0
         self.ViewportY = 0
-
-        self.LoadingIndicatorConfigIdleDict = dict(radius=1.4, color=(0,0,0,0), secondary_color=(0,0,0,0), speed=2, circle_count=10)
-        self.LoadingIndicatorConfigLoadingDict = dict(radius=1.4, color=(255,51,55,255), secondary_color=(29,151,236,100), speed=2, circle_count=10)
 
     # Attempt to load last Context configuration if it existed
     def LoadLastConfig(self, ForceDefaults=False):
@@ -145,28 +142,12 @@ class mmvEditor:
         spec.loader.exec_module(module)
         return module
 
-    # Add some Node file to the Editor
-    def AddNodeFile(self, path):
-        path = Path(path).resolve(); assert path.exists
-        node = self.ImportFileFromPath(path).GetNode(BaseNode)
-        node.Config()
-        node.Hash = hashlib.sha256(Path(path).read_text().encode()).hexdigest()
-        # logging.info(f"[mmvEditor.AddNodeFile] Add node [{node.Name}] category [{node.Category}] from [{path}]")
-        self.Scene.AvailableNodes[node.Category][node.Name] = node
-    
-    # Re-read the node files from NodeDir, add (replace) them.
-    # Also resets the NodeUI items and redisplays the ones we have
-    def AddNodeFilesDataDirRecursive(self, render=True):
-        self.ToggleLoadingIndicator()
-        logging.info("[mmvEditor.AddNodeFilesDataDirRecursive] Reloading..")
-        self.Scene.ClearAvailableNodes()
-        for candidate in self.PackageInterface.NodesDir.rglob("**/*.py"): self.AddNodeFile(candidate)
-        if render: self.AddNodeUI.Reset(); self.AddNodeUI.Render()
-        self.ToggleLoadingIndicator()
+    def SetStatusText(self, Message):
+        if self.DPG_STATUS_TEXT is not None:
+            Dear.configure_item(self.DPG_STATUS_TEXT, default_value=Message)
 
     def _log_sender_data(self, sender, app_data, user_data=None):
         logging.info(f"[mmvEditor Event Log] Sender: [{sender}] | App Data: [{app_data}] | User Data: [{user_data}]")
-    
 
     # Init the main Window but Async
     def InitMainWindowAsync(self):
@@ -187,7 +168,7 @@ class mmvEditor:
         dpfx = "[mmvEditor.InitMainWindow]"
 
         # Add node files we have, but don't render it
-        self.AddNodeFilesDataDirRecursive(render=False)
+        self.Scene.AddNodeFilesDataDirRecursive(render=False)
   
         # Load theme YAML, set values
         with Dear.theme(default_theme=True) as self.DPG_THEME:
@@ -195,7 +176,7 @@ class mmvEditor:
             for key, value in self.ThemeYaml.Global.items():
                 logging.info(f"{dpfx} Customize Theme [{key}] => [{value}]")
                 self.SetDearPyGuiThemeString(key, value)
-                
+
         # Load font, add circles unicode
         with Dear.font_registry() as self.DPG_FONT_REGISTRY:
             logging.info(f"{dpfx} Loading Interface font")
@@ -260,7 +241,7 @@ class mmvEditor:
                                     Dear.add_table_next_column()
                                     with Dear.child(border = False, height = -14):
                                         with Dear.node_editor(
-                                            callback=self.Scene.NodeLinked,
+                                            callback=self.Scene.NodeAttributeLinked,
                                             delink_callback=self.Scene.NodeDelinked
                                         ) as self.DPG_NODE_EDITOR: ...
 
@@ -276,7 +257,7 @@ class mmvEditor:
                     with Dear.tab(label="Performance") as self.DPG_PERFORMANCE_TAB: ...
             
             Dear.add_separator()
-            self.DPG_LOADING_INDICATOR_GLOBAL = Dear.add_loading_indicator(**self.LoadingIndicatorConfigIdleDict)
+            self.DPG_LOADING_INDICATOR_GLOBAL = Dear.add_loading_indicator(**self.ThemeYaml.LoadingIndicator.Idle)
             self.ToggleLoadingIndicator()
             Dear.add_same_line()
             Dear.add_text(f"MMV v{self.PackageInterface.VersionNumber}", color = (230,70,75))
@@ -287,18 +268,19 @@ class mmvEditor:
             Dear.add_same_line()
             Dear.add_text(f" | ", color = (80,80,80))
             Dear.add_same_line()
-            self.DPG_NOTIFICATION_TEXT = Dear.add_text("", color=(140,140,140))
+            self.DPG_STATUS_TEXT = Dear.add_text("", color=(140,140,140))
+            self.SetStatusText("Finished loading")
 
-        # # Custom StreamHandler logging class for updating the DPG text to show latest
-        # notifications on the UI for the user
-        class UpdateUINotificationDPGTextHandler(logging.StreamHandler):
-            def __init__(self, mmv_editor): self.mmv_editor = mmv_editor
-            def write(self, message): Dear.configure_item(self.mmv_editor.DPG_NOTIFICATION_TEXT, default_value=f"{message}")
-            def flush(self, *args, **kwargs): ...
+        # # # Custom StreamHandler logging class for updating the DPG text to show latest
+        # # notifications on the UI for the user
+        # class UpdateUINotificationDPGTextHandler(logging.StreamHandler):
+        #     def __init__(self, mmv_editor): self.mmv_editor = mmv_editor
+        #     def write(self, message): Dear.configure_item(self.mmv_editor.DPG_STATUS_TEXT, default_value=f"{message}")
+        #     def flush(self, *args, **kwargs): ...
 
-        # Add the handler
-        logging.getLogger().addHandler(logging.StreamHandler(
-            stream=UpdateUINotificationDPGTextHandler(mmv_editor=self)))
+        # # Add the handler
+        # logging.getLogger().addHandler(logging.StreamHandler(
+        #     stream=UpdateUINotificationDPGTextHandler(mmv_editor=self)))
     
         # Main Loop thread
         threading.Thread(target=self.MainLoop).start()
@@ -308,7 +290,7 @@ class mmvEditor:
         self.ToggleAttrSafe(self.__dict__, "_ToggleLoadingIndicator")
         if not hasattr(self, "DPG_LOADING_INDICATOR_GLOBAL"): return
         Dear.configure_item(self.DPG_LOADING_INDICATOR_GLOBAL,
-            **[self.LoadingIndicatorConfigIdleDict, self.LoadingIndicatorConfigLoadingDict][int(self._ToggleLoadingIndicator)])
+            **[self.ThemeYaml.LoadingIndicator.Idle.toDict(), self.ThemeYaml.LoadingIndicator.Loading.toDict()][int(self._ToggleLoadingIndicator)])
 
     # Handler when window was resized
     def ViewportResized(self, _, Data, __ignore=0, *a,**b):
@@ -322,9 +304,10 @@ class mmvEditor:
         logging.info(f"[mmvEditor.MainLoop] Enter MainLoop, start MMV")
         self._Stop = False
         self.Viewport = Dear.create_viewport(
-            title="Modular Music Visualizer Editor",
+            title="ModularMusicVisualizer Editor",
             caption=not self.Context.DotMap.BUILTIN_WINDOW_DECORATORS,
             resizable=True, border=False)
+        # for F in [Dear.set_viewport_small_icon, Dear.set_viewport_large_icon]: F(self.DefaultResourcesIcon)
         Dear.set_viewport_resize_callback(self.ViewportResized)
         Dear.setup_dearpygui(viewport=self.Viewport)
         Dear.show_viewport(self.Viewport)

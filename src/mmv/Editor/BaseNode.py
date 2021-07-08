@@ -5,12 +5,6 @@ from abc import abstractmethod
 import dearpygui.dearpygui as Dear
 
 
-class TwoWayConnection:
-    def __init__(self):
-        self.I = None
-        self.O = None
-
-
 class BaseNode:
     def Init(self, InheritedNode, Editor):
         dpfx = "[BaseNode.Init]"

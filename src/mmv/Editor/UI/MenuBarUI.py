@@ -96,7 +96,7 @@ class mmvEditorMenuBarUI:
     def About(self):
         logging.info(f"[mmvEditorMenuBarUI.About] Show About window")
         with self.Editor.CenteredWindow(self.Editor.Context, width=200, height=200) as AboutWindow:
-            self.Editor.AddImageWidget(path=self.Editor.LogoImage, size=190)
+            self.Editor.AddImageWidget(path=self.Editor.DefaultResourcesLogoImage, size=190)
             Dear.add_text(f"Modular Music Visualizer", color = (0,255,0))
             Dear.add_text(f"Version {self.Editor.PackageInterface.Version}", color=(150,150,150))
             Dear.add_separator()
