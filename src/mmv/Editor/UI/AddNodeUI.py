@@ -27,6 +27,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 import dearpygui.dearpygui as Dear
 
+from mmv.Editor.Localization import Polyglot
+
+Speak = Polyglot.Speak
 
 class mmvEditorAddNodeUI:
     def __init__(self, Editor):
@@ -41,7 +44,7 @@ class mmvEditorAddNodeUI:
     def Render(self):
         with self.Editor.EnterContainerStack(self.AddNodesGroup):
             Dear.add_separator()
-            Dear.add_text("Add Nodes", color = (0, 255, 0))
+            Dear.add_text(Speak("Add Nodes"), color = (0, 255, 0))
             AN = self.Editor.Scene.AvailableNodes
 
             for category in sorted(AN):

@@ -1,0 +1,119 @@
+ModularMusicVisualizer Editor:
+  pt-br: "Editor do Visualizador Modular de Música"
+
+Hello first time user!!:
+  pt-br: "Seja bem vindo pela primeira vez!!"
+
+Modular Music Visualizer is Free Software,:
+  pt-br: "Visualizador Modular de Música é Software Livre,"
+
+distributed under the GPLv3 License.:
+  pt-br: "distribuído sob a licença GPLv3."
+
+# "Generic" Menu Bar
+File:
+  pt-br: Arquivo
+New:
+  pt-br: Novo
+  ja: 新しい
+Open:
+  pt-br: Abrir
+Open Recent:
+  pt-br: Abrir recentes
+Save:
+  pt-br: Salvar
+Save As:
+  pt-br: Salvar Como
+Exit:
+  pt-br: Sair
+Close:
+  pt-br: Fechar
+Edit:
+  pt-br: Editar
+Undo:
+  pt-br: Desfazer
+Redo:
+  pt-br: Refazer
+View:
+  pt-br: Ver
+Preferences:
+  pt-br: Preferências
+Advanced:
+  pt-br: Avançado
+Help:
+  pt-br: Ajuda
+  ja: 助けて！
+Telegram Channel:
+  pt-br: Canal do Telegram
+  ja: Telegramチャネル
+GitHub Issues:
+  pt-br: Suporte do GitHub
+Developer:
+  pt-br: Desenvolvedor
+About:
+  pt-br: Sobre
+Delete:
+  pt-br: Remover
+  ja: 消える
+Clone:
+  pt-br: Clonar
+Version:
+  pt-br: Versão
+
+# Tabs
+Node Editor:
+  pt-br: Editor de Nodes
+Live Config:
+  pt-br: Configuração Tempo Real
+Render Video:
+  pt-br: Renderizar Vídeo
+Performance:
+  pt-br: Performance
+
+# Settings
+User Interface FX Volume:
+  pt-br: Volume de sons da Interface
+Start Maximized:
+  pt-br: Inicializar Maximizado
+
+# AddNodeUI
+Add Nodes:
+  pt-br: Adicionar Nodes
+  
+# LanguagesUI
+We need to restart for language settings to take effect, proceed?:
+  pt-br: Precisamos reiniciar o programa para alterar o idioma, proceder?
+Select Language [Needs Restart]:
+  pt-br: Selecione o Idioma [Precisa Reiniciar]
+  ja: 言語を択してください「リスタート」
+Ok (Close):
+  pt-br: Ok (Fechar)
+  ja: はい
+No (Continue):
+  pt-br: いいえ（続く）
+
+# Inception lol
+Language:
+  pt-br: Língua
+  ja: 言語
+Portuguese:
+  pt-br: Português
+  ja: ポルトガル語
+Japanese:
+  pt-br: Japonês
+  ja: 日本語
+English:
+  pt-br: Inglês
+  ja: 英語
+
+# Scene
+New Project:
+  pt-br: Novo Projeto
+
+# Status
+Finished Loading:
+  pt-br: Inicialização Completa
+
+# Temporary
+Hello I'll be toolbar:
+  pt-br: Olá, serei ferramentas de contexto

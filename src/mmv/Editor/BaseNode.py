@@ -1,9 +1,39 @@
+"""
+===============================================================================
+                                GPL v3 License                                
+===============================================================================
+
+Copyright (c) 2020 - 2021,
+  - Tremeschin < https://tremeschin.gitlab.io > 
+
+===============================================================================
+
+Purpose: Define the base functionality of a Node
+
+===============================================================================
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <http://www.gnu.org/licenses/>.
+
+===============================================================================
+"""
 import copy
 import logging
 from abc import abstractmethod
 
 import dearpygui.dearpygui as Dear
 
+from mmv.Editor.Localization import Polyglot
+
+Speak = Polyglot.Speak
 
 class BaseNode:
     def Init(self, InheritedNode, Editor):
@@ -30,7 +60,7 @@ class BaseNode:
                 no_drag_drop=True, no_border=True, no_alpha=True, tracked=True
             )
             Dear.add_same_line()
-            Dear.add_text("Delete   ", color=text_color)
+            Dear.add_text(Speak("Delete") + "   ", color=text_color)
 
             # Clone
             Dear.add_same_line()
@@ -40,7 +70,7 @@ class BaseNode:
                 no_drag_drop=True, no_border=True, no_alpha=True, tracked=True
             )
             Dear.add_same_line()
-            Dear.add_text("Clone   ", color=text_color)
+            Dear.add_text(Speak("Clone") + "   ", color=text_color)
 
     # Apply theme to a DearPyGui Node
     def ApplyTheme(self):

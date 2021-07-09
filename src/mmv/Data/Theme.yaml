@@ -46,7 +46,6 @@ LoadingIndicator:
   Idle: {radius: 1.4, color: [0,0,0,0], secondary_color: [0,0,0,0], speed: 2, circle_count: 10}
   Loading: {radius: 1.4, color: [255,51,55,255], secondary_color: [29,151,236,100], speed: 2, circle_count: 10}
 
-
 Nodes:
   Shaders:
     mvNodeCol_NodeOutline: [255,0,0,90]

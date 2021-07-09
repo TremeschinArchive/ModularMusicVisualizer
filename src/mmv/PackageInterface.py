@@ -256,10 +256,13 @@ f"""Show extension\n{"="*self.terminal_width}
         self.ScreenshotsDir = self.DIR/"Screenshots"
         self.RendersDir     = self.DIR/"Renders"
         self.RuntimeDir     = self.DIR/"Runtime"
+        self.TempDir        = self.DIR/"Runtime"/"Temp"
         self.NodesDir       = self.DataDir/"Nodes"
         self.ImageDir       = self.DataDir/"Image"
         self.ShadersDir     = self.DataDir/"Shaders"
         self.AssetsDir      = self.DataDir/"Assets"
+        self.IconDir        = self.ImageDir/"Icon"
+        self.FontsDir       = self.DataDir/"Fonts"
         self.DownloadsDir   = self.Externals.ExternalsDir/"Downloads"
 
         # mkdirs, print where they are

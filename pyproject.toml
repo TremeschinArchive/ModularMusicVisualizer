@@ -39,6 +39,7 @@ imageio = "^2.9.0"
 zstandard = "^0.15.2"
 
 [tool.poetry.scripts]
+magic = "src.Magic:Main"
 release = "src.MakeRelease:Main"
 editor = "src.RunEditor:Main"
 

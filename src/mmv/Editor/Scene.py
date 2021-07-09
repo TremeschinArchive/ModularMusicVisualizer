@@ -26,16 +26,19 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 import copy
-import logging
 import hashlib
+import logging
+from pathlib import Path
 
 import dearpygui.dearpygui as Dear
 import yaml
 from dotmap import DotMap
-from pathlib import Path
 
 from mmv.Common.PackUnpack import PackUnpack
 from mmv.Editor.BaseNode import BaseNode
+from mmv.Editor.Localization import Polyglot
+
+Speak = Polyglot.Speak
 
 
 class mmvEditorScene:
@@ -43,7 +46,7 @@ class mmvEditorScene:
         self.Editor = Editor
         self.Links = self.Editor.ExtendedDotMap()
         self.Nodes = []
-        self.PresetName = "New Preset"
+        self.PresetName = Speak("New Project")
         self.ClearAvailableNodes()
 
     def ClearAvailableNodes(self):
