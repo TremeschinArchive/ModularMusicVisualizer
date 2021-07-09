@@ -361,7 +361,7 @@ class mmvEditor:
         if iteration == 3:
             self.FirstTimeWarning()
 
-    def Exit(self): self._Stop = True
+    def Exit(self,*a,**b): self._Stop = True
 
     def SaveCurrentConfig(self): self.Context.Pack(self.USER_CONFIG_FILE)
 

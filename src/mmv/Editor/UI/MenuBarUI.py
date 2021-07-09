@@ -123,9 +123,11 @@ class mmvEditorMenuBarUI:
             self.Editor.Context.ForceSet("UI_FONT", UserData.Font)
 
             with self.Editor.CenteredWindow(self.Editor.Context, width=500, height=200, min_size=[500,0]) as RestartWindow:
-                Dear.add_text(Speak("We need to restart for language settings to take effect, proceed?"))
-                Dear.add_button(label=Speak("Ok (Close)"), callback=self.Editor.Exit)
-                Dear.add_button(label=Speak("No (Continue)"), callback=lambda d,s,UserData: Dear.delete_item(RestartWindow))
+                A=Dear.add_text(Speak("We need to restart for language settings to take effect, proceed?"))
+                B=Dear.add_button(label=Speak("Ok (Close)"), callback=self.Editor.Exit)
+                C=Dear.add_button(label=Speak("No (Continue)"), callback=lambda d,s,UserData: Dear.delete_item(RestartWindow))
+                for Item in [A,B,C]:
+                    Dear.set_item_font(Item, self.Editor.LoadedFonts[UserData.Font])
 
 
         with self.Editor.CenteredWindow(self.Editor.Context, width=300, height=200, min_size=[300,0], max_size=[10000,400]) as LanguageSelectWindow:
