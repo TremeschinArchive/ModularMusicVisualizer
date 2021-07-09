@@ -5,7 +5,8 @@ Global:
 
   mvStyleVar_ScrollbarRounding: 12
   mvStyleVar_WindowRounding: 6
-  mvStyleVar_FrameRounding: 5
+  mvStyleVar_ChildRounding: 4
+  mvStyleVar_FrameRounding: 50
   mvStyleVar_TabRounding: 6
 
   mvStyleVar_WindowPadding: [4, 1]

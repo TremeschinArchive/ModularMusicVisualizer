@@ -175,7 +175,7 @@ class mmvEditor:
             # Dear.mvFontRangeHint_Korean,
             # Dear.mvFontRangeHint_Chinese_Full,
             # Dear.mvFontRangeHint_Chinese_Simplified_Common,
-            # Dear.mvFontRangeHint_Cyrillic,
+            Dear.mvFontRangeHint_Cyrillic,  # Russian
             # Dear.mvFontRangeHint_Thai,
             # Dear.mvFontRangeHint_Vietnamese,
         ]:

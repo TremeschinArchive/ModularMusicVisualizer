@@ -162,7 +162,7 @@ class mmvEditorMenuBarUI:
     # # Ui to manage externals
 
     def ExternalsManagerUI(self):
-        logging.info(f"[mmvEditorMenuBarUI.ExternalsManagerUI] Show About window")
+        logging.info(f"[mmvEditorMenuBarUI.ExternalsManagerUI] Show Externals window")
 
         def DownloadSomething(TargetExternal, _ForceNotFound=False):
             self.Editor.ToggleLoadingIndicator()
