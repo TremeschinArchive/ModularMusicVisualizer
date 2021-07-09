@@ -1,10 +1,3 @@
-# Modular Music Visualizer
-
-**IMPORTANT NOTE:** For the "previous" and currently only working full featured code, [see this other branch](https://github.com/Tremeschin/ModularMusicVisualizer/tree/master).
-
-
-<hr>
-
 <p align="center">
     <img src="src/mmv/Data/Image/mmvLogoWhite.png" alt="Modular Music Visualizer Project Logo" width="200" height="200">
 </p>
@@ -15,10 +8,12 @@
 <hr>
 
 
+**IMPORTANT NOTE:** For the "previous" and currently only working full featured code, [see this other branch](https://github.com/Tremeschin/ModularMusicVisualizer/tree/master).
+
 
 # Node Editor Branch
 
-This branch is under heavy development!!
+This branch is under heavy development, keep reading for new features and changes, where this is heading.
 
 
 
