@@ -39,11 +39,21 @@ class Language:
     def __init__(self, EnName, NativeName, LanguageCode, CountryFlag, Font):
         AssignLocals(locals())
 
+# Prefer in order of most spoken, not only native L1 but L1+L2 speakers
 class Languages:
-    English    = Language("English",               "English",              "en-us", "us", "DejaVuSans-Bold.ttf")
-    Portuguese = Language("Brazillian Portuguese", "Português Brasileiro", "pt-br", "br", "DejaVuSans-Bold.ttf")
-    Japanese   = Language("Japanese",              "日本語",                "ja",    "jp", "unifont-13.0.06.ttf")
-    Russian    = Language("Russian",               "русский",              "ru",    "ru", "DejaVuSans-Bold.ttf")
+#---------------------------------------------------------------------------------------------------------------------------------------
+#                         | English Name             | Native Name             | Language Code   | Country Flag   | Font
+#---------------------------------------------------------------------------------------------------------------------------------------
+    English    = Language("English",                 "English",                "en-us",          "us",            "DejaVuSans-Bold.ttf")
+  # Spanish    = Language("Spanish",                 "Español",                "es",             "es",            "DejaVuSans-Bold.ttf")
+  # French     = Language("French",                  "Français",               "fr",             "fr",            "DejaVuSans-Bold.ttf")
+  # Russian    = Language("Russian",                 "русский",                "ru",             "ru",            "DejaVuSans-Bold.ttf")
+    Portuguese = Language("Brazillian Portuguese",   "Português Brasileiro",   "pt-br",          "br",            "DejaVuSans-Bold.ttf")
+  # German     = Language("German",                  "Deutsch",                "de",             "de",            "DejaVuSans-Bold.ttf")
+    Japanese   = Language("Japanese",                "日本語",                  "ja",             "jp",            "unifont-13.0.06.ttf")
+  # Korean     = Language("Korean",                  "한국어",                  "kr",             "kr",            "unifont-13.0.06.ttf")
+  # Italian    = Language("Italian",                 "Italiano",               "it",             "it",            "DejaVuSans-Bold.ttf")
+
  
 class PolyglotBrain:
     def Init(self, LangsYamlPath, SpokenLanguage=Languages.English):

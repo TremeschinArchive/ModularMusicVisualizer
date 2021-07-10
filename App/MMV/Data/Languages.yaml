@@ -1,14 +1,18 @@
 ModularMusicVisualizer Editor:
-  pt-br: "Editor do Visualizador Modular de Música"
+  pt-br: Editor do Visualizador Modular de Música
+
+Modular Music Visualizer:
+  pt-br: Visualizador Modular de Música
+  ja: モジュラーミュージックビジュアライザー
 
 Hello first time user!!:
-  pt-br: "Seja bem vindo pela primeira vez!!"
+  pt-br: Seja bem vindo pela primeira vez!!
 
 Modular Music Visualizer is Free Software,:
-  pt-br: "Visualizador Modular de Música é Software Livre,"
+  pt-br: Visualizador Modular de Música é Software Livre,
 
 distributed under the GPLv3 License.:
-  pt-br: "distribuído sob a licença GPLv3."
+  pt-br: distribuído sob a licença GPLv3.
 
 # "Generic" Menu Bar
 File:
@@ -75,6 +79,20 @@ User Interface FX Volume:
   pt-br: Volume de sons da Interface
 Start Maximized:
   pt-br: Inicializar Maximizado
+Toggle Loading Indicator:
+  pt-br: Alternar Indicador de "Processando"
+DearPyGui Style Editor:
+  pt-br: Editor de Estilo do DearPyGui
+DearPyGui Metrics:
+  pt-br: Métricas do DearPyGui
+DearPyGui Documentation:
+  pt-br: Documentação do DearPyGui
+DearPyGui Debug:
+  pt-br: Debug do DearPyGui
+DearPyGui Font Manager:
+  pt-br: Gerenciador de Fontes do DearPyGui
+DearPyGui Item Registry:
+  pt-br: Registo de Items do DearPyGui
 
 # AddNodeUI
 Add Nodes:
