@@ -49,15 +49,15 @@ from distutils.dir_util import copy_tree
 from pathlib import Path
 from subprocess import PIPE
 
-import mmv
-from mmv.Common.Download import Download
-from mmv.Common.Utils import Utils
+import MMV
+from MMV.Common.Download import Download
+from MMV.Common.Utils import Utils
 
 sys.dont_write_bytecode = True
 
 class MakeRelease:
     def __init__(self):
-        self.PackageInterface = mmv.mmvPackageInterface()
+        self.PackageInterface = MMV.mmvPackageInterface()
 
         # Releases dir
         # self.DIR = Path(os.path.dirname(os.path.abspath(__file__)))

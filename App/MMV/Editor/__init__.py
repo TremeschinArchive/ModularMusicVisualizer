@@ -1,0 +1,1 @@
+from MMV.Editor.Editor import mmvEditor

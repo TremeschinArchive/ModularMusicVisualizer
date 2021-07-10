@@ -34,7 +34,7 @@ import time
 import zipfile
 from pathlib import Path
 
-import mmv.Common.AnyLogger
+import MMV.Common.AnyLogger
 import pendulum
 import requests
 from dotmap import DotMap

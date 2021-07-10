@@ -38,16 +38,16 @@ import dearpygui.dearpygui as Dear
 import numpy as np
 import yaml
 from dotmap import DotMap
-from mmv.Common.PackUnpack import PackUnpack
-from mmv.Common.Utils import Utils
-from mmv.Editor.EditorUtils import (AssignLocals, CenteredWindow,
+from MMV.Common.PackUnpack import PackUnpack
+from MMV.Common.Utils import Utils
+from MMV.Editor.EditorUtils import (AssignLocals, CenteredWindow,
                                     EnterContainerStack, ExtendedDotMap,
                                     NewHash, PayloadTypes, ToggleAttrSafe,
                                     WatchdogTemplate)
-from mmv.Editor.Localization import Polyglot
-from mmv.Editor.Scene import mmvEditorScene
-from mmv.Editor.UI.AddNodeUI import mmvEditorAddNodeUI
-from mmv.Editor.UI.MenuBarUI import mmvEditorMenuBarUI
+from MMV.Editor.Localization import Polyglot
+from MMV.Editor.Scene import mmvEditorScene
+from MMV.Editor.UI.AddNodeUI import mmvEditorAddNodeUI
+from MMV.Editor.UI.MenuBarUI import mmvEditorMenuBarUI
 from PIL import Image, JpegImagePlugin, PngImagePlugin
 from watchdog.observers import Observer
 

@@ -33,11 +33,11 @@ import tempfile
 import time
 from pathlib import Path
 
-import mmv
-from mmv.Common.Download import Download
-from mmv.Editor.Localization import Languages
+import MMV
+from MMV.Common.Download import Download
+from MMV.Editor.Localization import Languages
 
-PackageInterface = mmv.mmvPackageInterface()
+PackageInterface = MMV.mmvPackageInterface()
 
 # Need: inkscape on PATH
 def MakeCountryFlags():

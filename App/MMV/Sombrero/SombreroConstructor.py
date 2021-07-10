@@ -2,7 +2,7 @@ from array import array
 from pathlib import Path
 
 import numpy as np
-from mmv.Sombrero.sombrero_shader import *
+from MMV.Sombrero.sombrero_shader import *
 
 
 class FullScreenConstructor:

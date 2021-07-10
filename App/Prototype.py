@@ -117,7 +117,7 @@ class BaseNode(Digestible):
 
 from pathlib import Path
 
-from mmv.Common.PackUnpack import PackUnpack
+from MMV.Common.PackUnpack import PackUnpack
 
 
 class MMVScene(Digestible):
@@ -138,7 +138,7 @@ class SomeNode(BaseNode):
         self.Digest("Y", 0)
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-savefile = Path("./session.mmv.pickle.zlib")
+savefile = Path("./session.MMV.pickle.zlib")
 
 if savefile.exists():
     Scene = MMVScene(OldSelf = PackUnpack.Unpack(savefile))

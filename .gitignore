@@ -25,24 +25,18 @@ venvs
 # # MMV Skia
 
 # Assets, externals, release
-App/mmv/Editor/zone
-App/mmv/Screenshots
-App/mmv/Externals
-App/mmv/Releases
-App/mmv/Runtime
-App/mmv/LastLog.txt
+App/MMV/Editor/zone
+App/MMV/Screenshots
+App/MMV/Externals
+App/MMV/Releases
+App/MMV/Runtime
+App/MMV/LastLog.txt
 
 unused
 App/unused
 
-# # MMV GLSL Shader
-
-App/mmv/mmvshader/glsl/st
-
-App/mmv/data/last_session_info.toml
-
 # # Tremx logos Yeah this is my identity, you should use yours here :)
-App/mmv/assets/tremx_assets
+App/MMV/assets/tremx_assets
 tremx*
 ___*
 

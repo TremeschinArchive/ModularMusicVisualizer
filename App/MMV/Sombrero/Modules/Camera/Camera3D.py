@@ -32,8 +32,8 @@ from math import cos, sin
 import imgui
 import numpy as np
 import quaternion
-from mmv.Sombrero.modules.base_module import BaseModule
-from mmv.Sombrero.utils.interpolation import SmoothVariable
+from MMV.Sombrero.modules.base_module import BaseModule
+from MMV.Sombrero.utils.interpolation import SmoothVariable
 
 
 # Normalize safely some vector to 1, if zero return 0

@@ -40,7 +40,7 @@ import time
 import uuid
 from pathlib import Path
 
-import mmv.Common.AnyLogger
+import MMV.Common.AnyLogger
 import toml
 import yaml
 

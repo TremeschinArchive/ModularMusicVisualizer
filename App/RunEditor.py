@@ -33,11 +33,11 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import time
 
-import mmv
+import MMV
 
 
 def Main():
-    PackageInterface = mmv.mmvPackageInterface()
+    PackageInterface = MMV.mmvPackageInterface()
     Editor = PackageInterface.GetEditor()
     Editor.InitMainWindow()
 

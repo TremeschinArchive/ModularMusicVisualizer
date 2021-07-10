@@ -43,12 +43,12 @@ import moderngl_window
 import numpy as np
 import quaternion
 from dotmap import DotMap
-from mmv.Sombrero.modules.camera.camera_2d import Camera2D
-from mmv.Sombrero.modules.camera.camera_3d import Camera3D
-from mmv.Sombrero.modules.controller.joystick import Joysticks
-from mmv.Sombrero.sombrero_context import RealTimeModes
-from mmv.Sombrero.utils.glfw_keyboard_keys import KeyboardKey
-from mmv.Sombrero.utils.sombrero_window_utils import (FrameTimesCounter,
+from MMV.Sombrero.modules.camera.camera_2d import Camera2D
+from MMV.Sombrero.modules.camera.camera_3d import Camera3D
+from MMV.Sombrero.modules.controller.joystick import Joysticks
+from MMV.Sombrero.sombrero_context import RealTimeModes
+from MMV.Sombrero.utils.glfw_keyboard_keys import KeyboardKey
+from MMV.Sombrero.utils.sombrero_window_utils import (FrameTimesCounter,
                                                       OnScreenTextMessages)
 from moderngl_window import resources
 from moderngl_window.conf import settings

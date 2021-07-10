@@ -30,7 +30,7 @@ import logging
 from abc import abstractmethod
 
 import dearpygui.dearpygui as Dear
-from mmv.Editor.Localization import Polyglot
+from MMV.Editor.Localization import Polyglot
 
 Speak = Polyglot.Speak
 

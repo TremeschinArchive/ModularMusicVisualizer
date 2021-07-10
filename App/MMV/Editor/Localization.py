@@ -31,7 +31,7 @@ from pathlib import Path
 
 import yaml
 from dotmap import DotMap
-from mmv.Editor.EditorUtils import AssignLocals
+from MMV.Editor.EditorUtils import AssignLocals
 
 
 class Language:

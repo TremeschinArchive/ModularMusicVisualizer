@@ -33,9 +33,9 @@ from pathlib import Path
 import dearpygui.dearpygui as Dear
 import yaml
 from dotmap import DotMap
-from mmv.Common.PackUnpack import PackUnpack
-from mmv.Editor.BaseNode import BaseNode
-from mmv.Editor.Localization import Polyglot
+from MMV.Common.PackUnpack import PackUnpack
+from MMV.Editor.BaseNode import BaseNode
+from MMV.Editor.Localization import Polyglot
 
 Speak = Polyglot.Speak
 

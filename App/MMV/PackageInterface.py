@@ -37,13 +37,13 @@ import tempfile
 from pathlib import Path
 
 import toml
-from mmv.Common.Download import Download
-from mmv.Common.ExternalsManager import ExternalsManager
-from mmv.Common.Utils import Utils
-from mmv.Editor import mmvEditor
-from mmv.Sombrero.SombreroFFmpeg import SombreroFFmpegWrapper
+from MMV.Common.Download import Download
+from MMV.Common.ExternalsManager import ExternalsManager
+from MMV.Common.Utils import Utils
+from MMV.Editor import mmvEditor
+from MMV.Sombrero.SombreroFFmpeg import SombreroFFmpegWrapper
 
-# from mmv.Sombrero.SombreroMain import SombreroMGL
+# from MMV.Sombrero.SombreroMain import SombreroMGL
 
 sys.dont_write_bytecode = True
 
