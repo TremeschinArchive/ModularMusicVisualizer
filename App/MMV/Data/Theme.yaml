@@ -29,10 +29,9 @@ Global:
   mvNodeStyleVar_LinkLineSegmentsPerLength: 20
 
   # Default Node
-  mvNodeCol_GridLine: [60,60,60]
   mvNodeCol_TitleBar: [29,151,236]
-  mvNodeCol_TitleBarHovered: [120,120,120]
-  mvNodeCol_TitleBarSelected: [150,150,150]
+  mvNodeCol_TitleBarHovered: [120]
+  mvNodeCol_TitleBarSelected: [150]
   mvNodeCol_NodeBackground         : [30, 30, 30, 40]
   
   # Hover / Select nodes
@@ -64,18 +63,20 @@ Nodes:
 
 # Stuff based on Dark or Light
 Dark:
-  mvThemeCol_Separator: [60,60,60]
-  mvThemeCol_Border: [60,60,60]
+  mvThemeCol_Separator: [60]
+  mvThemeCol_Border: [60]
+  mvNodeCol_GridLine: [60]
   
   # Tab Bars
-  mvThemeCol_Tab: [80, 80, 80]
+  mvThemeCol_Tab: [80]
   mvThemeCol_TabActive: [80,80,255]
   mvThemeCol_TabHovered: [0,0,255]
 
 Light:
-  mvThemeCol_FrameBg: [220,220,220]
-  mvThemeCol_Border: [120,120,120]
+  mvThemeCol_FrameBg: [220]
+  mvThemeCol_Border: [180]
   mvThemeCol_Button: [221]
+  mvNodeCol_GridLine: [190]
 
   mvThemeCol_Tab: [193,223,255]
   mvThemeCol_TabActive: [139,194,255]

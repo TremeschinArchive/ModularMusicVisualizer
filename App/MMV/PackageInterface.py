@@ -145,7 +145,7 @@ f"""Show extension\n{"="*self.terminal_width}
     # Send ForcePlatform = "Windows", "MacOS", "Linux" for forcing a specific one
     def __init__(self, ForcePlatform=None, **kwargs) -> None:
         dpfx = "[mmvPackageInterface.__init__]"
-        self.VersionNumber = "4.1"
+        self.VersionNumber = "4.1.1"
         self.Version = f"{self.VersionNumber}: Node Editor"
 
         # # Where this file is located, please refer using this on the whole package
