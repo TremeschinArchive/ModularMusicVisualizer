@@ -16,7 +16,7 @@ def GetNode(BaseNode):
                 with Dear.node_attribute() as A:
                     Dear.add_text("Hello World" + f"  |  [{A}]" * int(self.Editor.Context.DotMap.DEBUG_SHOW_IDS))
 
-                for _ in range(random.randint(3, 6)):
+                for _ in range(random.randint(30, 60)):
                     with Dear.node_attribute(attribute_type=Dear.mvNode_Attr_Output):
                         Dear.add_slider_float(label=f"Output Number {_}", width=150)
             self.ApplyTheme()

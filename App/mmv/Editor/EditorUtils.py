@@ -54,7 +54,7 @@ def CenteredWindow(Context, **k):
         # Default values
         for item, value in [
             ("modal",True), ("no_move",True),
-            ("autosize",True), ("label","")
+            ("autosize",True), ("label",""),
         ]:
             k[item] = k.get(item, value)
 

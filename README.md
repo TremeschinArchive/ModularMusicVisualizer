@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="src/mmv/Data/Image/mmvLogoWhite.png" alt="Modular Music Visualizer Project Logo" width="200" height="200">
+    <img src="App/mmv/Data/Image/mmvLogoWhite.png" alt="Modular Music Visualizer Project Logo" width="200" height="200">
 </p>
 <h3 align="center"><b>Modular Music Visualizer</b></h3>
 <p align="center">
@@ -8,12 +8,20 @@
 <hr>
 
 
-**IMPORTANT NOTE:** For the "previous" and currently only working full featured code, [see this other branch](https://github.com/Tremeschin/ModularMusicVisualizer/tree/master).
+**IMPORTANT NOTE:** _For the "previous" and currently only working full featured code, [see this other branch](https://github.com/Tremeschin/ModularMusicVisualizer/tree/master)._
+
+<hr>
+
+
+An <img src="https://raw.githubusercontent.com/edent/SuperTinyIcons/master/images/svg/opensource.svg" style="vertical-align: middle;" width="23"> Open Source shader rendered platform written in <img src="https://raw.githubusercontent.com/edent/SuperTinyIcons/master/images/svg/python.svg" style="vertical-align: middle;" width="23"> Python, capable of reacting in real time to audio playing on the computer or rendering to video files.
+
+
+
 
 
 # Node Editor Branch
 
-This branch is under heavy development, keep reading for new features and changes, where this is heading.
+This branch is under heavy development, keep reading for new features and changes, where this is heading, running instructions. 
 
 
 
@@ -24,6 +32,8 @@ This branch is under heavy development, keep reading for new features and change
 Plan on making MMV truly _modular_ and have an full featured GUI than script files for the end user.
 
 Much like Blender's Composite User Interface based on a Node Editor!!
+
+Also save, load presets, so community work, sharing session files will be possible without much trouble compared to before.
 
 <hr>
 
@@ -67,7 +77,10 @@ _The percentages of translations are shown on the GUI itself by clicking the bot
     <span style="vertical-align: middle;">(Japanese) Using different fonts as needed, extended unicode ranges thingy.</span>
 </div>
 
-_Thanks for [HatScripts](https://github.com/HatScripts/circle-flags) for the flags icons!!_
+
+
+
+_Thanks for [HatScripts](https://github.com/HatScripts/circle-flags) for the flags icons used here and on releases!!_
 
 <hr>
 
@@ -87,7 +100,9 @@ The shader render backend is called "Sombrero", I have to overhaul it a bit befo
 
 # Installing, running
 
-### From Releases
+<div align="center">
+  <b>Running From Releases</b>
+</div>
 
 Linux might need `fuse` installed for mounting the AppImage file. Windows should be a portable binary.
 
@@ -95,19 +110,76 @@ No releases are available for now since "nothing is working" regarding Shaders o
 
 <hr>
 
-### From Source
+<div align="center">
+  <b>Running Directly from Source Code</b>
+</div>
 
-Shortly, have Python 3.9 installed, download and extract the Source Code to some directory or git clone it, instructions below for Arch Linux: 
 
-- `sudo pacman -Syu python ffmpeg python-poetry git`
+<hr>
+<div align="center">
+  <img src="https://raw.githubusercontent.com/edent/SuperTinyIcons/master/images/svg/linux.svg" style="vertical-align: middle;" width="82">
+  
+  GNU/Linux 
+</div>
+<p>
+
+- <img src="https://raw.githubusercontent.com/edent/SuperTinyIcons/master/images/svg/arch_linux.svg" style="vertical-align: middle;" width="32">`$ sudo pacman -Syu python ffmpeg python-poetry git`
+
+- <img src="https://raw.githubusercontent.com/edent/SuperTinyIcons/master/images/svg/ubuntu.svg" style="vertical-align: middle;" width="32"> `$ sudo apt update && sudo apt upgrade && sudo apt install python3 ffmpeg python3-poetry git`
+
 - `git clone https://github.com/Tremeschin/ModularMusicVisualizer -b NodeEditor`
 - `cd ModularMusicVisualizer`
-- `poetry install --no-dev`
+- `poetry install`
 - `poetry run editor`
 
-Should work on Windows with minimal changes, just install Python and `python.exe -m pip install poetry` and start from the `poetry install` command.
 
 
+<hr>
+<div align="center">
+  <img src="https://raw.githubusercontent.com/edent/SuperTinyIcons/master/images/svg/windows.svg" style="vertical-align: middle;" width="64"> 
+  
+  Windows (7+)
+</div>
+<p>
+
+- Install [latest stable release Python "Windows installer (64-bit)"](https://www.python.org/downloads/windows/), be sure to check `Add Python 3.X to PATH`.
+- Download Modular Music Visualizer's [Source Code](https://github.com/Tremeschin/ModularMusicVisualizer/archive/refs/heads/NodeEditor.zip), extract to somewhere.
+- `Shift + Right Click` empty spot on a empty spot on the extracted folder in Windows Explorer (file manager), click `Open PowerShell Here`.
+- Install poetry with: (command can also be found [here](https://github.com/python-poetry/poetry#windows-powershell-install-instructions))
+  - `(Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | python.exe -`
+- Run: `python.exe -m poetry install`
+- Run: `python.exe -m poetry run editor`
+
+
+<hr>
+<div align="center">
+  <img src="https://raw.githubusercontent.com/edent/SuperTinyIcons/master/images/svg/apple.svg" style="vertical-align: middle;" width="64">
+  
+  macOS
+</div>
+<p>
+
+- Install [Homebrew](https://brew.sh/), _"The Missing Package Manager for macOS"_
+- `brew install python@3.x ffmpeg python`
+- `python3 -m pip install poetry`
+- `git clone https://github.com/Tremeschin/ModularMusicVisualizer -b NodeEditor`
+- `cd ModularMusicVisualizer`
+- `poetry install`
+- `poetry run editor`
+
+
+
+<hr>
+
+# Community, links, help
+
+Check out our:
+
+- <img src="https://raw.githubusercontent.com/edent/SuperTinyIcons/master/images/svg/telegram.svg" style="vertical-align: middle;" width="24"> [Telegram Channel](https://t.me/modular_music_visualizer)
+- <img src="https://raw.githubusercontent.com/edent/SuperTinyIcons/master/images/svg/github.svg" style="vertical-align: middle;" width="24"> [GitHub](https://github.com/Tremeschin/ModularMusicVisualizer)
+
+
+<hr>
 
 # License
 

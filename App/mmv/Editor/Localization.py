@@ -42,6 +42,7 @@ class Languages:
     English    = Language("English",               "English",              "en-us", "us", "DejaVuSans-Bold.ttf")
     Portuguese = Language("Brazillian Portuguese", "Português Brasileiro", "pt-br", "br", "DejaVuSans-Bold.ttf")
     Japanese   = Language("Japanese",              "日本語",                "ja",    "jp", "unifont-13.0.06.ttf")
+    Russian    = Language("Russian",               "русский",              "ru",    "ru", "DejaVuSans-Bold.ttf")
  
 class PolyglotBrain:
     def Init(self, LangsYamlPath, SpokenLanguage=Languages.English):
