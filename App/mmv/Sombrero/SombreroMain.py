@@ -33,13 +33,12 @@ from enum import Enum, auto
 
 import moderngl
 import numpy as np
-from PIL import Image
-
 from mmv.Sombrero.sombrero_constructor import *
 from mmv.Sombrero.sombrero_context import SombreroContext
 from mmv.Sombrero.sombrero_piano_roll import PianoRoll
 from mmv.Sombrero.sombrero_shader import *
 from mmv.Sombrero.sombrero_window import SombreroWindow
+from PIL import Image
 
 
 # When we don't find some element / want to ignore something

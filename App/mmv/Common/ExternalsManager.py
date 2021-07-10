@@ -33,7 +33,6 @@ import sys
 
 import ujson as json
 from dotmap import DotMap
-
 from mmv.Common.Download import Download
 from mmv.Common.Utils import Utils
 

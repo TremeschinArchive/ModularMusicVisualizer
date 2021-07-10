@@ -33,7 +33,6 @@ from pathlib import Path
 import dearpygui.dearpygui as Dear
 import yaml
 from dotmap import DotMap
-
 from mmv.Common.PackUnpack import PackUnpack
 from mmv.Editor.BaseNode import BaseNode
 from mmv.Editor.Localization import Polyglot

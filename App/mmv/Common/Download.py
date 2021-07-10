@@ -34,11 +34,11 @@ import time
 import zipfile
 from pathlib import Path
 
+import mmv.Common.AnyLogger
+import pendulum
 import requests
 from dotmap import DotMap
 from tqdm import tqdm
-
-import mmv.Common.AnyLogger
 
 
 class Download:
@@ -91,6 +91,7 @@ class Download:
 
         # Context status
         Status.FileSize = FileSize
+        Start = time.time()
 
         # Open, keep reading
         with open(SavePath, 'wb') as DownloadedFile:
@@ -98,7 +99,12 @@ class Download:
                 N = len(NewDataChunk)
                 Status.Downloaded += N
                 Status.Completed = Status.Downloaded/Status.FileSize
-                Status.Info = f"Progress [{Status.Downloaded/1024/1024:.2f}M/{Status.FileSize/1024/1024:.2f}M] [{Status.Completed*100:.2f}%]"
+                # Downloaded            = Took
+                # FileSize - Downloaded =  ETA
+                Took = time.time() - Start
+                ETA = ((Status.FileSize - Status.Downloaded)*Took) / (Status.Downloaded+1)
+                ETA = pendulum.duration(seconds=ETA).in_words()
+                Status.Info = f"{ETA} [{Status.Downloaded/1024/1024:.2f}M/{Status.FileSize/1024/1024:.2f}M] [{Status.Completed*100:.2f}%]"
                 ProgressBar.update(N)
                 DownloadedFile.write(NewDataChunk)
                 Callback(Status)

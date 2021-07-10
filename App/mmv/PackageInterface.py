@@ -37,7 +37,6 @@ import tempfile
 from pathlib import Path
 
 import toml
-
 from mmv.Common.Download import Download
 from mmv.Common.ExternalsManager import ExternalsManager
 from mmv.Common.Utils import Utils

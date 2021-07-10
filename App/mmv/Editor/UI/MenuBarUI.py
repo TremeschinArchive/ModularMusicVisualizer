@@ -25,12 +25,11 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
+import copy
 import logging
 import webbrowser
-import copy
 
 import dearpygui.dearpygui as Dear
-
 from mmv.Editor.Localization import Polyglot
 
 Speak = Polyglot.Speak
@@ -170,7 +169,7 @@ class mmvEditorMenuBarUI:
             with self.Editor.CenteredWindow(self.Editor.Context, width=600, height=200, no_close=True) as DownloadWindow:
                 Dear.add_text(f"Downloading [{TargetExternal}]")
                 Dear.add_same_line();
-                Dear.add_loading_indicator(**self.Editor.LoadingIndicatorConfigLoadingDict)
+                Dear.add_loading_indicator(**self.Editor.ThemeYaml.LoadingIndicator.Loading.toDict())
                 ProgressBar = Dear.add_progress_bar(width=600)
                 CurrentInfo = Dear.add_text(f"Requesting Download Info..")
 

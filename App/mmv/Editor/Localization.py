@@ -33,6 +33,7 @@ import yaml
 from dotmap import DotMap
 from mmv.Editor.EditorUtils import AssignLocals
 
+
 class Language:
     def __str__(self): return f"[{self.EnName}] | [{self.NativeName}] | Language"
     def __init__(self, EnName, NativeName, LanguageCode, CountryFlag, Font):

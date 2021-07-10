@@ -32,7 +32,6 @@ from math import cos, sin
 import imgui
 import numpy as np
 import quaternion
-
 from mmv.Sombrero.modules.base_module import BaseModule
 from mmv.Sombrero.utils.interpolation import SmoothVariable
 

@@ -28,7 +28,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 import imgui
 import pygame
-
 from mmv.Sombrero.modules.base_module import BaseModule
 from mmv.Sombrero.sombrero_context import RealTimeModes
 

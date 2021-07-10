@@ -26,7 +26,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 import dearpygui.dearpygui as Dear
-
 from mmv.Editor.Localization import Polyglot
 
 Speak = Polyglot.Speak

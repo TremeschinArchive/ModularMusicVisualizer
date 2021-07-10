@@ -31,9 +31,8 @@ from contextlib import contextmanager
 
 import dearpygui.dearpygui as Dear
 from dotmap import DotMap
-from watchdog.events import PatternMatchingEventHandler
-
 from mmv.Common.PackUnpack import PackUnpack
+from watchdog.events import PatternMatchingEventHandler
 
 
 # Enter a DPG container Stack using "with", it pushes then pops after exiting

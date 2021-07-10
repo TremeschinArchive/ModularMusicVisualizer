@@ -38,9 +38,6 @@ import dearpygui.dearpygui as Dear
 import numpy as np
 import yaml
 from dotmap import DotMap
-from PIL import Image, JpegImagePlugin, PngImagePlugin
-from watchdog.observers import Observer
-
 from mmv.Common.PackUnpack import PackUnpack
 from mmv.Common.Utils import Utils
 from mmv.Editor.EditorUtils import (AssignLocals, CenteredWindow,
@@ -51,6 +48,8 @@ from mmv.Editor.Localization import Polyglot
 from mmv.Editor.Scene import mmvEditorScene
 from mmv.Editor.UI.AddNodeUI import mmvEditorAddNodeUI
 from mmv.Editor.UI.MenuBarUI import mmvEditorMenuBarUI
+from PIL import Image, JpegImagePlugin, PngImagePlugin
+from watchdog.observers import Observer
 
 Speak = Polyglot.Speak
 
