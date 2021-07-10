@@ -1,12 +1,14 @@
+# Stuff that applies to dark and white
 Global:
   mvStyleVar_WindowBorderSize: 1
-  mvThemeCol_Border: [60,60,60]
-  mvThemeCol_Separator: [60,60,60]
+  mvStyleVar_GrabMinSize: 7
 
+  # Rounding
   mvStyleVar_ScrollbarRounding: 12
   mvStyleVar_WindowRounding: 6
+  mvStyleVar_FrameRounding: 4
   mvStyleVar_ChildRounding: 4
-  mvStyleVar_FrameRounding: 50
+  mvStyleVar_GrabRounding: 12
   mvStyleVar_TabRounding: 6
 
   mvStyleVar_WindowPadding: [4, 1]
@@ -16,11 +18,6 @@ Global:
   mvStyleVar_ScrollbarSize: 11
   mvStyleVar_ItemSpacing: [4, 2]
 
-  # Tab Bars
-  mvThemeCol_Tab: [80, 80, 80]
-  mvThemeCol_TabActive: [80,80,255]
-  mvThemeCol_TabHovered: [0,0,255]
-  
   # Nodes
   mvNodeStyleVar_NodeCornerRounding: 3
   mvNodeStyleVar_NodeBorderThickness: 1
@@ -31,6 +28,7 @@ Global:
   mvNodeStyleVar_PinOffset: 0
   mvNodeStyleVar_LinkLineSegmentsPerLength: 20
 
+  # Default Node
   mvNodeCol_GridLine: [60,60,60]
   mvNodeCol_TitleBar: [29,151,236]
   mvNodeCol_TitleBarHovered: [120,120,120]
@@ -63,3 +61,21 @@ Nodes:
     mvNodeCol_TitleBar: [0,255,0,70]
     mvNodeCol_Link: [0,255,0,150]
     mvNodeCol_Pin: [0,255,0]
+
+# Stuff based on Dark or Light
+Dark:
+  mvThemeCol_Separator: [60,60,60]
+  mvThemeCol_Border: [60,60,60]
+  
+  # Tab Bars
+  mvThemeCol_Tab: [80, 80, 80]
+  mvThemeCol_TabActive: [80,80,255]
+  mvThemeCol_TabHovered: [0,0,255]
+
+Light:
+  mvThemeCol_FrameBg: [220,220,220]
+  mvThemeCol_Border: [120,120,120]
+  mvThemeCol_Button: [221]
+
+  mvThemeCol_Tab: [193,223,255]
+  mvThemeCol_TabActive: [139,194,255]

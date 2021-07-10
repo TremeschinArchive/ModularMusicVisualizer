@@ -34,8 +34,8 @@ import dearpygui.dearpygui as Dear
 import yaml
 from dotmap import DotMap
 from MMV.Common.PackUnpack import PackUnpack
+from MMV.Common.Polyglot import Polyglot
 from MMV.Editor.BaseNode import BaseNode
-from MMV.Editor.Localization import Polyglot
 
 Speak = Polyglot.Speak
 

@@ -30,6 +30,7 @@ import importlib.util
 import itertools
 import logging
 import subprocess
+import sys
 import threading
 import webbrowser
 from pathlib import Path
@@ -39,12 +40,12 @@ import numpy as np
 import yaml
 from dotmap import DotMap
 from MMV.Common.PackUnpack import PackUnpack
+from MMV.Common.Polyglot import Polyglot
 from MMV.Common.Utils import Utils
 from MMV.Editor.EditorUtils import (AssignLocals, CenteredWindow,
-                                    EnterContainerStack, ExtendedDotMap,
-                                    NewHash, PayloadTypes, ToggleAttrSafe,
-                                    WatchdogTemplate)
-from MMV.Editor.Localization import Polyglot
+                                    EmptyCallable, EnterContainerStack,
+                                    ExtendedDotMap, NewHash, PayloadTypes,
+                                    ToggleAttrSafe, WatchdogTemplate)
 from MMV.Editor.Scene import mmvEditorScene
 from MMV.Editor.UI.AddNodeUI import mmvEditorAddNodeUI
 from MMV.Editor.UI.MenuBarUI import mmvEditorMenuBarUI
@@ -52,6 +53,9 @@ from PIL import Image, JpegImagePlugin, PngImagePlugin
 from watchdog.observers import Observer
 
 Speak = Polyglot.Speak
+
+from dearpygui import themes
+
 
 class mmvEditor:
     def __init__(self, PackageInterface):
@@ -73,7 +77,7 @@ class mmvEditor:
         self.PackageInterface = PackageInterface
         self.DefaultResourcesLogoImage = self.PackageInterface.ImageDir/"mmvLogoWhite.png"
         # self.DefaultResourcesIcon = self.PackageInterface.ImageDir/"mmvLogoWhite.ico"
-        self.LoadLastConfig()
+        self.LoadLastConfig(ForceDefaults=("ResetConfig" in sys.argv))
         self.MenuBarUI = mmvEditorMenuBarUI(self)
         self.AddNodeUI = mmvEditorAddNodeUI(self)
         self.Scene = mmvEditorScene(self)
@@ -105,6 +109,7 @@ class mmvEditor:
             logging.info(f"[mmvEditor.LoadLastConfig] Reset to default config")
             self.Context = ExtendedDotMap(SetCallback=self.SaveCurrentConfig)
 
+        self.Context.Digest("GLOBAL_THEME", "Dark")
         self.Context.Digest("FIRST_TIME", True)
         self.Context.Digest("WINDOW_SIZE", [1280, 720])
         self.Context.Digest("BUILTIN_WINDOW_DECORATORS", True)
@@ -115,6 +120,11 @@ class mmvEditor:
         self.Context.Digest("DEBUG_SHOW_IDS", True)
         self.Context.Digest("LANGUAGE", Polyglot.Languages.English)
         Polyglot.Speak.Language(self.Context.DotMap.LANGUAGE)
+
+        # Global Theme
+        {"Dark":  EmptyCallable,
+         "Light": themes.create_theme_imgui_light,
+        }.get(self.Context.DotMap.GLOBAL_THEME)(default_theme=True)
 
     # Play some sound from a file (usually UI FX, info, notification)
     def PlaySound(self, file):
@@ -192,9 +202,14 @@ class mmvEditor:
         # Load theme YAML, set values
         with Dear.theme(default_theme=True) as self.DPG_THEME:
             self.ThemeYaml = DotMap( yaml.load(Path(self.PackageInterface.DataDir/"Theme.yaml").read_text(), Loader = yaml.FullLoader) )
-            for key, value in self.ThemeYaml.Global.items():
-                logging.info(f"{dpfx} Customize Theme [{key}] => [{value}]")
-                self.SetDearPyGuiThemeString(key, value)
+            ApplyStuff = {**self.ThemeYaml.Global, **self.ThemeYaml[self.Context.DotMap.GLOBAL_THEME]}
+            for key, value in ApplyStuff.items():
+                # DearPyGui uses mv as a prefix
+                if key.startswith("mv"):
+                    logging.info(f"{dpfx} Customize Theme [{key}] => [{value}]")
+                    if isinstance(value, list):
+                        if len(value) == 1: value = value*3
+                    self.SetDearPyGuiThemeString(key, value)
 
         # Load font, add circles unicode
         with Dear.font_registry() as self.DPG_FONT_REGISTRY:

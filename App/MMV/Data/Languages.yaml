@@ -63,6 +63,26 @@ Clone:
   pt-br: Clonar
 Version:
   pt-br: Versão
+Yes:
+  pt-br: Sim
+No:
+  pt-br: Não
+
+# Externals
+Downloading:
+  pt-br: Baixando
+  ja: ダウンロード中
+Download:
+  pt-br: Baixar
+  jp: ダウンロード
+Requesting Download Info:
+  pt-br: Obtendo Informações do Download
+Externals Manager:
+  pt-br: Gerenciador de Programas Externos
+Reinstall:
+  pt-br: Reinstalar
+No, required for rendering videos:
+  pt-br: Não, necessário para renderizar vídeos
 
 # Tabs
 Node Editor:
@@ -93,6 +113,8 @@ DearPyGui Font Manager:
   pt-br: Gerenciador de Fontes do DearPyGui
 DearPyGui Item Registry:
   pt-br: Registo de Items do DearPyGui
+Interface Global Theme:
+  pt-br: Tema Global da Interface
 
 # AddNodeUI
 Add Nodes:
