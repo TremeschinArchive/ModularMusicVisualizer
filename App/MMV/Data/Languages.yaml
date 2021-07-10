@@ -90,7 +90,8 @@ Ok (Close):
   pt-br: Ok (Fechar)
   ja: はい
 No (Continue):
-  pt-br: いいえ（続く）
+  pt-br: Não (Continuar)
+  ja: いいえ（続く）
 
 # Inception lol
 Language:

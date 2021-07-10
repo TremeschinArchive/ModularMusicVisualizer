@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="App/mmv/Data/Image/mmvLogoWhite.png" alt="Modular Music Visualizer Project Logo" width="200" height="200">
+    <img src="App/MMV/Data/Image/mmvLogoWhite.png" alt="Modular Music Visualizer Project Logo" width="200" height="200">
 </p>
 <h3 align="center"><b>Modular Music Visualizer</b></h3>
 <p align="center">
