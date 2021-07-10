@@ -81,7 +81,6 @@ class mmvEditorMenuBarUI:
                 Dear.add_menu_item(label=Speak("DearPyGui Metrics"),        callback=lambda:Dear.show_tool(Dear.mvTool_Metrics))
                 Dear.add_menu_item(label=Speak("DearPyGui Documentation"),  callback=lambda:Dear.show_tool(Dear.mvTool_Doc))
                 Dear.add_menu_item(label=Speak("DearPyGui Debug"),          callback=lambda:Dear.show_tool(Dear.mvTool_Debug))
-                Dear.add_menu_item(label=Speak("DearPyGui Style Editor"),   callback=lambda:Dear.show_tool(Dear.mvTool_Style))
                 Dear.add_menu_item(label=Speak("DearPyGui Font Manager"),   callback=lambda:Dear.show_tool(Dear.mvTool_Font))
                 Dear.add_menu_item(label=Speak("DearPyGui Item Registry"),  callback=lambda:Dear.show_tool(Dear.mvTool_ItemRegistry))
 
