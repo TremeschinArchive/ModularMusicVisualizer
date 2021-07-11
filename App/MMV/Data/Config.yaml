@@ -1,0 +1,11 @@
+Logging:
+
+  # Critical, Debug, Error, Info, Warn, NotSet
+  LogLevel: Info
+
+  # Informational, Pretty. Economic, OnlyMessage
+  LogFormat: Pretty
+
+  Privacy:
+    LogBasicSystemInfo: true
+    LogPythonVersion: true

@@ -34,11 +34,14 @@ import time
 import zipfile
 from pathlib import Path
 
+import arrow
 import MMV.Common.AnyLogger
-import pendulum
 import requests
 from dotmap import DotMap
+from MMV.Common.Polyglot import Polyglot
 from tqdm import tqdm
+
+Speak = Polyglot.Speak
 
 
 class Download:
@@ -49,7 +52,8 @@ class Download:
         return requests.get(URL).text
 
     # Download some file to a SavePath (file).
-    def DownloadFile(URL, SavePath, Name="Downloading File", CheckSizes=True, Callback=None, ChunkSize=32768, Info=""):
+    @staticmethod
+    def DownloadFile(URL, SavePath, Name="Downloading File", Locale="en-us", CheckSizes=True, Callback=None, ChunkSize=32768, Info=""):
         if Callback is None: Callback = lambda _:_
 
         # Set up save path
@@ -99,12 +103,13 @@ class Download:
                 N = len(NewDataChunk)
                 Status.Downloaded += N
                 Status.Completed = Status.Downloaded/Status.FileSize
-                # Downloaded            = Took
-                # FileSize - Downloaded =  ETA
+                # Downloaded \/ Took
+                # Remaining  /\ ETA
                 Took = time.time() - Start
-                ETA = ((Status.FileSize - Status.Downloaded)*Took) / (Status.Downloaded+1)
-                ETA = pendulum.duration(seconds=ETA).in_words()
-                Status.Info = f"{ETA} [{Status.Downloaded/1024/1024:.2f}M/{Status.FileSize/1024/1024:.2f}M] [{Status.Completed*100:.2f}%]"
+                Remaining = Status.FileSize - Status.Downloaded
+                ETA = (Remaining*Took) / (Status.Downloaded+1)
+                ETA = arrow.utcnow().shift(seconds=ETA).humanize(locale=Locale)
+                Status.Info = Speak("Progress") + f" ({ETA}) [{Status.Downloaded/1024/1024:.2f}M/{Status.FileSize/1024/1024:.2f}M] [{Status.Completed*100:.2f}%]"
                 ProgressBar.update(N)
                 DownloadedFile.write(NewDataChunk)
                 Callback(Status)

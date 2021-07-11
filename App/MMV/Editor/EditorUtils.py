@@ -64,11 +64,13 @@ def CenteredWindow(Context, **k):
             item=window,
             pos=[
                 ( Context.DotMap.WINDOW_SIZE[0] - k.get("width", 0) - k.get("offx",0) ) / 2,
-                ( Context.DotMap.WINDOW_SIZE[1] - k.get("height",0) - k.get("offy",0) ) / 2,
+                Context.DotMap.CENTERED_WINDOWS_VERTICAL_DISTANCE,
             ])
         yield window
     finally: Dear.pop_container_stack()
 
+def CenteredWindowsSuggestedMaxVSize(Context):
+    return Context.DotMap.WINDOW_SIZE[1] - (2*Context.DotMap.CENTERED_WINDOWS_VERTICAL_DISTANCE)
 
 class PayloadTypes:
     Image  = "Image"

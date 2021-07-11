@@ -59,13 +59,16 @@ class MakeRelease:
     def __init__(self):
         self.PackageInterface = MMV.mmvPackageInterface()
 
+        self.Commit = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).decode("utf-8").strip().upper()
+        self.ReleaseName = f"Modular Music Visualizer {self.PackageInterface.VersionNumber} [{self.Commit}]"
+
         # Releases dir
         # self.DIR = Path(os.path.dirname(os.path.abspath(__file__)))
         self.DIR = self.PackageInterface.DIR
         self.ReleasesDir = self.DIR/"Releases"
-        self.ReleasesDirLinux = self.ReleasesDir/"Linux"
-        self.ReleasesDirWindows = self.ReleasesDir/"Windows"
-        self.ReleasesDirMacOS = self.ReleasesDir/"MacOS"
+        self.ReleasesDirLinux = self.ReleasesDir/(self.ReleaseName + " (Linux)")
+        self.ReleasesDirWindows = self.ReleasesDir/(self.ReleaseName + " (Windows)")
+        self.ReleasesDirMacOS = self.ReleasesDir/(self.ReleaseName + " (MacOS)")
         self.WineprefixDir = Path("~/.mmv/WinePrefix").expanduser().resolve()
         self.DarlingprefixDir = Path("~/.mmv/DarlingPrefix").expanduser().resolve()
 
@@ -79,8 +82,6 @@ class MakeRelease:
         self.Target = self.DIR/".."/"RunEditor.py"
         self.TargetBasename = "RunEditor"
         self.Now = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        self.Commit = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).decode("utf-8").strip().upper()
-        self.ReleaseName = f"Modular Music Visualizer {self.PackageInterface.VersionNumber} [{self.Commit}]"
         self.FinalBinName = "MMV Editor"
         self.Clear()
 

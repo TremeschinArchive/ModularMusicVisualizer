@@ -34,7 +34,7 @@ playsound = "^1.2.2"
 toml = "^0.10.2"
 requests = "^2.25.1"
 dearpygui = "^0.8.14"
-pendulum = "^2.1.2"
+arrow = "^1.1.1"
 
 [tool.poetry.dev-dependencies]
 Nuitka = "^0.6.16"

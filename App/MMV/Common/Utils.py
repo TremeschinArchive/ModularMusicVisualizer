@@ -77,6 +77,14 @@ class Utils:
             data = [data]
         return data
 
+    @staticmethod
+    def ResolvePath(path):
+        return Path(path).expanduser().resolve()
+
+    @staticmethod
+    def LoadYaml(path):
+        return yaml.load(Utils.ResolvePath(path).read_text(), Loader=yaml.FullLoader)
+
     # # "Old" / to rewrite
 
     def __init__(self):
@@ -146,25 +154,7 @@ class Utils:
             "nt": "windows",
             "darwin": "macos"
         }.get(os.name)
-    
-    # Load a yaml and return its content
-    def load_yaml(self, path, silent = False) -> None:
-        dpfx = "[Utils.load_yaml]"
-        
-        # Log action
-        if not silent:
-            logging.info(f"{dpfx} Loading YAML file from path [{path}], getting absolute realpath first")
 
-        # Open file in read mode
-        with open(path, "r") as f:
-            data = yaml.load(f, Loader = yaml.FullLoader)
-
-        # Log read data
-        if not silent:
-            logging.debug(f"{dpfx} Loaded data is: {data}")
-
-        # Return the data
-        return data
     
     # Save a dictionary to a YAML file, make sure the directory exists first..
     def dump_yaml(self, data, path, silent = False) -> None:

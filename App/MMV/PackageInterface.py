@@ -29,6 +29,7 @@ import json
 import logging
 import math
 import os
+import platform
 import shutil
 import struct
 import subprocess
@@ -37,7 +38,7 @@ import tempfile
 from pathlib import Path
 
 import toml
-from MMV.Common.Download import Download
+from dotmap import DotMap
 from MMV.Common.ExternalsManager import ExternalsManager
 from MMV.Common.Utils import Utils
 from MMV.Editor import mmvEditor
@@ -168,8 +169,14 @@ f"""Show extension\n{"="*self.terminal_width}
             self.DIR = Path(os.path.dirname(os.path.abspath(__file__)))
             self.IS_RELEASE = False
             print(f"{dpfx} Running directly from source code")
-
         print(f"{dpfx} Modular Music Visualizer Python package [__init__.py] or executable located at [{self.DIR}]")
+
+        # The most important directory
+        self.DataDir = self.DIR/"Data"
+
+        # Config
+        self.ConfigYAML = DotMap( Utils.LoadYaml(self.DataDir/"Config.yaml"), _dynamic=False )
+        logging.info(f"Config YAML is {self.ConfigYAML}")
 
         # # # Logging 
 
@@ -181,43 +188,33 @@ f"""Show extension\n{"="*self.terminal_width}
         handlers = [logging.StreamHandler(sys.stdout)]
 
         # Loglevel is defined in the config.toml configuration
-        LOG_LEVEL = {
-            "critical": logging.CRITICAL,
-            "debug": logging.DEBUG,
-            "error": logging.ERROR,
-            "info": logging.INFO,
-            "warn": logging.warning,
-            "notset": logging.NOTSET,
-        }.get("info")
+        LogLevel = {
+            "Critical": logging.CRITICAL,
+            "Debug": logging.DEBUG,
+            "Error": logging.ERROR,
+            "Info": logging.INFO,
+            "Warn": logging.warning,
+            "NotSet": logging.NOTSET,
+        }.get(self.ConfigYAML.Logging.LogLevel)
 
-        # Hard coded where the log file will be located
-        # this is only valid for the last time we run this software
-        self.LOG_FILE = self.DIR / "LastLog.txt"
-
-        # Reset the log file
+        # Where to log, reset file
+        self.LOG_FILE = self.DIR/"LastLog.txt"
         self.LOG_FILE.write_text("")
         print(f"{dpfx} Reset log file located at [{self.LOG_FILE}]")
 
         # Verbose and append the file handler
-        handlers.append(logging.FileHandler(filename = self.LOG_FILE, encoding = 'utf-8'))
+        handlers.append(logging.FileHandler(filename=self.LOG_FILE, encoding='utf-8'))
 
         # .. otherwise just keep the StreamHandler to stdout
-
-        log_format = {
-            "informational": "[%(levelname)-8s] [%(filename)-32s:%(lineno)-3d] (%(relativeCreated)-6d) %(message)s",
-            "pretty": "[%(levelname)-8s] (%(relativeCreated)-5d)ms %(message)s",
-            "economic": "[%(levelname)s::%(filename)s::%(lineno)d] %(message)s",
-            "onlymessage": "%(message)s"
-        }.get("pretty")
+        LogFormat = {
+            "Informational": "[%(levelname)-8s] [%(filename)-32s:%(lineno)-3d] (%(relativeCreated)-6d) %(message)s",
+            "Pretty": "[%(levelname)-8s] (%(relativeCreated)-5d)ms %(message)s",
+            "Economic": "[%(levelname)s::%(filename)s::%(lineno)d] %(message)s",
+            "Onlymessage": "%(message)s"
+        }.get(self.ConfigYAML.Logging.LogFormat)
 
         # Start the logging global class, output to file and stdout
-        logging.basicConfig(
-            level = LOG_LEVEL,
-            format = log_format,
-            handlers = handlers,
-        )
-
-        # Greeter message :)
+        logging.basicConfig(level=LogLevel, format=LogFormat, handlers=handlers)
         self.GreeterMessage()
 
         # Start logging message
@@ -225,14 +222,21 @@ f"""Show extension\n{"="*self.terminal_width}
         print(f"{bias[:-1]}# # [ Start Logging ] # #\n")
         print("-" * self.terminal_width + "\n")
 
-        # Log what we'll do next
-        logging.info(f"{dpfx} We're done with the pre configuration of Python's behavior and loading config.toml configuration file")
-
         # Log precise Python version
         sysversion = sys.version.replace("\n", " ").replace("  ", " ")
-        logging.info(f"{dpfx} Running on Python: [{sysversion}]")
+        if self.ConfigYAML.Logging.Privacy.LogPythonVersion:
+            logging.info(f"{dpfx} Running on Python: [{sysversion}]")
 
-        # # The operating system we're on, one of "linux", "windows", "macos"
+        # Optional System Info logging
+        SystemInfo = platform.uname()
+        if self.ConfigYAML.Logging.Privacy.LogBasicSystemInfo:
+            logging.info(f"{dpfx} Host System Info:")
+            logging.info(f"{dpfx} | Platform:   [{SystemInfo.system}]")
+            logging.info(f"{dpfx} | Release:    [{SystemInfo.release}]")
+            if SystemInfo.system != "Linux":
+                logging.info(f"{dpfx} | Version:    [{SystemInfo.version}]")
+            logging.info(f"{dpfx} | Arch:       [{SystemInfo.machine}]")
+            logging.info(f"{dpfx} | CPU, Cores: [{SystemInfo.processor}]")
 
         # Get the desired name from a dict matching against os.name
         if ForcePlatform is None:
@@ -240,18 +244,14 @@ f"""Show extension\n{"="*self.terminal_width}
         else:
             logging.info(f"{dpfx} Overriding platform OS to = [{ForcePlatform}]")
             self.os = ForcePlatform
-
-        # Log which OS we're running
         logging.info(f"{dpfx} Running Modular Music Visualizer on Operating System: [{self.os}]")
 
         # # Directories
 
         # NOTE: Extend this package interface with the externals manager
         self.Externals = ExternalsManager(self)
-        self.Download = Download
 
         # Set up directories
-        self.DataDir        = self.DIR/"Data"
         self.ScreenshotsDir = self.DIR/"Screenshots"
         self.RendersDir     = self.DIR/"Renders"
         self.RuntimeDir     = self.DIR/"Runtime"
@@ -260,8 +260,8 @@ f"""Show extension\n{"="*self.terminal_width}
         self.ImageDir       = self.DataDir/"Image"
         self.ShadersDir     = self.DataDir/"Shaders"
         self.AssetsDir      = self.DataDir/"Assets"
-        self.IconDir        = self.ImageDir/"Icon"
         self.FontsDir       = self.DataDir/"Fonts"
+        self.IconDir        = self.ImageDir/"Icon"
         self.DownloadsDir   = self.Externals.ExternalsDir/"Downloads"
 
         # mkdirs, print where they are
@@ -270,6 +270,7 @@ f"""Show extension\n{"="*self.terminal_width}
                 logging.info(f"{dpfx} {key} is [{value}]")
                 getattr(self, key).mkdir(parents=True, exist_ok=True)
 
+        # Get all stuff we will use, mostly for checking if we have them
         self.FindExternals()
         
     def FindExternals(self):

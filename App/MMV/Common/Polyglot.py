@@ -31,13 +31,16 @@ from pathlib import Path
 
 import yaml
 from dotmap import DotMap
-from MMV.Editor.EditorUtils import AssignLocals
 
 
 class Language:
     def __str__(self): return f"[{self.EnName}] | [{self.NativeName}] | Language"
     def __init__(self, EnName, NativeName, LanguageCode, CountryFlag, Font):
-        AssignLocals(locals())
+        self.EnName = EnName
+        self.NativeName = NativeName
+        self.LanguageCode = LanguageCode
+        self.CountryFlag = CountryFlag
+        self.Font = Font
 
 # Prefer in order of most spoken, not only native L1 but L1+L2 speakers
 class Languages:
@@ -45,15 +48,15 @@ class Languages:
 #                         | English Name             | Native Name             | Language Code   | Country Flag   | Font
 #---------------------------------------------------------------------------------------------------------------------------------------
     English    = Language("English",                 "English",                "en-us",          "us",            "DejaVuSans-Bold.ttf")
-#   Hindi      = Language("Hindi",                   "हिंदी",                    "hi",             "in",            "unifont-13.0.06.ttf")
-#   Spanish    = Language("Spanish",                 "Español",                "es",             "es",            "DejaVuSans-Bold.ttf")
-#   French     = Language("French",                  "Français",               "fr",             "fr",            "DejaVuSans-Bold.ttf")
-#   Russian    = Language("Russian",                 "русский",                "ru",             "ru",            "DejaVuSans-Bold.ttf")
+    Hindi      = Language("Hindi",                   "हिंदी",                    "hi",             "in",            "unifont-13.0.06.ttf")
+    Spanish    = Language("Spanish",                 "Español",                "es",             "es",            "DejaVuSans-Bold.ttf")
+    French     = Language("French",                  "Français",               "fr",             "fr",            "DejaVuSans-Bold.ttf")
+    Russian    = Language("Russian",                 "русский",                "ru",             "ru",            "DejaVuSans-Bold.ttf")
     Portuguese = Language("Brazillian Portuguese",   "Português Brasileiro",   "pt-br",          "br",            "DejaVuSans-Bold.ttf")
-#   German     = Language("German",                  "Deutsch",                "de",             "de",            "DejaVuSans-Bold.ttf")
+    German     = Language("German",                  "Deutsch",                "de",             "de",            "DejaVuSans-Bold.ttf")
     Japanese   = Language("Japanese",                "日本語",                  "ja",             "jp",            "unifont-13.0.06.ttf")
-#   Korean     = Language("Korean",                  "한국어",                  "kr",             "kr",            "unifont-13.0.06.ttf")
-#   Italian    = Language("Italian",                 "Italiano",               "it",             "it",            "DejaVuSans-Bold.ttf")
+    Korean     = Language("Korean",                  "한국어",                  "kr",             "kr",            "unifont-13.0.06.ttf")
+    Italian    = Language("Italian",                 "Italiano",               "it",             "it",            "DejaVuSans-Bold.ttf")
 
  
 class PolyglotBrain:
@@ -62,10 +65,14 @@ class PolyglotBrain:
         self.Data = DotMap(yaml.load(Data, Loader = yaml.FullLoader), _dynamic=False)
         self.SpokenLanguage = SpokenLanguage
 
-    def __call__(self, Phrase):
-        Have = self.Data.get(Phrase, {}).get(self.SpokenLanguage.LanguageCode, None)
-        if (not Have) and (self.SpokenLanguage != Languages.English): 
-            logging.warning(f"[PolyglotBrain] I don't know [{Phrase}] in {self.SpokenLanguage.EnName} ({self.SpokenLanguage.NativeName})")
+    def __call__(self, Phrase, ForceLanguage=None):
+        if ForceLanguage is None:
+            GetL = self.SpokenLanguage
+        else:
+            GetL = ForceLanguage
+        Have = self.Data.get(Phrase, {}).get(GetL.LanguageCode, None)
+        if (not Have) and (GetL != Languages.English): 
+            logging.warning(f"[PolyglotBrain] I don't know [{Phrase}] in {GetL.EnName} ({GetL.NativeName})")
         if Have: return Have
         return Phrase
 

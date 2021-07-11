@@ -74,7 +74,10 @@ Downloading:
   ja: ダウンロード中
 Download:
   pt-br: Baixar
-  jp: ダウンロード
+  ja: ダウンロード
+Progress:
+  pt-br: Progresso
+  ja: 進行状況
 Requesting Download Info:
   pt-br: Obtendo Informações do Download
 Externals Manager:
@@ -126,12 +129,22 @@ We need to restart for language settings to take effect, proceed?:
 Select Language [Needs Restart]:
   pt-br: Selecione o Idioma [Precisa Reiniciar]
   ja: 言語を択してください「リスタート」
-Ok (Close):
-  pt-br: Ok (Fechar)
-  ja: はい
+Ok (Restart):
+  pt-br: Ok (Reiniciar)
+  ja: はい（リスタート）
 No (Continue):
   pt-br: Não (Continuar)
   ja: いいえ（続く）
+Translated:
+  es: Traducido
+  hi: अनुवादित
+  fr: Traduit
+  ru: Перевод
+  pt-br: Traduzido
+  de: Übersetzt
+  ja: 翻訳先
+  kr: 번역 언어
+  it: Tradotto
 
 # Inception lol
 Language:

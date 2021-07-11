@@ -78,7 +78,7 @@ class ExternalsManager:
         }.get(self.os)
 
     # Download a external from somewhere, extract, put on right path
-    def DownloadInstallExternal(self, TargetExternal, Callback=None, _ForceNotFound=False):
+    def DownloadInstallExternal(self, TargetExternal, Locale="en-us", Callback=None, _ForceNotFound=False):
         dpfx = "[ExternalsManager.DownloadInstallExternal]"
         logging.info(f"{dpfx} Managing external [{TargetExternal}]")
 
@@ -119,7 +119,7 @@ class ExternalsManager:
                         
                 # Download the ZIP, extract
                 FFmpegZIP = str(self.ExternalsDirDownloads/AssetName)
-                SavePath, Status = Download.DownloadFile(URL=DownloadURL, SavePath=FFmpegZIP, Name=f"FFmpeg v={AssetName}", Info=Info, Callback=Callback)
+                SavePath, Status = Download.DownloadFile(URL=DownloadURL, SavePath=FFmpegZIP, Name=f"FFmpeg v={AssetName}", Info=Info, Callback=Callback, Locale=Locale)
                 Status.Info = "Extracting file.."
                 Callback(Status)
                 Download.ExtractFile(FFmpegZIP, self.ExternalsDirThisPlatform)

@@ -42,7 +42,7 @@ logger = logging.getLogger()
 
 # If handlers list is not empty
 if not logger.handlers:
-    print("[cmn_any_logger.py] No logger found, creating one with StreamHandler(sys.stdout)")
+    print("[AnyLogger] No logger found, creating one with StreamHandler(sys.stdout)")
 
     # Create basic logger
     logging.basicConfig(

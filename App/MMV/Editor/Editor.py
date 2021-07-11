@@ -29,6 +29,7 @@ import hashlib
 import importlib.util
 import itertools
 import logging
+import os
 import subprocess
 import sys
 import threading
@@ -43,6 +44,7 @@ from MMV.Common.PackUnpack import PackUnpack
 from MMV.Common.Polyglot import Polyglot
 from MMV.Common.Utils import Utils
 from MMV.Editor.EditorUtils import (AssignLocals, CenteredWindow,
+                                    CenteredWindowsSuggestedMaxVSize,
                                     EmptyCallable, EnterContainerStack,
                                     ExtendedDotMap, NewHash, PayloadTypes,
                                     ToggleAttrSafe, WatchdogTemplate)
@@ -65,6 +67,7 @@ class mmvEditor:
         self.DefaultFont = "DejaVuSans-Bold.ttf"
 
         # Stuff we can access
+        self.CenteredWindowsSuggestedMaxVSize = CenteredWindowsSuggestedMaxVSize
         self.EnterContainerStack = EnterContainerStack
         self.PayloadTypes = PayloadTypes
         self.CenteredWindow = CenteredWindow
@@ -113,12 +116,13 @@ class mmvEditor:
         self.Context.Digest("FIRST_TIME", True)
         self.Context.Digest("WINDOW_SIZE", [1280, 720])
         self.Context.Digest("BUILTIN_WINDOW_DECORATORS", True)
-        self.Context.Digest("START_MAXIMIZED", False)
+        self.Context.Digest("START_MAXIMIZED", True)
         self.Context.Digest("UI_SOUNDS", True)
         self.Context.Digest("UI_VOLUME", 40)
         self.Context.Digest("UI_FONT_SIZE", 16)
         self.Context.Digest("DEBUG_SHOW_IDS", True)
         self.Context.Digest("LANGUAGE", Polyglot.Languages.English)
+        self.Context.Digest("CENTERED_WINDOWS_VERTICAL_DISTANCE", 200)
         Polyglot.Speak.Language(self.Context.DotMap.LANGUAGE)
 
         # Global Theme
@@ -181,7 +185,7 @@ class mmvEditor:
         # Add all font ranges one would need, overkill? yes
         for FontRangeHint in [
             Dear.mvFontRangeHint_Japanese,
-            # Dear.mvFontRangeHint_Korean,
+            Dear.mvFontRangeHint_Korean,
             # Dear.mvFontRangeHint_Chinese_Full,
             # Dear.mvFontRangeHint_Chinese_Simplified_Common,
             Dear.mvFontRangeHint_Cyrillic,  # Russian
@@ -189,8 +193,17 @@ class mmvEditor:
             # Dear.mvFontRangeHint_Vietnamese,
         ]:
             Dear.add_font_range_hint(FontRangeHint, parent=Font)
+        
+        # Hindi range
+        Dear.add_font_range(0x0900, 0x097F, parent=Font)
 
     # # Loops, Layout
+
+    def GetThemeStuff(self):
+        self.SpecificThemeConfig = self.ThemeYaml[self.Context.DotMap.GLOBAL_THEME]
+        for Key, Value in self.SpecificThemeConfig.items():
+            if Key.startswith("mmv"):
+                self.ThemeYaml[Key] = Value
 
     # Create DearPyGui items
     def InitMainWindow(self):
@@ -202,7 +215,8 @@ class mmvEditor:
         # Load theme YAML, set values
         with Dear.theme(default_theme=True) as self.DPG_THEME:
             self.ThemeYaml = DotMap( yaml.load(Path(self.PackageInterface.DataDir/"Theme.yaml").read_text(), Loader = yaml.FullLoader) )
-            ApplyStuff = {**self.ThemeYaml.Global, **self.ThemeYaml[self.Context.DotMap.GLOBAL_THEME]}
+            self.GetThemeStuff()
+            ApplyStuff = {**self.ThemeYaml.Global, **self.SpecificThemeConfig}
             for key, value in ApplyStuff.items():
                 # DearPyGui uses mv as a prefix
                 if key.startswith("mv"):
@@ -376,6 +390,9 @@ class mmvEditor:
             self.FirstTimeWarning()
 
     def Exit(self,*a,**b): self._Stop = True
+    def Restart(self,*a,**b):
+        self.__mmvRestart__ = True
+        self.Exit()
 
     def SaveCurrentConfig(self): self.Context.Pack(self.USER_CONFIG_FILE)
 
@@ -384,21 +401,14 @@ class mmvEditor:
         logging.info(f"[mmvEditor.AddNodeFile] Exiting [Modular Music Visualizer Editor] *Safely*")
         self.SaveCurrentConfig()
         Dear.cleanup_dearpygui()
-
-
+        # TODO: How??
+        # if hasattr(self, "__mmvRestart__"):
+            # if self.PackageInterface.IS_RELEASE:
+                # os.execl(sys.executable, sys.executable, *sys.argv)
+            # os.execv(__file__, sys.argv)
 
     # First time opening MMV warning
-    # def __FirstTimeWarningOK(self, _): self.Context.ForceSet("FIRST_TIME", False); Dear.delete_item(_)
     def FirstTimeWarning(self):
         if self.Context.DotMap.FIRST_TIME:
             self.Context.ForceSet("FIRST_TIME", False)
             self.MenuBarUI.LanguageSelectUI()
-
-            # self.__FirstTimeWarningOK()
-            # with self.CenteredWindow(self.Context, width=400, height=100) as _:
-            #     Dear.add_text((
-            #         Speak("Hello first time user!!") + "\n\n" +
-            #         Speak("Modular Music Visualizer is Free Software,") + "\n" +
-            #         Speak("distributed under the GPLv3 License.") + "\n\n"
-            #     ))
-            #     Dear.add_button(label=Speak("Close"), callback=lambda d,s: self.__FirstTimeWarningOK(_))

@@ -43,7 +43,7 @@ class mmvEditorAddNodeUI:
     def Render(self):
         with self.Editor.EnterContainerStack(self.AddNodesGroup):
             Dear.add_separator()
-            Dear.add_text(Speak("Add Nodes"), color = (0, 255, 0))
+            Dear.add_text(Speak("Add Nodes"), color = (self.Editor.ThemeYaml.mmvSectionText))
             AN = self.Editor.Scene.AvailableNodes
 
             for category in sorted(AN):

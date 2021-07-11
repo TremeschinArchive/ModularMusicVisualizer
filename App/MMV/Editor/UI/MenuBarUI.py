@@ -64,7 +64,7 @@ class mmvEditorMenuBarUI:
             with Dear.menu(label=Speak("Preferences")):
                 Dear.add_slider_float(label=Speak("User Interface FX Volume"), default_value=40, min_value=0,max_value=100, callback=lambda s,d,a,b,c,f:print(d,s,a,b,c,f))
                 Dear.add_separator()
-                Dear.add_text("Stuff that Needs Restart", color=(0,255,0))
+                Dear.add_text("Stuff that Needs Restart", color=(self.Editor.ThemeYaml.mmvSectionText))
                 Dear.add_checkbox(label=Speak("Builtin Window Decorators"), callback=lambda d,s: self.ToggleBuiltinWindowDecorator(), default_value=self.Editor.Context.DotMap.BUILTIN_WINDOW_DECORATORS)
                 Dear.add_checkbox(label=Speak("Start Maximized"), callback=lambda d,s: self.ToggleStartMaximized(), default_value=self.Editor.Context.DotMap.START_MAXIMIZED)
                 Dear.add_combo(label=Speak("Interface Global Theme"), items=["Dark","Light"], width=100, default_value=self.Editor.Context.DotMap.GLOBAL_THEME, callback=lambda id,value:self.Editor.Context.ForceSet("GLOBAL_THEME", value))
@@ -100,7 +100,7 @@ class mmvEditorMenuBarUI:
         logging.info(f"[mmvEditorMenuBarUI.About] Show About window")
         with self.Editor.CenteredWindow(self.Editor.Context, width=200, height=200) as AboutWindow:
             Dear.add_image( self.Editor.AddDynamicTexture(path=self.Editor.DefaultResourcesLogoImage, size=190) )
-            Dear.add_text(f"{Speak('Modular Music Visualizer')}", color = (0,255,0))
+            Dear.add_text(f"{Speak('Modular Music Visualizer')}", color = (self.Editor.ThemeYaml.mmvSectionText))
             Dear.add_text(f"{Speak('Version')} {self.Editor.PackageInterface.Version}", color=(150,150,150))
             Dear.add_separator()
             Dear.add_button(label=Speak("Website"), callback=lambda s,d:webbrowser.open("http://mmvproject.gitlab.io/website"))
@@ -125,13 +125,16 @@ class mmvEditorMenuBarUI:
 
             with self.Editor.CenteredWindow(self.Editor.Context, width=500, height=200, min_size=[500,0]) as RestartWindow:
                 A=Dear.add_text(Speak("We need to restart for language settings to take effect, proceed?"))
-                B=Dear.add_button(label=Speak("Ok (Close)"), callback=self.Editor.Exit)
+                B=Dear.add_button(label=Speak("Ok (Restart)"), callback=self.Editor.Restart)
                 C=Dear.add_button(label=Speak("No (Continue)"), callback=lambda d,s,UserData: Dear.delete_item(RestartWindow))
                 for Item in [A,B,C]:
                     Dear.set_item_font(Item, self.Editor.LoadedFonts[UserData.Font])
 
 
-        with self.Editor.CenteredWindow(self.Editor.Context, width=300, height=200, min_size=[300,0], max_size=[10000,400]) as LanguageSelectWindow:
+        with self.Editor.CenteredWindow(
+        self.Editor.Context, width=300, height=200, min_size=[300,0],
+            max_size=[10000, self.Editor.CenteredWindowsSuggestedMaxVSize(self.Editor.Context)]
+        ) as LanguageSelectWindow:
             Dear.add_text(Speak("Select Language [Needs Restart]"))
             Dear.add_separator()
             for Key, Value in Polyglot.Languages.__dict__.items():
@@ -139,7 +142,7 @@ class mmvEditorMenuBarUI:
                     ThisLanguage = copy.deepcopy( Polyglot.Languages.__dict__[Key] )
 
                     # Add Flag button and text on the right
-                    Flag = self.Editor.AddDynamicTexture(self.Editor.PackageInterface.IconDir/"Flags"/f"{ThisLanguage.CountryFlag}.png", size=55)
+                    Flag = self.Editor.AddDynamicTexture(self.Editor.PackageInterface.IconDir/"Flags"/f"{ThisLanguage.CountryFlag}.png", size=45)
 
                     # Different Background to show that we are selected
                     if ThisLanguage.EnName == self.Editor.Context.DotMap.LANGUAGE.EnName:
@@ -153,7 +156,7 @@ class mmvEditorMenuBarUI:
                         callback=lambda d,s,UserData: ConfigureLanguage(UserData, LanguageSelectWindow))
                     Dear.add_same_line()
                     with Dear.group():
-                        NativeLangName = Dear.add_text(("● "*(ImageButtonExtra=={})) + ThisLanguage.NativeName, color=(0,255,0))
+                        NativeLangName = Dear.add_text(("● "*(ImageButtonExtra=={})) + ThisLanguage.NativeName, color=(self.Editor.ThemeYaml.mmvSectionText))
 
                         # Percentage of completion of the language
                         Total = 0
@@ -163,8 +166,11 @@ class mmvEditorMenuBarUI:
                                 Have += 1
                             Total += 1
                         Percentage = Have / Total
-                        Dear.add_text(f"[{Percentage*100:.2f} %]", color=(120,120,120))
-                    Dear.set_item_font(NativeLangName, self.Editor.LoadedFonts[ThisLanguage.Font])
+                        Dear.add_text(f"[{Percentage*100:06.2f} %] ", color=(120,120,120))
+                        Dear.add_same_line()
+                        PercentageTranslatedText = Dear.add_text(f"" + Speak("Translated", ForceLanguage=ThisLanguage), color=(120,120,120))
+                    for Item in [NativeLangName, PercentageTranslatedText]:
+                        Dear.set_item_font(Item, self.Editor.LoadedFonts[ThisLanguage.Font])
                     Dear.add_separator()
 
     # # Ui to manage externals
@@ -175,7 +181,9 @@ class mmvEditorMenuBarUI:
         def DownloadSomething(TargetExternal, _ForceNotFound=False):
             self.Editor.ToggleLoadingIndicator()
 
-            with self.Editor.CenteredWindow(self.Editor.Context, width=600, height=200, no_close=True) as DownloadWindow:
+            with self.Editor.CenteredWindow(
+                self.Editor.Context, width=600, no_close=True,
+            ) as DownloadWindow:
                 Dear.add_text(Speak("Downloading") + f" [{TargetExternal}]")
                 Dear.add_same_line();
                 Dear.add_loading_indicator(**self.Editor.ThemeYaml.LoadingIndicator.Loading.toDict())
@@ -193,6 +201,7 @@ class mmvEditorMenuBarUI:
                 TargetExternal=TargetExternal,
                 Callback=KeepUpdatingProgressBar,
                 _ForceNotFound=_ForceNotFound,
+                Locale=Speak.SpokenLanguage.LanguageCode
             )
 
             Dear.delete_item(DownloadWindow)
@@ -200,15 +209,18 @@ class mmvEditorMenuBarUI:
             self.ExternalsManagerUI()
             self.Editor.ToggleLoadingIndicator()
 
-        with self.Editor.CenteredWindow(self.Editor.Context, width=200, height=200) as ExternalsWindow:
-            Dear.add_text(Speak("Externals Manager"), color = (0,255,0))
+        with self.Editor.CenteredWindow(
+            self.Editor.Context, width=200,
+            max_size=[10000, self.Editor.CenteredWindowsSuggestedMaxVSize(self.Editor.Context)]
+        ) as ExternalsWindow:
+            Dear.add_text(Speak("Externals Manager"), color = (self.Editor.ThemeYaml.mmvSectionText))
 
             Dear.add_text("FFmpeg: ")
             Dear.add_same_line()
             HaveFFmpeg = not self.Editor.PackageInterface.FFmpegBinary is None
             
             if HaveFFmpeg:
-                Dear.add_text(Speak("Yes"), color=(0,255,0))
+                Dear.add_text(Speak("Yes"), color=(self.Editor.ThemeYaml.mmvSectionText))
                 Action = Speak("Reinstall")
             else:
                 Dear.add_text("No, required for rendering videos", color=(255,0,0))
