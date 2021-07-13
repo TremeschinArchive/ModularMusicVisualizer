@@ -33,11 +33,11 @@ from enum import Enum, auto
 
 import moderngl
 import numpy as np
-from MMV.Sombrero.sombrero_constructor import *
-from MMV.Sombrero.sombrero_context import SombreroContext
-from MMV.Sombrero.sombrero_piano_roll import PianoRoll
-from MMV.Sombrero.sombrero_shader import *
-from MMV.Sombrero.sombrero_window import SombreroWindow
+from MMV.Sombrero.SombreroConstructor import *
+from MMV.Sombrero.SombreroContext import SombreroContext
+from MMV.Sombrero.SombreroPianoRoll import PianoRoll
+from MMV.Sombrero.SombreroShader import *
+from MMV.Sombrero.SombreroWindow import SombreroWindow
 from PIL import Image
 
 
@@ -53,20 +53,16 @@ def pretty_lines_counter(data):
         yield f"[{number:05}] | {line}"
 
 
-class SombreroMGL:
-    def __init__(self, mmv_interface, master_shader = False, flip = False, context = None):
-
+class SombreroMain:
+    def __init__(self, PackageInterface, MasterShader=False, flip=False, ChildSombreroContext=None):
         # # Constructor
-        self.mmv_interface = mmv_interface
-        self.shaders_dir = self.mmv_interface.shaders_dir
-        self.sombrero_dir = self.mmv_interface.sombrero_dir
-        self.config = self.mmv_interface.config
+        self.PackageInterface = PackageInterface
 
         # Do flip coordinates vertically? OpenGL context ("shared" with main class)
         self.flip = flip
 
         # # Standard attributes
-        self.master_shader = master_shader
+        self.MasterShader = MasterShader
 
         # Contents dictionary that holds instruction, other classes and all
         # Pipeline textures have name if mappend one 
@@ -78,9 +74,9 @@ class SombreroMGL:
         self.pipeline = {}
 
         # Modules
-        if self.master_shader: self.context = SombreroContext(self)
-        else: self.context = context
-        self.window = SombreroWindow(sombrero_mgl = self)
+        if self.MasterShader: self.SombreroContext = SombreroContext(self)
+        else: self.SombreroContext = ChildSombreroContext
+        self.window = SombreroWindow(SombreroMain = self)
         self.macros = SombreroShaderMacros(self)
         self.shader = SombreroShader()
         self.constructor = None
@@ -93,8 +89,8 @@ class SombreroMGL:
         return self.piano_roll
 
     # Create and configure one child of this class with same target stuff
-    def new_child(self,):
-        child = SombreroMGL(mmv_interface = self.mmv_interface, master_shader = False, context = self.context)
+    def new_child(self):
+        child = SombreroMain(PackageInterface = self.PackageInterface, MasterShader = False, context = self.SombreroContext)
         return child
 
     # # Shorthands
@@ -110,12 +106,12 @@ class SombreroMGL:
 
     # # Mappings
 
-    # Map some other SombreroMGL class as a shader of this one
-    def map_shader(self, name, sombrero_mgl):
+    # Map some other SombreroMain class as a shader of this one
+    def map_shader(self, name, SombreroMain):
         uniforms = [Uniform("sampler2D", name, None)]
         self.pending_uniforms += uniforms
         self.assign_content(dict(
-            loader = "child_sombrero_mgl", name = name, texture = sombrero_mgl.texture, SombreroMGL = sombrero_mgl,
+            loader = "child_SombreroMain", name = name, texture = SombreroMain.texture, SombreroMain = SombreroMain,
             dynamic = True
         ))
         return uniforms
@@ -125,7 +121,7 @@ class SombreroMGL:
 
         # Open image, mipmap, texture
         img = Image.open(path).convert("RGBA")
-        texture = self.context.gl_context.texture(img.size, 4, img.tobytes())
+        texture = self.SombreroContext.gl_context.texture(img.size, 4, img.tobytes())
         self.__mipmap_anisotropy_repeat_texture(texture, locals())
 
         # Uniforms, assign content
@@ -135,11 +131,11 @@ class SombreroMGL:
             loader = "image", name = name, texture = texture, resolution = img.size
         )); return uniforms
 
-    # Map some other SombreroMGL class as a shader of this one
+    # Map some other SombreroMain class as a shader of this one
     def map_pipeline_texture(self, name, width, height, depth):
         size = (width, height)
         uniforms = [Uniform("sampler2D", name, None), Uniform("vec2", f"{name}_resolution", size)]
-        texture = self.context.gl_context.texture(size, depth, dtype = "f4")
+        texture = self.SombreroContext.gl_context.texture(size, depth, dtype = "f4")
         texture.write(np.zeros((width, height, depth), dtype = np.float32))  # Start empty (GL context no guarantee to be clean)
         self.writable_textures[name] = texture
         self.pending_uniforms += uniforms
@@ -152,8 +148,8 @@ class SombreroMGL:
 
     # Create one texture attached to some FBO. Depth = 4 -> RGBA
     def create_texture_fbo(self, width, height, depth = 4) -> list:
-        texture = self.context.gl_context.texture((int(width), int(height)), depth)
-        fbo = self.context.gl_context.framebuffer(color_attachments = [texture])
+        texture = self.SombreroContext.gl_context.texture((int(width), int(height)), depth)
+        fbo = self.SombreroContext.gl_context.framebuffer(color_attachments = [texture])
         return [texture, fbo]
 
     # Get the uniform if exists, enforce tuple if isn't tuple or int and assign the value
@@ -165,7 +161,7 @@ class SombreroMGL:
     # Write to some PipelineTexture that was mapped, recursively to every child
     def write_pipeline_texture(self, name, data):
         self.writable_textures.get(name, DummyElement()).write(np.array(data, dtype = np.float32).tobytes())
-        for child in self.children_sombrero_mgl(): child.write_pipeline_texture(name, data)
+        for child in self.children_SombreroMain(): child.write_pipeline_texture(name, data)
     
     # Write uniform values on the list of pending uniforms
     def solve_pending_uniforms(self):
@@ -181,12 +177,12 @@ class SombreroMGL:
 
     def _create_assing_texture_fbo_render_buffer(self):
         self.texture, self.fbo = self.create_texture_fbo(
-            width  = self.context.width  * self.context.ssaa,
-            height = self.context.height * self.context.ssaa)
+            width  = self.SombreroContext.width  * self.SombreroContext.ssaa,
+            height = self.SombreroContext.height * self.SombreroContext.ssaa)
 
     # Load shader from this class's SombreroConstructor
     def finish(self, _give_up_if_any_errors = False):
-        dpfx = "[SombreroMGL.finish]"
+        dpfx = "[SombreroMain.finish]"
         self.__ever_finished = True
 
         # Default constructor is Fullscreen if not set
@@ -197,17 +193,17 @@ class SombreroMGL:
         frag = self.shader.build()
 
         # The FBO and texture so we can use on parent shaders, master shader doesn't require since it haves window fbo
-        if not self.master_shader:
+        if not self.MasterShader:
             self._create_assing_texture_fbo_render_buffer()
             
         try:
-            self.program = self.context.gl_context.program(
+            self.program = self.SombreroContext.gl_context.program(
                 vertex_shader = self.constructor.vertex_shader,
                 geometry_shader = self.constructor.geometry_shader,
                 fragment_shader = frag,
             )
             self.solve_pending_uniforms()
-            if self.master_shader: self.context.framerate.clear()
+            if self.MasterShader: self.SombreroContext.framerate.clear()
 
         except moderngl.error.Error as e:
             self.reset()
@@ -216,14 +212,14 @@ class SombreroMGL:
             if _give_up_if_any_errors: sys.exit()
             self.constructor = FullScreenConstructor(self)
             self.shader = SombreroShader()
-            self.macros.load(self.mmv_interface.sombrero_dir/"glsl"/"missing_texture.glsl")
+            self.macros.load(self.PackageInterface.sombrero_dir/"glsl"/"missing_texture.glsl")
             self.finish(_give_up_if_any_errors = True)
 
     # Get render instructions, do this every render because stuff like piano roll needs
     # their draw instructions to be updated
     def get_vao(self):
         if instructions := self.constructor.vao():
-            self.vao = self.context.gl_context.vertex_array(self.program, instructions, skip_errors = True)
+            self.vao = self.SombreroContext.gl_context.vertex_array(self.program, instructions, skip_errors = True)
 
     # # Render
 
@@ -235,41 +231,41 @@ class SombreroMGL:
         # # Update pipeline
 
         # Get current window "state"
-        self.pipeline["mResolution"] = (self.context.width * self.context.ssaa, self.context.height * self.context.ssaa)
+        self.pipeline["mResolution"] = (self.SombreroContext.width * self.SombreroContext.ssaa, self.SombreroContext.height * self.SombreroContext.ssaa)
         self.pipeline["mFlip"] = -1 if self.flip else 1
 
         # Render related
-        self.pipeline["quality"] = self.context.quality
+        self.pipeline["quality"] = self.SombreroContext.quality
 
         # Time related
-        self.pipeline["mFrame"] = self.pipeline.get("mFrame", 0) + self.context.time_speed
-        self.pipeline["mTime"] = self.pipeline["mFrame"] / self.context.fps
+        self.pipeline["mFrame"] = self.pipeline.get("mFrame", 0) + self.SombreroContext.time_speed
+        self.pipeline["mTime"] = self.pipeline["mFrame"] / self.SombreroContext.fps
 
         # GUI related
-        self.pipeline["mIsGuiVisible"] = self.context.show_gui
-        self.pipeline["mIsDebugMode"] = self.context.debug_mode
+        self.pipeline["mIsGuiVisible"] = self.SombreroContext.show_gui
+        self.pipeline["mIsDebugMode"] = self.SombreroContext.debug_mode
 
         # 2D
-        self.pipeline["m2DIsDraggingMode"] = 1 in self.context.mouse_buttons_pressed
-        self.pipeline["m2DIsDragging"] = self.context.camera2d.is_dragging
-        self.pipeline["m2DRotation"] = self.context.camera2d.rotation.value
-        self.pipeline["m2DZoom"] = self.context.camera2d.zoom.value
-        self.pipeline["m2DDrag"] = self.context.camera2d.drag.value
+        self.pipeline["m2DIsDraggingMode"] = 1 in self.SombreroContext.mouse_buttons_pressed
+        self.pipeline["m2DIsDragging"] = self.SombreroContext.camera2d.is_dragging
+        self.pipeline["m2DRotation"] = self.SombreroContext.camera2d.rotation.value
+        self.pipeline["m2DZoom"] = self.SombreroContext.camera2d.zoom.value
+        self.pipeline["m2DDrag"] = self.SombreroContext.camera2d.drag.value
 
         # 3D
-        self.pipeline["m3DCameraBase"] = self.context.camera3d.standard_base.reshape(-1)
-        self.pipeline["m3DCameraPointing"] = self.context.camera3d.pointing
-        self.pipeline["m3DCameraPos"] = self.context.camera3d.position.value
-        self.pipeline["m3DRoll"] = self.context.camera3d.roll.value
-        self.pipeline["m3DFOV"] = self.context.camera3d.fov.value
+        self.pipeline["m3DCameraBase"] = self.SombreroContext.camera3d.standard_base.reshape(-1)
+        self.pipeline["m3DCameraPointing"] = self.SombreroContext.camera3d.pointing
+        self.pipeline["m3DCameraPos"] = self.SombreroContext.camera3d.position.value
+        self.pipeline["m3DRoll"] = self.SombreroContext.camera3d.roll.value
+        self.pipeline["m3DFOV"] = self.SombreroContext.camera3d.fov.value
         
         # Keys
-        self.pipeline["mMouse1"] = 1 in self.context.mouse_buttons_pressed
-        self.pipeline["mMouse2"] = 2 in self.context.mouse_buttons_pressed
-        self.pipeline["mMouse3"] = 3 in self.context.mouse_buttons_pressed
-        self.pipeline["mKeyShift"] = self.context.shift_pressed
-        self.pipeline["mKeyCtrl"] = self.context.ctrl_pressed
-        self.pipeline["mKeyAlt"] = self.context.alt_pressed
+        self.pipeline["mMouse1"] = 1 in self.SombreroContext.mouse_buttons_pressed
+        self.pipeline["mMouse2"] = 2 in self.SombreroContext.mouse_buttons_pressed
+        self.pipeline["mMouse3"] = 3 in self.SombreroContext.mouse_buttons_pressed
+        self.pipeline["mKeyShift"] = self.SombreroContext.shift_pressed
+        self.pipeline["mKeyCtrl"] = self.SombreroContext.ctrl_pressed
+        self.pipeline["mKeyAlt"] = self.SombreroContext.alt_pressed
 
         # Merge the two dictionaries
         for key, value in custom_pipeline.values():
@@ -290,13 +286,13 @@ class SombreroMGL:
         self.pipe_pipeline(self.pipeline)
 
         # Pipe the pipeline to child shaders and render them
-        for child in self.children_sombrero_mgl():
+        for child in self.children_SombreroMain():
             child.pipe_pipeline(self.pipeline)
             child.pipeline = self.pipeline
             child._render()
 
         # Which FBO to use
-        if self.master_shader: self.window.window.use(); self.window.window.clear()
+        if self.MasterShader: self.window.window.use(); self.window.window.clear()
         else: self.fbo.use(); self.fbo.clear()
 
         # Use textures at specific indexes
@@ -315,19 +311,19 @@ class SombreroMGL:
         # Render the content
         # self.vao.render(mode = moderngl.TRIANGLE_STRIP)
 
-        self.context.gl_context.enable_only(moderngl.NOTHING)
+        self.SombreroContext.gl_context.enable_only(moderngl.NOTHING)
         
         if isinstance(self.constructor, PianoRollConstructor):
-            self.context.gl_context.enable_only(moderngl.BLEND)
+            self.SombreroContext.gl_context.enable_only(moderngl.BLEND)
 
         if nvert := self.constructor.num_vertices:
             self.vao.render(mode = moderngl.POINTS, vertices = nvert)
         
         # Draw UI then reset composite mode to NOTHING because imgui changes that
-        if self.master_shader and (not self.context.window_headless) and (self.context.show_gui):
+        if self.MasterShader and (not self.SombreroContext.window_headless) and (self.SombreroContext.show_gui):
             self.window.render_ui()
             
-        self.context.gl_context.enable_only(moderngl.NOTHING)
+        self.SombreroContext.gl_context.enable_only(moderngl.NOTHING)
 
     # Read contents from window FBO, chose one
     def read(self): return self.window.window.fbo.read()
@@ -336,18 +332,18 @@ class SombreroMGL:
     @property # FBO size for screenshots
     def fbo_size(self): return self.window.window.fbo.size
     
-    # Generator for iterating on child SombreroMGL instances
-    def children_sombrero_mgl(self):
+    # Generator for iterating on child SombreroMain instances
+    def children_SombreroMain(self):
         for index, item in self.contents.items():
-            if item["loader"] == "child_sombrero_mgl":
-                yield item["SombreroMGL"]
+            if item["loader"] == "child_SombreroMain":
+                yield item["SombreroMain"]
     
     # Return list of used variables in program
     def get_used_variables(self) -> list:
         info = [k for k in self.program._members.keys()]
 
         # Call for every shader as texture loaders
-        for child in self.children_sombrero_mgl():
+        for child in self.children_SombreroMain():
             for key in child.get_used_variables(): info.append(key)
 
         # Remove duplicates
@@ -356,12 +352,12 @@ class SombreroMGL:
     def time_zero(self): self.pipeline["mFrame"] = 0
 
     def reset(self):
-        if self.context.piano_roll is not None:
-            self.context.piano_roll.synth.reset()
-            del self.context.piano_roll; self.context.piano_roll = None
-        self.context.camera2d.reset()
-        self.context.camera3d.reset()
-        for child in self.children_sombrero_mgl(): child.reset(); del child
+        if self.SombreroContext.piano_roll is not None:
+            self.SombreroContext.piano_roll.synth.reset()
+            del self.SombreroContext.piano_roll; self.SombreroContext.piano_roll = None
+        self.SombreroContext.camera2d.reset()
+        self.SombreroContext.camera3d.reset()
+        for child in self.children_SombreroMain(): child.reset(); del child
         with suppress(AttributeError): self.program.release()
         with suppress(AttributeError): self.texture.release()
         with suppress(AttributeError): self.fbo.release()

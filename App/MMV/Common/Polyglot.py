@@ -71,7 +71,7 @@ class PolyglotBrain:
         else:
             GetL = ForceLanguage
         Have = self.Data.get(Phrase, {}).get(GetL.LanguageCode, None)
-        if (not Have) and (GetL != Languages.English): 
+        if (not Have) and (GetL.EnName != Languages.English.EnName): 
             logging.warning(f"[PolyglotBrain] I don't know [{Phrase}] in {GetL.EnName} ({GetL.NativeName})")
         if Have: return Have
         return Phrase

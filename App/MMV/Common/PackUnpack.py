@@ -41,7 +41,7 @@ class PackUnpack:
     @staticmethod
     def Pack(data, path) -> None:
         p = Path(path).resolve()
-        logging.info(f"[PackUnpack.Unpack] Packing to file [{p}]")
+        logging.info(f"[PackUnpack.Unpack] Packing to file [{data}] => [{p}]")
         data = pickle.dumps(data)
         old, data = data, zlib.compress(data, level=9)
         oldb, newb = sys.getsizeof(old), sys.getsizeof(data)

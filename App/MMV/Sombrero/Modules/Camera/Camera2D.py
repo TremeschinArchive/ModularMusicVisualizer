@@ -33,8 +33,8 @@ from math import cos, sin
 import imgui
 import numpy as np
 import pygame
-from MMV.Sombrero.modules.base_module import BaseModule
-from MMV.Sombrero.utils.interpolation import SmoothVariable
+from MMV.Sombrero.Modules.BaseModule import BaseModule
+from MMV.Sombrero.Utils.Interpolation import SmoothVariable
 
 
 class Camera2D(BaseModule):
@@ -43,11 +43,11 @@ class Camera2D(BaseModule):
     GlobalCanonicalBase = np.array([GlobalX, GlobalY])
     AxisX, AxisY = 0, 1
 
-    def __init__(self, sombrero_window):
-        self.init(sombrero_window)
-        self.sombrero_window = sombrero_window
-        self.cfg = self.context.config["window"]["2D"]
-        self.fix_due_fps = self.context._fix_ratio_due_fps
+    def __init__(self, SombreroWindow):
+        self.init(SombreroWindow)
+        self.SombreroWindow = SombreroWindow
+        self.cfg = self.SombreroContext.LiveConfig["window"]["2D"]
+        self.fix_due_fps = self.SombreroContext._fix_ratio_due_fps
         self.reset()
         
     # # 2D Specific Info
@@ -70,11 +70,11 @@ class Camera2D(BaseModule):
         inverse = -1 if inverse else 1
 
         # Add to the mmv_drag pipeline item the dx and dy multiplied by the square of the current zoom
-        square_current_zoom = (self.sombrero_mgl.pipeline["m2DZoom"] ** 2)
+        square_current_zoom = (self.SombreroMain.pipeline["m2DZoom"] ** 2)
 
         # dx and dy on zoom and SSAA
-        dx = (dx * square_current_zoom) * self.context.ssaa
-        dy = (dy * square_current_zoom) * self.context.ssaa
+        dx = (dx * square_current_zoom) * self.SombreroContext.ssaa
+        dy = (dy * square_current_zoom) * self.SombreroContext.ssaa
 
         # Cosine and sine, calculate once
         c = cos(self.rotation.value)
@@ -87,7 +87,7 @@ class Camera2D(BaseModule):
         ]) * howmuch * inverse
 
         # Normalize dx step due aspect ratio
-        drag_rotated[0] *= self.context.width / self.context.height
+        drag_rotated[0] *= self.SombreroContext.width / self.SombreroContext.height
 
         # Add to target drag the dx, dy relative to current zoom and SSAA level
         self.drag += drag_rotated
@@ -105,7 +105,7 @@ class Camera2D(BaseModule):
         self.is_dragging = not np.allclose(self.drag.target, self.drag.value, rtol = 0.003)
 
         # Drag momentum
-        if not 1 in self.context.mouse_buttons_pressed: self.drag.target += self.drag_momentum
+        if not 1 in self.SombreroContext.mouse_buttons_pressed: self.drag.target += self.drag_momentum
 
     def key_event(self, key, action, modifiers):
         dpfx = "[Camera2D.key_event]"
@@ -124,8 +124,8 @@ class Camera2D(BaseModule):
             self.drag.set_target(np.array([0.0, 0.0]))
 
     def mouse_drag_event(self, x, y, dx, dy):
-        if self.context.shift_pressed: self.zoom += (dy / 1000) * self.zoom.value
-        elif self.context.alt_pressed: self.rotation += (dy / 80) / (2*math.pi)
+        if self.SombreroContext.shift_pressed: self.zoom += (dy / 1000) * self.zoom.value
+        elif self.SombreroContext.alt_pressed: self.rotation += (dy / 80) / (2*math.pi)
         else: self.apply_rotated_drag(dx = dx, dy = dy, inverse = True)
     
     def gui(self):
@@ -137,14 +137,14 @@ class Camera2D(BaseModule):
         imgui.text(f"UV Rotation:  [{math.degrees(self.rotation.value):.3f}°] => [{math.degrees(self.rotation.target):.3f}°]")
 
     def mouse_scroll_event(self, x_offset, y_offset):
-        if self.context.shift_pressed:
+        if self.SombreroContext.shift_pressed:
             self.intensity += y_offset / 10
 
-        elif self.context.ctrl_pressed and (not self.is_dragging_mode):
-            change_to = self.context.ssaa + ((y_offset / 20) * self.context.ssaa)
+        elif self.SombreroContext.ctrl_pressed and (not self.is_dragging_mode):
+            change_to = self.SombreroContext.ssaa + ((y_offset / 20) * self.SombreroContext.ssaa)
             self.change_ssaa(change_to)
 
-        elif self.context.alt_pressed:
+        elif self.SombreroContext.alt_pressed:
             self.rotation -= y_offset * (math.pi) / (180 / 5)
 
         else:

@@ -53,6 +53,7 @@ from MMV.Editor.UI.AddNodeUI import mmvEditorAddNodeUI
 from MMV.Editor.UI.MenuBarUI import mmvEditorMenuBarUI
 from PIL import Image, JpegImagePlugin, PngImagePlugin
 from watchdog.observers import Observer
+from MMV.Sombrero import SombreroMain
 
 Speak = Polyglot.Speak
 
@@ -93,13 +94,19 @@ class mmvEditor:
         self.WatchdogNodeDir.start()
 
         # Interactive
-        self.MouseDown = False
-        self.ViewportX = 0
-        self.ViewportY = 0
+        # self.MouseDown = False
+        # self.ViewportX = 0
+        # self.ViewportY = 0
+
+        # Shaders
+        self.SombreroMain = SombreroMain(
+            MasterShader=True,
+            PackageInterface=self.PackageInterface
+        )
 
     # Attempt to load last Context configuration if it existed
     def LoadLastConfig(self, ForceDefaults=False):
-        self.USER_CONFIG_FILE = self.PackageInterface.RuntimeDir/"UserEditorConfig.pickle.zlib"
+        self.USER_CONFIG_FILE = self.PackageInterface.RuntimeDir/"UserConfigEditorContext.pickle.zlib"
         if self.USER_CONFIG_FILE.exists():
             self.Context = ExtendedDotMap(
                 OldSelf=PackUnpack.Unpack(self.USER_CONFIG_FILE),

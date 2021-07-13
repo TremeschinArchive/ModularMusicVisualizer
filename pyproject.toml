@@ -35,6 +35,7 @@ toml = "^0.10.2"
 requests = "^2.25.1"
 dearpygui = "^0.8.14"
 arrow = "^1.1.1"
+SoundCard = "^0.4.1"
 
 [tool.poetry.dev-dependencies]
 Nuitka = "^0.6.16"

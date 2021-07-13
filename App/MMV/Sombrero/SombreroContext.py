@@ -25,6 +25,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
+from dotmap import DotMap
+from MMV.Common.Utils import Utils
 
 # Are we realtime or rendering? We need to block some functionality
 # if we're rendering like not listening to joystick events
@@ -43,9 +45,31 @@ class RealTimeModes:
     def cycle_mode(mode): M=RealTimeModes.AllModes; return M[(M.index(mode)+1)%len(M)]
 
 class SombreroContext:
-    def __init__(self, sombrero_mgl):
-        self.sombrero_mgl = sombrero_mgl
-        self.config = self.sombrero_mgl.config
+    def __init__(self, SombreroMain):
+        self.SombreroMain = SombreroMain
+        self.LiveConfig = DotMap(_dynamic=False)
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+        Y = """\
+window:
+  action_message_timeout: 1.3
+  intensity_responsiveness: 0.2
+  time_responsiveness: 0.09
+
+  2D:
+    rotation_responsiveness: 0.2
+    zoom_responsiveness: 0.2
+    drag_responsiveness: 0.3
+    drag_momentum: 0.6
+
+  3D:
+    mouse_sensitivity: 1
+    rotation_responsiveness: 0.3
+    zoom_responsiveness: 0.2
+    walk_responsiveness: 0.3
+"""
+        self.LiveConfig = DotMap(Utils.LoadYamlString(Y), _dynamic=False)
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
         # Easy access outside
         self.ExecutionMode = ExecutionMode
@@ -110,7 +134,7 @@ class SombreroContext:
 
     # We are changing target fps, fix time
     def change_fps(self, new):
-        self.sombrero_mgl.pipeline["mFrame"] *= (new / self.fps)
+        self.SombreroMain.pipeline["mFrame"] *= (new / self.fps)
         self.fps = new
     
     # If new fps < 60, ratio should be higher

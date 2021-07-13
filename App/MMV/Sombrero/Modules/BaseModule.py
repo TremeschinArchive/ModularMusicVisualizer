@@ -27,10 +27,10 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 class BaseModule:
-    def init(self, sombrero_window):
-        self.sombrero_window = sombrero_window
-        self.context = self.sombrero_window.context
-        self.messages = self.sombrero_window.messages
-        self.sombrero_mgl = self.sombrero_window.sombrero_mgl
-        self.ACTION_MESSAGE_TIMEOUT = self.sombrero_window.ACTION_MESSAGE_TIMEOUT
+    def init(self, SombreroWindow):
+        self.SombreroWindow = SombreroWindow
+        self.SombreroContext = self.SombreroWindow.SombreroContext
+        self.messages = self.SombreroWindow.messages
+        self.SombreroMain = self.SombreroWindow.SombreroMain
+        self.ACTION_MESSAGE_TIMEOUT = self.SombreroWindow.ACTION_MESSAGE_TIMEOUT
         

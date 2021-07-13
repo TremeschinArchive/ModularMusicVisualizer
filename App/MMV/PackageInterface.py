@@ -44,7 +44,7 @@ from MMV.Common.Utils import Utils
 from MMV.Editor import mmvEditor
 from MMV.Sombrero.SombreroFFmpeg import SombreroFFmpegWrapper
 
-# from MMV.Sombrero.SombreroMain import SombreroMGL
+# from MMV.Sombrero.SombreroMain import SombreroMain
 
 sys.dont_write_bytecode = True
 
@@ -134,7 +134,7 @@ f"""Show extension\n{"="*self.terminal_width}
 
     def GetSombrero(self, **kwargs):
         self.___printshadersmode()
-        return SombreroMGL
+        return SombreroMain
 
     # Return one (usually required) setting up encoder unless using preview window
     def GetFFmpegWrapper(self):
@@ -150,7 +150,7 @@ f"""Show extension\n{"="*self.terminal_width}
         self.Version = f"{self.VersionNumber}: Node Editor"
 
         # # Where this file is located, please refer using this on the whole package
-        # # Refer to it as self.mmv_interface.DIR at any depth in the code
+        # # Refer to it as self.PackageInterface.DIR at any depth in the code
         # # This deals with the case we used pyinstaller and it'll get the executable path instead
         # print("Compiled", globals().get("__compiled__", None))
         # if getattr(sys, 'frozen', True) or (globals().get("__compiled__", None) is not None):    

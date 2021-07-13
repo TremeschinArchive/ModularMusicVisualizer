@@ -28,13 +28,13 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 import imgui
 import pygame
-from MMV.Sombrero.modules.base_module import BaseModule
-from MMV.Sombrero.sombrero_context import RealTimeModes
+from MMV.Sombrero.Modules.BaseModule import BaseModule
+from MMV.Sombrero.SombreroContext import RealTimeModes
 
 
 class Joysticks(BaseModule):
-    def __init__(self, sombrero_window):
-        self.init(sombrero_window)
+    def __init__(self, SombreroWindow):
+        self.init(SombreroWindow)
         pygame.init()
         pygame.joystick.init()
 
@@ -65,34 +65,34 @@ class Joysticks(BaseModule):
 
             # Select button toggle context modes
             if (event.type == pygame.JOYBUTTONDOWN) and (event.button == 6):
-                self.context.live_mode = RealTimeModes.cycle_mode(self.context.live_mode)
-                self.context.window_show_menu = False
+                self.SombreroContext.live_mode = RealTimeModes.cycle_mode(self.SombreroContext.live_mode)
+                self.SombreroContext.window_show_menu = False
 
             # Right axis press, cycle camera 3d mode
             if (event.type == pygame.JOYBUTTONDOWN) and (event.button == 10):
                 self.messages.add(f"{dpfx} ", self.ACTION_MESSAGE_TIMEOUT)
-                self.context.camera3d.cycle_mode()
+                self.SombreroContext.camera3d.cycle_mode()
 
         if self.ready:
-            c2d = self.context.camera2d
-            c3d = self.context.camera3d
+            c2d = self.SombreroContext.camera2d
+            c3d = self.SombreroContext.camera3d
 
             # Joystick -> Camera2D
-            if self.context.live_mode == RealTimeModes.Mode2D:
+            if self.SombreroContext.live_mode == RealTimeModes.Mode2D:
                 c2d.apply_rotated_drag(0, 3*self.axis[1], inverse = True)
                 c2d.apply_rotated_drag(3*self.axis[0], 0, inverse = True)
                 c2d.zoom += (self.axis[4] / 100) * c2d.zoom.value
                 c2d.rotation += (self.axis[3] / 100)
 
             # Joystick -> Camera3D
-            if self.context.live_mode == RealTimeModes.Mode3D:
+            if self.SombreroContext.live_mode == RealTimeModes.Mode3D:
                 c3d.want_to_walk_unit_vector[0] = -self.axis[1]
                 c3d.want_to_walk_unit_vector[2] =  self.axis[0]
                 c3d.want_to_walk_unit_vector[1] =  ((self.axis[5] + 1) / 2) - ((self.axis[2] + 1) / 2)
                 c3d.mouse_position_event(0, 0, c3d.sensitivity.value * 10 * self.axis[3], 0)
                 c3d.mouse_position_event(0, 0, 0, c3d.sensitivity.value * 10 * self.axis[4])
-                if 4 in self.buttons: c3d.want_to_roll = self.context._fix_ratio_due_fps(-1 / 200)
-                if 5 in self.buttons: c3d.want_to_roll = self.context._fix_ratio_due_fps( 1 / 200)
+                if 4 in self.buttons: c3d.want_to_roll = self.SombreroContext._fix_ratio_due_fps(-1 / 200)
+                if 5 in self.buttons: c3d.want_to_roll = self.SombreroContext._fix_ratio_due_fps( 1 / 200)
 
     def gui(self):
         imgui.separator()

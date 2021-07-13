@@ -8,7 +8,7 @@ Copyright (c) 2020 - 2021,
 
 ===============================================================================
 
-Purpose: Window utilities, functions for SombreroMGL
+Purpose: Window utilities, functions for SombreroMain
 Heavy calculations on 2D coordinates, interactive contents and also 3D.
 
 ===============================================================================
@@ -43,12 +43,12 @@ import moderngl_window
 import numpy as np
 import quaternion
 from dotmap import DotMap
-from MMV.Sombrero.modules.camera.camera_2d import Camera2D
-from MMV.Sombrero.modules.camera.camera_3d import Camera3D
-from MMV.Sombrero.modules.controller.joystick import Joysticks
-from MMV.Sombrero.sombrero_context import RealTimeModes
-from MMV.Sombrero.utils.glfw_keyboard_keys import KeyboardKey
-from MMV.Sombrero.utils.sombrero_window_utils import (FrameTimesCounter,
+from MMV.Sombrero.Modules.Camera.Camera2D import Camera2D
+from MMV.Sombrero.Modules.Camera.Camera3D import Camera3D
+from MMV.Sombrero.Modules.Controller.Joystick import Joysticks
+from MMV.Sombrero.SombreroContext import RealTimeModes
+from MMV.Sombrero.Utils.GLFWKeyboardKeys import KeyboardKey
+from MMV.Sombrero.Utils.SombreroWindowUtils import (FrameTimesCounter,
                                                       OnScreenTextMessages)
 from moderngl_window import resources
 from moderngl_window.conf import settings
@@ -60,18 +60,18 @@ cos = math.cos
 
 class SombreroWindow:
 
-    def __init__(self, sombrero_mgl):
-        self.sombrero_mgl = sombrero_mgl
-        self.mmv_interface = self.sombrero_mgl.mmv_interface
-        self.context = self.sombrero_mgl.context
-        self.ACTION_MESSAGE_TIMEOUT = self.context.config["window"]["action_message_timeout"]
+    def __init__(self, SombreroMain):
+        self.SombreroMain = SombreroMain
+        self.PackageInterface = self.SombreroMain.PackageInterface
+        self.SombreroContext = self.SombreroMain.SombreroContext
+        self.ACTION_MESSAGE_TIMEOUT = self.SombreroContext.LiveConfig["window"]["action_message_timeout"]
         
         # Modules
         self.messages = OnScreenTextMessages()
-        self.context.camera3d = Camera3D(self)
-        self.context.camera2d = Camera2D(self)
-        self.context.joysticks = Joysticks(self)
-        self.context.framerate = FrameTimesCounter(fps = self.context.fps)
+        self.SombreroContext.camera3d = Camera3D(self)
+        self.SombreroContext.camera2d = Camera2D(self)
+        self.SombreroContext.joysticks = Joysticks(self)
+        self.SombreroContext.framerate = FrameTimesCounter(fps = self.SombreroContext.fps)
         self.window_should_close = False
 
         # TODO move to context
@@ -81,31 +81,31 @@ class SombreroWindow:
         dpfx = "[SombreroWindow.create]"
 
         # On Wayland one must use XWayland because ModernGL haven't implemented EGL yet
-        if self.mmv_interface.os == "linux": os.environ["XDG_SESSION_TYPE"] = "x11"
+        if self.PackageInterface.os == "linux": os.environ["XDG_SESSION_TYPE"] = "x11"
 
         # Headless we disable vsync because we're rendering only..?
         # And also force aspect ratio just in case (strict option)
-        if self.context.window_headless: settings.WINDOW["aspect_ratio"] = self.context.width / self.context.height
+        if self.SombreroContext.window_headless: settings.WINDOW["aspect_ratio"] = self.SombreroContext.width / self.SombreroContext.height
         else: settings.WINDOW["aspect_ratio"] = None
 
         # Assign the function arguments
-        settings.WINDOW["class"] = f"moderngl_window.context.{self.context.window_class}.Window"
-        settings.WINDOW["vsync"] = self.context.window_vsync
+        settings.WINDOW["class"] = f"moderngl_window.context.{self.SombreroContext.window_class}.Window"
+        settings.WINDOW["vsync"] = self.SombreroContext.window_vsync
         settings.WINDOW["title"] = "Sombrero Real Time"
 
         # Don't set target width, height otherwise this will always crash
-        if (self.context.window_headless) or (not self.context.LINUX_GNOME_PIXEL_SAVER_EXTENSION_WORKAROUND):
-            settings.WINDOW["size"] = (self.context.width, self.context.height)
+        if (self.SombreroContext.window_headless) or (not self.SombreroContext.LINUX_GNOME_PIXEL_SAVER_EXTENSION_WORKAROUND):
+            settings.WINDOW["size"] = (self.SombreroContext.width, self.SombreroContext.height)
 
         # Create the window
         self.window = moderngl_window.create_window_from_settings()
-        self.context.gl_context = self.window.ctx
+        self.SombreroContext.gl_context = self.window.ctx
 
         # Make sure we render strictly into the resolution we asked
-        if self.context.window_strict: self.window.fbo.viewport = (0, 0, self.context.width, self.context.height)
+        if self.SombreroContext.window_strict: self.window.fbo.viewport = (0, 0, self.SombreroContext.width, self.SombreroContext.height)
 
         # Functions of the window if not headless
-        if not self.context.window_headless:
+        if not self.SombreroContext.window_headless:
             self.window.resize_func = self.window_resize
             self.window.key_event_func = self.key_event
             self.window.mouse_position_event_func = self.mouse_position_event
@@ -126,29 +126,29 @@ class SombreroWindow:
 
         # We need to do some sort of change of basis between drag numbers when we change resolutions because
         # drag itself is absolute, not related 
-        self.context.camera2d.drag.set_target(
-            self.context.camera2d.drag.value * (np.array([width, height]) / np.array([self.context.width, self.context.height]))
+        self.SombreroContext.camera2d.drag.set_target(
+            self.SombreroContext.camera2d.drag.value * (np.array([width, height]) / np.array([self.SombreroContext.width, self.SombreroContext.height]))
         )
-        self.context.camera2d.drag._target_is_current_value()
+        self.SombreroContext.camera2d.drag._target_is_current_value()
 
         # Set width and height
-        self.context.width = int(width)
-        self.context.height = int(height)
+        self.SombreroContext.width = int(width)
+        self.SombreroContext.height = int(height)
 
-        # for child in self.sombrero_mgl.children_sombrero_mgl():
+        # for child in self.SombreroMain.children_SombreroMain():
         #     child.texture.release()
         #     child.fbo.release()
         #     child._create_assing_texture_fbo_render_buffer()
 
-        # for child in self.sombrero_mgl.children_sombrero_mgl():
+        # for child in self.SombreroMain.children_SombreroMain():
         #     child.window.window_resize(width, height)
-        self.context.mmv_main.reload_shaders()
+        self.SombreroContext.mmv_main.reload_shaders()
 
         # Master shader has window and imgui
-        if self.sombrero_mgl.master_shader:
-            if not self.context.window_headless: self.imgui.resize(self.context.width, self.context.height)
-            self.window.fbo.viewport = (0, 0, self.context.width, self.context.height)
-            self.sombrero_mgl._create_assing_texture_fbo_render_buffer()
+        if self.SombreroMain.MasterShader:
+            if not self.SombreroContext.window_headless: self.imgui.resize(self.SombreroContext.width, self.SombreroContext.height)
+            self.window.fbo.viewport = (0, 0, self.SombreroContext.width, self.SombreroContext.height)
+            self.SombreroMain._create_assing_texture_fbo_render_buffer()
 
     # Close the window
     def close(self, *args, **kwargs):
@@ -160,18 +160,18 @@ class SombreroWindow:
     # the video
     def update_window(self):
         self.window.swap_buffers()
-        cfg = self.sombrero_mgl.config["window"]
+        cfg = self.SombreroMain.config["window"]
 
-        if not self.context.mode == self.context.ExecutionMode.Render:
-            self.context.joysticks.next()
-        if self.context.live_mode == RealTimeModes.Mode2D: self.context.camera2d.next()
-        if self.context.live_mode == RealTimeModes.Mode3D: self.context.camera3d.next()
+        if not self.SombreroContext.mode == self.SombreroContext.ExecutionMode.Render:
+            self.SombreroContext.joysticks.next()
+        if self.SombreroContext.live_mode == RealTimeModes.Mode2D: self.SombreroContext.camera2d.next()
+        if self.SombreroContext.live_mode == RealTimeModes.Mode3D: self.SombreroContext.camera3d.next()
 
         # TODO: move to context
-        # self.context.intensity += (self.target_intensity - self.context.intensity) * cfg["intensity_responsiveness"]
+        # self.SombreroContext.intensity += (self.target_intensity - self.SombreroContext.intensity) * cfg["intensity_responsiveness"]
         # self.time_factor += \
-        #     ( (int(not self.playback_stopped) * int(not self.context.freezed_pipeline) * self.target_time_factor) \
-        #     - self.time_factor) * self.sombrero_mgl._fix_ratio_due_fps(cfg["time_responsiveness"]) 
+        #     ( (int(not self.playback_stopped) * int(not self.SombreroContext.freezed_pipeline) * self.target_time_factor) \
+        #     - self.time_factor) * self.SombreroMain._fix_ratio_due_fps(cfg["time_responsiveness"]) 
 
     def key_event(self, key, action, modifiers):
         dpfx = "[SombreroWindow.key_event]"
@@ -179,28 +179,28 @@ class SombreroWindow:
         logging.info(f"{dpfx} Key [{key}] Action [{action}] Modifier [{modifiers}]")
 
         # Shift and control
-        if key == 340: self.context.shift_pressed = bool(action)
-        if key == 341: self.context.ctrl_pressed = bool(action)
-        if key == 342: self.context.alt_pressed = bool(action)
+        if key == 340: self.SombreroContext.shift_pressed = bool(action)
+        if key == 341: self.SombreroContext.ctrl_pressed = bool(action)
+        if key == 342: self.SombreroContext.alt_pressed = bool(action)
         
         # "tab" key pressed, toggle gui
         if (key == 258) and (action == 1):
-            if self.context.shift_pressed:
-                self.context.show_gui = not self.context.show_gui
-                self.messages.add(f"(Shift + TAB) Toggle All GUI [{self.context.show_gui}]", self.ACTION_MESSAGE_TIMEOUT)
-                self.context.framerate.clear()
+            if self.SombreroContext.shift_pressed:
+                self.SombreroContext.show_gui = not self.SombreroContext.show_gui
+                self.messages.add(f"(Shift + TAB) Toggle All GUI [{self.SombreroContext.show_gui}]", self.ACTION_MESSAGE_TIMEOUT)
+                self.SombreroContext.framerate.clear()
             else:
-                self.context.window_show_menu = not self.context.window_show_menu
-                self.messages.add(f"(TAB) Toggle menu GUI [{self.context.window_show_menu}]", self.ACTION_MESSAGE_TIMEOUT)
-                if self.context.window_show_menu: self.window.mouse_exclusivity = False
+                self.SombreroContext.window_show_menu = not self.SombreroContext.window_show_menu
+                self.messages.add(f"(TAB) Toggle menu GUI [{self.SombreroContext.window_show_menu}]", self.ACTION_MESSAGE_TIMEOUT)
+                if self.SombreroContext.window_show_menu: self.window.mouse_exclusivity = False
                 else:
-                    if self.context.live_mode == RealTimeModes.Mode3D: self.window.mouse_exclusivity = True
+                    if self.SombreroContext.live_mode == RealTimeModes.Mode3D: self.window.mouse_exclusivity = True
 
         if self.imgui_io.want_capture_keyboard: return
 
-        if self.context.shift_pressed: pass
+        if self.SombreroContext.shift_pressed: pass
 
-        elif self.context.ctrl_pressed:
+        elif self.SombreroContext.ctrl_pressed:
             if (key == 49) and (action == 1):
                 self.playback_stopped = not self.playback_stopped
                 self.messages.add(f"{dpfx} (Ctrl 1) Toggle playback [{self.playback_stopped}]", self.ACTION_MESSAGE_TIMEOUT)
@@ -208,30 +208,30 @@ class SombreroWindow:
             if (key == KeyboardKey) and (action == 1):
                 self.messages.add(f"{dpfx} (2) Set 2D (default) mode", self.ACTION_MESSAGE_TIMEOUT)
                 self.window.mouse_exclusivity = False
-                self.context.live_mode = RealTimeModes.Mode2D
-                self.context.window_show_menu = False
+                self.SombreroContext.live_mode = RealTimeModes.Mode2D
+                self.SombreroContext.window_show_menu = False
 
             if (key == 51) and (action == 1):
                 self.messages.add(f"{dpfx} (3) Set 3D mode", self.ACTION_MESSAGE_TIMEOUT)
                 self.ThreeD_want_to_walk_unit_vector = np.array([0, 0, 0])
                 self.window.mouse_exclusivity = True
-                self.context.live_mode = RealTimeModes.Mode3D
-                self.context.window_show_menu = False
+                self.SombreroContext.live_mode = RealTimeModes.Mode3D
+                self.SombreroContext.window_show_menu = False
 
         # Mode
-        if self.context.live_mode == RealTimeModes.Mode2D:
-            self.context.camera2d.key_event(key = key, action = action, modifiers = modifiers)
-        if self.context.live_mode == RealTimeModes.Mode3D:
-            self.context.camera3d.key_event(key = key, action = action, modifiers = modifiers)
+        if self.SombreroContext.live_mode == RealTimeModes.Mode2D:
+            self.SombreroContext.camera2d.key_event(key = key, action = action, modifiers = modifiers)
+        if self.SombreroContext.live_mode == RealTimeModes.Mode3D:
+            self.SombreroContext.camera3d.key_event(key = key, action = action, modifiers = modifiers)
                 
         # # # # Generic
         
         # Escape
-        if (key == 256) and (action == 1) and (self.context.live_mode == RealTimeModes.Mode3D):
+        if (key == 256) and (action == 1) and (self.SombreroContext.live_mode == RealTimeModes.Mode3D):
             self.window_should_close = True
 
         if (key == 44) and (action == 1):
-            if self.context.shift_pressed:
+            if self.SombreroContext.shift_pressed:
                 self.target_time_factor -= 0.01
                 self.messages.add(f"{dpfx} (,) Playback speed [-0.1] [{self.target_time_factor:.3f}]", self.ACTION_MESSAGE_TIMEOUT)
             else:
@@ -239,7 +239,7 @@ class SombreroWindow:
                 self.messages.add(f"{dpfx} (.) Playback speed [-0.1] [{self.target_time_factor:.3f}]", self.ACTION_MESSAGE_TIMEOUT)
 
         if (key == 46) and (action == 1):
-            if self.context.shift_pressed:
+            if self.SombreroContext.shift_pressed:
                 self.target_time_factor += 0.01
                 self.messages.add(f"{dpfx} (,) Playback speed [+0.1] [{self.target_time_factor:.3f}]", self.ACTION_MESSAGE_TIMEOUT)
             else:
@@ -259,22 +259,22 @@ class SombreroWindow:
             self.messages.add(f"{dpfx} (h) Toggle Hide Mouse [{self.window.cursor}]", self.ACTION_MESSAGE_TIMEOUT)
       
         if (key == 79) and (action == 1):
-            self.context.freezed_pipeline = not self.context.freezed_pipeline
-            self.messages.add(f"{dpfx} (o) Freeze pipeline [{self.context.freezed_pipeline}]", self.ACTION_MESSAGE_TIMEOUT)
+            self.SombreroContext.freezed_pipeline = not self.SombreroContext.freezed_pipeline
+            self.messages.add(f"{dpfx} (o) Freeze pipeline [{self.SombreroContext.freezed_pipeline}]", self.ACTION_MESSAGE_TIMEOUT)
             self.time_factor = 0
-            for index in self.sombrero_mgl.contents.keys():
-                if self.sombrero_mgl.contents[index]["loader"] == "shader":
-                    self.sombrero_mgl.contents[index]["shader_as_texture"].freezed_pipeline = self.context.freezed_pipeline
+            for index in self.SombreroMain.contents.keys():
+                if self.SombreroMain.contents[index]["loader"] == "shader":
+                    self.SombreroMain.contents[index]["shader_as_texture"].freezed_pipeline = self.SombreroContext.freezed_pipeline
 
         if (key == 82) and (action == 1):
             self.messages.add(f"{dpfx} (r) Reloading shaders..", self.ACTION_MESSAGE_TIMEOUT)
             # TOOD remove want to reload
-            self.context.mmv_main.reload_shaders()
-            self.sombrero_mgl._want_to_reload = True
+            self.SombreroContext.mmv_main.reload_shaders()
+            self.SombreroMain._want_to_reload = True
   
         if (key == 84) and (action == 1):
-            self.sombrero_mgl.pipeline["mFrame"] = 0
-            self.sombrero_mgl.pipeline["mTime"] = 0
+            self.SombreroMain.pipeline["mFrame"] = 0
+            self.SombreroMain.pipeline["mTime"] = 0
             self.messages.add(f"{dpfx} (t) Set time to [0s]", self.ACTION_MESSAGE_TIMEOUT)
 
         if (key == 89) and (action == 1):
@@ -286,16 +286,16 @@ class SombreroWindow:
 
             # Where to save
             now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            saveto = self.mmv_interface.screenshots_dir / f"{now}.jpg"
+            saveto = self.PackageInterface.screenshots_dir / f"{now}.jpg"
             self.messages.add(f"{dpfx} (p) Screenshot save [{saveto}]", self.ACTION_MESSAGE_TIMEOUT * 4)
 
-            old = self.context.show_gui  # Did we have GUI enabled previously?
-            self.context.show_gui = False  # Disable for screenshot
-            self.sombrero_mgl._render()  # Update screen so we actually remove the GUI
-            self.context.show_gui = old  # Revert
+            old = self.SombreroContext.show_gui  # Did we have GUI enabled previously?
+            self.SombreroContext.show_gui = False  # Disable for screenshot
+            self.SombreroMain._render()  # Update screen so we actually remove the GUI
+            self.SombreroContext.show_gui = old  # Revert
       
             # Get data ib the scree's size viewport
-            size = (self.context.width, self.context.height)
+            size = (self.SombreroContext.width, self.SombreroContext.height)
             data = self.window.fbo.read( viewport = (0, 0, size[0], size[1]) )
             logging.info(f"{dpfx} [Resolution: {size}] [WxHx3: {size[0] * size[1] * 3}] [len(data): {len(data)}]")
 
@@ -307,32 +307,32 @@ class SombreroWindow:
 
     # Mouse position changed
     def mouse_position_event(self, x, y, dx, dy):
-        self.sombrero_mgl.pipeline["mMouse"] = np.array([x, y])
+        self.SombreroMain.pipeline["mMouse"] = np.array([x, y])
         if self.imgui_io.want_capture_mouse: return
-        if self.context.live_mode == RealTimeModes.Mode2D: self.context.camera2d.mouse_position_event(x, y, dx, dy)
-        if self.context.live_mode == RealTimeModes.Mode3D: self.context.camera3d.mouse_position_event(x, y, dx, dy)
+        if self.SombreroContext.live_mode == RealTimeModes.Mode2D: self.SombreroContext.camera2d.mouse_position_event(x, y, dx, dy)
+        if self.SombreroContext.live_mode == RealTimeModes.Mode3D: self.SombreroContext.camera3d.mouse_position_event(x, y, dx, dy)
         
     # Mouse drag, add to pipeline drag
     def mouse_drag_event(self, x, y, dx, dy):
         self.imgui.mouse_drag_event(x, y, dx, dy)
         if self.imgui_io.want_capture_mouse: return
 
-        if 2 in self.context.mouse_buttons_pressed:
-            if self.context.shift_pressed: self.sombrero_mgl.pipeline["mFrame"] -= (dy * self.context.fps) / 200
-            elif self.context.alt_pressed: self.target_time_factor -= dy / 80
-            else: self.sombrero_mgl.pipeline["mFrame"] -= (dy * self.context.fps) / 800
+        if 2 in self.SombreroContext.mouse_buttons_pressed:
+            if self.SombreroContext.shift_pressed: self.SombreroMain.pipeline["mFrame"] -= (dy * self.SombreroContext.fps) / 200
+            elif self.SombreroContext.alt_pressed: self.target_time_factor -= dy / 80
+            else: self.SombreroMain.pipeline["mFrame"] -= (dy * self.SombreroContext.fps) / 800
         else:
-            if self.context.live_mode == RealTimeModes.Mode2D:
-                self.context.camera2d.mouse_drag_event(x = x, y = y, dx = dx, dy = dy)
+            if self.SombreroContext.live_mode == RealTimeModes.Mode2D:
+                self.SombreroContext.camera2d.mouse_drag_event(x = x, y = y, dx = dx, dy = dy)
                 self.window.mouse_exclusivity = True
-            if self.context.live_mode == RealTimeModes.Mode3D:
-                self.context.camera3d.mouse_drag_event(x = x, y = y, dx = dx, dy = dy)
+            if self.SombreroContext.live_mode == RealTimeModes.Mode3D:
+                self.SombreroContext.camera3d.mouse_drag_event(x = x, y = y, dx = dx, dy = dy)
 
     # Change SSAA
     def change_ssaa(self, value):
         dpfx = "[SombreroWindow.change_ssaa]"
-        self.context.ssaa = value
-        self.sombrero_mgl._read_shaders_from_paths_again()
+        self.SombreroContext.ssaa = value
+        self.SombreroMain._read_shaders_from_paths_again()
         logging.info(f"{dpfx} Changed SSAA to [{value}]")
 
     # Zoom in or out (usually)
@@ -340,24 +340,24 @@ class SombreroWindow:
         dpfx = "[SombreroWindow.mouse_scroll_event]"
         self.imgui.mouse_scroll_event(x_offset, y_offset)
         if self.imgui_io.want_capture_mouse: return
-        if self.context.live_mode == RealTimeModes.Mode2D: self.context.camera2d.mouse_scroll_event(x_offset = x_offset, y_offset = y_offset)
-        if self.context.live_mode == RealTimeModes.Mode3D: self.context.camera3d.mouse_scroll_event(x_offset = x_offset, y_offset = y_offset)
+        if self.SombreroContext.live_mode == RealTimeModes.Mode2D: self.SombreroContext.camera2d.mouse_scroll_event(x_offset = x_offset, y_offset = y_offset)
+        if self.SombreroContext.live_mode == RealTimeModes.Mode3D: self.SombreroContext.camera3d.mouse_scroll_event(x_offset = x_offset, y_offset = y_offset)
 
     def mouse_press_event(self, x, y, button):
         dpfx = "[SombreroWindow.mouse_press_event]"
         logging.info(f"{dpfx} Mouse press (x, y): [{x}, {y}] Button [{button}]")
         self.imgui.mouse_press_event(x, y, button)
         if self.imgui_io.want_capture_mouse: return
-        if not button in self.context.mouse_buttons_pressed: self.context.mouse_buttons_pressed.append(button)
+        if not button in self.SombreroContext.mouse_buttons_pressed: self.SombreroContext.mouse_buttons_pressed.append(button)
         if button == 2: self.window.mouse_exclusivity = True
 
     def mouse_release_event(self, x, y, button):
         dpfx = "[SombreroWindow.mouse_release_event]"
         logging.info(f"{dpfx} Mouse release (x, y): [{x}, {y}] Button [{button}]")
         self.imgui.mouse_release_event(x, y, button)
-        if button in self.context.mouse_buttons_pressed: self.context.mouse_buttons_pressed.remove(button)
+        if button in self.SombreroContext.mouse_buttons_pressed: self.SombreroContext.mouse_buttons_pressed.remove(button)
         if self.imgui_io.want_capture_mouse: return
-        if not self.context.live_mode == RealTimeModes.Mode3D: self.window.mouse_exclusivity = False
+        if not self.SombreroContext.live_mode == RealTimeModes.Mode3D: self.window.mouse_exclusivity = False
 
     def unicode_char_entered(self, char):
         self.imgui.unicode_char_entered(char)
@@ -374,8 +374,8 @@ class SombreroWindow:
         imgui.new_frame()
 
         # Main menu
-        if self.context.window_show_menu:
-            W, H = self.context.width / 2, self.context.height / 2
+        if self.SombreroContext.window_show_menu:
+            W, H = self.SombreroContext.width / 2, self.SombreroContext.height / 2
             imgui.set_window_position(W, H)
             imgui.begin(f"Modular Music Visualizer", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE)
             imgui.text("-" * 30)
@@ -383,12 +383,12 @@ class SombreroWindow:
 
             # Presets loading
             imgui.text_colored("Load Presets", *section_color)
-            for item in os.listdir(self.sombrero_mgl.mmv_interface.shaders_dir / "presets"):
+            for item in os.listdir(self.SombreroMain.PackageInterface.shaders_dir / "presets"):
                 if ".py" in item:
                     item = item.replace(".py", "")
                     changed = imgui.button(f"> {item}")
                     if changed:
-                        self.sombrero_mgl.mmv_interface.main._load_preset(item)
+                        self.SombreroMain.PackageInterface.main._load_preset(item)
 
             w, h = imgui.get_window_width(), imgui.get_window_height()
             imgui.set_window_position(W - (w/2), H - (h/2))
@@ -406,14 +406,14 @@ class SombreroWindow:
             # Render related
             imgui.separator()
             imgui.text_colored("Render", *section_color)
-            imgui.text(f"SSAA:       [{self.context.ssaa:.3f}]")
-            imgui.text(f"Resolution: [{int(self.context.width)}, {int(self.context.height)}] => [{int(self.context.width*self.context.ssaa)}, {int(self.context.height*self.context.ssaa)}]")
+            imgui.text(f"SSAA:       [{self.SombreroContext.ssaa:.3f}]")
+            imgui.text(f"Resolution: [{int(self.SombreroContext.width)}, {int(self.SombreroContext.height)}] => [{int(self.SombreroContext.width*self.SombreroContext.ssaa)}, {int(self.SombreroContext.height*self.SombreroContext.ssaa)}]")
 
             # Camera stats
-            if self.context.live_mode == RealTimeModes.Mode2D: self.context.camera2d.gui()
-            if self.context.live_mode == RealTimeModes.Mode3D: self.context.camera3d.gui()
-            if self.context.piano_roll is not None: self.context.piano_roll.gui()
-            if self.context.joysticks is not None: self.context.joysticks.gui()
+            if self.SombreroContext.live_mode == RealTimeModes.Mode2D: self.SombreroContext.camera2d.gui()
+            if self.SombreroContext.live_mode == RealTimeModes.Mode3D: self.SombreroContext.camera3d.gui()
+            if self.SombreroContext.piano_roll is not None: self.SombreroContext.piano_roll.gui()
+            if self.SombreroContext.joysticks is not None: self.SombreroContext.joysticks.gui()
 
             dock_y += imgui.get_window_height()
             imgui.end()
@@ -427,24 +427,24 @@ class SombreroWindow:
             imgui.begin("Config Window", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE)
             
             # # FPS
-            changed, value = imgui.input_int("Target FPS", self.context.fps)
-            if changed: self.context.change_fps(value)
+            changed, value = imgui.input_int("Target FPS", self.SombreroContext.fps)
+            if changed: self.SombreroContext.change_fps(value)
 
             # List of common fps
             for fps in [24, 30, 60, 90, 120, 144, 240]:
                 changed = imgui.button(f"{fps}Hz")
                 if fps != 240: imgui.same_line() # Same line until last value
-                if changed: self.context.change_fps(fps)
+                if changed: self.SombreroContext.change_fps(fps)
             imgui.separator()
 
             # # Time
-            t = f"{self.sombrero_mgl.pipeline['mTime']:.1f}s"
-            if not self.context.freezed_pipeline: imgui.text_colored(f"Time [PLAYING] [{t}]", *section_color)
+            t = f"{self.SombreroMain.pipeline['mTime']:.1f}s"
+            if not self.SombreroContext.freezed_pipeline: imgui.text_colored(f"Time [PLAYING] [{t}]", *section_color)
             else: imgui.text_colored(f"Time [FROZEN] [{t}]", 1, 0, 0)
 
             changed, value = imgui.slider_float("Multiplier", self.target_time_factor, min_value = -3, max_value = 3, power = 1)
             if changed:
-                self.context.time_speed = value
+                self.SombreroContext.time_speed = value
 
             # # Time
             imgui.separator()
@@ -454,16 +454,16 @@ class SombreroWindow:
                 changed = imgui.button(f"{ratio}x")
                 if ratio != 2: imgui.same_line() # Same line until last value
                 if changed:
-                    self.context.time_speed = ratio
-                    self.context.freezed_pipeline = False
+                    self.SombreroContext.time_speed = ratio
+                    self.SombreroContext.freezed_pipeline = False
             imgui.separator()
 
             imgui.text_colored("Render Config", *section_color)
-            changed, value = imgui.slider_int("Quality", self.context.quality, min_value = 0, max_value = 20)
-            if changed: self.context.quality = value; 
+            changed, value = imgui.slider_int("Quality", self.SombreroContext.quality, min_value = 0, max_value = 20)
+            if changed: self.SombreroContext.quality = value; 
 
-            if self.context.piano_roll is not None:
-                self.context.piano_roll.gui()
+            if self.SombreroContext.piano_roll is not None:
+                self.SombreroContext.piano_roll.gui()
 
             dock_y += imgui.get_window_height()
             imgui.end()
@@ -472,14 +472,14 @@ class SombreroWindow:
 
         if 1:
             # Update framerates, get info
-            self.context.framerate.next()
-            info = self.context.framerate.get_info()
+            self.SombreroContext.framerate.next()
+            info = self.SombreroContext.framerate.get_info()
 
             imgui.set_next_window_collapsed(True, imgui.FIRST_USE_EVER)
             imgui.set_next_window_position(0, dock_y)
             imgui.set_next_window_bg_alpha(0.5)
             imgui.begin("Performance", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE)
-            imgui.text_colored(f"Frametimes [last {self.context.framerate.history:.2f}s]", *section_color)
+            imgui.text_colored(f"Frametimes [last {self.SombreroContext.framerate.history:.2f}s]", *section_color)
             imgui.separator()
             precision = 2
             imgui.plot_lines(

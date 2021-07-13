@@ -32,8 +32,8 @@ from math import cos, sin
 import imgui
 import numpy as np
 import quaternion
-from MMV.Sombrero.modules.base_module import BaseModule
-from MMV.Sombrero.utils.interpolation import SmoothVariable
+from MMV.Sombrero.Modules.BaseModule import BaseModule
+from MMV.Sombrero.Utils.Interpolation import SmoothVariable
 
 
 # Normalize safely some vector to 1, if zero return 0
@@ -77,10 +77,10 @@ class Camera3D(BaseModule):
         self.mode = CM[(CM.index(self.mode)+1) % len(CM)]
 
     def __repr__(self): return f"Camera3D: {self.__pointing()}"
-    def __init__(self, sombrero_window):
-        self.init(sombrero_window)
-        self.cfg = self.context.config["window"]["3D"]
-        self.fix_due_fps = self.context._fix_ratio_due_fps
+    def __init__(self, SombreroWindow):
+        self.init(SombreroWindow)
+        self.cfg = self.SombreroContext.LiveConfig["window"]["3D"]
+        self.fix_due_fps = self.SombreroContext._fix_ratio_due_fps
         self.reset()
         
     # # 3D Specific Info
@@ -198,8 +198,8 @@ class Camera3D(BaseModule):
             self.fov.set_target(1)
 
     def mouse_drag_event(self, x, y, dx, dy):
-        if self.context.ctrl_pressed: self.fov += (dy * 0.05) * self.fov.value
-        if self.context.alt_pressed: self.apply_rotation( self.fix_due_fps(dy/800), Camera3D.AxisX)
+        if self.SombreroContext.ctrl_pressed: self.fov += (dy * 0.05) * self.fov.value
+        if self.SombreroContext.alt_pressed: self.apply_rotation( self.fix_due_fps(dy/800), Camera3D.AxisX)
 
     def gui(self):
         imgui.separator()
@@ -213,8 +213,8 @@ class Camera3D(BaseModule):
         imgui.text(f"Roll: [{self.roll.value:.3f}]")
 
     def mouse_scroll_event(self, x_offset, y_offset):
-        if self.context.alt_pressed: self.fov -= (y_offset * 0.05) * self.fov.value
-        elif self.context.ctrl_pressed: self.cfg["mouse_sensitivity"] += (y_offset * 0.05) * self.cfg["mouse_sensitivity"]
+        if self.SombreroContext.alt_pressed: self.fov -= (y_offset * 0.05) * self.fov.value
+        elif self.SombreroContext.ctrl_pressed: self.cfg["mouse_sensitivity"] += (y_offset * 0.05) * self.cfg["mouse_sensitivity"]
         else: self.speed += (y_offset * 0.05) * self.speed.value
 
     def mouse_position_event(self, x, y, dx, dy):

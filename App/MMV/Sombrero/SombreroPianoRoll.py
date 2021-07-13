@@ -135,9 +135,9 @@ class FluidSynthUtils:
 
 
 class PianoRoll:
-    def __init__(self, sombrero_mgl):
-        self.sombrero_mgl = sombrero_mgl
-        self.context = self.sombrero_mgl.context
+    def __init__(self, SombreroMain):
+        self.SombreroMain = SombreroMain
+        self.SombreroContext = self.SombreroMain.context
         self.__scene_contents = {}
         self.__playing_notes_fluid = []
 
@@ -237,7 +237,7 @@ class PianoRoll:
             start = self.now - self.time_draw_bleed, end = self.now + self.visible_seconds + self.time_draw_bleed)
 
     @property
-    def now(self): return self.sombrero_mgl.pipeline["mTime"]
+    def now(self): return self.SombreroMain.pipeline["mTime"]
     
     # Notes being played right now 
     def get_playing_now(self): return self.get_playing_notes_at(time = self.now)
@@ -264,7 +264,7 @@ class PianoRoll:
 
         for index in reversed(todel): del self.__playing_notes_fluid[index]
 
-        if self.context.freezed_pipeline:
+        if self.SombreroContext.freezed_pipeline:
             for note in self.__playing_notes_fluid:
                 self.synth.key_up(note.note)#, note.channel)
                 self.__playing_notes_fluid = []

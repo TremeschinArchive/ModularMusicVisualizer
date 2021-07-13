@@ -83,7 +83,11 @@ class Utils:
 
     @staticmethod
     def LoadYaml(path):
-        return yaml.load(Utils.ResolvePath(path).read_text(), Loader=yaml.FullLoader)
+        return Utils.LoadYamlString( Utils.ResolvePath(path).read_text() )
+
+    @staticmethod
+    def LoadYamlString(data):
+        return yaml.load(data, Loader=yaml.FullLoader)
 
     # # "Old" / to rewrite
 
