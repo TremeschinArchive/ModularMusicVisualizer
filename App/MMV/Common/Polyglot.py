@@ -60,9 +60,11 @@ class Languages:
 
  
 class PolyglotBrain:
-    def Init(self, LangsYamlPath, SpokenLanguage=Languages.English):
-        Data = Path(LangsYamlPath).resolve().read_text(encoding="utf-8")
-        self.Data = DotMap(yaml.load(Data, Loader = yaml.FullLoader), _dynamic=False)
+    def __init__(self):
+        self.Init({})
+
+    def Init(self, LangsDict, SpokenLanguage=Languages.English):
+        self.Data = DotMap(LangsDict, _dynamic=False)
         self.SpokenLanguage = SpokenLanguage
 
     def __call__(self, Phrase, ForceLanguage=None):

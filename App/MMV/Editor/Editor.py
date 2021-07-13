@@ -62,7 +62,7 @@ from dearpygui import themes
 
 class mmvEditor:
     def __init__(self, PackageInterface):
-        Polyglot.Speak.Init(PackageInterface.DataDir/"Languages.yaml")
+        Polyglot.Speak.Init(Utils.LoadYaml(PackageInterface.DataDir/"Languages.yaml"))
 
         self.LoadedFonts = DotMap(_dynamic=False)
         self.DefaultFont = "DejaVuSans-Bold.ttf"

@@ -216,7 +216,7 @@ class MakeRelease:
 
             # Windoe
             # "--windows-disable-console",
-            "--windows-file-description", "The Interactive Shader Render Platform",
+            "--windows-file-description", "The Interactive Shader Render Platform. MMV is Free Software (Freedom and Price) distributed under the GPLv3 License",
             "--windows-product-version", self.PackageInterface.VersionNumber,
             "--windows-file-version", str(self.PackageInterface.VersionNumber),
             "--windows-product-name", "Modular Music Visualizer",

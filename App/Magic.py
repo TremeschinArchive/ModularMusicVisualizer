@@ -8,7 +8,8 @@ Copyright (c) 2020 - 2021,
 
 ===============================================================================
 
-Purpose: SVG flags icons -> PNG images
+Purpose: Packaging / Developer utils:
+  - SVG flags icons -> PNG images
 
 ===============================================================================
 
@@ -35,7 +36,7 @@ from pathlib import Path
 
 import MMV
 from MMV.Common.Download import Download
-from MMV.Editor.Localization import Languages
+from MMV.Common.Polyglot import Languages
 
 PackageInterface = MMV.mmvPackageInterface()
 
@@ -60,10 +61,15 @@ def MakeCountryFlags():
             subprocess.run(Command)
             os.remove(str(TempSourceSVGPath))
 
+def TestExternalsManager:
+    for Platform in ["Linux", "Windows"]:
+        MMV = MMV.mmvPackageInterface(ForcePlatform=Platform)
+        for External in (MMV.Externals.AvailableExternals.ListOfAll):
+            MMV.Externals.DownloadInstallExternal(TargetExternals=External, _ForceNotFound=True)
+
 def Main():
     if "MakeCountryFlags" in sys.argv: MakeCountryFlags()
+    if "TestExternalsManager" in sys.argv: TestExternalsManager()
 
 if __name__ == "__main__":
     Main()
-
-
