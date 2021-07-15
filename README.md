@@ -127,12 +127,15 @@ When we do have releases, grab them from [here](https://github.com/Tremeschin/Mo
 </div>
 <p>
 
-- <img src="https://raw.githubusercontent.com/edent/SuperTinyIcons/master/images/svg/arch_linux.svg" style="vertical-align: middle;" width="32">`$ sudo pacman -Syu python ffmpeg python-poetry git`
+<i><h5>If `python` is not a command or it fails try running with `python3` instead.</h5></i>
 
-- <img src="https://raw.githubusercontent.com/edent/SuperTinyIcons/master/images/svg/ubuntu.svg" style="vertical-align: middle;" width="32"> `$ sudo apt update && sudo apt upgrade && sudo apt install python3 ffmpeg python3-poetry git`
+- <img src="https://raw.githubusercontent.com/edent/SuperTinyIcons/master/images/svg/arch_linux.svg" style="vertical-align: middle;" width="32">`$ sudo pacman -Syu python ffmpeg python-poetry git git-lfs`
 
-- `git clone https://github.com/Tremeschin/ModularMusicVisualizer -b NodeEditor`
+- <img src="https://raw.githubusercontent.com/edent/SuperTinyIcons/master/images/svg/ubuntu.svg" style="vertical-align: middle;" width="32"> `$ sudo apt update && sudo apt upgrade && sudo apt install python3 ffmpeg python3-poetry git git-lfs`
+
+- `git clone https://github.com/Tremeschin/ModularMusicVisualizer.git -b NodeEditor`
 - `cd ModularMusicVisualizer`
+- `git lfs install && git lfs fetch`
 - `poetry install`
 - `poetry run editor`
 
@@ -146,13 +149,18 @@ When we do have releases, grab them from [here](https://github.com/Tremeschin/Mo
 </div>
 <p>
 
+<i><h5>You might need to type `python.exe` or `python3.exe` than `python` on the command line</h5></i>
+
 - Install [latest stable release Python "Windows installer (64-bit)"](https://www.python.org/downloads/windows/), be sure to check `Add Python 3.X to PATH`.
-- Download Modular Music Visualizer's [Source Code](https://github.com/Tremeschin/ModularMusicVisualizer/archive/refs/heads/NodeEditor.zip), extract to somewhere.
+- Install [Git LFS](https://git-lfs.github.com/) (Git Large File Storage for the assets)
+- **(I)** Download Modular Music Visualizer's [Source Code](https://github.com/Tremeschin/ModularMusicVisualizer/archive/refs/heads/NodeEditor.zip), extract to somewhere.
+- **(I)** Alternatively install [Git](https://git-scm.com/download/win) and run `git clone https://github.com/Tremeschin/ModularMusicVisualizer.git -b NodeEditor`
 - `Shift + Right Click` empty spot on a empty spot on the extracted folder in Windows Explorer (file manager), click `Open PowerShell Here`.
 - Install poetry with: (command can also be found [here](https://github.com/python-poetry/poetry#windows-powershell-install-instructions))
   - `(Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | python.exe -`
-- Run: `python.exe -m poetry install`
-- Run: `python.exe -m poetry run editor`
+- Run: `git lfs install && git lfs fetch`
+- Run: `python -m poetry install`
+- Run: `python -m poetry run editor`
 
 
 <hr>
@@ -164,9 +172,9 @@ When we do have releases, grab them from [here](https://github.com/Tremeschin/Mo
 <p>
 
 - Install [Homebrew](https://brew.sh/), _"The Missing Package Manager for macOS"_
-- `brew install python@3.x ffmpeg python`
+- `brew install python@3.x ffmpeg python git-lfs`
 - `python3 -m pip install poetry`
-- `git clone https://github.com/Tremeschin/ModularMusicVisualizer -b NodeEditor`
+- `git clone https://github.com/Tremeschin/ModularMusicVisualizer.git -b NodeEditor`
 - `cd ModularMusicVisualizer`
 - `poetry install`
 - `poetry run editor`
@@ -177,9 +185,8 @@ When we do have releases, grab them from [here](https://github.com/Tremeschin/Mo
 
 # > Community
 
-<hr>
 <div align="center">
- <b><h2>Community</h2></b>
+ <b><h2>Links</h2></b>
 </div>
 <p>
 
@@ -213,6 +220,8 @@ The Modular Music Visualizer **Python code** I have written is **GPLv3 Licensed*
 
 As said previously, the flag icons and distro, social icons on this README are thanks to [HatScripts's Circle Flags](https://github.com/HatScripts/circle-flags) and [edent's SuperTinyIcons](https://github.com/edent/SuperTinyIcons).
 
+<hr>
+
 # > Attribution, thanks to
 **Attributions are not required** but would show **gratitude** for the project!!
 
@@ -220,18 +229,26 @@ As said previously, the flag icons and distro, social icons on this README are t
 ## ● Translators
 Placeholder
 
+<hr>
 
 ## ● Build Server
 Placeholder
 
 <h5><i>if we ever get one for bleeding edge builds</i></h5>
 
+<hr>
+
+## ● Contributors
+Placeholder
+
+<hr>
 
 ## ● Third Party Software, Python Packages
-
 These are not in any order of more important or less important, all have their own crucial role in MMV.
 
 It is quite impossible to list everyone, so check `pyproject.toml` for the full list, also some packages depends on others and there are usually multiple contributors to every single one of those.
+
+<hr>
 
 ### **Python Packages:**
 - [DearPyGui](https://github.com/hoffstadt/DearPyGui): Awesome GUIs easily. The single reason I'm rewriting / rebasing on a Node Editor based software.
@@ -247,6 +264,8 @@ It is quite impossible to list everyone, so check `pyproject.toml` for the full 
 - [mido](https://pypi.org/project/mido/): Reading MIDI files
 - [Poetry](https://github.com/python-poetry/poetry): Less instructions on README for creating, enabling virtual environments for Python, lots of high level commands for facilitating the end user.
 - [OpenCV](https://opencv.org/) and [opencv-python](https://pypi.org/project/opencv-python/) for reading frames from videos individually.
+
+<hr>
 
 ### **Third Party Software:**
 - [FFmpeg](https://ffmpeg.org/): Do I have to say something? _"A complete, cross-platform solution to record, convert and stream audio and video."_ - and they are not lying!!
