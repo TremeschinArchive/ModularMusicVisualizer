@@ -3,7 +3,7 @@
 </p>
 <h3 align="center"><b>Modular Music Visualizer</b></h3>
 <p align="center">
-  <i>The Interactive Shader Renderer Platform.</i>
+  <i>The Interactive Shader Renderer Platform</i>
 </p>
 <hr>
 
@@ -129,13 +129,15 @@ When we do have releases, grab them from [here](https://github.com/Tremeschin/Mo
 
 <i><h5>If `python` is not a command or it fails try running with `python3` instead.</h5></i>
 
-- <img src="https://raw.githubusercontent.com/edent/SuperTinyIcons/master/images/svg/arch_linux.svg" style="vertical-align: middle;" width="32">`$ sudo pacman -Syu python ffmpeg python-poetry git git-lfs`
+- Open a Terminal in some directory
 
-- <img src="https://raw.githubusercontent.com/edent/SuperTinyIcons/master/images/svg/ubuntu.svg" style="vertical-align: middle;" width="32"> `$ sudo apt update && sudo apt upgrade && sudo apt install python3 ffmpeg python3-poetry git git-lfs`
+- <img src="https://raw.githubusercontent.com/edent/SuperTinyIcons/master/images/svg/arch_linux.svg" style="vertical-align: middle;" width="32">`sudo pacman -Syu python ffmpeg python-poetry git git-lfs`
+
+- <img src="https://raw.githubusercontent.com/edent/SuperTinyIcons/master/images/svg/ubuntu.svg" style="vertical-align: middle;" width="32"> `sudo apt update && sudo apt upgrade && sudo apt install python3 ffmpeg python3-poetry git git-lfs`
 
 - `git clone https://github.com/Tremeschin/ModularMusicVisualizer.git -b NodeEditor`
 - `cd ModularMusicVisualizer`
-- `git lfs install && git lfs fetch`
+- `git lfs fetch`
 - `poetry install`
 - `poetry run editor`
 
@@ -145,11 +147,11 @@ When we do have releases, grab them from [here](https://github.com/Tremeschin/Mo
 <div align="center">
   <img src="https://raw.githubusercontent.com/edent/SuperTinyIcons/master/images/svg/windows.svg" style="vertical-align: middle;" width="64"> 
   
-  Windows (7+)
+  Windows (8+)
 </div>
 <p>
 
-<i><h5>You might need to type `python.exe` or `python3.exe` than `python` on the command line</h5></i>
+<i><h5>You might need to run `python.exe` or `python3.exe` than `python` on the command line, same with `git` and `git.exe`.</h5></i>
 
 - Install [latest stable release Python "Windows installer (64-bit)"](https://www.python.org/downloads/windows/), be sure to check `Add Python 3.X to PATH`.
 - Install [Git LFS](https://git-lfs.github.com/) (Git Large File Storage for the assets)
@@ -158,7 +160,7 @@ When we do have releases, grab them from [here](https://github.com/Tremeschin/Mo
 - `Shift + Right Click` empty spot on a empty spot on the extracted folder in Windows Explorer (file manager), click `Open PowerShell Here`.
 - Install poetry with: (command can also be found [here](https://github.com/python-poetry/poetry#windows-powershell-install-instructions))
   - `(Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | python.exe -`
-- Run: `git lfs install && git lfs fetch`
+- Run: `git lfs fetch`
 - Run: `python -m poetry install`
 - Run: `python -m poetry run editor`
 
@@ -171,11 +173,14 @@ When we do have releases, grab them from [here](https://github.com/Tremeschin/Mo
 </div>
 <p>
 
-- Install [Homebrew](https://brew.sh/), _"The Missing Package Manager for macOS"_
+- Open a Terminal into some directory
+- Install [Homebrew](https://brew.sh/), _"The Missing Package Manager for macOS":_
+  - `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
 - `brew install python@3.x ffmpeg python git-lfs`
 - `python3 -m pip install poetry`
 - `git clone https://github.com/Tremeschin/ModularMusicVisualizer.git -b NodeEditor`
 - `cd ModularMusicVisualizer`
+- `git lfs fetch`
 - `poetry install`
 - `poetry run editor`
 
@@ -195,7 +200,7 @@ When we do have releases, grab them from [here](https://github.com/Tremeschin/Mo
 
 <hr>
 <div align="center">
- <b><h2>Donations, pricing</h2></b>
+ <b><h2>Donations, MMV as a Service</h2></b>
 </div>
 <p>
 

@@ -31,7 +31,7 @@ pycparser = "*"
 
 [[package]]
 name = "charset-normalizer"
-version = "2.0.1"
+version = "2.0.2"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
 category = "main"
 optional = false
@@ -68,7 +68,7 @@ reference = "testpypi"
 
 [[package]]
 name = "dearpygui"
-version = "0.8.31"
+version = "0.8.38"
 description = "DearPyGui: A simple Python GUI Toolkit"
 category = "main"
 optional = false
@@ -539,6 +539,11 @@ cffi = [
     {file = "cffi-1.14.6-cp27-cp27m-win_amd64.whl", hash = "sha256:7bcac9a2b4fdbed2c16fa5681356d7121ecabf041f18d97ed5b8e0dd38a80224"},
     {file = "cffi-1.14.6-cp27-cp27mu-manylinux1_i686.whl", hash = "sha256:ed38b924ce794e505647f7c331b22a693bee1538fdf46b0222c4717b42f744e7"},
     {file = "cffi-1.14.6-cp27-cp27mu-manylinux1_x86_64.whl", hash = "sha256:e22dcb48709fc51a7b58a927391b23ab37eb3737a98ac4338e2448bef8559b33"},
+    {file = "cffi-1.14.6-cp35-cp35m-macosx_10_9_x86_64.whl", hash = "sha256:aedb15f0a5a5949ecb129a82b72b19df97bbbca024081ed2ef88bd5c0a610534"},
+    {file = "cffi-1.14.6-cp35-cp35m-manylinux1_i686.whl", hash = "sha256:48916e459c54c4a70e52745639f1db524542140433599e13911b2f329834276a"},
+    {file = "cffi-1.14.6-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:f627688813d0a4140153ff532537fbe4afea5a3dffce1f9deb7f91f848a832b5"},
+    {file = "cffi-1.14.6-cp35-cp35m-win32.whl", hash = "sha256:f0010c6f9d1a4011e429109fda55a225921e3206e7f62a0c22a35344bfd13cca"},
+    {file = "cffi-1.14.6-cp35-cp35m-win_amd64.whl", hash = "sha256:57e555a9feb4a8460415f1aac331a2dc833b1115284f7ded7278b54afc5bd218"},
     {file = "cffi-1.14.6-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:e8c6a99be100371dbb046880e7a282152aa5d6127ae01783e37662ef73850d8f"},
     {file = "cffi-1.14.6-cp36-cp36m-manylinux1_i686.whl", hash = "sha256:19ca0dbdeda3b2615421d54bef8985f72af6e0c47082a8d26122adac81a95872"},
     {file = "cffi-1.14.6-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:d950695ae4381ecd856bcaf2b1e866720e4ab9a1498cba61c602e56630ca7195"},
@@ -574,8 +579,8 @@ cffi = [
     {file = "cffi-1.14.6.tar.gz", hash = "sha256:c9a875ce9d7fe32887784274dd533c57909b7b1dcadcc128a2ac21331a9765dd"},
 ]
 charset-normalizer = [
-    {file = "charset-normalizer-2.0.1.tar.gz", hash = "sha256:ad0da505736fc7e716a8da15bf19a985db21ac6415c26b34d2fafd3beb3d927e"},
-    {file = "charset_normalizer-2.0.1-py3-none-any.whl", hash = "sha256:b68b38179052975093d71c1b5361bf64afd80484697c1f27056e50593e695ceb"},
+    {file = "charset-normalizer-2.0.2.tar.gz", hash = "sha256:951567c2f7433a70ab63f1be67e5ee05d3925d9423306ecb71a3b272757bcc95"},
+    {file = "charset_normalizer-2.0.2-py3-none-any.whl", hash = "sha256:3c502a35807c9df35697b0f44b1d65008f83071ff29c69677c7c22573bc5a45a"},
 ]
 click = [
     {file = "click-7.1.2-py2.py3-none-any.whl", hash = "sha256:dacca89f4bfadd5de3d7489b7c8a566eee0d3676333fbb50030263894c38c0dc"},
@@ -586,13 +591,18 @@ colorama = [
     {file = "colorama-0.4.4.tar.gz", hash = "sha256:e0a5998fe95a9f21e5af4a73aff20ef37ca3f2efd1c38e84475efdf3031926f6"},
 ]
 dearpygui = [
-    {file = "dearpygui-0.8.31-cp36-cp36m-macosx_10_6_x86_64.whl", hash = "sha256:ca7dba6018b0749c4ee5a673133e9ffbb23f301391b4e60366b9b572199c1be3"},
-    {file = "dearpygui-0.8.31-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:e2fa66d02f0755de0dfcb4063c7bb3157d3fd50c3a7474efcbd12302b8729a43"},
-    {file = "dearpygui-0.8.31-cp36-cp36m-win_amd64.whl", hash = "sha256:8e83f434f6732a95420c3fffef38638ab3f0b6ca4a1a26b4a7f5e649a1886a47"},
-    {file = "dearpygui-0.8.31-cp37-cp37m-macosx_10_6_x86_64.whl", hash = "sha256:357265c84b8a8b8a2d9f8b72c61b22bcd21ffeb3f6c7f35ec8e91053ba6a5135"},
-    {file = "dearpygui-0.8.31-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:e600f629e49e1af8f788701d75e5bb9976b5d099a00a11ca466c86c0487f6f74"},
-    {file = "dearpygui-0.8.31-cp37-cp37m-win_amd64.whl", hash = "sha256:53238fdd905247ebcdf7bb9bd9e95e319b3cbdf51483f9095f18a20192a3046e"},
-    {file = "dearpygui-0.8.31-cp38-cp38-macosx_10_6_x86_64.whl", hash = "sha256:8256c887b844cdfb99c21db19ac825b079df089e55c2f01cf569d2685b289b99"},
+    {file = "dearpygui-0.8.38-cp36-cp36m-macosx_10_6_x86_64.whl", hash = "sha256:5c0b852bd3b9bc73a224937db48de1106da60d057e92fe02c2a81f9f211da921"},
+    {file = "dearpygui-0.8.38-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:bb225bcdfba9c6a65790ec3498f8cbbb0dd1d55e62c1c214ee5263c21af840ca"},
+    {file = "dearpygui-0.8.38-cp36-cp36m-win_amd64.whl", hash = "sha256:1fc340c3dc329443d39e0ecc59f9819aa7fd3e881d1fccb660db9ea429f34c0b"},
+    {file = "dearpygui-0.8.38-cp37-cp37m-macosx_10_6_x86_64.whl", hash = "sha256:34f373b710e9e19223c66cdb9ad40d3ef18d155ec32dde439c9063455ce099f6"},
+    {file = "dearpygui-0.8.38-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:0444679d6d160364e222b2154c94ff38ba281630454bbf6ed219b297c00a4bc8"},
+    {file = "dearpygui-0.8.38-cp37-cp37m-win_amd64.whl", hash = "sha256:fea39802b132a99e48cdda298237e1fc60efbe80d8ca8a52b83e662c141f926b"},
+    {file = "dearpygui-0.8.38-cp38-cp38-macosx_10_6_x86_64.whl", hash = "sha256:f5ea2fef179d321a5b42f374fe4d94ff63438becc2b56bafbdbb817f8639a8d9"},
+    {file = "dearpygui-0.8.38-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:e0246ca073cfbb5785dac9585bd60992de388c8d21f30a0670a568f184c56213"},
+    {file = "dearpygui-0.8.38-cp38-cp38-win_amd64.whl", hash = "sha256:3b6f2faa2c400bcb52a70b3e39e89d752da3b88a31c7540f6159938ba29ab716"},
+    {file = "dearpygui-0.8.38-cp39-cp39-macosx_10_6_x86_64.whl", hash = "sha256:e42c99a6434baffa5865e9830dfe031a71ff8a73cd5bb09abfee39094ab80880"},
+    {file = "dearpygui-0.8.38-cp39-cp39-manylinux1_x86_64.whl", hash = "sha256:9999180bf8acb7d6e0464968fcddb0a6bccd232563e73330d80e538d738456e9"},
+    {file = "dearpygui-0.8.38-cp39-cp39-win_amd64.whl", hash = "sha256:4a113913c89d97371b9e8d21b74e70dc1a3cb9e4db8bf7b8e97d499392f55058"},
 ]
 dotmap = [
     {file = "dotmap-1.3.23-py3-none-any.whl", hash = "sha256:88270f02a34f42af6f760de8fa9b7080156d118bb9e252508f30633d4f21ce51"},
@@ -797,6 +807,11 @@ opencv-python-headless = [
     {file = "opencv_python_headless-4.5.3.56-cp39-cp39-win_amd64.whl", hash = "sha256:f1082f4f15a681b435686ed3fc0232128a222fed6792a47fae5cf081eb751ccf"},
 ]
 pillow = [
+    {file = "Pillow-8.3.1-1-cp36-cp36m-win_amd64.whl", hash = "sha256:fd7eef578f5b2200d066db1b50c4aa66410786201669fb76d5238b007918fb24"},
+    {file = "Pillow-8.3.1-1-cp37-cp37m-win_amd64.whl", hash = "sha256:75e09042a3b39e0ea61ce37e941221313d51a9c26b8e54e12b3ececccb71718a"},
+    {file = "Pillow-8.3.1-1-cp38-cp38-win_amd64.whl", hash = "sha256:c0e0550a404c69aab1e04ae89cca3e2a042b56ab043f7f729d984bf73ed2a093"},
+    {file = "Pillow-8.3.1-1-cp39-cp39-win_amd64.whl", hash = "sha256:479ab11cbd69612acefa8286481f65c5dece2002ffaa4f9db62682379ca3bb77"},
+    {file = "Pillow-8.3.1-1-pp37-pypy37_pp73-win_amd64.whl", hash = "sha256:f156d6ecfc747ee111c167f8faf5f4953761b5e66e91a4e6767e548d0f80129c"},
     {file = "Pillow-8.3.1-cp36-cp36m-macosx_10_10_x86_64.whl", hash = "sha256:196560dba4da7a72c5e7085fccc5938ab4075fd37fe8b5468869724109812edd"},
     {file = "Pillow-8.3.1-cp36-cp36m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:29c9569049d04aaacd690573a0398dbd8e0bf0255684fee512b413c2142ab723"},
     {file = "Pillow-8.3.1-cp36-cp36m-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:c088a000dfdd88c184cc7271bfac8c5b82d9efa8637cd2b68183771e3cf56f04"},
