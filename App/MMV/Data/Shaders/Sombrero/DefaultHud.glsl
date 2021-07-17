@@ -28,50 +28,50 @@ vec4 mainImage(in vec2 fragCoord) {
 
         // Rotation marker
         if (mKeyAlt) {
-            if (abs(opengl_uv.x) < (line_size / fulldh_scalar.y) / resratio && abs(opengl_uv.y) < size * 1.6) {
+            if (abs(OpenGLUV.x) < (line_size / fulldh_scalar.y) / resratio && abs(OpenGLUV.y) < size * 1.6) {
                 col = mAlphaComposite(col, vec4(0.0, 1.0, 0.0, 1.0));
             }
 
-            if (abs(opengl_uv.y) < line_size / fulldh_scalar.y && abs(opengl_uv.x) < size * 1.6 / resratio) {
+            if (abs(OpenGLUV.y) < line_size / fulldh_scalar.y && abs(OpenGLUV.x) < size * 1.6 / resratio) {
                 col = mAlphaComposite(col, vec4(0.0, 1.0, 0.0, 1.0));
             }
         }
 
-        if (abs(opengl_uv.x) < ((line_size + border) / fulldh_scalar.y) / resratio && abs(opengl_uv.y) < size) {
+        if (abs(OpenGLUV.x) < ((line_size + border) / fulldh_scalar.y) / resratio && abs(OpenGLUV.y) < size) {
             col = mAlphaComposite(col, vec4(0.0, 0.0, 0.0, 0.8));
         }
 
-        if (abs(opengl_uv.y) < (line_size + border) / fulldh_scalar.y && abs(opengl_uv.x) < size / resratio) {
+        if (abs(OpenGLUV.y) < (line_size + border) / fulldh_scalar.y && abs(OpenGLUV.x) < size / resratio) {
             col = mAlphaComposite(col, vec4(0.0, 0.0, 0.0, 0.8));
         }
 
         // Draw center cross
-        if (abs(opengl_uv.x) < (line_size / fulldh_scalar.y) / resratio && abs(opengl_uv.y) < size) {
+        if (abs(OpenGLUV.x) < (line_size / fulldh_scalar.y) / resratio && abs(OpenGLUV.y) < size) {
             col = mAlphaComposite(col, vec4(1, 1, 1, 1.0));
         }
 
-        if (abs(opengl_uv.y) < line_size / fulldh_scalar.y && abs(opengl_uv.x) < size / resratio) {
+        if (abs(OpenGLUV.y) < line_size / fulldh_scalar.y && abs(OpenGLUV.x) < size / resratio) {
             col = mAlphaComposite(col, vec4(1, 1, 1, 1.0));
         }
 
         // Zoom marker
         if (mKeyShift) {
-            if (abs(opengl_uv.x) < ((5*border*line_size) / fulldh_scalar.y) / resratio && abs(opengl_uv.y) < size) {
+            if (abs(OpenGLUV.x) < ((5*border*line_size) / fulldh_scalar.y) / resratio && abs(OpenGLUV.y) < size) {
                 col = mAlphaComposite(col, vec4(1.0, 0.0, 0.0, 1.0));
             }
 
-            if (abs(opengl_uv.y) < (5*border*line_size) / fulldh_scalar.y && abs(opengl_uv.x) < size / resratio) {
+            if (abs(OpenGLUV.y) < (5*border*line_size) / fulldh_scalar.y && abs(OpenGLUV.x) < size / resratio) {
                 col = mAlphaComposite(col, vec4(1.0, 0.0, 0.0, 1.0));
             }
         }
 
         // While dragging crosshair changes color
         if (m2DIsDragging) {
-            if (abs(opengl_uv.x) < (line_size / fulldh_scalar.y) / resratio && abs(opengl_uv.y) < size) {
+            if (abs(OpenGLUV.x) < (line_size / fulldh_scalar.y) / resratio && abs(OpenGLUV.y) < size) {
                 col = mAlphaComposite(col, vec4(1.0, 1.0, 0.0, 1.0));
             }
 
-            if (abs(opengl_uv.y) < line_size / fulldh_scalar.y && abs(opengl_uv.x) < size / resratio) {
+            if (abs(OpenGLUV.y) < line_size / fulldh_scalar.y && abs(OpenGLUV.x) < size / resratio) {
                 col = mAlphaComposite(col, vec4(1.0, 1.0, 0.0, 1.0));
             }
         }
@@ -90,11 +90,11 @@ vec4 mainImage(in vec2 fragCoord) {
         // 2.3 because floating point..
         for (float i = -1 + stepp; i < 1; i += stepp) {
             for (float k = -1 + stepp; k < 1; k += stepp) {
-                if (abs(opengl_uv.x - i) < 2.3 / mResolution.x) {
+                if (abs(OpenGLUV.x - i) < 2.3 / mResolution.x) {
                     col = mAlphaComposite(col, vec4(alignment_color, across_screen_alpha));
                 }
 
-                if (abs(opengl_uv.y - k) < 2.3 / mResolution.y) {
+                if (abs(OpenGLUV.y - k) < 2.3 / mResolution.y) {
                     col = mAlphaComposite(col, vec4(alignment_color, across_screen_alpha));
                 }
             }

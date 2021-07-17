@@ -36,6 +36,7 @@ requests = "^2.25.1"
 dearpygui = "^0.8.14"
 arrow = "^1.1.1"
 SoundCard = "^0.4.1"
+glfw = "^2.1.0"
 
 [tool.poetry.dev-dependencies]
 Nuitka = "^0.6.16"

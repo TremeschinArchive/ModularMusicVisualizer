@@ -18,8 +18,8 @@ vec2 mGetFullHDScalar() { return vec2(mResolution.x / 1920, mResolution.y / 1080
 mat2 mGetCoordinatesRotation() { return m2DRotation2D(m2DRotation); }
 
 // GL and ST uv based on the aspect ratio
-vec2 mGetGLUV() { vec2 gluv = opengl_uv; gluv.x *= mGetNormalizeYratio(); return gluv; }
-vec2 mGetSTUV() { vec2 stuv = shadertoy_uv; stuv.x *= mGetNormalizeYratio(); return stuv; }
+vec2 mGetGLUV() { vec2 gluv = OpenGLUV; gluv.x *= mGetNormalizeYratio(); return gluv; }
+vec2 mGetSTUV() { vec2 stuv = ShaderToyUV; stuv.x *= mGetNormalizeYratio(); return stuv; }
 
 // Mouse drag relative to the resolution, flip etc, because m2DDrag is raw pixels
 // we want a vec2 normalized to 1 also relative to the aspect ratio

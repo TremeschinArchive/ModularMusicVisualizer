@@ -77,8 +77,8 @@ class SombreroWindow:
         # TODO move to context
         self.target_time_factor = 1
 
-    def create(self):
-        dpfx = "[SombreroWindow.create]"
+    def CreateWindow(self):
+        dpfx = "[SombreroWindow.CreateWindow]"
 
         # On Wayland one must use XWayland because ModernGL haven't implemented EGL yet
         if self.PackageInterface.os == "linux": os.environ["XDG_SESSION_TYPE"] = "x11"
@@ -91,7 +91,7 @@ class SombreroWindow:
         # Assign the function arguments
         settings.WINDOW["class"] = f"moderngl_window.context.{self.SombreroContext.window_class}.Window"
         settings.WINDOW["vsync"] = self.SombreroContext.window_vsync
-        settings.WINDOW["title"] = "Sombrero Real Time"
+        settings.WINDOW["title"] = "MMV Live [Sombrero]"
 
         # Don't set target width, height otherwise this will always crash
         if (self.SombreroContext.window_headless) or (not self.SombreroContext.LINUX_GNOME_PIXEL_SAVER_EXTENSION_WORKAROUND):
@@ -106,7 +106,7 @@ class SombreroWindow:
 
         # Functions of the window if not headless
         if not self.SombreroContext.window_headless:
-            self.window.resize_func = self.window_resize
+            self.window.resize_func = self.WindowResized
             self.window.key_event_func = self.key_event
             self.window.mouse_position_event_func = self.mouse_position_event
             self.window.mouse_drag_event_func = self.mouse_drag_event
@@ -114,14 +114,14 @@ class SombreroWindow:
             self.window.mouse_press_event_func = self.mouse_press_event
             self.window.mouse_release_event_func = self.mouse_release_event
             self.window.unicode_char_entered_func = self.unicode_char_entered
-            self.window.close_func = self.close
+            self.window.close_func = self.CloseWindow
             imgui.create_context()
             self.imgui = ModernglWindowRenderer(self.window)
             self.imgui_io = imgui.get_io()
             self.imgui_io.ini_saving_rate = 1
 
     # [NOT HEADLESS] Window was resized, update the width and height so we render with the new config
-    def window_resize(self, width, height):
+    def WindowResized(self, width, height):
         if hasattr(self, "strict") and self.strict: return
 
         # We need to do some sort of change of basis between drag numbers when we change resolutions because
@@ -141,8 +141,8 @@ class SombreroWindow:
         #     child._create_assing_texture_fbo_render_buffer()
 
         # for child in self.SombreroMain.children_SombreroMain():
-        #     child.window.window_resize(width, height)
-        self.SombreroContext.mmv_main.reload_shaders()
+        #     child.window.WindowResized(width, height)
+        # self.SombreroContext.mmv_main.reload_shaders()
 
         # Master shader has window and imgui
         if self.SombreroMain.MasterShader:
@@ -151,16 +151,16 @@ class SombreroWindow:
             self.SombreroMain._create_assing_texture_fbo_render_buffer()
 
     # Close the window
-    def close(self, *args, **kwargs):
-        logging.info(f"[SombreroWindow.close] Window should close")
+    def CloseWindow(self, *args, **kwargs):
+        logging.info(f"[SombreroWindow.CloseWindow] Window should close")
         self.window_should_close = True
 
     # Swap the window buffers, be careful if vsync is False and you have a heavy
     # shader, it will consume all of your GPU computation and will most likely freeze
     # the video
-    def update_window(self):
+    def UpdateWindow(self):
         self.window.swap_buffers()
-        cfg = self.SombreroMain.config["window"]
+        # cfg = self.SombreroMain.config["window"]
 
         if not self.SombreroContext.mode == self.SombreroContext.ExecutionMode.Render:
             self.SombreroContext.joysticks.next()
@@ -170,7 +170,7 @@ class SombreroWindow:
         # TODO: move to context
         # self.SombreroContext.intensity += (self.target_intensity - self.SombreroContext.intensity) * cfg["intensity_responsiveness"]
         # self.time_factor += \
-        #     ( (int(not self.playback_stopped) * int(not self.SombreroContext.freezed_pipeline) * self.target_time_factor) \
+        #     ( (int(not self.playback_stopped) * int(not self.SombreroContext.freezed_GlobalPipeline) * self.target_time_factor) \
         #     - self.time_factor) * self.SombreroMain._fix_ratio_due_fps(cfg["time_responsiveness"]) 
 
     def key_event(self, key, action, modifiers):
@@ -259,12 +259,12 @@ class SombreroWindow:
             self.messages.add(f"{dpfx} (h) Toggle Hide Mouse [{self.window.cursor}]", self.ACTION_MESSAGE_TIMEOUT)
       
         if (key == 79) and (action == 1):
-            self.SombreroContext.freezed_pipeline = not self.SombreroContext.freezed_pipeline
-            self.messages.add(f"{dpfx} (o) Freeze pipeline [{self.SombreroContext.freezed_pipeline}]", self.ACTION_MESSAGE_TIMEOUT)
+            self.SombreroContext.freezed_GlobalPipeline = not self.SombreroContext.freezed_GlobalPipeline
+            self.messages.add(f"{dpfx} (o) Freeze GlobalPipeline [{self.SombreroContext.freezed_GlobalPipeline}]", self.ACTION_MESSAGE_TIMEOUT)
             self.time_factor = 0
             for index in self.SombreroMain.contents.keys():
                 if self.SombreroMain.contents[index]["loader"] == "shader":
-                    self.SombreroMain.contents[index]["shader_as_texture"].freezed_pipeline = self.SombreroContext.freezed_pipeline
+                    self.SombreroMain.contents[index]["shader_as_texture"].freezed_GlobalPipeline = self.SombreroContext.freezed_GlobalPipeline
 
         if (key == 82) and (action == 1):
             self.messages.add(f"{dpfx} (r) Reloading shaders..", self.ACTION_MESSAGE_TIMEOUT)
@@ -273,8 +273,8 @@ class SombreroWindow:
             self.SombreroMain._want_to_reload = True
   
         if (key == 84) and (action == 1):
-            self.SombreroMain.pipeline["mFrame"] = 0
-            self.SombreroMain.pipeline["mTime"] = 0
+            self.SombreroMain.GlobalPipeline["mFrame"] = 0
+            self.SombreroMain.GlobalPipeline["mTime"] = 0
             self.messages.add(f"{dpfx} (t) Set time to [0s]", self.ACTION_MESSAGE_TIMEOUT)
 
         if (key == 89) and (action == 1):
@@ -307,20 +307,20 @@ class SombreroWindow:
 
     # Mouse position changed
     def mouse_position_event(self, x, y, dx, dy):
-        self.SombreroMain.pipeline["mMouse"] = np.array([x, y])
+        self.SombreroMain.GlobalPipeline["mMouse"] = np.array([x, y])
         if self.imgui_io.want_capture_mouse: return
         if self.SombreroContext.live_mode == RealTimeModes.Mode2D: self.SombreroContext.camera2d.mouse_position_event(x, y, dx, dy)
         if self.SombreroContext.live_mode == RealTimeModes.Mode3D: self.SombreroContext.camera3d.mouse_position_event(x, y, dx, dy)
         
-    # Mouse drag, add to pipeline drag
+    # Mouse drag, add to GlobalPipeline drag
     def mouse_drag_event(self, x, y, dx, dy):
         self.imgui.mouse_drag_event(x, y, dx, dy)
         if self.imgui_io.want_capture_mouse: return
 
         if 2 in self.SombreroContext.mouse_buttons_pressed:
-            if self.SombreroContext.shift_pressed: self.SombreroMain.pipeline["mFrame"] -= (dy * self.SombreroContext.fps) / 200
+            if self.SombreroContext.shift_pressed: self.SombreroMain.GlobalPipeline["mFrame"] -= (dy * self.SombreroContext.fps) / 200
             elif self.SombreroContext.alt_pressed: self.target_time_factor -= dy / 80
-            else: self.SombreroMain.pipeline["mFrame"] -= (dy * self.SombreroContext.fps) / 800
+            else: self.SombreroMain.GlobalPipeline["mFrame"] -= (dy * self.SombreroContext.fps) / 800
         else:
             if self.SombreroContext.live_mode == RealTimeModes.Mode2D:
                 self.SombreroContext.camera2d.mouse_drag_event(x = x, y = y, dx = dx, dy = dy)
@@ -373,26 +373,26 @@ class SombreroWindow:
         imgui.push_style_var(imgui.STYLE_WINDOW_ROUNDING, 0)
         imgui.new_frame()
 
-        # Main menu
-        if self.SombreroContext.window_show_menu:
-            W, H = self.SombreroContext.width / 2, self.SombreroContext.height / 2
-            imgui.set_window_position(W, H)
-            imgui.begin(f"Modular Music Visualizer", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE)
-            imgui.text("-" * 30)
-            imgui.separator()
+        # # Main menu
+        # if self.SombreroContext.window_show_menu:
+        #     W, H = self.SombreroContext.width / 2, self.SombreroContext.height / 2
+        #     imgui.set_window_position(W, H)
+        #     imgui.begin(f"Modular Music Visualizer", True, imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_MOVE)
+        #     imgui.text("-" * 30)
+        #     imgui.separator()
 
-            # Presets loading
-            imgui.text_colored("Load Presets", *section_color)
-            for item in os.listdir(self.SombreroMain.PackageInterface.shaders_dir / "presets"):
-                if ".py" in item:
-                    item = item.replace(".py", "")
-                    changed = imgui.button(f"> {item}")
-                    if changed:
-                        self.SombreroMain.PackageInterface.main._load_preset(item)
+        #     # Presets loading
+        #     imgui.text_colored("Load Presets", *section_color)
+        #     for item in os.listdir(self.SombreroMain.PackageInterface.shaders_dir / "presets"):
+        #         if ".py" in item:
+        #             item = item.replace(".py", "")
+        #             changed = imgui.button(f"> {item}")
+        #             if changed:
+        #                 self.SombreroMain.PackageInterface.main._load_preset(item)
 
-            w, h = imgui.get_window_width(), imgui.get_window_height()
-            imgui.set_window_position(W - (w/2), H - (h/2))
-            imgui.end()
+        #     w, h = imgui.get_window_width(), imgui.get_window_height()
+        #     imgui.set_window_position(W - (w/2), H - (h/2))
+        #     imgui.end()
 
         # # # Info window, top left anchored
 
@@ -438,8 +438,8 @@ class SombreroWindow:
             imgui.separator()
 
             # # Time
-            t = f"{self.SombreroMain.pipeline['mTime']:.1f}s"
-            if not self.SombreroContext.freezed_pipeline: imgui.text_colored(f"Time [PLAYING] [{t}]", *section_color)
+            t = f"{self.SombreroMain.GlobalPipeline['mTime']:.1f}s"
+            if not self.SombreroContext.freezed_GlobalPipeline: imgui.text_colored(f"Time [PLAYING] [{t}]", *section_color)
             else: imgui.text_colored(f"Time [FROZEN] [{t}]", 1, 0, 0)
 
             changed, value = imgui.slider_float("Multiplier", self.target_time_factor, min_value = -3, max_value = 3, power = 1)
@@ -455,7 +455,7 @@ class SombreroWindow:
                 if ratio != 2: imgui.same_line() # Same line until last value
                 if changed:
                     self.SombreroContext.time_speed = ratio
-                    self.SombreroContext.freezed_pipeline = False
+                    self.SombreroContext.freezed_GlobalPipeline = False
             imgui.separator()
 
             imgui.text_colored("Render Config", *section_color)

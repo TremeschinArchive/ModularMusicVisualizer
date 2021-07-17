@@ -1,12 +1,12 @@
 #version 330
-in vec2 in_pos;
-in vec2 in_size;
+in vec2 InPos;
+in vec2 InSize;
 out vec2 size;
 
 void main() {
     // Position of the vertex on the screen
-    gl_Position = vec4(in_pos, 0.0, 1.0);
+    gl_Position = vec4(InPos, 0.0, 1.0);
 
     // Size that expands laterally
-    size = in_size;
+    size = InSize;
 }

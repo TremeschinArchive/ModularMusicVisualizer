@@ -8,9 +8,9 @@ from MMV.Sombrero.SombreroShader import *
 class FullScreenConstructor:
     def __init__(self, SombreroMain):
         self.SombreroMain = SombreroMain
-        self.SombreroContext = self.SombreroMain.context
-        self.vertex_shader = Path(self.SombreroMain.sombrero_dir/"glsl"/"constructors"/"rectangles_vertex.glsl").read_text()
-        self.geometry_shader = Path(self.SombreroMain.sombrero_dir/"glsl"/"constructors"/"rectangles_geometry.glsl").read_text()
+        self.SombreroContext = self.SombreroMain.SombreroContext
+        self.vertex_shader = Path(self.SombreroMain.SombreroDir/"Constructors"/"RectanglesVertex.glsl").read_text()
+        self.geometry_shader = Path(self.SombreroMain.SombreroDir/"Constructors"/"RectanglesGeometry.glsl").read_text()
         self.num_vertices = 4
         self.buffer = self.SombreroContext.gl_context.buffer(reserve = 16)
         self.buffer.write(array("f", [0, 0, 2, 2]))
@@ -18,14 +18,14 @@ class FullScreenConstructor:
     
     def treat_fragment_shader(self, SombreroShader):
         io_placeholder = SombreroShader.IOPlaceHolder
-        IO("vec2", "opengl_uv", prefix = False, mode = "i")(io_placeholder)
-        IO("vec2", "shadertoy_uv", prefix = False, mode = "i")(io_placeholder)
+        IO("vec2", "OpenGLUV", prefix = False, mode = "i")(io_placeholder)
+        IO("vec2", "ShaderToyUV", prefix = False, mode = "i")(io_placeholder)
         IO("vec4", "fragColor", prefix = False, mode = "o")(io_placeholder)
 
     def vao(self):
         if self.once_returned_vao: return
         self.once_returned_vao = True
-        return [(self.buffer, "2f 2f", "in_pos", "in_size"),]
+        return [(self.buffer, "2f 2f", "InPos", "InSize"),]
 
     def next(self):
         pass
@@ -35,22 +35,22 @@ class FullScreenConstructor:
 class PianoRollConstructor:
     def __init__(self, SombreroMain, piano_roll, expect, maxkeys = 500):
         self.SombreroMain = SombreroMain
-        self.SombreroContext = self.SombreroMain.context
+        self.SombreroContext = self.SombreroMain.SombreroContext
         self.piano_roll = piano_roll
         self.expect = expect
-        self.vertex_shader = Path(self.SombreroMain.sombrero_dir/"glsl"/"constructors"/"piano_vertex.glsl").read_text()
-        self.geometry_shader = Path(self.SombreroMain.sombrero_dir/"glsl"/"constructors"/"piano_geometry.glsl").read_text()
+        self.vertex_shader = Path(self.SombreroMain.SombreroDir/"Constructors"/"PianoVertex.glsl").read_text()
+        self.geometry_shader = Path(self.SombreroMain.SombreroDir/"Constructors"/"PianoGeometry.glsl").read_text()
         self.buffer = self.SombreroContext.gl_context.buffer(reserve = 9 * 4 * maxkeys)
     
     def treat_fragment_shader(self, SombreroShader):
         io_placeholder = SombreroShader.IOPlaceHolder
-        IO("vec2", "opengl_uv", prefix = False, mode = "i")(io_placeholder)
-        IO("vec2", "shadertoy_uv", prefix = False, mode = "i")(io_placeholder)
+        IO("vec2", "OpenGLUV", prefix = False, mode = "i")(io_placeholder)
+        IO("vec2", "ShaderToyUV", prefix = False, mode = "i")(io_placeholder)
         IO("float", "note", prefix = False, mode = "i")(io_placeholder)
         IO("float", "velocity", prefix = False, mode = "i")(io_placeholder)
         IO("float", "channel", prefix = False, mode = "i")(io_placeholder)
-        IO("float", "is_playing", prefix = False, mode = "i")(io_placeholder)
-        IO("float", "is_white", prefix = False, mode = "i")(io_placeholder)
+        IO("float", "IsPlaying", prefix = False, mode = "i")(io_placeholder)
+        IO("float", "IsWhite", prefix = False, mode = "i")(io_placeholder)
         IO("vec4", "fragColor", prefix = False, mode = "o")(io_placeholder)
 
     def vao(self):
@@ -64,7 +64,7 @@ class PianoRollConstructor:
 
         return (self.buffer,
             "2f 2f 1f 1f 1f 1f 1f",
-            "in_pos", "in_size", "in_note", "in_velocity", "in_channel", "in_is_playing", "in_is_white"
+            "InPos", "InSize", "InNote", "InVelocity", "InChannel", "InIsPlaying", "InIsWhite"
         ),
 
     def next(self):

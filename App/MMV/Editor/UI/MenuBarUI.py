@@ -77,6 +77,7 @@ class mmvEditorMenuBarUI:
 
             with Dear.menu(label=Speak("Developer")):
                 Dear.add_menu_item(label=Speak("Toggle Loading Indicator"), callback=lambda s,d:self.Editor.ToggleLoadingIndicator())
+                Dear.add_menu_item(label=Speak("Test Run Sombrero"), callback=lambda s,d: self.Editor.Scene.TestRunSombrero())
                 Dear.add_menu_item(label=Speak("DearPyGui Style Editor"),   callback=lambda s,d:Dear.show_tool(Dear.mvTool_Style))
                 Dear.add_menu_item(label=Speak("DearPyGui Metrics"),        callback=lambda:Dear.show_tool(Dear.mvTool_Metrics))
                 Dear.add_menu_item(label=Speak("DearPyGui Documentation"),  callback=lambda:Dear.show_tool(Dear.mvTool_Doc))

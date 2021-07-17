@@ -259,6 +259,7 @@ f"""Show extension\n{"="*self.terminal_width}
         self.NodesDir       = self.DataDir/"Nodes"
         self.ImageDir       = self.DataDir/"Image"
         self.ShadersDir     = self.DataDir/"Shaders"
+        self.SombreroDir    = self.ShadersDir/"Sombrero"
         self.AssetsDir      = self.DataDir/"Assets"
         self.FontsDir       = self.DataDir/"Fonts"
         self.IconDir        = self.ImageDir/"Icon"

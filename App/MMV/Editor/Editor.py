@@ -43,7 +43,7 @@ from dotmap import DotMap
 from MMV.Common.PackUnpack import PackUnpack
 from MMV.Common.Polyglot import Polyglot
 from MMV.Common.Utils import Utils
-from MMV.Editor.EditorUtils import (AssignLocals, CenteredWindow,
+from MMV.Editor.EditorUtils import (CenteredWindow,
                                     CenteredWindowsSuggestedMaxVSize,
                                     EmptyCallable, EnterContainerStack,
                                     ExtendedDotMap, NewHash, PayloadTypes,

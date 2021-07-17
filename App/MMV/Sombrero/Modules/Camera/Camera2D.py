@@ -69,8 +69,8 @@ class Camera2D(BaseModule):
         # Inverse drag? Feels more natural when mouse exclusivity is on
         inverse = -1 if inverse else 1
 
-        # Add to the mmv_drag pipeline item the dx and dy multiplied by the square of the current zoom
-        square_current_zoom = (self.SombreroMain.pipeline["m2DZoom"] ** 2)
+        # Add to the mmv_drag GlobalPipeline item the dx and dy multiplied by the square of the current zoom
+        square_current_zoom = (self.SombreroMain.GlobalPipeline["m2DZoom"] ** 2)
 
         # dx and dy on zoom and SSAA
         dx = (dx * square_current_zoom) * self.SombreroContext.ssaa

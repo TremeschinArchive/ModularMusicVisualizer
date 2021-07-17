@@ -96,7 +96,7 @@ window:
         self.time_speed = 1
         self.playback = 1
         self.debug_mode = False
-        self.freezed_pipeline = False
+        self.freezed_GlobalPipeline = False
 
         # Interactive
         self.shift_pressed = False
@@ -134,7 +134,7 @@ window:
 
     # We are changing target fps, fix time
     def change_fps(self, new):
-        self.SombreroMain.pipeline["mFrame"] *= (new / self.fps)
+        self.SombreroMain.GlobalPipeline["mFrame"] *= (new / self.fps)
         self.fps = new
     
     # If new fps < 60, ratio should be higher

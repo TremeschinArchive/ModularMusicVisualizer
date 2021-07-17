@@ -57,6 +57,7 @@ class SombreroMain:
     def __init__(self, PackageInterface, MasterShader=False, flip=False, ChildSombreroContext=None):
         # # Constructor
         self.PackageInterface = PackageInterface
+        self.SombreroDir = self.PackageInterface.SombreroDir
 
         # Do flip coordinates vertically? OpenGL context ("shared" with main class)
         self.flip = flip
@@ -67,18 +68,18 @@ class SombreroMain:
         # Contents dictionary that holds instruction, other classes and all
         # Pipeline textures have name if mappend one 
         # Pending uniforms to be passed values after shader is loaded
-        # Variables pipeline
+        # Variables GlobalPipeline
         self.contents = {}
-        self.writable_textures = {}
-        self.pending_uniforms = []
-        self.pipeline = {}
+        self.WritableTextures = {}
+        self.PendingUniforms = []
+        self.GlobalPipeline = {}
 
         # Modules
         if self.MasterShader: self.SombreroContext = SombreroContext(self)
         else: self.SombreroContext = ChildSombreroContext
-        self.window = SombreroWindow(SombreroMain = self)
-        self.macros = SombreroShaderMacros(self)
-        self.shader = SombreroShader()
+        self.window = SombreroWindow(SombreroMain=self)
+        self.ShaderMacros = SombreroShaderMacros(self)
+        self.Shader = SombreroShader()
         self.constructor = None
         
         self._want_to_reload = False
@@ -89,8 +90,11 @@ class SombreroMain:
         return self.piano_roll
 
     # Create and configure one child of this class with same target stuff
-    def new_child(self):
-        child = SombreroMain(PackageInterface = self.PackageInterface, MasterShader = False, context = self.SombreroContext)
+    def NewChild(self):
+        child = SombreroMain(
+            PackageInterface=self.PackageInterface,
+            MasterShader=False,
+            context=self.SombreroContext)
         return child
 
     # # Shorthands
@@ -107,9 +111,9 @@ class SombreroMain:
     # # Mappings
 
     # Map some other SombreroMain class as a shader of this one
-    def map_shader(self, name, SombreroMain):
+    def MapShader(self, name, SombreroMain):
         uniforms = [Uniform("sampler2D", name, None)]
-        self.pending_uniforms += uniforms
+        self.PendingUniforms += uniforms
         self.assign_content(dict(
             loader = "child_SombreroMain", name = name, texture = SombreroMain.texture, SombreroMain = SombreroMain,
             dynamic = True
@@ -117,7 +121,7 @@ class SombreroMain:
         return uniforms
 
     # Image mapping as texture
-    def map_image(self, name, path, repeat_x = True, repeat_y = True, mipmap = True, anisotropy = 16):
+    def MapImage(self, name, path, repeat_x = True, repeat_y = True, mipmap = True, anisotropy = 16):
 
         # Open image, mipmap, texture
         img = Image.open(path).convert("RGBA")
@@ -126,57 +130,57 @@ class SombreroMain:
 
         # Uniforms, assign content
         uniforms = [Uniform("sampler2D", name, None), Uniform("vec2", f"{name}_resolution", img.size)]
-        self.pending_uniforms += uniforms
+        self.PendingUniforms += uniforms
         self.assign_content(dict(
             loader = "image", name = name, texture = texture, resolution = img.size
         )); return uniforms
 
     # Map some other SombreroMain class as a shader of this one
-    def map_pipeline_texture(self, name, width, height, depth):
+    def MapPipelineTexture(self, name, width, height, depth):
         size = (width, height)
         uniforms = [Uniform("sampler2D", name, None), Uniform("vec2", f"{name}_resolution", size)]
         texture = self.SombreroContext.gl_context.texture(size, depth, dtype = "f4")
         texture.write(np.zeros((width, height, depth), dtype = np.float32))  # Start empty (GL context no guarantee to be clean)
-        self.writable_textures[name] = texture
-        self.pending_uniforms += uniforms
+        self.WritableTextures[name] = texture
+        self.PendingUniforms += uniforms
         self.assign_content(dict(
-            loader = "pipeline_texture", name = name, texture = texture, size = size
+            loader = "GlobalPipeline_texture", name = name, texture = texture, size = size
         ))
         return uniforms
 
     # # GL objects
 
     # Create one texture attached to some FBO. Depth = 4 -> RGBA
-    def create_texture_fbo(self, width, height, depth = 4) -> list:
+    def CreateTextureFBO(self, width, height, depth = 4) -> list:
         texture = self.SombreroContext.gl_context.texture((int(width), int(height)), depth)
         fbo = self.SombreroContext.gl_context.framebuffer(color_attachments = [texture])
         return [texture, fbo]
 
     # Get the uniform if exists, enforce tuple if isn't tuple or int and assign the value
-    def set_uniform(self, name, value):
+    def SetUniform(self, name, value):
         if (not isinstance(value, float)) and (not isinstance(value, int)): value = tuple(value)
         self.program.get(name, DummyElement()).value = value
         return name
     
     # Write to some PipelineTexture that was mapped, recursively to every child
-    def write_pipeline_texture(self, name, data):
-        self.writable_textures.get(name, DummyElement()).write(np.array(data, dtype = np.float32).tobytes())
-        for child in self.children_SombreroMain(): child.write_pipeline_texture(name, data)
+    def WritePipelineTexture(self, name, data):
+        self.WritableTextures.get(name, DummyElement()).write(np.array(data, dtype = np.float32).tobytes())
+        for child in self.children_SombreroMain(): child.WritePipelineTexture(name, data)
     
     # Write uniform values on the list of pending uniforms
-    def solve_pending_uniforms(self):
-        for item in self.pending_uniforms:
-            if item.value is not None: self.set_uniform(item.name, item.value)
-        self.pending_uniforms = []
+    def SolvePendingUniforms(self):
+        for item in self.PendingUniforms:
+            if item.value is not None: self.SetUniform(item.name, item.value)
+        self.PendingUniforms = []
 
-    # Pipe a global pipeline
-    def pipe_pipeline(self, pipeline):
-        for name, value in pipeline.items(): self.set_uniform(name, value)
+    # Pipe a global GlobalPipeline
+    def PipePipeline(self, GlobalPipeline):
+        for name, value in GlobalPipeline.items(): self.SetUniform(name, value)
     
     # # Load
 
     def _create_assing_texture_fbo_render_buffer(self):
-        self.texture, self.fbo = self.create_texture_fbo(
+        self.texture, self.fbo = self.CreateTextureFBO(
             width  = self.SombreroContext.width  * self.SombreroContext.ssaa,
             height = self.SombreroContext.height * self.SombreroContext.ssaa)
 
@@ -189,8 +193,8 @@ class SombreroMain:
         if self.constructor is None: self.constructor = FullScreenConstructor(self)
 
         # Add IOs to the frag shader based on constructor specifications
-        self.constructor.treat_fragment_shader(self.shader)
-        frag = self.shader.build()
+        self.constructor.treat_fragment_shader(self.Shader)
+        frag = self.Shader.Build()
 
         # The FBO and texture so we can use on parent shaders, master shader doesn't require since it haves window fbo
         if not self.MasterShader:
@@ -202,7 +206,7 @@ class SombreroMain:
                 geometry_shader = self.constructor.geometry_shader,
                 fragment_shader = frag,
             )
-            self.solve_pending_uniforms()
+            self.SolvePendingUniforms()
             if self.MasterShader: self.SombreroContext.framerate.clear()
 
         except moderngl.error.Error as e:
@@ -211,84 +215,84 @@ class SombreroMain:
             logging.error(f"{dpfx} {e}")
             if _give_up_if_any_errors: sys.exit()
             self.constructor = FullScreenConstructor(self)
-            self.shader = SombreroShader()
-            self.macros.load(self.PackageInterface.sombrero_dir/"glsl"/"missing_texture.glsl")
+            self.Shader = SombreroShader()
+            self.macros.load(self.PackageInterface.SombreroDir/"glsl"/"missing_texture.glsl")
             self.finish(_give_up_if_any_errors = True)
 
     # Get render instructions, do this every render because stuff like piano roll needs
     # their draw instructions to be updated
-    def get_vao(self):
+    def GetVAO(self):
         if instructions := self.constructor.vao():
             self.vao = self.SombreroContext.gl_context.vertex_array(self.program, instructions, skip_errors = True)
 
     # # Render
 
     # Next iteration, also render
-    def next(self, custom_pipeline = {}):
+    def Next(self, CustomGlobalPipeline = {}):
         if not self.__ever_finished: self.finish()
-        if custom_pipeline is None: custom_pipeline = {}
+        if CustomGlobalPipeline is None: CustomGlobalPipeline = {}
 
-        # # Update pipeline
+        # # Update GlobalPipeline
 
         # Get current window "state"
-        self.pipeline["mResolution"] = (self.SombreroContext.width * self.SombreroContext.ssaa, self.SombreroContext.height * self.SombreroContext.ssaa)
-        self.pipeline["mFlip"] = -1 if self.flip else 1
+        self.GlobalPipeline["mResolution"] = (self.SombreroContext.width * self.SombreroContext.ssaa, self.SombreroContext.height * self.SombreroContext.ssaa)
+        self.GlobalPipeline["mFlip"] = -1 if self.flip else 1
 
         # Render related
-        self.pipeline["quality"] = self.SombreroContext.quality
+        self.GlobalPipeline["quality"] = self.SombreroContext.quality
 
         # Time related
-        self.pipeline["mFrame"] = self.pipeline.get("mFrame", 0) + self.SombreroContext.time_speed
-        self.pipeline["mTime"] = self.pipeline["mFrame"] / self.SombreroContext.fps
+        self.GlobalPipeline["mFrame"] = self.GlobalPipeline.get("mFrame", 0) + self.SombreroContext.time_speed
+        self.GlobalPipeline["mTime"] = self.GlobalPipeline["mFrame"] / self.SombreroContext.fps
 
         # GUI related
-        self.pipeline["mIsGuiVisible"] = self.SombreroContext.show_gui
-        self.pipeline["mIsDebugMode"] = self.SombreroContext.debug_mode
+        self.GlobalPipeline["mIsGuiVisible"] = self.SombreroContext.show_gui
+        self.GlobalPipeline["mIsDebugMode"] = self.SombreroContext.debug_mode
 
         # 2D
-        self.pipeline["m2DIsDraggingMode"] = 1 in self.SombreroContext.mouse_buttons_pressed
-        self.pipeline["m2DIsDragging"] = self.SombreroContext.camera2d.is_dragging
-        self.pipeline["m2DRotation"] = self.SombreroContext.camera2d.rotation.value
-        self.pipeline["m2DZoom"] = self.SombreroContext.camera2d.zoom.value
-        self.pipeline["m2DDrag"] = self.SombreroContext.camera2d.drag.value
+        self.GlobalPipeline["m2DIsDraggingMode"] = 1 in self.SombreroContext.mouse_buttons_pressed
+        self.GlobalPipeline["m2DIsDragging"] = self.SombreroContext.camera2d.is_dragging
+        self.GlobalPipeline["m2DRotation"] = self.SombreroContext.camera2d.rotation.value
+        self.GlobalPipeline["m2DZoom"] = self.SombreroContext.camera2d.zoom.value
+        self.GlobalPipeline["m2DDrag"] = self.SombreroContext.camera2d.drag.value
 
         # 3D
-        self.pipeline["m3DCameraBase"] = self.SombreroContext.camera3d.standard_base.reshape(-1)
-        self.pipeline["m3DCameraPointing"] = self.SombreroContext.camera3d.pointing
-        self.pipeline["m3DCameraPos"] = self.SombreroContext.camera3d.position.value
-        self.pipeline["m3DRoll"] = self.SombreroContext.camera3d.roll.value
-        self.pipeline["m3DFOV"] = self.SombreroContext.camera3d.fov.value
+        self.GlobalPipeline["m3DCameraBase"] = self.SombreroContext.camera3d.standard_base.reshape(-1)
+        self.GlobalPipeline["m3DCameraPointing"] = self.SombreroContext.camera3d.pointing
+        self.GlobalPipeline["m3DCameraPos"] = self.SombreroContext.camera3d.position.value
+        self.GlobalPipeline["m3DRoll"] = self.SombreroContext.camera3d.roll.value
+        self.GlobalPipeline["m3DFOV"] = self.SombreroContext.camera3d.fov.value
         
         # Keys
-        self.pipeline["mMouse1"] = 1 in self.SombreroContext.mouse_buttons_pressed
-        self.pipeline["mMouse2"] = 2 in self.SombreroContext.mouse_buttons_pressed
-        self.pipeline["mMouse3"] = 3 in self.SombreroContext.mouse_buttons_pressed
-        self.pipeline["mKeyShift"] = self.SombreroContext.shift_pressed
-        self.pipeline["mKeyCtrl"] = self.SombreroContext.ctrl_pressed
-        self.pipeline["mKeyAlt"] = self.SombreroContext.alt_pressed
+        self.GlobalPipeline["mMouse1"] = 1 in self.SombreroContext.mouse_buttons_pressed
+        self.GlobalPipeline["mMouse2"] = 2 in self.SombreroContext.mouse_buttons_pressed
+        self.GlobalPipeline["mMouse3"] = 3 in self.SombreroContext.mouse_buttons_pressed
+        self.GlobalPipeline["mKeyShift"] = self.SombreroContext.shift_pressed
+        self.GlobalPipeline["mKeyCtrl"] = self.SombreroContext.ctrl_pressed
+        self.GlobalPipeline["mKeyAlt"] = self.SombreroContext.alt_pressed
 
         # Merge the two dictionaries
-        for key, value in custom_pipeline.values():
-            self.pipeline[key] = value
+        for key, value in CustomGlobalPipeline.values():
+            self.GlobalPipeline[key] = value
 
         # Render, update window
         self._render()
-        self.window.update_window()
+        self.window.UpdateWindow()
 
     # Internal function for rendering (some stuff needs to be called like getting next image of video)
     def _render(self):
 
         # VAO, constructor
         self.constructor.next()
-        self.get_vao()
+        self.GetVAO()
 
         # Pipe to self
-        self.pipe_pipeline(self.pipeline)
+        self.PipePipeline(self.GlobalPipeline)
 
-        # Pipe the pipeline to child shaders and render them
+        # Pipe the GlobalPipeline to child shaders and render them
         for child in self.children_SombreroMain():
-            child.pipe_pipeline(self.pipeline)
-            child.pipeline = self.pipeline
+            child.PipePipeline(self.GlobalPipeline)
+            child.GlobalPipeline = self.GlobalPipeline
             child._render()
 
         # Which FBO to use
@@ -349,7 +353,7 @@ class SombreroMain:
         # Remove duplicates
         return list(set(info))
     
-    def time_zero(self): self.pipeline["mFrame"] = 0
+    def time_zero(self): self.GlobalPipeline["mFrame"] = 0
 
     def reset(self):
         if self.SombreroContext.piano_roll is not None:

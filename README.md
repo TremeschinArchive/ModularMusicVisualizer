@@ -97,6 +97,9 @@ The shader render backend is called "Sombrero", I have to overhaul it a bit befo
 - **Rendering Shaders to Video easily**, react to audio or not.
 
 
+## ● Interactive Live Mode
+Edit the Shader nodes interactively, change values per node, hook up keyboard controls for certain values.
+
 
 <hr>
 

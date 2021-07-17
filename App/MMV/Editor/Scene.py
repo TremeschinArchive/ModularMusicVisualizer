@@ -113,3 +113,14 @@ class mmvEditorScene:
         C = copy.deepcopy(self.Links.DotMap); del C.Hash; C = C.toDict()
         for line in yaml.dump(C, default_flow_style=False, width=50, indent=2).split("\n"):
             if line: logging.info(f"{dpfx} {line}")
+
+    def TestRunSombrero(self):
+        self.Editor.SombreroMain.ShaderMacros.Load(
+            self.Editor.PackageInterface.ShadersDir/"Sombrero"/"Menu.glsl"
+        )
+        self.Editor.SombreroMain.window.CreateWindow()
+
+        import time
+        while True:
+            self.Editor.SombreroMain.Next()
+            time.sleep(1/60)

@@ -33,6 +33,7 @@ import dearpygui.dearpygui as Dear
 from dotmap import DotMap
 from MMV.Common.PackUnpack import PackUnpack
 from watchdog.events import PatternMatchingEventHandler
+from MMV.Common.Utils import Utils
 
 
 # Enter a DPG container Stack using "with", it pushes then pops after exiting
@@ -91,14 +92,6 @@ def WatchdogTemplate():
 # Get one _pretty_ identifier, uppercase without dashes uuid4
 def NewHash(): return str(uuid.uuid4()).replace("-","").upper()
 
-
-# Very Weird'n'Lazy Overkill Way of assigning all locals() that aren't
-# attributes as self.* variables.
-def AssignLocals(data):
-    for k,v in data.items():
-        if k != "self": data["self"].__setattr__(k,v)
-
-
 # Toggle one bool from __dict__ safely, creates if doesn't exist
 def ToggleAttrSafe(InternalDict, Key, Default=True):
     InternalDict[Key] = not InternalDict.get(Key, Default)
@@ -110,7 +103,7 @@ class EmptyCallable:
 # # ExtendedDotMap
 class ExtendedDotMap:
     def __init__(self, OldSelf=None, SetCallback=EmptyCallable()):
-        AssignLocals(locals())
+        Utils.AssignLocals(locals())
         self.DotMap = DotMap(_dynamic=False)
         self.Digest("Hash", NewHash())
 

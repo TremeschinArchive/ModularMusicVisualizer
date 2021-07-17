@@ -36,7 +36,7 @@ from intervaltree import Interval, IntervalTree
 def midi_index_to_name(note):
     return ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'][(note + 60) % 12] + str((note // 12) - 1)
 
-def is_white_key(note): return "#" in midi_index_to_name(note)
+def IsWhite_key(note): return "#" in midi_index_to_name(note)
 
 # Attributes one Midi Note will have, the usual: which, when, how much, where
 class MidiNote:
@@ -237,7 +237,7 @@ class PianoRoll:
             start = self.now - self.time_draw_bleed, end = self.now + self.visible_seconds + self.time_draw_bleed)
 
     @property
-    def now(self): return self.SombreroMain.pipeline["mTime"]
+    def now(self): return self.SombreroMain.GlobalPipeline["mTime"]
     
     # Notes being played right now 
     def get_playing_now(self): return self.get_playing_notes_at(time = self.now)
@@ -264,7 +264,7 @@ class PianoRoll:
 
         for index in reversed(todel): del self.__playing_notes_fluid[index]
 
-        if self.SombreroContext.freezed_pipeline:
+        if self.SombreroContext.freezed_GlobalPipeline:
             for note in self.__playing_notes_fluid:
                 self.synth.key_up(note.note)#, note.channel)
                 self.__playing_notes_fluid = []
@@ -289,8 +289,8 @@ class PianoRoll:
 
             # Coordinates
             this_instruction += [x, (-1 + self.piano_height / 2), S*width, S*self.piano_height]
-            is_playing = any([note == playing.note for playing in playing_now])
-            this_instruction += [note, 0, 0, is_playing, not "#" in midi_index_to_name(note)]
+            IsPlaying = any([note == playing.note for playing in playing_now])
+            this_instruction += [note, 0, 0, IsPlaying, not "#" in midi_index_to_name(note)]
             instructions["keys"].append(this_instruction)
 
         for note in playing:
@@ -317,10 +317,10 @@ class PianoRoll:
             )
 
             # If note is playing now
-            is_playing = any([note.note == playing.note for playing in playing_now])
+            IsPlaying = any([note.note == playing.note for playing in playing_now])
 
             # Attributes
-            note_attrs = [note.note, note.velocity, note.channel, int(is_playing), int(not "#" in note.name)]
+            note_attrs = [note.note, note.velocity, note.channel, int(IsPlaying), int(not "#" in note.name)]
 
             # Midi coordinate and attributes
             this_instruction += [x, y - height/2, S*width, S*height] + note_attrs
