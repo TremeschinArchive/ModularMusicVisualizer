@@ -3,8 +3,7 @@
                                 GPL v3 License                                
 ===============================================================================
 
-Copyright (c) 2020 - 2021,
-  - Tremeschin < https://tremeschin.gitlab.io > 
+Copyright (c) 2020 - 2021, Tremeschin
 
 ===============================================================================
 
@@ -29,6 +28,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 import glob
 import hashlib
+import importlib.util
 import logging
 import math
 import os
@@ -43,7 +43,48 @@ from pathlib import Path
 import MMV.Common.AnyLogger
 import toml
 import yaml
+from dotmap import DotMap
+from MMV.Common.PackUnpack import PackUnpack
+from watchdog.events import PatternMatchingEventHandler
 
+
+class EmptyCallable:
+    def __init__(self,*a,**b): ...
+    def __call__(self,*a,**b): ...
+
+# # ExtendedDotMap
+class ExtendedDotMap:
+    def __init__(self, OldSelf=None, SetCallback=EmptyCallable()):
+        Utils.AssignLocals(locals())
+        self.DotMap = DotMap(_dynamic=False)
+        self.Digest("Hash", Utils.NewHash())
+
+    # If we have one OldSelf, attempt to get its attribute to current DotMap
+    def Digest(self, Name, Default):
+        if self.OldSelf is not None:
+            Value = self.OldSelf.get(Name, Default)
+        else: Value = Default
+        logging.info(f"[ExtendedDotMap.Digest] {Name=} => {Default=} | {Value=}")
+        self.DotMap[Name] = Value
+
+    # Set one attribute 
+    def ForceSet(self, Key, Value):
+        logging.info(f"[ExtendedDotMap.ForceSet] {Key} => {Value}")
+        self.DotMap[Key] = Value
+        self.SetCallback()
+
+    # Get one attribute if it exists, if it doesn't set to default
+    def SetDNE(self, Key, Default):
+        logging.info(f"[ExtendedDotMap.SetDNE] {Key} => {Default}")
+        self.DotMap[Key] = self.DotMap.get(Key, Default)
+        self.SetCallback()
+
+    # Toggle one boolean on this DotMap safely
+    def ToggleBool(self, Key, Default=False):
+        self.ForceSet(Key, not self.DotMap.get(Key, not Default))
+
+    # Pack this DotMap to a file so we load it later on
+    def Pack(self, path): PackUnpack.Pack(self.DotMap, path)
 
 class Utils:
     # Get the desired name from a dict matching against os.name
@@ -56,8 +97,8 @@ class Utils:
         }.get(os.name)
 
     @staticmethod
-    def AllSubdirectories(path):
-        return [item for item in Path(path).rglob("*") if item.is_dir]
+    def AllSubdirectories(FilePath):
+        return [item for item in Path(FilePath).rglob("*") if item.is_dir]
 
     @staticmethod
     def AssignLocals(data):
@@ -78,16 +119,58 @@ class Utils:
         return data
 
     @staticmethod
-    def ResolvePath(path):
-        return Path(path).expanduser().resolve()
+    def ResolvePath(FilePath):
+        return Path(FilePath).expanduser().resolve()
 
     @staticmethod
-    def LoadYaml(path):
-        return Utils.LoadYamlString( Utils.ResolvePath(path).read_text() )
+    def LoadYaml(FilePath):
+        return Utils.LoadYamlString( Utils.ResolvePath(FilePath).read_text() )
 
     @staticmethod
     def LoadYamlString(data):
         return yaml.load(data, Loader=yaml.FullLoader)
+
+    # Dynamically import a file from a given Path
+    @staticmethod
+    def ImportFileFromPath(FilePath):
+        logging.info(f"[Utils.ImportFileFromPath] Import file [{FilePath}]")
+        spec = importlib.util.spec_from_file_location(f"DynamicImport[{FilePath}]", FilePath)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    # Get one _pretty_ identifier, uppercase without dashes uuid4
+    @staticmethod
+    def NewHash(): return str(uuid.uuid4()).replace("-","").upper()
+
+    # Create one Watchdog template with some functions that does nothing
+    @staticmethod
+    def WatchdogTemplate():
+        T = PatternMatchingEventHandler(["*"], None, False, True)
+        T.on_created  = lambda *a,**b: None
+        T.on_deleted  = lambda *a,**b: None
+        T.on_modified = lambda *a,**b: None
+        T.on_moved    = lambda *a,**b: None
+        return T
+
+    # Toggle one bool from __dict__ safely, creates if doesn't exist
+    @staticmethod
+    def ToggleAttrSafe(InternalDict, Key, Default=True):
+        InternalDict[Key] = not InternalDict.get(Key, Default)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     # # "Old" / to rewrite
 

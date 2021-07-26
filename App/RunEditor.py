@@ -3,8 +3,7 @@
                                 GPL v3 License                                
 ===============================================================================
 
-Copyright (c) 2020 - 2021,
-  - Tremeschin < https://tremeschin.gitlab.io > 
+Copyright (c) 2020 - 2021, Tremeschin
 
 ===============================================================================
 
@@ -26,30 +25,28 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 import os
-# Add current directory to PATH so we find the "mmv" package
+# Add current directory to PATH so we find the "MMV" package
 import sys
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import time
 
+import dearpygui.dearpygui as Dear
 import MMV
 
 
-def Main():
+def RunEditor():
     PackageInterface = MMV.mmvPackageInterface()
     Editor = PackageInterface.GetEditor()
     Editor.InitMainWindow()
+    Editor.MainLoop()
+    return Editor
 
-    while True: 
-        try: time.sleep(0.5)
-        except KeyboardInterrupt:
-            Editor.Exit(); break
-
-        if Editor._Stop: break
-
-    sys.exit(0)
-
+def Main():
+    while True:
+        if RunEditor()._mmvRestart_: continue
+        else: break
 
 if __name__ == "__main__":
     Main()

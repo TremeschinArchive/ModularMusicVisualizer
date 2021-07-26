@@ -3,8 +3,7 @@
                                 GPL v3 License                                
 ===============================================================================
 
-Copyright (c) 2020 - 2021,
-  - Tremeschin < https://tremeschin.gitlab.io > 
+Copyright (c) 2020 - 2021, Tremeschin
 
 ===============================================================================
 
@@ -27,6 +26,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 import copy
 from pathlib import Path
+
 from MMV.Common.Utils import Utils
 
 # # Abstractions

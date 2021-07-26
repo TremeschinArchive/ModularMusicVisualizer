@@ -3,8 +3,7 @@
                                 GPL v3 License                                
 ===============================================================================
 
-Copyright (c) 2020 - 2021,
-  - Tremeschin < https://tremeschin.gitlab.io > 
+Copyright (c) 2020 - 2021, Tremeschin
 
 ===============================================================================
 
@@ -38,6 +37,7 @@ import tempfile
 from pathlib import Path
 
 import toml
+from appdirs import AppDirs
 from dotmap import DotMap
 from MMV.Common.ExternalsManager import ExternalsManager
 from MMV.Common.Utils import Utils
@@ -146,21 +146,10 @@ f"""Show extension\n{"="*self.terminal_width}
     # Send ForcePlatform = "Windows", "MacOS", "Linux" for forcing a specific one
     def __init__(self, ForcePlatform=None, **kwargs) -> None:
         dpfx = "[mmvPackageInterface.__init__]"
-        self.VersionNumber = "4.1.1"
+        self.VersionNumber = "4.1.2"
         self.Version = f"{self.VersionNumber}: Node Editor"
 
-        # # Where this file is located, please refer using this on the whole package
-        # # Refer to it as self.PackageInterface.DIR at any depth in the code
-        # # This deals with the case we used pyinstaller and it'll get the executable path instead
-        # print("Compiled", globals().get("__compiled__", None))
-        # if getattr(sys, 'frozen', True) or (globals().get("__compiled__", None) is not None):    
-        #     self.DIR = Path(os.path.dirname(os.path.abspath(__file__)))
-        #     print(f"{dpfx} Running directly from source code")
-        # else:
-        #     self.DIR = Path(os.path.dirname(os.path.abspath(__file__)))
-        #     # self.DIR = Path(os.path.dirname(os.path.abspath(sys.executable)))
-        #     print(f"{dpfx} Running from release (sys.executable..?)")
-
+        # Detect if we are running from a release or from source code
         if globals().get("__compiled__", None) is not None:
             self.DIR = Path(sys.argv[0]).resolve().parent
             print(f"{dpfx} Running from Nuitka compiled binary")
@@ -171,7 +160,13 @@ f"""Show extension\n{"="*self.terminal_width}
             print(f"{dpfx} Running directly from source code")
         print(f"{dpfx} Modular Music Visualizer Python package [__init__.py] or executable located at [{self.DIR}]")
 
-        # The most important directory
+        # Platform Dirs
+        self.AppName = "ModularMusicVisualizer"
+        self.AppAuthor = "MMV"
+        self.AppDirs = AppDirs(self.AppName, self.AppAuthor)
+        self.AppDirsVersioned = AppDirs(self.AppName, self.AppAuthor, version=self.VersionNumber)
+
+        # The most important directory, where we also load startup configuration
         self.DataDir = self.DIR/"Data"
 
         # Config

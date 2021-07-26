@@ -65,9 +65,9 @@ Clone:
   pt-br: Clonar
 Version:
   pt-br: Versão
-Yes:
+"Yes":
   pt-br: Sim
-No:
+"No":
   pt-br: Não
 
 # Externals
@@ -173,3 +173,8 @@ Finished Loading:
 # Temporary
 Hello I'll be toolbar:
   pt-br: Olá, serei ferramentas de contexto
+
+
+# Sombrero
+Real Time Shaders:
+  pt-br: Shaders em Tempo Real

@@ -3,8 +3,7 @@
                                 GPL v3 License                                
 ===============================================================================
 
-Copyright (c) 2020 - 2021,
-  - Tremeschin < https://tremeschin.gitlab.io > 
+Copyright (c) 2020 - 2021, Tremeschin
 
 ===============================================================================
 
@@ -27,6 +26,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 from dotmap import DotMap
 from MMV.Common.Utils import Utils
+
 
 # Are we realtime or rendering? We need to block some functionality
 # if we're rendering like not listening to joystick events

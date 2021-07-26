@@ -3,8 +3,7 @@
                                 GPL v3 License                                
 ===============================================================================
 
-Copyright (c) 2020 - 2021,
-  - Tremeschin < https://tremeschin.gitlab.io > 
+Copyright (c) 2020 - 2021, Tremeschin
 
 ===============================================================================
 
@@ -61,7 +60,7 @@ def MakeCountryFlags():
             subprocess.run(Command)
             os.remove(str(TempSourceSVGPath))
 
-def TestExternalsManager:
+def TestExternalsManager():
     for Platform in ["Linux", "Windows"]:
         MMV = MMV.mmvPackageInterface(ForcePlatform=Platform)
         for External in (MMV.Externals.AvailableExternals.ListOfAll):

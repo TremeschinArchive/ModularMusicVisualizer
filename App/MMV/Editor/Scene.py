@@ -3,8 +3,7 @@
                                 GPL v3 License                                
 ===============================================================================
 
-Copyright (c) 2020 - 2021,
-  - Tremeschin < https://tremeschin.gitlab.io > 
+Copyright (c) 2020 - 2021, Tremeschin
 
 ===============================================================================
 
@@ -33,17 +32,25 @@ from pathlib import Path
 import dearpygui.dearpygui as Dear
 import yaml
 from dotmap import DotMap
+from MMV.Common.BudgetVsync import BudgetVsyncClient
 from MMV.Common.PackUnpack import PackUnpack
 from MMV.Common.Polyglot import Polyglot
-from MMV.Editor.BaseNode import BaseNode
+from MMV.Common.Utils import *
+from MMV.Common.Utils import ExtendedDotMap
+from MMV.Editor.Nodes.BaseNode import BaseNode
 
 Speak = Polyglot.Speak
+
+class PayloadTypes:
+    Image  = "Image"
+    Shader = "Shader"
+    Number = "Number"
 
 
 class mmvEditorScene:
     def __init__(self, Editor):
         self.Editor = Editor
-        self.Links = self.Editor.ExtendedDotMap()
+        self.Links = ExtendedDotMap()
         self.Nodes = []
         self.PresetName = Speak("New Project")
         self.ClearAvailableNodes()
@@ -64,7 +71,7 @@ class mmvEditorScene:
     # Add some Node file to the Editor
     def AddNodeFile(self, path):
         path = Path(path).resolve(); assert path.exists
-        node = self.Editor.ImportFileFromPath(path).GetNode(BaseNode)
+        node = Utils.ImportFileFromPath(path).GetNode(BaseNode)
         node.Config()
         node.SourceFileHash = hashlib.sha256(Path(path).read_text().encode()).hexdigest()
         logging.info(f"[mmvEditor.AddNodeFile] Add node [{node.Name}] category [{node.Category}] from [{path}]")
@@ -74,14 +81,14 @@ class mmvEditorScene:
     # Also resets the NodeUI items and redisplays the ones we have
     def AddNodeFilesDataDirRecursive(self, render=True):
         logging.info("[mmvEditor.AddNodeFilesDataDirRecursive] Reloading..")
-        self.Editor.ToggleLoadingIndicator()
+        self.Editor.DearPyStuff.ToggleLoadingIndicator()
         self.ClearAvailableNodes()
         for candidate in self.Editor.PackageInterface.NodesDir.rglob("**/*.py"): self.AddNodeFile(candidate)
         if render: self.AddNodeUI.Reset(); self.AddNodeUI.Render()
-        self.Editor.ToggleLoadingIndicator()
+        self.Editor.DearPyStuff.ToggleLoadingIndicator()
 
     # user_data is "pointer" to some Node class
-    def AddNodeToScene(self, sender, app_data, node, *a, **k):
+    def AddNodeToScene(self, node, sender=None, app_data=None, *a, **k):
         self.Editor._log_sender_data(sender, app_data, node)
         node.Init(InheritedNode=node, Editor=self.Editor)
         node.Render(parent=self.Editor.DPG_NODE_EDITOR)
@@ -115,12 +122,6 @@ class mmvEditorScene:
             if line: logging.info(f"{dpfx} {line}")
 
     def TestRunSombrero(self):
-        self.Editor.SombreroMain.ShaderMacros.Load(
-            self.Editor.PackageInterface.ShadersDir/"Sombrero"/"Menu.glsl"
-        )
         self.Editor.SombreroMain.window.CreateWindow()
-
-        import time
-        while True:
-            self.Editor.SombreroMain.Next()
-            time.sleep(1/60)
+        self.Editor.SombreroMain.ShaderMacros.Load(self.Editor.PackageInterface.ShadersDir/"Sombrero"/"Default.glsl")
+        self.Editor.BudgetVsyncManager.AddVsyncTarget(BudgetVsyncClient(60, self.Editor.SombreroMain.Next))

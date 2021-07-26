@@ -5,18 +5,19 @@ Global:
 
   # Rounding
   mvStyleVar_ScrollbarRounding: 12
-  mvStyleVar_WindowRounding: 6
+  mvStyleVar_WindowRounding: 8
   mvStyleVar_FrameRounding: 4
-  mvStyleVar_ChildRounding: 4
+  mvStyleVar_ChildRounding: 6
   mvStyleVar_GrabRounding: 12
   mvStyleVar_TabRounding: 6
 
-  mvStyleVar_WindowPadding: [4, 1]
+  mvStyleVar_FramePadding: [4, 2]
+  mvStyleVar_WindowPadding: [3, 1]
   mvStyleVar_CellPadding: [2, 2]
 
   mvStyleVar_WindowTitleAlign: [0.5, 0.5]
-  mvStyleVar_ScrollbarSize: 11
-  mvStyleVar_ItemSpacing: [4, 2]
+  mvStyleVar_ScrollbarSize: 10
+  mvStyleVar_ItemSpacing: [6, 2]
 
   # Nodes
   mvNodeStyleVar_NodeCornerRounding: 3
@@ -66,6 +67,7 @@ Dark:
   mmvSectionText: [0,255,0]
 
   # # DearPyGui
+  mvStyleVar_FrameBorderSize: 0
 
   mvThemeCol_Separator: [60]
   mvThemeCol_Border: [60]
@@ -80,6 +82,7 @@ Light:
   mmvSectionText: [0,0,255]
 
   # # DearPyGui
+  mvStyleVar_FrameBorderSize: 1
 
   mvThemeCol_FrameBg: [220]
   mvThemeCol_Border: [180]

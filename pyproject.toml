@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mmv"
-version = "4.1.1"
+version = "4.1.2"
 description = "The Interactive Shader Render Platform"
 authors = ["Tremeschin"]
 license = "GPLv3"
@@ -33,10 +33,11 @@ pygame = "^2.0.1"
 playsound = "^1.2.2"
 toml = "^0.10.2"
 requests = "^2.25.1"
-dearpygui = "^0.8.14"
 arrow = "^1.1.1"
 SoundCard = "^0.4.1"
 glfw = "^2.1.0"
+appdirs = "^1.4.4"
+dearpygui = "0.8.39"
 
 [tool.poetry.dev-dependencies]
 Nuitka = "^0.6.16"
@@ -48,6 +49,7 @@ zstandard = "^0.15.2"
 magic = "App.Magic:Main"
 release = "App.MakeRelease:Main"
 editor = "App.RunEditor:Main"
+prototype = "App.Prototype:Main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

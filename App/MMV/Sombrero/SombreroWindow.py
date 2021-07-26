@@ -3,8 +3,7 @@
                                 GPL v3 License                                
 ===============================================================================
 
-Copyright (c) 2020 - 2021,
-  - Tremeschin < https://tremeschin.gitlab.io > 
+Copyright (c) 2020 - 2021, Tremeschin
 
 ===============================================================================
 
@@ -49,7 +48,7 @@ from MMV.Sombrero.Modules.Controller.Joystick import Joysticks
 from MMV.Sombrero.SombreroContext import RealTimeModes
 from MMV.Sombrero.Utils.GLFWKeyboardKeys import KeyboardKey
 from MMV.Sombrero.Utils.SombreroWindowUtils import (FrameTimesCounter,
-                                                      OnScreenTextMessages)
+                                                    OnScreenTextMessages)
 from moderngl_window import resources
 from moderngl_window.conf import settings
 from moderngl_window.integrations.imgui import ModernglWindowRenderer
@@ -57,6 +56,10 @@ from PIL import Image
 
 sin = math.sin
 cos = math.cos
+
+from MMV.Common.Polyglot import Polyglot
+
+Speak = Polyglot.Speak
 
 class SombreroWindow:
 
@@ -72,7 +75,7 @@ class SombreroWindow:
         self.SombreroContext.camera2d = Camera2D(self)
         self.SombreroContext.joysticks = Joysticks(self)
         self.SombreroContext.framerate = FrameTimesCounter(fps = self.SombreroContext.fps)
-        self.window_should_close = False
+        self.ModernGLWindowShouldClose = False
 
         # TODO move to context
         self.target_time_factor = 1
@@ -91,7 +94,7 @@ class SombreroWindow:
         # Assign the function arguments
         settings.WINDOW["class"] = f"moderngl_window.context.{self.SombreroContext.window_class}.Window"
         settings.WINDOW["vsync"] = self.SombreroContext.window_vsync
-        settings.WINDOW["title"] = "MMV Live [Sombrero]"
+        settings.WINDOW["title"] = Speak("Real Time Shaders")+" [Sombrero]"
 
         # Don't set target width, height otherwise this will always crash
         if (self.SombreroContext.window_headless) or (not self.SombreroContext.LINUX_GNOME_PIXEL_SAVER_EXTENSION_WORKAROUND):
@@ -153,7 +156,7 @@ class SombreroWindow:
     # Close the window
     def CloseWindow(self, *args, **kwargs):
         logging.info(f"[SombreroWindow.CloseWindow] Window should close")
-        self.window_should_close = True
+        self.ModernGLWindowShouldClose = True
 
     # Swap the window buffers, be careful if vsync is False and you have a heavy
     # shader, it will consume all of your GPU computation and will most likely freeze
@@ -228,7 +231,7 @@ class SombreroWindow:
         
         # Escape
         if (key == 256) and (action == 1) and (self.SombreroContext.live_mode == RealTimeModes.Mode3D):
-            self.window_should_close = True
+            self.ModernGLWindowShouldClose = True
 
         if (key == 44) and (action == 1):
             if self.SombreroContext.shift_pressed:

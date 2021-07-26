@@ -3,12 +3,11 @@
                                 GPL v3 License                                
 ===============================================================================
 
-Copyright (c) 2020 - 2021,
-  - Tremeschin < https://tremeschin.gitlab.io > 
+Copyright (c) 2020 - 2021, Tremeschin
 
 ===============================================================================
 
-Purpose: Menu bar refactor for main editor window
+Purpose: 
 
 ===============================================================================
 
@@ -25,35 +24,22 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
+import logging
+
 import dearpygui.dearpygui as Dear
+from MMV.Common.DearPyGuiUtils import *
 from MMV.Common.Polyglot import Polyglot
 
 Speak = Polyglot.Speak
 
-class mmvEditorAddNodeUI:
-    def __init__(self, Editor):
-        self.Editor = Editor
-    
-    def Here(self):
-        with Dear.group() as self.AddNodesGroup: ...
-    
-    def Reset(self):
-        Dear.delete_item(self.AddNodesGroup, children_only=True)
-
-    def Render(self):
-        with self.Editor.EnterContainerStack(self.AddNodesGroup):
-            Dear.add_separator()
-            Dear.add_text(Speak("Add Nodes"), color = (self.Editor.ThemeYaml.mmvSectionText))
-            AN = self.Editor.Scene.AvailableNodes
-
-            for category in sorted(AN):
-                Dear.add_text(f":: {category}", color=(140,140,140))
-                cat = AN[category]
-
-                for name in cat:
-                    node = cat[name]
-                    Dear.add_button(
-                        label=name,
-                        callback=self.Editor.Scene.AddNodeToScene,
-                        user_data=node
-                    )
+def AboutUI(Editor):
+    logging.info(f"[mmvEditorMenuBarUI.About] Show About window")
+    with DearCenteredWindow(Editor.Context, width=200, height=200) as AboutWindow:
+        Dear.add_image( DearAddDynamicTexture(FilePath=Editor.DearPyStuff.DefaultResourcesLogoImage, TextureRegistry=Editor.DearPyStuff.TextureRegistry, size=190) )
+        Dear.add_text(f"{Speak('Modular Music Visualizer')}", color = (Editor.ThemeYaml.mmvSectionText))
+        Dear.add_text(f"{Speak('Version')} {Editor.PackageInterface.Version}", color=(150,150,150))
+        Dear.add_separator()
+        Dear.add_button(label=Speak("Website"), callback=lambda s,d:webbrowser.open("http://mmvproject.gitlab.io/website"))
+        Dear.add_button(label=Speak("GitHub Page"), callback=lambda s,d:webbrowser.open("https://github.com/Tremeschin/modular-music-visualizer"))
+        Dear.add_separator()
+        Dear.add_button(label=Speak("About DearPyGui"), callback=lambda:Dear.show_tool(Dear.mvTool_About))
