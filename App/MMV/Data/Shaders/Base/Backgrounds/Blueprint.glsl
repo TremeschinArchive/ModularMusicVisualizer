@@ -79,7 +79,7 @@ vec4 mainImage(in vec2 fragCoord) {
     }
 
     // Saturate the edges just for some more fun
-    col = mSaturate(col, 1.0 + pow(length(opengl_uv), 3.0) );
+    col = mSaturate(col, 1.0 + pow(length(OpenGLUV), 3.0) );
 
     return col;
 }

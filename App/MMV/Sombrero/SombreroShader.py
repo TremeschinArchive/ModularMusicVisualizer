@@ -41,7 +41,7 @@ class CallableAddToParent:
     def __call__(self, parent): self.parent = parent; parent._add(self)
 
 # One can search the contents of this object for stuff
-# like matching classes or names
+# like matching classes or Names
 class Searchable(HasContents):
     def __init__(self): super().__init__()
 
@@ -59,7 +59,7 @@ class Searchable(HasContents):
     # Search for some specific class instance like SearchClass(IO) will yield all the IOs
     def SearchClass(self, who): return [stuff for stuff in self.everyone if isinstance(stuff, who)]
 
-    # If item has attribute name (functions, placeholders) then match against it
+    # If item has attribute Name (functions, placeholders) then match against it
     def SearchByName(self, Name):
         return [Item for Item in self.everyone if ((hasattr(Item, "Name")) and (Item.Name == Name))]
 
@@ -176,9 +176,9 @@ class CustomLine(CallableAddToParent):
 
 # Incomplete statement, meant to be used alongside some other one. They also return strings
 # when called inside fstrings, makes sense since we want to just f"something {partialstatement}"
-# and no need to directly call build on them
+# and no need to directly call Build on them
 class PartialStatement:
-    def __repr__(self): return self.build()
+    def __repr__(self): return self.Build()
 
 class Texture(PartialStatement):
     def __init__(self, sampler2D, uv): Utils.AssignLocals(locals())
@@ -215,7 +215,7 @@ class GenericMapping:
     def __call__(self, SombreroShader, parent, SombreroMain):
         Utils.AssignLocals(locals()); self.parent._add(self)
 
-    # Return uniform type name;
+    # Return uniform type Name;
     def Build(self, indent = ""):
         self.action()
         for item in self.info:
@@ -246,19 +246,19 @@ class SombreroShader(Searchable, SimpleBuildableChilds, SimpleEnterable):
     def GetIOs(self) -> list: return self.SearchClass(IO)
 
     @property
-    def Mappings(self): return self.SearchPlaceholder("Mappings")[0]
+    def Mappings(self):      return self.SearchPlaceholder("Mappings")[0]
     @property
-    def UserShader(self): return self.SearchPlaceholder("UserShader")[0]
+    def UserShader(self):    return self.SearchPlaceholder("UserShader")[0]
     @property
-    def Uniforms(self): return self.SearchPlaceholder("Uniforms")[0]
+    def Uniforms(self):      return self.SearchPlaceholder("Uniforms")[0]
     @property
     def IOPlaceHolder(self): return self.SearchPlaceholder("IO")[0]
     @property
-    def Includes(self): return self.SearchPlaceholder("Includes")[0]
+    def Includes(self):      return self.SearchPlaceholder("Includes")[0]
     @property
     def AfterIncludes(self): return self.SearchPlaceholder("AfterIncludes")[0]
     @property
-    def Defines(self): return self.SearchPlaceholder("Defines")[0]
+    def Defines(self):       return self.SearchPlaceholder("Defines")[0]
 
 
 # Here is what all this jazz is about
@@ -269,17 +269,17 @@ class SombreroShaderMacros:
             "Uniforms", "Constants", "Utils", "Colors", "Complex",
             "Noise", "Coordinates", "Dynamic", "RayMarching"]
 
-    def __DefaultPlaceholdersAndSpecifications(self, Shader):
-        Version("330")(Shader)
-        PlaceHolder("IO")(Shader)
-        PlaceHolder("Defines")(Shader)
-        PlaceHolder("Mappings")(Shader)
-        PlaceHolder("Uniforms")(Shader)
+    def __DefaultPlaceholdersAndSpecifications(self, SHADER):
+        Version("330")(SHADER)
+        PlaceHolder("IO")(SHADER)
+        PlaceHolder("Defines")(SHADER)
+        PlaceHolder("Mappings")(SHADER)
+        PlaceHolder("Uniforms")(SHADER)
         for Name in self.DefaultIncludes:
-            Include(Path(self.SombreroMain.PackageInterface.SombreroDir)/"Include"/f"{Name}.glsl")(Shader)
-        PlaceHolder("Includes")(Shader)
-        PlaceHolder("UserShader")(Shader)
-        PlaceHolder("AfterIncludes")(Shader)
+            Include(Path(self.SombreroMain.PackageInterface.SombreroDir)/"Include"/f"{Name}.glsl")(SHADER)
+        PlaceHolder("Includes")(SHADER)
+        PlaceHolder("UserShader")(SHADER)
+        PlaceHolder("AfterIncludes")(SHADER)
 
     # Versioned, placeholders, and sombrero specification
     def __BaseShader(self) -> SombreroShader:
@@ -291,7 +291,7 @@ class SombreroShaderMacros:
                 FragColor("mainImage(gl_FragCoord.xy)")(main)
         return SHADER
 
-    # # These assign_to_parent are for automatically setting the parent SombreroMain's .shader attribute
+    # # These AssignToParent are for automatically setting the parent SombreroMain's .shader attribute
     # to what we will return. Using it False doesn't have much sense unless generating shaders from a single
     # macro instance then assigning to other SombreroMains
 
@@ -302,33 +302,34 @@ class SombreroShaderMacros:
         if AssignToParent: self.SombreroMain.Shader = SHADER; return
         return SHADER
     
-    # def load(self, path, assign_to_parent = True) -> SombreroShader:
+    # def load(self, path, AssignToParent = True) -> SombreroShader:
     #     with SombreroShader() as SHADER:
     #         Version("330")(SHADER)
     
     # Some shaders most likely pfx ones require one layer layer0, two layer0 layer1 to work this is 
     # so that you chain those, please read the shader you're loading first otherwise this might do nothing.
-    def LoadChainDependent(self, path, processed_layers, assign_to_parent = True) -> SombreroShader:
+    def LoadChainDependent(self, path, processed_layers, AssignToParent = True) -> SombreroShader:
         with self.__BaseShader() as SHADER:
             self.__MapShader_as_textures(processed_layers, SHADER)
             Include(Path(path).resolve())(SHADER.UserShader)
-        if assign_to_parent: self.SombreroMain.shader = SHADER; return
+        if AssignToParent: self.SombreroMain.shader = SHADER; return
         return SHADER
 
     # # Map layers as shader textures layer0 layer1 layer2...
-    def __MapShader_as_textures(self, layers, shader: SombreroShader):
+    def __MapShader_as_textures(self, layers, Shader: SombreroShader):
         for index, layer in enumerate(layers):
-            if hasattr(layer, "finish"): layer.finish()
-            TextureShader(name = f"layer{index}", SombreroMain = layer)(shader, shader.Mappings, self.SombreroMain)
+            # print("Mapping", layer)
+            if hasattr(layer, "Finish"): layer.Finish()
+            TextureShader(Name=f"layer{index}", SombreroMain=layer)(Shader, Shader.Mappings, self.SombreroMain)
 
     def AddMapping(self, item): item(self.SombreroMain.shader, self.SombreroMain.shader.Mappings, self.SombreroMain)
     def AddInclude(self, item): item(self.SombreroMain.shader.Includes)
 
     # Alpha composite many layers together
-    def AlphaComposite(self, layers, gamma_correction = False, assign_to_parent = True, HUD = False, gamma_val = 2.0) -> SombreroShader:
+    def AlphaComposite(self, layers, gamma_correction=False, AssignToParent=True, HUD=False, gamma_val=2.0) -> SombreroShader:
         if HUD:
             hud = self.SombreroMain.NewChild()
-            hud.macros.load(self.SombreroMain.SombreroDir/"DefaultHud.glsl")
+            hud.ShaderMacros.Load(self.SombreroMain.SombreroDir/"DefaultHud.glsl")
             layers.append(hud)
 
         with self.__BaseShader() as SHADER:
@@ -346,5 +347,6 @@ class SombreroShaderMacros:
                 # Gamma correction
                 if gamma_correction: GammaCorrection("col", "col", gamma_val)(main)
                 Return("col")(main)
-        if assign_to_parent: self.SombreroMain.Shader = SHADER; return
+        print("Assinging to parent AC"*30)
+        if AssignToParent: self.SombreroMain.Shader = SHADER; return
         return SHADER

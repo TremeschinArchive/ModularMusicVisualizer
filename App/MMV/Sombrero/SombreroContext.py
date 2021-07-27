@@ -83,7 +83,7 @@ window:
         self.show_gui = True
 
         # Resolution related
-        self.gl_context = None
+        self.OpenGL_Context = None
         self.width = 1920
         self.height = 1080
         self.fps = 60

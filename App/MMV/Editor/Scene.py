@@ -121,8 +121,37 @@ class mmvEditorScene:
         for line in yaml.dump(C, default_flow_style=False, width=50, indent=2).split("\n"):
             if line: logging.info(f"{dpfx} {line}")
 
-    def DefaultScene(self):
+
+    def LoadDemoScenePreNodes(self, Name):
         ShadersDir = self.Editor.PackageInterface.ShadersDir
-        Load = ShadersDir/"Sombrero"/"Default.glsl"
-        # Load = ShadersDir/"Base"/"Fractals"/"Tetration.glsl"
-        self.Editor.SombreroMain.ShaderMacros.Load(Load)
+        with self.Editor.SombreroMain.window.window.ctx:
+            Layers = []
+
+            self.Editor.SombreroMain.Reset()
+            self.Editor.SombreroVsyncClient.Ignore = True
+
+            Rain = self.Editor.SombreroMain.NewChild()
+            Rain.ShaderMacros.Load(ShadersDir/"Base"/"FX"/"Rain.glsl")
+
+            Vignetting = self.Editor.SombreroMain.NewChild()
+            Vignetting.ShaderMacros.Load(ShadersDir/"Base"/"PFX"/"Vignetting.glsl")
+
+            if Name == "Default":
+                Default = self.Editor.SombreroMain.NewChild()
+                Default.ShaderMacros.Load(ShadersDir/"Sombrero"/"Default.glsl")
+                Layers += [Default]
+
+            if Name == "Blueprint":
+                Blueprint = self.Editor.SombreroMain.NewChild()
+                Blueprint.ShaderMacros.Load(ShadersDir/"Base"/"Backgrounds"/"Blueprint.glsl")
+                Layers += [Blueprint, Rain, Vignetting]
+
+            if Name == "AlphaComposite":
+                Background = self.Editor.SombreroMain.NewChild()
+                Background.ShaderMacros.Load(ShadersDir/"Base"/"Fractals"/"Tetration.glsl")
+                Layers += [Background, Rain, Vignetting]
+
+            self.Editor.SombreroMain.ShaderMacros.AlphaComposite(Layers, HUD=True, gamma_correction=True)
+            self.Editor.SombreroMain.Finish()
+            self.Editor.SombreroVsyncClient.SomeContextToEnter = self.Editor.SombreroMain.window.window.ctx
+            self.Editor.SombreroVsyncClient.Ignore = False

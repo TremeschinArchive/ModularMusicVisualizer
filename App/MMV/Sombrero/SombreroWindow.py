@@ -102,7 +102,7 @@ class SombreroWindow:
 
         # Create the window
         self.window = moderngl_window.create_window_from_settings()
-        self.SombreroContext.gl_context = self.window.ctx
+        self.SombreroContext.OpenGL_Context = self.window.ctx
 
         # Make sure we render strictly into the resolution we asked
         if self.SombreroContext.window_strict: self.window.fbo.viewport = (0, 0, self.SombreroContext.width, self.SombreroContext.height)
@@ -138,12 +138,12 @@ class SombreroWindow:
         self.SombreroContext.width = int(width)
         self.SombreroContext.height = int(height)
 
-        # for child in self.SombreroMain.children_SombreroMain():
+        # for child in self.SombreroMain.ChildrenOfSombreroMain():
         #     child.texture.release()
         #     child.fbo.release()
         #     child._create_assing_texture_fbo_render_buffer()
 
-        # for child in self.SombreroMain.children_SombreroMain():
+        # for child in self.SombreroMain.ChildrenOfSombreroMain():
         #     child.window.WindowResized(width, height)
         # self.SombreroContext.mmv_main.reload_shaders()
 

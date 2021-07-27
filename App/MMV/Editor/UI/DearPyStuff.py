@@ -257,6 +257,10 @@ class mmvDearPyStuff:
                     with Dear.tab(label=Speak("Live Config")) as self.DPG_LIVE_CONFIG_TAB: ...
                     with Dear.tab(label=Speak("Render Video")) as self.DPG_EXPORT_TAB: ...
                     with Dear.tab(label=Speak("Performance")) as self.DPG_PERFORMANCE_TAB: ...
+                    with Dear.tab(label=Speak("Sombrero Demo")) as self.DPG_SOMBRERO_DEMO_TAB:
+                        Dear.add_button(label="Default Scene", callback=lambda d,s:self.Editor.Scene.LoadDemoScenePreNodes("Default"))
+                        Dear.add_button(label="Alpha Composite Scene", callback=lambda d,s:self.Editor.Scene.LoadDemoScenePreNodes("AlphaComposite"))
+                        Dear.add_button(label="Blueprint Scene", callback=lambda d,s:self.Editor.Scene.LoadDemoScenePreNodes("Blueprint"))
             
             Dear.add_separator()
             self.DPG_LOADING_INDICATOR_GLOBAL = Dear.add_loading_indicator(**self.ThemeYaml.LoadingIndicator.Idle)

@@ -1,7 +1,7 @@
 
 vec4 mainImage(in vec2 fragCoord) {
     vec4 col = vec4(0.0);
-    vec2 uv = shadertoy_uv;
+    vec2 uv = ShaderToyUV;
 
     // Top and bottom bar for cinematics
     float bar = 0.03;

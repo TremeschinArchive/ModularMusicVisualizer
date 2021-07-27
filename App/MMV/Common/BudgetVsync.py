@@ -34,6 +34,7 @@ class BudgetVsyncClient:
         self.Frequency, self.Callable = Frequency, Callable
         self.SomeContextToEnter = SomeContextToEnter
         self.NextCall = time.time()
+        self.Ignore = False
         self._Iteration = 0
 
     # Do our action, set NextCall timer
@@ -82,9 +83,10 @@ class BudgetVsyncManager:
         if len(self.Targets) == 0: time.sleep(0.1); return
 
         # Get the nearest Next Call
-        Closest = sorted(self.Targets, key=lambda Item: Item.NextCall)[0]
+        Closest = [Item for Item in sorted(self.Targets, key=lambda Item: Item.NextCall) if not Item.Ignore][0]
 
         # Sleep until it, call the VsyncedCallable (also calculates NextCall)
         time.sleep(max(Closest.NextCall-time.time(), 0))
-        return Closest()
+        if not Closest.Ignore:
+            return Closest()
             
