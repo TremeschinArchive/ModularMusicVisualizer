@@ -56,7 +56,9 @@ Speak = Polyglot.Speak
 
 class mmvEditor:
     def __init__(self, PackageInterface):
-        Polyglot.Speak.Init(Utils.LoadYaml(PackageInterface.DataDir/"Languages.yaml"))
+        Polyglot.Speak.Init(
+            Utils.LoadYaml(PackageInterface.DataDir/"Languages.yaml"),
+            PathSaveUnknown=PackageInterface.RuntimeDir/"PolyglotMissing.txt")
         self._Stop = False
         self._mmvRestart_ = False
 

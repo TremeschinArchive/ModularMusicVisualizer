@@ -122,4 +122,7 @@ class mmvEditorScene:
             if line: logging.info(f"{dpfx} {line}")
 
     def DefaultScene(self):
-        self.Editor.SombreroMain.ShaderMacros.Load(self.Editor.PackageInterface.ShadersDir/"Sombrero"/"Default.glsl")
+        ShadersDir = self.Editor.PackageInterface.ShadersDir
+        Load = ShadersDir/"Sombrero"/"Default.glsl"
+        # Load = ShadersDir/"Base"/"Fractals"/"Tetration.glsl"
+        self.Editor.SombreroMain.ShaderMacros.Load(Load)

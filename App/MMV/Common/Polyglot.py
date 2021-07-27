@@ -51,7 +51,7 @@ class Languages:
     Spanish    = Language("Spanish",                 "Español",                "es",             "es",            "DejaVuSans-Bold.ttf")
     French     = Language("French",                  "Français",               "fr",             "fr",            "DejaVuSans-Bold.ttf")
     Russian    = Language("Russian",                 "русский",                "ru",             "ru",            "DejaVuSans-Bold.ttf")
-    Portuguese = Language("Brazillian Portuguese",   "Português Brasileiro",   "pt-br",          "br",            "DejaVuSans-Bold.ttf")
+    Portuguese = Language("Brazilian Portuguese",    "Português Brasileiro",   "pt-br",          "br",            "DejaVuSans-Bold.ttf")
     German     = Language("German",                  "Deutsch",                "de",             "de",            "DejaVuSans-Bold.ttf")
     Japanese   = Language("Japanese",                "日本語",                  "ja",             "jp",            "unifont-13.0.06.ttf")
     Korean     = Language("Korean",                  "한국어",                  "kr",             "kr",            "unifont-13.0.06.ttf")
@@ -63,9 +63,13 @@ class PolyglotBrain:
     def __init__(self):
         self.Init({})
 
-    def Init(self, LangsDict, SpokenLanguage=Languages.English):
+    def Init(self, LangsDict, SpokenLanguage=Languages.English, PathSaveUnknown=None):
         self.Data = DotMap(LangsDict, _dynamic=False)
         self.SpokenLanguage = SpokenLanguage
+
+        # Dir to save 
+        if PathSaveUnknown is not None: PathSaveUnknown = Path(PathSaveUnknown).expanduser().resolve()
+        self.PathSaveUnknown = PathSaveUnknown
 
     def __call__(self, Phrase, ForceLanguage=None):
         if ForceLanguage is None:
@@ -74,7 +78,10 @@ class PolyglotBrain:
             GetL = ForceLanguage
         Have = self.Data.get(Phrase, {}).get(GetL.LanguageCode, None)
         if (not Have) and (GetL.EnName != Languages.English.EnName): 
-            logging.warning(f"[PolyglotBrain] I don't know [{Phrase}] in {GetL.EnName} ({GetL.NativeName})")
+            Unknown = f"[PolyglotBrain] I don't know [{Phrase}] in {GetL.EnName} ({GetL.NativeName})"
+            logging.warning(Unknown)
+            if self.PathSaveUnknown is not None:
+                self.PathSaveUnknown.write_text(Unknown)
         if Have: return Have
         return Phrase
 

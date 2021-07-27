@@ -7,5 +7,7 @@ Logging:
   LogFormat: Pretty
 
   Privacy:
-    LogBasicSystemInfo: true
-    LogPythonVersion: true
+    LogBasicSystemInfo: yes
+    LogPythonVersion: yes
+
+Developer: yes

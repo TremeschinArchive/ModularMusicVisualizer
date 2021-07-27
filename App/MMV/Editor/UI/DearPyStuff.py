@@ -28,6 +28,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 import logging
 from pathlib import Path
 
+import dearpygui.logger as DearLogger
 import dearpygui.dearpygui as Dear
 import yaml
 from dotmap import DotMap
@@ -85,6 +86,22 @@ class mmvDearPyStuff:
     def InitMainWindow(self):
         dpfx = "[mmvDearPyStuff.InitMainWindow]"
 
+        # # Logger
+
+        self.DearPyGuiLogger = DearLogger.mvLogger()
+        Dear.configure_item(self.DearPyGuiLogger.window_id, show=False)
+
+        # # Custom StreamHandler logging class for redirecting logging messages
+        # also to DearPyGui logger
+        class UpdateUINotificationDPGTextHandler(logging.StreamHandler):
+            def __init__(self, DearPyGuiLogger): self.DearPyGuiLogger = DearPyGuiLogger
+            def write(self, message): self.DearPyGuiLogger.log(message)
+            def flush(self, *args, **kwargs): ...
+
+        # # Add the handler
+        logging.getLogger().addHandler(logging.StreamHandler(
+            stream=UpdateUINotificationDPGTextHandler(DearPyGuiLogger=self.DearPyGuiLogger)))
+
         # Add node files we have, but don't render it
         self.Scene.AddNodeFilesDataDirRecursive(render=False)
 
@@ -103,6 +120,9 @@ class mmvDearPyStuff:
                     if isinstance(Value, list):
                         if len(Value) == 1: Value = Value*3
                     DearSetThemeString(Key=Key, Value=Value, Parent=self.DPG_THEME)
+
+        # Change trace text color
+        Dear.add_theme_color(Dear.mvThemeCol_Text, self.ThemeYaml.mmvSectionText, parent=self.DearPyGuiLogger.trace_theme)
 
         # Load font, add circles unicode
         with Dear.font_registry() as self.DPG_FONT_REGISTRY:
@@ -175,14 +195,15 @@ class mmvDearPyStuff:
                     Dear.add_menu_item(label=Speak("Telegram Channel"), callback=lambda s,d:webbrowser.open("https://t.me/modular_music_visualizer"))
                     Dear.add_menu_item(label=Speak("GitHub Issues"),    callback=lambda s,d:webbrowser.open("https://github.com/Tremeschin/modular-music-visualizer/issues"))
 
-                with Dear.menu(label=Speak("Developer")):
-                    Dear.add_menu_item(label=Speak("Toggle Loading Indicator"), callback=lambda s,d:self.Editor.DearPyStuff.ToggleLoadingIndicator())
-                    Dear.add_menu_item(label=Speak("DearPyGui Style Editor"),   callback=lambda s,d:Dear.show_tool(Dear.mvTool_Style))
-                    Dear.add_menu_item(label=Speak("DearPyGui Metrics"),        callback=lambda:Dear.show_tool(Dear.mvTool_Metrics))
-                    Dear.add_menu_item(label=Speak("DearPyGui Documentation"),  callback=lambda:Dear.show_tool(Dear.mvTool_Doc))
-                    Dear.add_menu_item(label=Speak("DearPyGui Debug"),          callback=lambda:Dear.show_tool(Dear.mvTool_Debug))
-                    Dear.add_menu_item(label=Speak("DearPyGui Font Manager"),   callback=lambda:Dear.show_tool(Dear.mvTool_Font))
-                    Dear.add_menu_item(label=Speak("DearPyGui Item Registry"),  callback=lambda:Dear.show_tool(Dear.mvTool_ItemRegistry))
+                if self.Editor.PackageInterface.ConfigYAML.Developer:
+                    with Dear.menu(label=Speak("Developer")):
+                        Dear.add_menu_item(label=Speak("Toggle Loading Indicator"), callback=lambda s,d:self.Editor.DearPyStuff.ToggleLoadingIndicator())
+                        Dear.add_menu_item(label=Speak("DearPyGui Style Editor"),   callback=lambda s,d:Dear.show_tool(Dear.mvTool_Style))
+                        Dear.add_menu_item(label=Speak("DearPyGui Metrics"),        callback=lambda:Dear.show_tool(Dear.mvTool_Metrics))
+                        Dear.add_menu_item(label=Speak("DearPyGui Documentation"),  callback=lambda:Dear.show_tool(Dear.mvTool_Doc))
+                        Dear.add_menu_item(label=Speak("DearPyGui Debug"),          callback=lambda:Dear.show_tool(Dear.mvTool_Debug))
+                        Dear.add_menu_item(label=Speak("DearPyGui Font Manager"),   callback=lambda:Dear.show_tool(Dear.mvTool_Font))
+                        Dear.add_menu_item(label=Speak("DearPyGui Item Registry"),  callback=lambda:Dear.show_tool(Dear.mvTool_ItemRegistry))
 
                 Dear.add_menu_item(label=Speak("About"), callback=lambda s,d:AboutUI(self.Editor))
 
@@ -233,32 +254,35 @@ class mmvDearPyStuff:
             Dear.add_separator()
             self.DPG_LOADING_INDICATOR_GLOBAL = Dear.add_loading_indicator(**self.ThemeYaml.LoadingIndicator.Idle)
             self.Editor.DearPyStuff.ToggleLoadingIndicator()
+            
             Dear.add_same_line()
             Dear.add_text(f"MMV v{self.PackageInterface.VersionNumber}  ", color = (230,70,75))
+            with Dear.tooltip(parent=Dear.last_item()): Dear.add_text(Speak("Version"))
+            
             Dear.add_same_line()
             self.DPG_LANGUAGE_BUTTON = Dear.add_button(label=f"", callback=lambda d,s: LanguageSelectUI(self.Editor))
+            with Dear.tooltip(parent=Dear.last_item()): Dear.add_text(Speak("Change Language"))
             self.UpdateLanguageButtonText()
+            
             Dear.add_same_line()
             Dear.add_text(f" | ", color = (80,80,80))
+            
             Dear.add_same_line()
             self.DPG_CURRENT_PRESET_TEXT = Dear.add_text(f"\"{self.Scene.PresetName}\"")
+            
             Dear.add_same_line()
             Dear.add_text(f" | ", color = (80,80,80))
+
+            Dear.add_same_line()
+            Dear.add_button(label="●", callback=lambda d,sy:
+                Dear.configure_item(
+                    self.DearPyGuiLogger.window_id,
+                    show=not Dear.get_item_configuration(self.DearPyGuiLogger.window_id)["show"]))
+            with Dear.tooltip(parent=Dear.last_item()): Dear.add_text(Speak("Open Logger"))
+
             Dear.add_same_line()
             self.DPG_STATUS_TEXT = Dear.add_text("", color=(140,140,140))
             self.SetStatusText(Speak("Finished Loading"))
-
-        # Dear.add_text("Modular Music Visualizer Editor", color=(150,150,150))
-        # # # Custom StreamHandler logging class for updating the DPG text to show latest
-        # # notifications on the UI for the user
-        # class UpdateUINotificationDPGTextHandler(logging.StreamHandler):
-        #     def __init__(self, mmv_editor): self.mmv_editor = mmv_editor
-        #     def write(self, message): Dear.configure_item(self.mmv_editor.DPG_STATUS_TEXT, default_value=f"{message}")
-        #     def flush(self, *args, **kwargs): ...
-
-        # # Add the handler
-        # logging.getLogger().addHandler(logging.StreamHandler(
-        #     stream=UpdateUINotificationDPGTextHandler(mmv_editor=self)))
 
     def ToggleBuiltinWindowDecorator(self):
         self.Editor.Context.ToggleBool("BUILTIN_WINDOW_DECORATORS")

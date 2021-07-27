@@ -13,6 +13,7 @@ vec4 mainImage(in vec2 fragCoord) {
 
     // col = vec4(0.0, 0.0, 0.0, 1.0);
     
+    gluv_all = mGetGLUVParallax(1.3);
     float angle = mAtan2(gluv_all.y, gluv_all.x) + mTime;
     vec4 hsved = mHSV2RGB(vec4(angle, 1.0, 1, 1));
     float d = length(gluv_all);
