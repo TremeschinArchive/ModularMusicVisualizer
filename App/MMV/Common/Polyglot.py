@@ -81,7 +81,10 @@ class PolyglotBrain:
             Unknown = f"[PolyglotBrain] I don't know [{Phrase}] in {GetL.EnName} ({GetL.NativeName})"
             logging.warning(Unknown)
             if self.PathSaveUnknown is not None:
-                self.PathSaveUnknown.write_text(Unknown)
+                if not self.PathSaveUnknown.exists():
+                    self.PathSaveUnknown.write_text("")
+                with open(str(self.PathSaveUnknown), "a") as F:
+                    F.write(f"{Unknown}\n")
         if Have: return Have
         return Phrase
 

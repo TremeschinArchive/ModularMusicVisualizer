@@ -39,6 +39,7 @@ import dearpygui.themes as DearThemes
 import numpy as np
 import yaml
 from dotmap import DotMap
+from MMV.Editor.UI.Dialogs.LanguageSelect import LanguageSelectUI
 from MMV.Common.BudgetVsync import BudgetVsyncClient, BudgetVsyncManager
 from MMV.Common.DearPyGuiUtils import *
 from MMV.Common.PackUnpack import PackUnpack
@@ -168,4 +169,4 @@ class mmvEditor:
     def FirstTimeWarning(self):
         if self.Context.DotMap.FIRST_TIME:
             self.Context.ForceSet("FIRST_TIME", False)
-            self.MenuBarUI.LanguageSelectUI()
+            LanguageSelectUI(self)

@@ -40,6 +40,7 @@ from MMV.Editor.UI.Dialogs.About import AboutUI
 from MMV.Editor.UI.Dialogs.ExternalsManager import ExternalsManagerDialog
 from MMV.Editor.UI.Dialogs.LanguageSelect import LanguageSelectUI
 from MMV.Editor.UI.Tabs.NodeEditor.AddNodeUI import AddNodeUI
+from MMV.Editor.UI.Dialogs.PleaseRestart import PleaseRestartUI
 
 Speak = Polyglot.Speak
 
@@ -187,7 +188,13 @@ class mmvDearPyStuff:
                     Dear.add_text("Stuff that Needs Restart", color=(self.ThemeYaml.mmvSectionText))
                     Dear.add_checkbox(label=Speak("Builtin Window Decorators"), callback=lambda d,s: self.ToggleBuiltinWindowDecorator(), default_value=self.Editor.Context.DotMap.BUILTIN_WINDOW_DECORATORS)
                     Dear.add_checkbox(label=Speak("Start Maximized"), callback=lambda d,s: self.ToggleStartMaximized(), default_value=self.Editor.Context.DotMap.START_MAXIMIZED)
-                    Dear.add_combo(label=Speak("Interface Global Theme"), items=["Dark","Light"], width=100, default_value=self.Editor.Context.DotMap.GLOBAL_THEME, callback=lambda id,value:self.Editor.Context.ForceSet("GLOBAL_THEME", value))
+
+                    # Change Theme
+                    def ChangeTheme(Editor, Value):
+                        self.Editor.Context.ForceSet("GLOBAL_THEME", Value)
+                        PleaseRestartUI(Editor, "Change Theme")
+                    Dear.add_combo(label=Speak("Interface Global Theme"), items=["Dark","Light"], width=100, default_value=self.Editor.Context.DotMap.GLOBAL_THEME,
+                        callback=lambda id,Value: ChangeTheme(self.Editor, Value))
 
                 Dear.add_menu_item(label=Speak("Downloads"), callback=lambda s,d:ExternalsManagerDialog(self.Editor))
 
