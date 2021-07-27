@@ -30,20 +30,24 @@ import time
 
 # The one we add to BudgetVsyncManager
 class BudgetVsyncClient:
-    def __init__(self, Frequency, Callable):
+    def __init__(self, Frequency, Callable, SomeContextToEnter=None):
         self.Frequency, self.Callable = Frequency, Callable
+        self.SomeContextToEnter = SomeContextToEnter
         self.NextCall = time.time()
         self._Iteration = 0
 
     # Do our action, set NextCall timer
     def __call__(self):
-        self.Callable()
+        if self.SomeContextToEnter is not None:
+            with self.SomeContextToEnter:
+                self.Callable()
+        else:   self.Callable()
         self._Iteration += 1
         self.NextCall = time.time() + self.Period
         return self
 
     @property
-    def Period(self): return 1/self.Frequency
+    def Period(self): return (1/self.Frequency)
 
     def __str__(self): return (
         f"[BudgetVsyncClient] "
@@ -59,6 +63,15 @@ class BudgetVsyncManager:
     def AddVsyncTarget(self, T: BudgetVsyncClient):
         self.Targets.append(T)
 
+    # Do we have this target to be called already?
+    def HaveTarget(self, T: BudgetVsyncClient):
+        return T in self.Targets
+
+    # Add target if does not exist
+    def AddVsyncTargetIfDNE(self, T: BudgetVsyncClient):
+        if self.HaveTarget(T): return
+        self.AddVsyncTarget(T)
+
     # Run this on the main thread
     def Start(self):
         while True:
@@ -73,6 +86,5 @@ class BudgetVsyncManager:
 
         # Sleep until it, call the VsyncedCallable (also calculates NextCall)
         time.sleep(max(Closest.NextCall-time.time(), 0))
-        Closest()
-        return Closest
+        return Closest()
             

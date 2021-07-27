@@ -121,7 +121,5 @@ class mmvEditorScene:
         for line in yaml.dump(C, default_flow_style=False, width=50, indent=2).split("\n"):
             if line: logging.info(f"{dpfx} {line}")
 
-    def TestRunSombrero(self):
-        self.Editor.SombreroMain.window.CreateWindow()
+    def DefaultScene(self):
         self.Editor.SombreroMain.ShaderMacros.Load(self.Editor.PackageInterface.ShadersDir/"Sombrero"/"Default.glsl")
-        self.Editor.BudgetVsyncManager.AddVsyncTarget(BudgetVsyncClient(60, self.Editor.SombreroMain.Next))

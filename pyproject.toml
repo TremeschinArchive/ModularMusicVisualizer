@@ -11,7 +11,6 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.7,<3.10"
 numpy = "^1.20.3"
-Pillow = "^8.2.0"
 moderngl = "^5.6.4"
 moderngl-window = "^2.3.0"
 PyYAML = "^5.4.1"
@@ -38,6 +37,7 @@ SoundCard = "^0.4.1"
 glfw = "^2.1.0"
 appdirs = "^1.4.4"
 dearpygui = "0.8.39"
+Pillow-SIMD = "^7.0.0"
 
 [tool.poetry.dev-dependencies]
 Nuitka = "^0.6.16"

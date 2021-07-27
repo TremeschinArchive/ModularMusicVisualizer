@@ -163,6 +163,7 @@ class SombreroWindow:
     # the video
     def UpdateWindow(self):
         self.window.swap_buffers()
+
         # cfg = self.SombreroMain.config["window"]
 
         if not self.SombreroContext.mode == self.SombreroContext.ExecutionMode.Render:

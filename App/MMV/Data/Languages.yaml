@@ -125,9 +125,13 @@ Interface Global Theme:
 Add Nodes:
   pt-br: Adicionar Nodes
   
+# Reasons on PleaseRestartUI
+Change Language:
+  pt-br: Mudar idioma
+
 # LanguagesUI
-We need to restart for language settings to take effect, proceed?:
-  pt-br: Precisamos reiniciar o programa para alterar o idioma, proceder?
+We need to restart for this setting to take effect, proceed?:
+  pt-br: Precisamos reiniciar o programa para alterar esta configuração, proceder?
 Select Language [Needs Restart]:
   pt-br: Selecione o Idioma [Precisa Reiniciar]
   ja: 言語を択してください「リスタート」

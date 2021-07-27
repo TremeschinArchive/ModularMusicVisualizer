@@ -279,6 +279,14 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
+name = "pillow-simd"
+version = "7.0.0.post3"
+description = "Python Imaging Library (Fork)"
+category = "main"
+optional = false
+python-versions = ">=3.5"
+
+[[package]]
 name = "playsound"
 version = "1.3.0"
 description = "Pure Python, cross platform, single function module with no dependencies for playing sounds."
@@ -541,7 +549,7 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<3.10"
-content-hash = "11b46537047886994594aaeb445fa171f7472bf117d48680d8d2c75ef0f0c853"
+content-hash = "b1c2f4513e1facb5768f83bb8f4d087db7f926dc7b1a1a817b94430155399e8a"
 
 [metadata.files]
 appdirs = [
@@ -881,6 +889,9 @@ pillow = [
     {file = "Pillow-8.3.1-pp37-pypy37_pp73-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:f4ebde71785f8bceb39dcd1e7f06bcc5d5c3cf48b9f69ab52636309387b097c8"},
     {file = "Pillow-8.3.1-pp37-pypy37_pp73-win_amd64.whl", hash = "sha256:1c03e24be975e2afe70dfc5da6f187eea0b49a68bb2b69db0f30a61b7031cee4"},
     {file = "Pillow-8.3.1.tar.gz", hash = "sha256:2cac53839bfc5cece8fdbe7f084d5e3ee61e1303cccc86511d351adcb9e2c792"},
+]
+pillow-simd = [
+    {file = "Pillow-SIMD-7.0.0.post3.tar.gz", hash = "sha256:c27907af0e7ede1ceed281719e722e7dbf3e1dbfe561373978654a6b64896cb7"},
 ]
 playsound = [
     {file = "playsound-1.3.0.tar.gz", hash = "sha256:cc6ed11d773034b0ef624e6bb4bf50f4b76b8414a59ce6d38afb89b423297ced"},

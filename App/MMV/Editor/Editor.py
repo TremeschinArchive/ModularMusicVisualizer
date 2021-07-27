@@ -124,11 +124,18 @@ class mmvEditor:
 
     def MainLoop(self):
         logging.info(f"[mmvEditor.MainLoop] Enter MainLoop, start MMV")
+        
+        # Init Sombrero
+        self.SombreroMain.window.CreateWindow()
+        self.SombreroVsyncClient = BudgetVsyncClient(
+            60, self.SombreroMain.Next,
+            SomeContextToEnter=self.SombreroMain.window.window.ctx)
+        self.Scene.DefaultScene()
+        self.BudgetVsyncManager.AddVsyncTargetIfDNE(self.SombreroVsyncClient)
+
+        # DearPyGui
         self.DearPyStuff.SetupViewport()
-
-        # Hey we must enter the two contexts? how that goes??
-        # self.Scene.TestRunSombrero()
-
+        
         try:
             while True:
                 if (self._Stop) or (not Dear.is_dearpygui_running()): break

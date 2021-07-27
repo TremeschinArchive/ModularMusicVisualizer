@@ -30,6 +30,7 @@ import logging
 import dearpygui.dearpygui as Dear
 from MMV.Common.DearPyGuiUtils import *
 from MMV.Common.Polyglot import Polyglot
+from MMV.Editor.UI.Dialogs.PleaseRestart import PleaseRestartUI
 
 Speak = Polyglot.Speak
 
@@ -48,13 +49,7 @@ def LanguageSelectUI(Editor):
         Editor.DearPyStuff.UpdateLanguageButtonText()
         Editor.Context.ForceSet("UI_FONT", UserData.Font)
 
-        with DearCenteredWindow(Editor.Context, width=500, height=200, min_size=[500,0]) as RestartWindow:
-            A=Dear.add_text(Speak("We need to restart for language settings to take effect, proceed?"))
-            B=Dear.add_button(label=Speak("Ok (Restart)"), callback=Editor.Restart)
-            C=Dear.add_button(label=Speak("No (Continue)"), callback=lambda d,s,UserData: Dear.delete_item(RestartWindow))
-            for Item in [A,B,C]:
-                Dear.set_item_font(Item, Editor.LoadedFonts[UserData.Font])
-
+        PleaseRestartUI(Editor, "Change Language")
 
     with DearCenteredWindow(
     Editor.Context, width=300, height=200, min_size=[300,0],
@@ -63,26 +58,22 @@ def LanguageSelectUI(Editor):
         Dear.add_text(Speak("Select Language [Needs Restart]"))
         Dear.add_separator()
         for Key, Value in Polyglot.Languages.__dict__.items():
-            if not "__" in Key:
+            if (not "__" in Key) and (Key != "MakeCountries"):
                 ThisLanguage = copy.deepcopy( Polyglot.Languages.__dict__[Key] )
+                isThisLangSelected =  ThisLanguage.EnName == Editor.Context.DotMap.LANGUAGE.EnName
 
                 # Add Flag button and text on the right
                 Flag = Editor.PackageInterface.IconDir/"Flags"/f"{ThisLanguage.CountryFlag}.png"
-                Flag = DearAddDynamicTexture(Flag, Editor.DearPyStuff.TextureRegistry, size=45)
+                Flag = DearAddDynamicTexture(Flag, Editor.DearPyStuff.TextureRegistry, size=45+(20*isThisLangSelected))
 
                 # Different Background to show that we are selected
-                if ThisLanguage.EnName == Editor.Context.DotMap.LANGUAGE.EnName:
-                    ImageButtonExtra = {}
-                else:
-                    ImageButtonExtra = dict(tint_color=[220]*3)
                 Dear.add_image_button(
                     texture_id=Flag,
                     user_data=ThisLanguage,
-                    **ImageButtonExtra,
                     callback=lambda d,s,UserData: ConfigureLanguage(UserData, LanguageSelectWindow))
                 Dear.add_same_line()
                 with Dear.group():
-                    NativeLangName = Dear.add_text(("● "*(ImageButtonExtra=={})) + ThisLanguage.NativeName, color=(Editor.DearPyStuff.ThemeYaml.mmvSectionText))
+                    NativeLangName = Dear.add_text(("● "*isThisLangSelected) + ThisLanguage.NativeName, color=(Editor.DearPyStuff.ThemeYaml.mmvSectionText))
 
                     # Percentage of completion of the language
                     Total = 0
