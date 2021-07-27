@@ -43,22 +43,20 @@ PackageInterface = MMV.mmvPackageInterface()
 def MakeCountryFlags():
     dpfx = "[Magic.MakeCountryFlags]"
 
-    for Key, Value in Languages.__dict__.items():
-        if not "__" in Key:
-            ThisLanguage = Languages.__dict__[Key]
-            TempSourceSVGPath = PackageInterface.TempDir/"TempCountryFlag.svg"
-            with open(TempSourceSVGPath, "w") as SourceSVG:
-                URL = f"https://hatscripts.github.io/circle-flags/flags/{ThisLanguage.CountryFlag}.svg"
-                SVG = Download.GetHTMLContent(URL)
-                logging.info(f"{dpfx} SVG content is: {SVG}")
-                SourceSVG.write(SVG)
-            FinalPNG = PackageInterface.DataDir/"Image"/"Icon"/"Flags"/f"{ThisLanguage.CountryFlag}.png"
-            FinalPNG.parent.mkdir(exist_ok=True)
-            logging.info(f"{dpfx} Final PNG is {FinalPNG}")
-            Command = ["inkscape", str(TempSourceSVGPath), "-o", str(FinalPNG)]
-            logging.info(f"{dpfx} Run command: {Command}")
-            subprocess.run(Command)
-            os.remove(str(TempSourceSVGPath))
+    for CountryFlag in Languages.MakeCountries.split(" "):
+        TempSourceSVGPath = PackageInterface.TempDir/"TempCountryFlag.svg"
+        with open(TempSourceSVGPath, "w") as SourceSVG:
+            URL = f"https://hatscripts.github.io/circle-flags/flags/{CountryFlag}.svg"
+            SVG = Download.GetHTMLContent(URL)
+            logging.info(f"{dpfx} SVG content is: {SVG}")
+            SourceSVG.write(SVG)
+        FinalPNG = PackageInterface.DataDir/"Image"/"Icon"/"Flags"/f"{CountryFlag}.png"
+        FinalPNG.parent.mkdir(exist_ok=True)
+        logging.info(f"{dpfx} Final PNG is {FinalPNG}")
+        Command = ["inkscape", "-w", "1024", "-h", "1024", str(TempSourceSVGPath), "-o", str(FinalPNG)]
+        logging.info(f"{dpfx} Run command: {Command}")
+        subprocess.run(Command)
+        os.remove(str(TempSourceSVGPath))
 
 def TestExternalsManager():
     for Platform in ["Linux", "Windows"]:

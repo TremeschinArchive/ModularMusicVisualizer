@@ -57,6 +57,7 @@ class Languages:
     Korean     = Language("Korean",                  "한국어",                  "kr",             "kr",            "unifont-13.0.06.ttf")
     Italian    = Language("Italian",                 "Italiano",               "it",             "it",            "DejaVuSans-Bold.ttf")
 
+    MakeCountries = "us in es fr ru br de jp kr it"
  
 class PolyglotBrain:
     def __init__(self):
