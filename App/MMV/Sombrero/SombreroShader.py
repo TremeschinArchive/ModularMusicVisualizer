@@ -65,9 +65,7 @@ class Searchable(HasContents):
 
     # Search some placeholder
     def SearchPlaceholder(self, Name):
-        r = [Item for Item in self.SearchByName(Name) if isinstance(Item, PlaceHolder)]
-        print("Search", Name, r)
-        return r
+        return [Item for Item in self.SearchByName(Name) if isinstance(Item, PlaceHolder)]
 
 
 
@@ -318,7 +316,6 @@ class SombreroShaderMacros:
     # # Map layers as shader textures layer0 layer1 layer2...
     def __MapShader_as_textures(self, layers, Shader: SombreroShader):
         for index, layer in enumerate(layers):
-            # print("Mapping", layer)
             if hasattr(layer, "Finish"): layer.Finish()
             TextureShader(Name=f"layer{index}", SombreroMain=layer)(Shader, Shader.Mappings, self.SombreroMain)
 
@@ -347,6 +344,5 @@ class SombreroShaderMacros:
                 # Gamma correction
                 if gamma_correction: GammaCorrection("col", "col", gamma_val)(main)
                 Return("col")(main)
-        print("Assinging to parent AC"*30)
         if AssignToParent: self.SombreroMain.Shader = SHADER; return
         return SHADER

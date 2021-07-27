@@ -157,6 +157,9 @@ class SombreroWindow:
     def CloseWindow(self, *args, **kwargs):
         logging.info(f"[SombreroWindow.CloseWindow] Window should close")
         self.ModernGLWindowShouldClose = True
+        self.window.fbo.release()
+        self.window.ctx.release()
+        self.window.destroy()
 
     # Swap the window buffers, be careful if vsync is False and you have a heavy
     # shader, it will consume all of your GPU computation and will most likely freeze

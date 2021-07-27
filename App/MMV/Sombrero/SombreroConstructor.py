@@ -17,9 +17,6 @@ class FullScreenConstructor:
         self.once_returned_vao = False
     
     def TreatFragmentShader(self, SombreroShader):
-        print(SombreroShader.contents)
-        print("\n" + "dd"*30, "\n", SombreroShader.GetIOs())
-        print(SombreroShader)
         io_placeholder = SombreroShader.IOPlaceHolder
         IO("vec2", "OpenGLUV", prefix = False, mode = "i")(io_placeholder)
         IO("vec2", "ShaderToyUV", prefix = False, mode = "i")(io_placeholder)

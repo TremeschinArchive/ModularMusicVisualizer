@@ -103,7 +103,7 @@ class mmvEditor:
         self.Context.Digest("FIRST_TIME", True)
         self.Context.Digest("WINDOW_SIZE", [1280, 720])
         self.Context.Digest("BUILTIN_WINDOW_DECORATORS", True)
-        self.Context.Digest("START_MAXIMIZED", True)
+        self.Context.Digest("START_MAXIMIZED", False)
         self.Context.Digest("UI_SOUNDS", True)
         self.Context.Digest("UI_VOLUME", 40)
         self.Context.Digest("UI_FONT_SIZE", 16)
@@ -162,6 +162,7 @@ class mmvEditor:
         self.Exit()
         self.SaveCurrentConfig()
         Dear.cleanup_dearpygui()
+        self.SombreroMain.window.window.close()
 
     def SaveCurrentConfig(self): self.Context.Pack(self.USER_CONFIG_FILE)
 
