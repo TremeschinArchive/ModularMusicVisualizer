@@ -263,9 +263,8 @@ class mmvDearPyStuff:
                     with Dear.tab(label=Speak("Sombrero Tech Demo Scenes")) as self.DPG_SOMBRERO_DEMO_TAB:
 
                         def add_scene(name):
-                            w, h = -1, 200
                             Dear.add_button(
-                                label=name, width=w,height=h,
+                                label=name, width=-1,height=130,
                                 user_data=copy.deepcopy(name),
                                 callback=lambda d,s,u:self.Editor.Scene.LoadDemoScenePreNodes(u)
                             )

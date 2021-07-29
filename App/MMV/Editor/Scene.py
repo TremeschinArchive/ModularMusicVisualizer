@@ -121,31 +121,38 @@ class mmvEditorScene:
         for line in yaml.dump(C, default_flow_style=False, width=50, indent=2).split("\n"):
             if line: logging.info(f"{dpfx} {line}")
 
-
+    # Temporary JustLoad™ Sombrero shaders
     def LoadDemoScenePreNodes(self, Name):
         ShadersDir = self.Editor.PackageInterface.ShadersDir
-        print(f"Load {Name}\n"*30)
+
+        # Enter the ModernGL's OpenGL  context
         with self.Editor.SombreroMain.window.window.ctx:
             Layers = []
 
+            # Reset shaders, delete children, don't attempt to render
             self.Editor.SombreroMain.Reset()
             self.Editor.SombreroVsyncClient.Ignore = True
 
+            # Rain shader
             Rain = self.Editor.SombreroMain.NewChild()
             Rain.ShaderMacros.Load(ShadersDir/"Base"/"FX"/"Rain.glsl")
 
+            # Vignetting shader
             Vignetting = self.Editor.SombreroMain.NewChild()
             Vignetting.ShaderMacros.Load(ShadersDir/"Base"/"PFX"/"Vignetting.glsl")
 
+            # Simple shader, one layer
             if Name == "Default Scene":
                 Default = self.Editor.SombreroMain.NewChild()
                 Default.ShaderMacros.Load(ShadersDir/"Sombrero"/"Default.glsl")
                 Layers += [Default]
 
+            # Chain multiple shaders (apply PFX)
             if Name == "Lens Distortion (Chain Shaders) Demo Scene":
                 Default = self.Editor.SombreroMain.NewChild()
                 Default.ShaderMacros.Load(ShadersDir/"Sombrero"/"Default.glsl")
 
+                # Here we mark DependentLayers as the target shader to apply
                 LensDistortion = self.Editor.SombreroMain.NewChild()
                 LensDistortion.ShaderMacros.Load(
                     FilePath = ShadersDir/"Base"/"PFX"/"Chain1"/"LensDistortion.glsl",
@@ -154,17 +161,25 @@ class mmvEditorScene:
 
                 Layers += [LensDistortion]
 
+            # Single shader, simple scene
             if Name == "Blueprint Scene":
                 Blueprint = self.Editor.SombreroMain.NewChild()
                 Blueprint.ShaderMacros.Load(ShadersDir/"Base"/"Backgrounds"/"Blueprint.glsl")
                 Layers += [Blueprint, Rain, Vignetting]
 
+            # Multiple shaders together, many PFX
             if Name == "Alpha Composite Demo Scene":
                 Background = self.Editor.SombreroMain.NewChild()
                 Background.ShaderMacros.Load(ShadersDir/"Base"/"Fractals"/"Tetration.glsl")
                 Layers += [Background, Rain, Vignetting]
 
+            # Alpha composite everybody, finish the shader
             self.Editor.SombreroMain.ShaderMacros.AlphaComposite(Layers, HUD=True, gamma_correction=True)
             self.Editor.SombreroMain.Finish()
-            self.Editor.SombreroVsyncClient.SomeContextToEnter = self.Editor.SombreroMain.window.window.ctx
+
+            # Render more frames
             self.Editor.SombreroVsyncClient.Ignore = False
+
+            # If we do kill and reopen the window..?
+            # self.Editor.SombreroVsyncClient.SomeContextToEnter = self.Editor.SombreroMain.window.window.ctx
+
