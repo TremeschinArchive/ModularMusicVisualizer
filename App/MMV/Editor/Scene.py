@@ -31,6 +31,7 @@ from pathlib import Path
 
 import dearpygui.dearpygui as Dear
 import yaml
+import time
 from dotmap import DotMap
 from MMV.Common.BudgetVsync import BudgetVsyncClient
 from MMV.Common.PackUnpack import PackUnpack
@@ -124,6 +125,7 @@ class mmvEditorScene:
     # Temporary JustLoad™ Sombrero shaders
     def LoadDemoScenePreNodes(self, Name):
         ShadersDir = self.Editor.PackageInterface.ShadersDir
+        Start = time.time()
 
         # Enter the ModernGL's OpenGL  context
         with self.Editor.SombreroMain.window.window.ctx:
@@ -183,3 +185,5 @@ class mmvEditorScene:
             # If we do kill and reopen the window..?
             # self.Editor.SombreroVsyncClient.SomeContextToEnter = self.Editor.SombreroMain.window.window.ctx
 
+        self.Editor.DearPyStuff.SetStatusText(
+            Speak("Shaders took | seconds to Load, Build and Compile").replace("|", f"{time.time()-Start:.4f}"))

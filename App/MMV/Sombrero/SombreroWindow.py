@@ -139,13 +139,10 @@ class SombreroWindow:
         self.SombreroContext.height = int(height)
 
         # for child in self.SombreroMain.ChildrenOfSombreroMain():
-        #     child.texture.release()
-        #     child.fbo.release()
-        #     child._create_assing_texture_fbo_render_buffer()
-
-        # for child in self.SombreroMain.ChildrenOfSombreroMain():
-        #     child.window.WindowResized(width, height)
-        # self.SombreroContext.mmv_main.reload_shaders()
+            # child.window.WindowResized(width, height)
+            # child.texture.release()
+            # child.fbo.release()
+            # child._create_assing_texture_fbo_render_buffer()
 
         # Master shader has window and imgui
         if self.SombreroMain.MasterShader:

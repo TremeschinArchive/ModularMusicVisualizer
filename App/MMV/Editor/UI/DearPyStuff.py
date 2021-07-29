@@ -75,6 +75,7 @@ class mmvDearPyStuff:
     def SetStatusText(self, Message):
         if self.DPG_STATUS_TEXT is not None:
             Dear.configure_item(self.DPG_STATUS_TEXT, default_value=Message)
+        logging.info(f"[mmvDearPyStuff.SetStatusText] [{Message}]")
 
     # def MainWindowResized(self, _, Data):
     #     Dear.configure_viewport(self.Viewport, width=Data[0], height=Data[1])
@@ -88,21 +89,12 @@ class mmvDearPyStuff:
     def InitMainWindow(self):
         dpfx = "[mmvDearPyStuff.InitMainWindow]"
 
-        # # Logger
-
-        self.DearPyGuiLogger = DearLogger.mvLogger()
-        Dear.configure_item(self.DearPyGuiLogger.window_id, show=False)
-
         # # Custom StreamHandler logging class for redirecting logging messages
         # also to DearPyGui logger
         class UpdateUINotificationDPGTextHandler(logging.StreamHandler):
             def __init__(self, DearPyGuiLogger): self.DearPyGuiLogger = DearPyGuiLogger
             def write(self, message): self.DearPyGuiLogger.log(message)
             def flush(self, *args, **kwargs): ...
-
-        # # Add the handler
-        logging.getLogger().addHandler(logging.StreamHandler(
-            stream=UpdateUINotificationDPGTextHandler(DearPyGuiLogger=self.DearPyGuiLogger)))
 
         # Add node files we have, but don't render it
         self.Scene.AddNodeFilesDataDirRecursive(render=False)
@@ -122,9 +114,6 @@ class mmvDearPyStuff:
                     if isinstance(Value, list):
                         if len(Value) == 1: Value = Value*3
                     DearSetThemeString(Key=Key, Value=Value, Parent=self.DPG_THEME)
-
-        # Change trace text color
-        Dear.add_theme_color(Dear.mvThemeCol_Text, self.ThemeYaml.mmvSectionText, parent=self.DearPyGuiLogger.trace_theme)
 
         # Load font, add circles unicode
         with Dear.font_registry() as self.DPG_FONT_REGISTRY:
@@ -277,7 +266,17 @@ class mmvDearPyStuff:
                             Dear.add_table_next_column()
                             add_scene("Blueprint Scene")
                             add_scene("Lens Distortion (Chain Shaders) Demo Scene")
-                
+
+                    # Logging tab
+                    if self.Editor.PackageInterface.ConfigYAML.Developer:
+                        with Dear.tab(label=Speak("Logs")) as self.DPG_LOG_TAB:
+                            self.DearPyGuiLogger = DearLogger.mvLogger(parent=self.DPG_LOG_TAB)
+                            Dear.add_theme_color(Dear.mvThemeCol_Text, self.ThemeYaml.mmvSectionText, parent=self.DearPyGuiLogger.trace_theme)
+
+                            # # Add the handler
+                            logging.getLogger().addHandler(logging.StreamHandler(
+                                stream=UpdateUINotificationDPGTextHandler(DearPyGuiLogger=self.DearPyGuiLogger)))
+
             Dear.add_separator()
             self.DPG_LOADING_INDICATOR_GLOBAL = Dear.add_loading_indicator(**self.ThemeYaml.LoadingIndicator.Idle)
             self.Editor.DearPyStuff.ToggleLoadingIndicator()
@@ -299,13 +298,6 @@ class mmvDearPyStuff:
             
             Dear.add_same_line()
             Dear.add_text(f" | ", color = (80,80,80))
-
-            Dear.add_same_line()
-            Dear.add_button(label="●", callback=lambda d,sy:
-                Dear.configure_item(
-                    self.DearPyGuiLogger.window_id,
-                    show=not Dear.get_item_configuration(self.DearPyGuiLogger.window_id)["show"]))
-            with Dear.tooltip(parent=Dear.last_item()): Dear.add_text(Speak("Open Logger"))
 
             Dear.add_same_line()
             self.DPG_STATUS_TEXT = Dear.add_text("", color=(140,140,140))

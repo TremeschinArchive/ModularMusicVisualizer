@@ -226,6 +226,7 @@ class GenericMapping:
                 item( self.SombreroShader.Uniforms )
         return []
 
+# Redirect these to SombreroMain calls
 class TextureImage(GenericMapping):
     def action(self): self.info = self.SombreroMain.MapImage(**self.config)
 class TextureShader(GenericMapping):

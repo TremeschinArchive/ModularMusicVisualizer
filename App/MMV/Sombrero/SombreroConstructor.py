@@ -9,8 +9,8 @@ class FullScreenConstructor:
     def __init__(self, SombreroMain):
         self.SombreroMain = SombreroMain
         self.SombreroContext = self.SombreroMain.SombreroContext
-        self.vertex_shader = Path(self.SombreroMain.SombreroDir/"Constructors"/"RectanglesVertex.glsl").read_text()
-        self.geometry_shader = Path(self.SombreroMain.SombreroDir/"Constructors"/"RectanglesGeometry.glsl").read_text()
+        self.VertexShader = Path(self.SombreroMain.SombreroDir/"Constructors"/"RectanglesVertex.glsl").read_text()
+        self.GeometryShader = Path(self.SombreroMain.SombreroDir/"Constructors"/"RectanglesGeometry.glsl").read_text()
         self.num_vertices = 4
         self.buffer = self.SombreroContext.OpenGL_Context.buffer(reserve=16)
         self.buffer.write(array("f", [0, 0, 2, 2]))
@@ -38,8 +38,8 @@ class PianoRollConstructor:
         self.SombreroContext = self.SombreroMain.SombreroContext
         self.piano_roll = piano_roll
         self.expect = expect
-        self.vertex_shader = Path(self.SombreroMain.SombreroDir/"Constructors"/"PianoVertex.glsl").read_text()
-        self.geometry_shader = Path(self.SombreroMain.SombreroDir/"Constructors"/"PianoGeometry.glsl").read_text()
+        self.VertexShader = Path(self.SombreroMain.SombreroDir/"Constructors"/"PianoVertex.glsl").read_text()
+        self.GeometryShader = Path(self.SombreroMain.SombreroDir/"Constructors"/"PianoGeometry.glsl").read_text()
         self.buffer = self.SombreroContext.OpenGL_Context.buffer(reserve = 9 * 4 * maxkeys)
     
     def TreatFragmentShader(self, SombreroShader):

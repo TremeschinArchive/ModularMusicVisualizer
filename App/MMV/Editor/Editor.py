@@ -161,8 +161,8 @@ class mmvEditor:
         logging.info(f"[mmvEditor.AddNodeFile] Exiting [Modular Music Visualizer Editor] *Safely*")
         self.Exit()
         self.SaveCurrentConfig()
-        Dear.cleanup_dearpygui()
         self.SombreroMain.window.window.close()
+        Dear.cleanup_dearpygui()
 
     def SaveCurrentConfig(self): self.Context.Pack(self.USER_CONFIG_FILE)
 

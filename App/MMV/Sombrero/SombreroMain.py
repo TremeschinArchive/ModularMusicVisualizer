@@ -194,7 +194,7 @@ class SombreroMain:
 
         # Add IOs to the frag shader based on constructor specifications
         self.constructor.TreatFragmentShader(self.Shader)
-        frag = self.Shader.Build()
+        FragmentShader = self.Shader.Build()
 
         # The FBO and texture so we can use on parent shaders, master shader doesn't require since it haves window fbo
         if not self.MasterShader:
@@ -202,16 +202,16 @@ class SombreroMain:
             
         try:
             self.program = self.SombreroContext.OpenGL_Context.program(
-                vertex_shader = self.constructor.vertex_shader,
-                geometry_shader = self.constructor.geometry_shader,
-                fragment_shader = frag,
+                vertex_shader = self.constructor.VertexShader,
+                geometry_shader = self.constructor.GeometryShader,
+                fragment_shader = FragmentShader,
             )
             self.SolvePendingUniforms()
             if self.MasterShader: self.SombreroContext.framerate.clear()
 
         except moderngl.error.Error as e:
             self.Reset()
-            for pretty in pretty_lines_counter(frag): print(pretty)
+            for pretty in pretty_lines_counter(FragmentShader): print(pretty)
             logging.error(f"{dpfx} {e}")
             if _give_up_if_any_errors: sys.exit()
             self.constructor = FullScreenConstructor(self)
