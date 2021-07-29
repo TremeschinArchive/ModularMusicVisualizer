@@ -124,6 +124,7 @@ class mmvEditorScene:
 
     def LoadDemoScenePreNodes(self, Name):
         ShadersDir = self.Editor.PackageInterface.ShadersDir
+        print(f"Load {Name}\n"*30)
         with self.Editor.SombreroMain.window.window.ctx:
             Layers = []
 
@@ -136,17 +137,29 @@ class mmvEditorScene:
             Vignetting = self.Editor.SombreroMain.NewChild()
             Vignetting.ShaderMacros.Load(ShadersDir/"Base"/"PFX"/"Vignetting.glsl")
 
-            if Name == "Default":
+            if Name == "Default Scene":
                 Default = self.Editor.SombreroMain.NewChild()
                 Default.ShaderMacros.Load(ShadersDir/"Sombrero"/"Default.glsl")
                 Layers += [Default]
 
-            if Name == "Blueprint":
+            if Name == "Lens Distortion (Chain Shaders) Demo Scene":
+                Default = self.Editor.SombreroMain.NewChild()
+                Default.ShaderMacros.Load(ShadersDir/"Sombrero"/"Default.glsl")
+
+                LensDistortion = self.Editor.SombreroMain.NewChild()
+                LensDistortion.ShaderMacros.Load(
+                    FilePath = ShadersDir/"Base"/"PFX"/"Chain1"/"LensDistortion.glsl",
+                    DependentLayers = [Default]
+                )
+
+                Layers += [LensDistortion]
+
+            if Name == "Blueprint Scene":
                 Blueprint = self.Editor.SombreroMain.NewChild()
                 Blueprint.ShaderMacros.Load(ShadersDir/"Base"/"Backgrounds"/"Blueprint.glsl")
                 Layers += [Blueprint, Rain, Vignetting]
 
-            if Name == "AlphaComposite":
+            if Name == "Alpha Composite Demo Scene":
                 Background = self.Editor.SombreroMain.NewChild()
                 Background.ShaderMacros.Load(ShadersDir/"Base"/"Fractals"/"Tetration.glsl")
                 Layers += [Background, Rain, Vignetting]

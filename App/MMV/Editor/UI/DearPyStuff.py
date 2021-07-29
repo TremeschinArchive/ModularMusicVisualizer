@@ -27,6 +27,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 import logging
 from pathlib import Path
+import copy
 
 import dearpygui.logger as DearLogger
 import dearpygui.dearpygui as Dear
@@ -257,11 +258,27 @@ class mmvDearPyStuff:
                     with Dear.tab(label=Speak("Live Config")) as self.DPG_LIVE_CONFIG_TAB: ...
                     with Dear.tab(label=Speak("Render Video")) as self.DPG_EXPORT_TAB: ...
                     with Dear.tab(label=Speak("Performance")) as self.DPG_PERFORMANCE_TAB: ...
-                    with Dear.tab(label=Speak("Sombrero Demo")) as self.DPG_SOMBRERO_DEMO_TAB:
-                        Dear.add_button(label="Default Scene", callback=lambda d,s:self.Editor.Scene.LoadDemoScenePreNodes("Default"))
-                        Dear.add_button(label="Alpha Composite Scene", callback=lambda d,s:self.Editor.Scene.LoadDemoScenePreNodes("AlphaComposite"))
-                        Dear.add_button(label="Blueprint Scene", callback=lambda d,s:self.Editor.Scene.LoadDemoScenePreNodes("Blueprint"))
-            
+
+                    # Temporary Sombrero Backend testing
+                    with Dear.tab(label=Speak("Sombrero Tech Demo Scenes")) as self.DPG_SOMBRERO_DEMO_TAB:
+
+                        def add_scene(name):
+                            w, h = -1, 200
+                            Dear.add_button(
+                                label=name, width=w,height=h,
+                                user_data=copy.deepcopy(name),
+                                callback=lambda d,s,u:self.Editor.Scene.LoadDemoScenePreNodes(u)
+                            )
+
+                        with Dear.table(header_row=False, no_clip=True, precise_widths=True):
+                            Dear.add_table_column()
+                            Dear.add_table_column()
+                            add_scene("Default Scene")
+                            add_scene("Alpha Composite Demo Scene")
+                            Dear.add_table_next_column()
+                            add_scene("Blueprint Scene")
+                            add_scene("Lens Distortion (Chain Shaders) Demo Scene")
+                
             Dear.add_separator()
             self.DPG_LOADING_INDICATOR_GLOBAL = Dear.add_loading_indicator(**self.ThemeYaml.LoadingIndicator.Idle)
             self.Editor.DearPyStuff.ToggleLoadingIndicator()

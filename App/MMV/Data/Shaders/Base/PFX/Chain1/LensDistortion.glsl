@@ -1,47 +1,31 @@
-// ===============================================================================
-//#shadermaker includes
-//#shadermaker mappings
-//#shadermaker functions
-// ===============================================================================
 
-// EXPECTS: sampler2D named "layer" on the texture to be applied
-
-// ===============================================================================
-
-uniform vec3 mmv_progressive_rms_0_05;
-uniform vec3 mmv_rms_0_15;
-
-void main() {
-    //#mmv {"type": "include", "value": "coordinates_normalization", "mode": "multiple"}
+vec4 mainImage(in vec2 fragCoord) {
     vec4 col = vec4(0.0);
 
     // User stuff
-    float intensity = ((mmv_rms_0_15[2] / 5.5)) / (mmv_zoom * mmv_zoom);
-    float add = mmv_progressive_rms_0_05[2] / 18.0;
+    float intensity = 0.5;
 
     // Shortcuts
-    float w = mmv_resolution[0];
-    float h = mmv_resolution[1];
+    float w = mResolution[0];
+    float h = mResolution[1];
 
     // Offsets
-    vec2 red_offset   = intensity * vec2(15*sin((mmv_time + add)) / w, 25*cos(1.35135*(mmv_time + add)) / h);
-    vec2 green_offset = intensity * vec2(20*cos(1.2315*(mmv_time + add)) / w, 20*sin(3.2315*(mmv_time + add)) / h);
-    vec2 blue_offset  = intensity * vec2(10*cos(5.34235*(mmv_time + add)) / w, 13*cos(1.35634*(mmv_time + add)) / h);
+    vec2 red_offset   = intensity * vec2(15*sin((mTime)) / w, 25*cos(1.35135*(mTime)) / h);
+    vec2 green_offset = intensity * vec2(20*cos(1.2315*(mTime)) / w, 20*sin(3.2315*(mTime)) / h);
+    vec2 blue_offset  = intensity * vec2(10*cos(5.34235*(mTime)) / w, 13*cos(1.35634*(mTime)) / h);
 
     // // Calculate it
 
     // Raw, without chromatic aberration
-    vec4 base_layer = texture(layer, shadertoy_uv);
+    vec4 base_layer = texture(layer0, ShaderToyUV);
 
     // Define color and use layer's alpha
     col = vec4(
-        texture(layer, shadertoy_uv + red_offset  ).r,
-        texture(layer, shadertoy_uv + green_offset).g,
-        texture(layer, shadertoy_uv + blue_offset  ).b,
+        texture(layer0, ShaderToyUV + red_offset  ).r,
+        texture(layer0, ShaderToyUV + green_offset).g,
+        texture(layer0, ShaderToyUV + blue_offset ).b,
         base_layer.a
     );
 
-    // col = texture(layer, shadertoy_uv + red_offset);
-    fragColor = col;
+    return col;
 }
-

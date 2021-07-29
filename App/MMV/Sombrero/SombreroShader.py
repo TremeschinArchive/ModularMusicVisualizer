@@ -82,7 +82,7 @@ class SimpleEnterable:
 # You can put this class on a with statement, it holds the content
 #
 # with SomeClass() as foo:
-#     Include("path")(foo)
+#     Include("FilePath")(foo)
 #
 class WithScopedAddToParent(Searchable, SimpleBuildableChilds):
     def __init__(self): super().__init__()
@@ -136,10 +136,15 @@ class IO(CallableAddToParent):
     def __repr__(self): return f"<IO {str(id(self))[-4:]} Name:\"{self.Name}\" mode:\"{self.mode}\">"
     def __init__(self, glsltype, Name, use = True, prefix = True, mode = "io", flat = False):
         Utils.AssignLocals(locals())
+        self.AlreadyBuilt = False
         {"io": self.do_input_and_output, 'i': self.do_only_input, 'o': self.do_only_output}.get(mode, "io")()
 
     def Build(self, indent = "") -> list:
         R = []
+
+        # I'm not sure who/where is building twice..
+        if self.AlreadyBuilt: return []
+        self.AlreadyBuilt = True
         prefix = "flat " if self.flat else ""
         if "i" in self.mode: R += [f"{indent}{prefix}in {self.glsltype} {self.InName};"]
         if "o" in self.mode: R += [f"{indent}{prefix}out {self.glsltype} {self.OutName};"]
@@ -294,23 +299,15 @@ class SombreroShaderMacros:
     # macro instance then assigning to other SombreroMains
 
     # Load some fragment shader, vertex and geometry are defined per constructor object
-    def Load(self, path, AssignToParent=True) -> SombreroShader:
+    #
+    # DependentLayers:
+    #   Some shaders most likely pfx ones require one layer layer0, two layer0 layer1 to work this is 
+    #   so that you chain those, please read the shader you're loading first otherwise this might do nothing.
+    def Load(self, FilePath, DependentLayers=[], AssignToParent=True) -> SombreroShader:
         with self.__BaseShader() as SHADER:
-            Include(Path(path).resolve())(SHADER.UserShader)
+            if DependentLayers: self.__MapShader_as_textures(DependentLayers, SHADER)
+            Include(Path(FilePath).resolve())(SHADER.UserShader)
         if AssignToParent: self.SombreroMain.Shader = SHADER; return
-        return SHADER
-    
-    # def load(self, path, AssignToParent = True) -> SombreroShader:
-    #     with SombreroShader() as SHADER:
-    #         Version("330")(SHADER)
-    
-    # Some shaders most likely pfx ones require one layer layer0, two layer0 layer1 to work this is 
-    # so that you chain those, please read the shader you're loading first otherwise this might do nothing.
-    def LoadChainDependent(self, path, processed_layers, AssignToParent = True) -> SombreroShader:
-        with self.__BaseShader() as SHADER:
-            self.__MapShader_as_textures(processed_layers, SHADER)
-            Include(Path(path).resolve())(SHADER.UserShader)
-        if AssignToParent: self.SombreroMain.shader = SHADER; return
         return SHADER
 
     # # Map layers as shader textures layer0 layer1 layer2...

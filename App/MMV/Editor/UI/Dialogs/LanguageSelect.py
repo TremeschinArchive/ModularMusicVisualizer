@@ -51,12 +51,16 @@ def LanguageSelectUI(Editor):
 
         PleaseRestartUI(Editor, "Change Language")
 
+    Editor.DearPyStuff.ToggleLoadingIndicator()
+
     with DearCenteredWindow(
-    Editor.Context, width=300, height=200, min_size=[300,0],
+        Editor.Context, width=300, height=200, min_size=[300,0],
         max_size=[10000, DearCenteredWindowsSuggestedMaxVSize(Editor.Context)]
     ) as LanguageSelectWindow:
+
         Dear.add_text(Speak("Select Language [Needs Restart]"))
         Dear.add_separator()
+
         for Key, Value in Polyglot.Languages.__dict__.items():
             if (not "__" in Key) and (Key != "MakeCountries"):
                 ThisLanguage = copy.deepcopy( Polyglot.Languages.__dict__[Key] )
@@ -90,4 +94,4 @@ def LanguageSelectUI(Editor):
                     Dear.set_item_font(Item, Editor.DearPyStuff.LoadedFonts[ThisLanguage.Font])
                 Dear.add_separator()
 
-
+        Editor.DearPyStuff.ToggleLoadingIndicator()

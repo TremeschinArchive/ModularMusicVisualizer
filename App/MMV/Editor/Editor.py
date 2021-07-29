@@ -134,7 +134,7 @@ class mmvEditor:
             60, self.SombreroMain.Next,
             SomeContextToEnter=self.SombreroMain.window.window.ctx)
         self.BudgetVsyncManager.AddVsyncTargetIfDNE(self.SombreroVsyncClient)
-        self.Scene.LoadDemoScenePreNodes("Default")
+        self.Scene.LoadDemoScenePreNodes("Default Scene")
 
         # DearPyGui
         self.DearPyStuff.SetupViewport()
