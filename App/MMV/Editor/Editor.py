@@ -138,6 +138,9 @@ class mmvEditor:
 
         # DearPyGui
         self.DearPyStuff.SetupViewport()
+
+        # Some GL stuff must be called from the main thread
+        self.MainThreadCalls = []
         
         try:
             while True:
@@ -145,6 +148,11 @@ class mmvEditor:
                 ActionDone = self.BudgetVsyncManager.DoNextAction()
                 if ActionDone == self.BudgetVsyncDearRender:
                     self.Next(ActionDone._Iteration)
+                
+                # Calls we must do from main thread
+                while self.MainThreadCalls:
+                    self.MainThreadCalls.pop(0)()
+
         except KeyboardInterrupt: pass
         self.__True_Exit()
 

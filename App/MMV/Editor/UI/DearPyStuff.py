@@ -255,7 +255,9 @@ class mmvDearPyStuff:
                             Dear.add_button(
                                 label=name, width=-1,height=130,
                                 user_data=copy.deepcopy(name),
-                                callback=lambda d,s,u:self.Editor.Scene.LoadDemoScenePreNodes(u)
+                                # We must call it from the main Thread
+                                callback=lambda d,s,u: \
+                                    self.Editor.MainThreadCalls.append(lambda: self.Editor.Scene.LoadDemoScenePreNodes(u))
                             )
 
                         with Dear.table(header_row=False, no_clip=True, precise_widths=True):

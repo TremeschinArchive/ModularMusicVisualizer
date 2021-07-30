@@ -25,16 +25,18 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
+from MMV.Common.Utils import Utils
 import time
+import math
 
 
 # The one we add to BudgetVsyncManager
 class BudgetVsyncClient:
-    def __init__(self, Frequency, Callable, SomeContextToEnter=None):
-        self.Frequency, self.Callable = Frequency, Callable
-        self.SomeContextToEnter = SomeContextToEnter
+    def __init__(self, Frequency, Callable, SomeContextToEnter=None, Expire=math.inf):
+        Utils.AssignLocals(locals())
         self.NextCall = time.time()
         self.Ignore = False
+        self.Manager = None
         self._Iteration = 0
 
     # Do our action, set NextCall timer
@@ -44,6 +46,8 @@ class BudgetVsyncClient:
                 self.Callable()
         else:   self.Callable()
         self._Iteration += 1
+        if self._Iteration >= self.Expire:
+            if self.Manager: self.Manager.RemoveTarget(self)
         self.NextCall = time.time() + self.Period
         return self
 
@@ -62,11 +66,15 @@ class BudgetVsyncManager:
 
     # Add some Vsync callable
     def AddVsyncTarget(self, T: BudgetVsyncClient):
+        T.Manager = self
         self.Targets.append(T)
 
     # Do we have this target to be called already?
     def HaveTarget(self, T: BudgetVsyncClient):
         return T in self.Targets
+
+    def RemoveTarget(self, T: BudgetVsyncClient):
+        self.Targets.remove(T)
 
     # Add target if does not exist
     def AddVsyncTargetIfDNE(self, T: BudgetVsyncClient):
