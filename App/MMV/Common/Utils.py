@@ -124,7 +124,7 @@ class Utils:
 
     @staticmethod
     def LoadYaml(FilePath):
-        return Utils.LoadYamlString( Utils.ResolvePath(FilePath).read_text() )
+        return Utils.LoadYamlString( Utils.ResolvePath(FilePath).read_text(encoding="utf-8") )
 
     @staticmethod
     def LoadYamlString(data):

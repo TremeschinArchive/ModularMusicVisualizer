@@ -9,6 +9,8 @@ import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
 # Nuitka "Missing imports"
+import moderngl_window.context.glfw
+import glcontext
 import glfw
 
 # Import PackageInterface that controls the whole MMV
