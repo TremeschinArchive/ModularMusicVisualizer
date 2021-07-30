@@ -68,8 +68,8 @@ class MakeRelease:
         self.ReleasesDirLinux = self.ReleasesDir/(self.ReleaseName + " (Linux)")
         self.ReleasesDirWindows = self.ReleasesDir/(self.ReleaseName + " (Windows)")
         self.ReleasesDirMacOS = self.ReleasesDir/(self.ReleaseName + " (MacOS)")
-        self.WineprefixDir = Path("~/.mmv/WinePrefix").expanduser().resolve()
-        self.DarlingprefixDir = Path("~/.mmv/DarlingPrefix").expanduser().resolve()
+        self.WineprefixDir = Path("~/.MMV/WinePrefix").expanduser().resolve()
+        self.DarlingprefixDir = Path("~/.MMV/DarlingPrefix").expanduser().resolve()
 
         # Make Releases dir
         self.ReleasesDir.mkdir(exist_ok=True)
@@ -199,10 +199,12 @@ class MakeRelease:
 
         # Change working directory
         self.CurrentWorkingDirectory = self.CurrentMakingReleaseDir
+
+        LTO = ["--lto"] if (os.environ.get("MMV_RELEASE_LTO", False)) else []
         
         # Nuitka Command for final export
         CompileCommand = NUITKA + [
-            "--standalone", "--onefile", "--jobs", str(NJobs), # "--lto",
+            "--standalone", "--onefile", "--jobs", str(NJobs), *LTO,
             "--linux-onefile-icon", icon,
             "--file-reference-choice=runtime",
             # "--nofollow-imports",
@@ -211,6 +213,7 @@ class MakeRelease:
             # "--noinclude-setuptools-mode=nofollow",
             "--enable-plugin=anti-bloat",
             "--plugin-enable=numpy",
+            "--plugin-enable=glfw",
             "--plugin-enable=pkg-resources",
 
             # Windoe
