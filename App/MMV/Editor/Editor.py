@@ -39,7 +39,6 @@ import dearpygui.themes as DearThemes
 import numpy as np
 import yaml
 from dotmap import DotMap
-from MMV.Editor.UI.Dialogs.LanguageSelect import LanguageSelectUI
 from MMV.Common.BudgetVsync import BudgetVsyncClient, BudgetVsyncManager
 from MMV.Common.DearPyGuiUtils import *
 from MMV.Common.PackUnpack import PackUnpack
@@ -48,6 +47,7 @@ from MMV.Common.Utils import *
 from MMV.Common.Utils import Utils
 from MMV.Editor.Scene import mmvEditorScene
 from MMV.Editor.UI.DearPyStuff import mmvDearPyStuff
+from MMV.Editor.UI.Dialogs.LanguageSelect import LanguageSelectUI
 from MMV.Sombrero import SombreroMain
 from PIL import Image, JpegImagePlugin, PngImagePlugin
 from watchdog.observers import Observer
@@ -57,9 +57,15 @@ Speak = Polyglot.Speak
 
 class mmvEditor:
     def __init__(self, PackageInterface):
+
+        # Setup Polyglot for translations
+        PolyglotMissing = PackageInterface.RuntimeDir/"PolyglotMissing.txt"
         Polyglot.Speak.Init(
             Utils.LoadYaml(PackageInterface.DataDir/"Languages.yaml"),
-            PathSaveUnknown=PackageInterface.RuntimeDir/"PolyglotMissing.txt")
+            PathSaveUnknown=PolyglotMissing)
+
+        # Reset file if exists
+        if PolyglotMissing.exists(): PolyglotMissing.write_text("")
         self._Stop = False
         self._mmvRestart_ = False
 
@@ -145,11 +151,16 @@ class mmvEditor:
         try:
             while True:
                 if (self._Stop) or (not Dear.is_dearpygui_running()): break
+                
+                # Next "Vsynced" action
                 ActionDone = self.BudgetVsyncManager.DoNextAction()
+
+                # If we rendered DPg then call ours Next
                 if ActionDone == self.BudgetVsyncDearRender:
                     self.Next(ActionDone._Iteration)
                 
-                # Calls we must do from main thread
+                # Calls we must do from main thread, mostly GL stuff on Windows
+                # Keep popping items and calling them
                 while self.MainThreadCalls:
                     self.MainThreadCalls.pop(0)()
 

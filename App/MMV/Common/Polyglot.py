@@ -66,19 +66,18 @@ class PolyglotBrain:
     def Init(self, LangsDict, SpokenLanguage=Languages.English, PathSaveUnknown=None):
         self.Data = DotMap(LangsDict, _dynamic=False)
         self.SpokenLanguage = SpokenLanguage
+        self.UnknownPhrases = []
 
         # Dir to save 
         if PathSaveUnknown is not None: PathSaveUnknown = Path(PathSaveUnknown).expanduser().resolve()
         self.PathSaveUnknown = PathSaveUnknown
 
     def __call__(self, Phrase, ForceLanguage=None):
-        if ForceLanguage is None:
-            GetL = self.SpokenLanguage
-        else:
-            GetL = ForceLanguage
+        if ForceLanguage is None: GetL = self.SpokenLanguage
+        else: GetL = ForceLanguage
         Have = self.Data.get(Phrase, {}).get(GetL.LanguageCode, None)
         if (not Have) and (GetL.EnName != Languages.English.EnName): 
-            Unknown = f"[PolyglotBrain] I don't know [{Phrase}] in {GetL.EnName} ({GetL.NativeName})"
+            Unknown = f"[PolyglotBrain] I don't know [{Phrase}] in [EnName: {GetL.EnName}] [NativeName: {GetL.NativeName}]"
             logging.warning(Unknown)
             if self.PathSaveUnknown is not None:
                 if not self.PathSaveUnknown.exists():
@@ -86,6 +85,7 @@ class PolyglotBrain:
                 with open(str(self.PathSaveUnknown), "a") as F:
                     F.write(f"{Unknown}\n")
         if Have: return Have
+        if not Phrase in self.UnknownPhrases: self.UnknownPhrases.append(Phrase)
         return Phrase
 
     # Change language

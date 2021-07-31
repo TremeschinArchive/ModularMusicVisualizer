@@ -25,12 +25,12 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
+import copy
 import logging
 from pathlib import Path
-import copy
 
-import dearpygui.logger as DearLogger
 import dearpygui.dearpygui as Dear
+import dearpygui.logger as DearLogger
 import yaml
 from dotmap import DotMap
 from MMV.Common.BudgetVsync import BudgetVsyncClient
@@ -40,8 +40,9 @@ from MMV.Common.Utils import *
 from MMV.Editor.UI.Dialogs.About import AboutUI
 from MMV.Editor.UI.Dialogs.ExternalsManager import ExternalsManagerDialog
 from MMV.Editor.UI.Dialogs.LanguageSelect import LanguageSelectUI
-from MMV.Editor.UI.Tabs.NodeEditor.AddNodeUI import AddNodeUI
 from MMV.Editor.UI.Dialogs.PleaseRestart import PleaseRestartUI
+from MMV.Editor.UI.Tabs.NodeEditor.AddNodeUI import AddNodeUI
+from MMV.Editor.UI.Tabs.RenderVideo.RenderVideoUI import RenderVideoUI
 
 Speak = Polyglot.Speak
 
@@ -54,6 +55,7 @@ class mmvDearPyStuff:
 
         self.LoadedFonts = DotMap(_dynamic=False)
         self.AddNodeUI = AddNodeUI(self.Editor)
+        self.RenderVideoUI = RenderVideoUI(self.Editor)
 
         self.DefaultFont = "DejaVuSans-Bold.ttf"
         self.DefaultResourcesLogoImage = self.PackageInterface.ImageDir/"mmvLogoWhite.png"
@@ -245,7 +247,10 @@ class mmvDearPyStuff:
                             Dear.add_same_line()
 
                     with Dear.tab(label=Speak("Live Config")) as self.DPG_LIVE_CONFIG_TAB: ...
-                    with Dear.tab(label=Speak("Render Video")) as self.DPG_EXPORT_TAB: ...
+
+                    with Dear.tab(label=Speak("Render Video")) as self.DPG_EXPORT_TAB:
+                        self.RenderVideoUI.Render()
+
                     with Dear.tab(label=Speak("Performance")) as self.DPG_PERFORMANCE_TAB: ...
 
                     # Temporary Sombrero Backend testing

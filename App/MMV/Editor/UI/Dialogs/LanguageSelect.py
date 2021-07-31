@@ -58,7 +58,7 @@ def LanguageSelectUI(Editor):
         max_size=[10000, DearCenteredWindowsSuggestedMaxVSize(Editor.Context)]
     ) as LanguageSelectWindow:
 
-        Dear.add_text(Speak("Select Language [Needs Restart]"))
+        Dear.add_text(Speak("Select Language") + " | " + Speak("Missing") + f" [{len(Polyglot.Speak.UnknownPhrases)}]")
         Dear.add_separator()
 
         for Key, Value in Polyglot.Languages.__dict__.items():
@@ -86,6 +86,7 @@ def LanguageSelectUI(Editor):
                         if (ThisLanguage.LanguageCode in [*Values, "en-us"]):
                             Have += len(Key)
                         Total += len(Key)
+                    Total += len(Polyglot.Speak.UnknownPhrases)
                     Percentage = Have / Total
                     Dear.add_text(f"[{Percentage*100:06.2f} %] ", color=(120,120,120))
                     Dear.add_same_line()

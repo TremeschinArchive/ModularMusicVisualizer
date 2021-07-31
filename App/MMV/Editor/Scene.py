@@ -27,11 +27,11 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 import copy
 import hashlib
 import logging
+import time
 from pathlib import Path
 
 import dearpygui.dearpygui as Dear
 import yaml
-import time
 from dotmap import DotMap
 from MMV.Common.BudgetVsync import BudgetVsyncClient
 from MMV.Common.PackUnpack import PackUnpack

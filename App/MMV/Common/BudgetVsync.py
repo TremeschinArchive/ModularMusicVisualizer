@@ -25,9 +25,10 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 ===============================================================================
 """
-from MMV.Common.Utils import Utils
-import time
 import math
+import time
+
+from MMV.Common.Utils import Utils
 
 
 # The one we add to BudgetVsyncManager
